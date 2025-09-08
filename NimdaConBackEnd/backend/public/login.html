@@ -1,0 +1,123 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>로그인</title>
+    <meta charset="UTF-8">
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            margin: 0;
+            background-color: #f5f5f5;
+        }
+        .login-form {
+            background: white;
+            padding: 2rem;
+            border-radius: 8px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+            width: 300px;
+        }
+        .form-group {
+            margin-bottom: 1rem;
+        }
+        input {
+            width: 100%;
+            padding: 0.5rem;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            box-sizing: border-box;
+        }
+        button {
+            width: 100%;
+            padding: 0.75rem;
+            background-color: #007bff;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+        }
+        button:hover {
+            background-color: #0056b3;
+        }
+        .error {
+            color: red;
+            margin-top: 1rem;
+            text-align: center;
+        }
+        .success {
+            color: green;
+            margin-top: 1rem;
+            text-align: center;
+        }
+        .register-link {
+            text-align: center;
+            margin-top: 1rem;
+        }
+        .register-link a {
+            color: #007bff;
+            text-decoration: none;
+        }
+        .register-link a:hover {
+            text-decoration: underline;
+        }
+    </style>
+</head>
+<body>
+    <div class="login-form">
+        <h2>로그인</h2>
+        <form id="loginForm">
+            <div class="form-group">
+                <input type="text" id="username" placeholder="사용자명" required>
+            </div>
+            <div class="form-group">
+                <input type="password" id="password" placeholder="비밀번호" required>
+            </div>
+            <button type="submit">로그인</button>
+        </form>
+        <div id="message"></div>
+        <div class="register-link">
+            계정이 없으신가요? <a href="register.html">회원가입하기</a>
+        </div>
+    </div>
+
+    <script>
+        document.getElementById('loginForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            
+            const username = document.getElementById('username').value;
+            const password = document.getElementById('password').value;
+            const messageDiv = document.getElementById('message');
+            
+            try {
+                const response = await fetch('/api/auth/login', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({ username, password })
+                });
+                
+                if (response.ok) {
+                    const data = await response.json();
+                    localStorage.setItem('token', data.access_token);
+                    messageDiv.innerHTML = '<div class="success">로그인 성공! 대회 메인페이지로 이동합니다.</div>';
+                    console.log('JWT Token:', data.access_token);
+                    
+                    // 2초 후 대회 메인페이지로 이동
+                    setTimeout(() => {
+                        window.location.href = 'contest.html';
+                    }, 2000);
+                } else {
+                    messageDiv.innerHTML = '<div class="error">로그인 실패: 사용자명 또는 비밀번호가 잘못되었습니다.</div>';
+                }
+            } catch (error) {
+                messageDiv.innerHTML = '<div class="error">로그인 중 오류가 발생했습니다.</div>';
+                console.error('Error:', error);
+            }
+        });
+    </script>
+</body>
+</html>

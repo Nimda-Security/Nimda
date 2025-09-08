@@ -1,0 +1,144 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>회원가입</title>
+    <meta charset="UTF-8">
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            margin: 0;
+            background-color: #f5f5f5;
+        }
+        .register-form {
+            background: white;
+            padding: 2rem;
+            border-radius: 8px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+            width: 350px;
+        }
+        .form-group {
+            margin-bottom: 1rem;
+        }
+        input {
+            width: 100%;
+            padding: 0.5rem;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            box-sizing: border-box;
+        }
+        button {
+            width: 100%;
+            padding: 0.75rem;
+            background-color: #28a745;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            margin-bottom: 1rem;
+        }
+        button:hover {
+            background-color: #218838;
+        }
+        .login-link {
+            text-align: center;
+        }
+        .login-link a {
+            color: #007bff;
+            text-decoration: none;
+        }
+        .login-link a:hover {
+            text-decoration: underline;
+        }
+        .error {
+            color: red;
+            margin-top: 1rem;
+            text-align: center;
+        }
+        .success {
+            color: green;
+            margin-top: 1rem;
+            text-align: center;
+        }
+    </style>
+</head>
+<body>
+    <div class="register-form">
+        <h2>회원가입</h2>
+        <form id="registerForm">
+            <div class="form-group">
+                <input type="text" id="username" placeholder="사용자명" required>
+            </div>
+            <div class="form-group">
+                <input type="email" id="email" placeholder="이메일" required>
+            </div>
+            <div class="form-group">
+                <input type="password" id="password" placeholder="비밀번호 (4자 이상)" minlength="4" required>
+            </div>
+            <div class="form-group">
+                <input type="password" id="confirmPassword" placeholder="비밀번호 확인 (4자 이상)" minlength="4" required>
+            </div>
+            <button type="submit">회원가입</button>
+        </form>
+        <div class="login-link">
+            이미 계정이 있으신가요? <a href="login.html">로그인하기</a>
+        </div>
+        <div id="message"></div>
+    </div>
+
+    <script>
+        document.getElementById('registerForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            
+            const username = document.getElementById('username').value;
+            const email = document.getElementById('email').value;
+            const password = document.getElementById('password').value;
+            const confirmPassword = document.getElementById('confirmPassword').value;
+            const messageDiv = document.getElementById('message');
+            
+            // 비밀번호 확인 검증
+            if (password !== confirmPassword) {
+                messageDiv.innerHTML = '<div class="error">비밀번호가 일치하지 않습니다.</div>';
+                return;
+            }
+            
+            // 비밀번호 길이 검증
+            if (password.length < 4) {
+                messageDiv.innerHTML = '<div class="error">비밀번호는 최소 4자 이상이어야 합니다.</div>';
+                return;
+            }
+            
+            try {
+                const response = await fetch('/api/auth/register', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({ username, password, email })
+                });
+                
+                if (response.ok) {
+                    const data = await response.json();
+                    localStorage.setItem('token', data.access_token);
+                    messageDiv.innerHTML = '<div class="success">회원가입 성공! 대회 메인페이지로 이동합니다.</div>';
+                    console.log('JWT Token:', data.access_token);
+                    
+                    // 2초 후 대회 메인페이지로 이동
+                    setTimeout(() => {
+                        window.location.href = 'contest.html';
+                    }, 2000);
+                } else {
+                    const errorData = await response.json();
+                    messageDiv.innerHTML = `<div class="error">회원가입 실패: ${errorData.message || '알 수 없는 오류가 발생했습니다.'}</div>`;
+                }
+            } catch (error) {
+                messageDiv.innerHTML = '<div class="error">회원가입 중 오류가 발생했습니다.</div>';
+                console.error('Error:', error);
+            }
+        });
+    </script>
+</body>
+</html>
