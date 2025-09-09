@@ -1,6 +1,6 @@
 import React from 'react';
-import ArrowLeftIcon from '../icons/ArrowLeftIcon';
-import ArrowRightIcon from '../icons/ArrowRightIcon';
+import ArrowLeftIcon from '../../icons/ArrowLeftIcon';
+import ArrowRightIcon from '../../icons/ArrowRightIcon';
 
 const UserActions: React.FC = () => {
   return (
