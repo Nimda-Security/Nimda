@@ -4,12 +4,12 @@ import ArrowRightIcon from '@/components/icons/Logout';
 
 const UserActions: React.FC = () => {
   return (
-    <div className="flex items-center space-x-4">
-      <div className="text-[#1A1A1A] text-right font-pretendard text-base font-semibold leading-[150%] overflow-hidden text-ellipsis mr-5">
+    <div className="flex items-center space-x-4 xl:space-x-6">
+      <div className="text-[#1A1A1A] text-right font-pretendard text-base xl:text-lg font-semibold leading-relaxed overflow-hidden text-ellipsis">
         admin
       </div>
-      <ArrowLeftIcon className="mr-[10px]" />
-      <ArrowRightIcon className="mr-[332px]" />
+      <ArrowLeftIcon className="w-5 h-5 xl:w-6 xl:h-6" />
+      <ArrowRightIcon className="w-5 h-5 xl:w-6 xl:h-6" />
     </div>
   );
 };
