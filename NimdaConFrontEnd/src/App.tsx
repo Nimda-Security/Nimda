@@ -15,7 +15,7 @@ function App() {
     /* w-full : full width */
     <div className="w-full">
       <NavBar />
-      <main className="p-8">
+      <main className="pt-24 px-8 pb-8">
         <Button onClick={goToLogIn}>
         버튼버튼
       </Button>
