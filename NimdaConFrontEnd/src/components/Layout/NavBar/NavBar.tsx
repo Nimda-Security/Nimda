@@ -1,5 +1,5 @@
 import React from 'react';
-import BrandSection from '../../icons/Logo';
+import BrandSection from '@/components/icons/Logo';
 import UserActions from './UserName';
 
 const NavBar: React.FC = () => {
