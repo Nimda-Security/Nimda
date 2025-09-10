@@ -1,6 +1,6 @@
 import React from 'react';
-import BrandSection from './NavBar/BrandSection';
-import UserActions from './NavBar/UserActions';
+import BrandSection from '../../icons/Logo';
+import UserActions from './UserName';
 
 const NavBar: React.FC = () => {
   return (
