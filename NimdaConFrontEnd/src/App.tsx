@@ -1,6 +1,7 @@
 import './App.css'
-import Button from '@/components/Button/Black'
-import NavBar from './components/Layout/NavBar/NavBar'
+import BlackButton from '@/components/Button/Black'
+import Components from '@/components/Layout/Layout'
+import BlackLineBtn from '@/components/Button/BlackLine'
 import { useNavigate } from "react-router-dom";
 
 function App() {
@@ -12,15 +13,11 @@ function App() {
 
 
   return (
-    /* w-full : full width */
-    <div className="w-full">
-      <NavBar />
-      <main className="pt-24 px-8 pb-8">
-        <Button onClick={goToLogIn}>
+    <Components>
+      <BlackLineBtn onClick={goToLogIn}>
         버튼버튼
-      </Button>
-      </main>
-    </div>
+      </BlackLineBtn>
+    </Components>
   )
 }
 
