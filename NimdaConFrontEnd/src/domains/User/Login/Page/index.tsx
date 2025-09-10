@@ -1,27 +1,24 @@
 import '@/App.css'
-import Button from '@/components/Button/Black'
-import NavBar from '@/components/Layout/NavBar/NavBar'
+import BlackButton from '@/components/Button/Black'
+import Components from '@/components/Layout/Layout'
+import BlackLineBtn from '@/components/Button/BlackLine'
+import { useNavigate } from "react-router-dom";
 
+function LogInPage() {
+  const navigate = useNavigate();
 
-function LoginPage() {
-
-  const handleLogin = () => {
-    alert('로그인 버튼이 클릭되었습니다!');
-    // 실제 로그인 처리 로직을 추가 예정
+  const goToHome = () => {
+    navigate("/");
   };
 
+
   return (
-    /* w-full : full width */
-    <div className="w-full">
-
-
-      <main className="p-8">
-        <Button onClick={handleLogin}>
-        로그인
-      </Button>
-      </main>
-    </div>
+    <Components>
+      <BlackButton onClick={goToHome}>
+        버튼버튼
+      </BlackButton>
+    </Components>
   )
 }
 
-export default LoginPage
+export default LogInPage
