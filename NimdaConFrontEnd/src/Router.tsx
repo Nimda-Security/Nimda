@@ -2,6 +2,7 @@ import { BrowserRouter, Routes, Route } from 'react-router-dom';
 
 import App from "@/App";
 import LoginPage from "@/domains/User/Login/Page";
+import Home from "@/App";
 
 const Router = () => {
     return (
