@@ -1,6 +1,5 @@
 import React from 'react';
 import Logo from '@/components/icons/Logo';
-import UserActions from './UserName';
 
 const NavBar: React.FC = () => {
   return (
