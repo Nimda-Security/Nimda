@@ -54,6 +54,7 @@ public class AuthService {
      * @return JWT 토큰이 포함된 응답
      */
     public Map<String, Object> login(User user) {
+        
         Map<String, Object> response = new HashMap<>();
         
         // JWT 토큰 생성
@@ -66,24 +67,14 @@ public class AuthService {
     }
     
     /**
-     * 회원가입 처리
+     * 회원가입 처리 (UserService에 위임)
      * @param username 사용자명
      * @param password 비밀번호
      * @param email 이메일
      * @return 생성된 사용자 정보 (비밀번호 제외)
      */
     public User register(String username, String password, String email) {
-        // 중복 사용자명 확인
-        if (userService.existsByUsername(username)) {
-            throw new RuntimeException("Username already exists");
-        }
-        
-        // 중복 이메일 확인
-        if (userService.existsByEmail(email)) {
-            throw new RuntimeException("Email already exists");
-        }
-        
-        // 새 사용자 생성
+        // UserService에 사용자 생성 위임 (중복 확인 포함)
         User user = userService.createUser(username, password, email);
         
         // 비밀번호를 제외한 사용자 정보 반환
