@@ -1,11 +1,11 @@
 import React from 'react';
 import NavBar from './Header/NavBar';
 
-interface PageLayoutProps {
+interface LayoutProps {
   children: React.ReactNode;
 }
 
-const PageLayout: React.FC<PageLayoutProps> = ({ children }) => {
+const Layout: React.FC<LayoutProps> = ({ children }) => {
   return (
     <div className="w-full">
       <NavBar />
@@ -16,4 +16,4 @@ const PageLayout: React.FC<PageLayoutProps> = ({ children }) => {
   );
 };
 
-export default PageLayout;
+export default Layout;
