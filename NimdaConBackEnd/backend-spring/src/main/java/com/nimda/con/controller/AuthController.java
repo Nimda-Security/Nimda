@@ -1,7 +1,7 @@
 package com.nimda.con.controller;
 
-import com.nimda.con.dto.LoginRequest;
-import com.nimda.con.dto.RegisterRequest;
+import com.nimda.con.dto.LoginDTO;
+import com.nimda.con.dto.RegisterDTO;
 import com.nimda.con.entity.User;
 import com.nimda.con.service.AuthService;
 import jakarta.validation.Valid;
@@ -28,7 +28,7 @@ public class AuthController {
      * @return JWT 토큰과 사용자 정보
      */
     @PostMapping("/login")
-    public ResponseEntity<?> login(@Valid @RequestBody LoginRequest loginRequest) {
+    public ResponseEntity<?> login(@Valid @RequestBody LoginDTO loginRequest) {
         try {
             // 사용자 인증
             Optional<User> userOpt = authService.validateUser(
@@ -59,7 +59,7 @@ public class AuthController {
      * @return 생성된 사용자 정보
      */
     @PostMapping("/register")
-    public ResponseEntity<?> register(@Valid @RequestBody RegisterRequest registerRequest) {
+    public ResponseEntity<?> register(@Valid @RequestBody RegisterDTO registerRequest) {
         try {
             User user = authService.register(
                 registerRequest.getUsername(),
