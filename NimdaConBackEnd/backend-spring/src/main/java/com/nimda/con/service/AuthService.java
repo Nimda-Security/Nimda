@@ -48,17 +48,13 @@ public class AuthService {
         return Optional.empty();
     }
     
-    /**
-     * 로그인 처리
-     * @param user 인증된 사용자 정보
-     * @return JWT 토큰이 포함된 응답
-     */
+    /* 로그인 처리 */
+
     public Map<String, Object> login(User user) {
-        
+
         Map<String, Object> response = new HashMap<>();
-        
-        // JWT 토큰 생성
-        String token = jwtUtil.generateToken(user.getUsername(), user.getId());
+
+        String token = jwtUtil.generateToken(user.getUsername(), user.getId()); // JWT 토큰 생성
         
         response.put("access_token", token);
         response.put("user", user);

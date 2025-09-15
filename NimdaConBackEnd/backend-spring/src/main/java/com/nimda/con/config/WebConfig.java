@@ -40,7 +40,7 @@ public class WebConfig implements WebMvcConfigurer {
     public void addViewControllers(ViewControllerRegistry registry) {
         // 루트 경로와 모든 경로를 index.html로 리다이렉트 (SPA 라우팅)
         registry.addViewController("/").setViewName("forward:/index.html");
-        registry.addViewController("/{spring:\\w+}").setViewName("forward:/index.html");
-        registry.addViewController("/{spring:\\w+}/**{spring:?!(\\.js|\\.css)$}").setViewName("forward:/index.html");
+        registry.addViewController("/{path:\\w+}").setViewName("forward:/index.html");
+        registry.addViewController("/{path:\\w+}/**{file:?!(\\.js|\\.css)$}").setViewName("forward:/index.html");
     }
 }
