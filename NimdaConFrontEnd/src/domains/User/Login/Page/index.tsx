@@ -23,39 +23,10 @@ function LogInPage() {
         <form onSubmit={handleLogin} className="flex flex-col gap-4">
           <div>이름</div>
 
-          <Input placeholder="네임" />
-          <Input placeholder="test" />
-          <FormField>
-            <input
-              type="text"
-              placeholder="name"
-              value={name}
-              onChange={(e) => setName(e.target.value)}
-              className="w-full h-full bg-transparent outline-none"
-              required
-            />
-          </FormField>
-          <div>아이디</div>
-          <FormField>
-            <input
-              type="text"
-              placeholder="아이디"
-              value={id}
-              onChange={(e) => setID(e.target.value)}
-              className="w-full h-full bg-transparent outline-none"
-              required
-            />
-          </FormField>
-          <FormField>
-            <input
-              type="password"
-              placeholder="비밀번호"
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
-              className="w-full h-full bg-transparent outline-none"
-              required
-            />
-          </FormField>
+          <Input placeholder="이름" />
+          <Input placeholder="아이디" />
+          <Input placeholder="비밀번호z" />
+
           <BlackButton type="submit">로그인</BlackButton>
         </form>
       </div>
