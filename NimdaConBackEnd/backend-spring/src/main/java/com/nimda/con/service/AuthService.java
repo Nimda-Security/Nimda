@@ -39,8 +39,6 @@ public class AuthService {
                 userWithoutPassword.setId(user.getId());
                 userWithoutPassword.setUsername(user.getUsername());
                 userWithoutPassword.setEmail(user.getEmail());
-                userWithoutPassword.setCreatedAt(user.getCreatedAt());
-                userWithoutPassword.setUpdatedAt(user.getUpdatedAt());
                 return Optional.of(userWithoutPassword);
             }
         }
@@ -78,8 +76,6 @@ public class AuthService {
         userWithoutPassword.setId(user.getId());
         userWithoutPassword.setUsername(user.getUsername());
         userWithoutPassword.setEmail(user.getEmail());
-        userWithoutPassword.setCreatedAt(user.getCreatedAt());
-        userWithoutPassword.setUpdatedAt(user.getUpdatedAt());
         
         return userWithoutPassword;
     }

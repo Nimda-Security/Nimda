@@ -30,14 +30,16 @@ public class User {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     @JsonIgnore
     private Long id;
+    // IDNENTITY : AUTO_INCREMENT
     
     @NotBlank
-    @Size(min = 3, max = 50)
+    @Size(min = 3, max = 20)
     @Column(unique = true, nullable = false)
     private String username;
+    // VARCHAR(255)
     
     @NotBlank
-    @Size(min = 6, max = 100)
+    @Size(min = 4, max = 20)
     @Column(nullable = false)
     private String password;
     
@@ -45,14 +47,6 @@ public class User {
     @NotBlank
     @Column(unique = true, nullable = false)
     private String email;
-    
-    @CreatedDate
-    @Column(name = "created_at", nullable = false, updatable = false)
-    private LocalDateTime createdAt;
-    
-    @LastModifiedDate
-    @Column(name = "updated_at")
-    private LocalDateTime updatedAt;
     
     // 필요한 생성자 추가
     public User(String username, String password, String email) {
@@ -65,8 +59,8 @@ public class User {
     @ManyToMany(fetch = FetchType.EAGER)
     @JoinTable(
         name = "user_authorities",
-        joinColumns = @JoinColumn(name = "user_id"),
-        inverseJoinColumns = @JoinColumn(name = "authority_id")
+        joinColumns = @JoinColumn(name = "user_id"), // FK
+        inverseJoinColumns = @JoinColumn(name = "authority_id") // FK
     )
     @JsonIgnore
     private Set<Authority> authorities = new HashSet<>();
