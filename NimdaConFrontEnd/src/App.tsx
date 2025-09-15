@@ -1,6 +1,6 @@
-import './App.css'
-import Layout from '@/components/Layout/Layout'
-import BlackLineButton from '@/components/Button/BlackLine'
+import "./App.css";
+import Layout from "@/components/Layout/Layout";
+import BlackLineButton from "@/components/Button/BlackLine";
 import { useNavigate } from "react-router-dom";
 
 function App() {
@@ -10,14 +10,11 @@ function App() {
     navigate("/login");
   };
 
-
   return (
     <Layout>
-      <BlackLineButton onClick={goToLogIn}>
-        버튼버튼
-      </BlackLineButton>
+      <BlackLineButton onClick={goToLogIn}>버튼버튼</BlackLineButton>
     </Layout>
-  )
+  );
 }
 
-export default App
+export default App;

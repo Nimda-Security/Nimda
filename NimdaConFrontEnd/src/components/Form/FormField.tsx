@@ -1,14 +1,14 @@
-import React from 'react';
+import React from "react";
 
 interface FormFieldProps {
-    children: React.ReactNode;
-    className?: string;
+  children: React.ReactNode;
+  className?: string;
 }
 
-const FormField: React.FC<FormFieldProps> = ({ children, className = '' }) => {
-    return (
-        <div 
-        className = {`
+const FormField: React.FC<FormFieldProps> = ({ children, className = "" }) => {
+  return (
+    <div
+      className={`
             flex           /* display: flex */
             w-[400px]
             h-10   /* height: 40px (h-10 = 2.5rem = 40px) */ 
@@ -22,10 +22,10 @@ const FormField: React.FC<FormFieldProps> = ({ children, className = '' }) => {
             bg-white
             ${className}
         `}
-        >
-            {children}
-        </div>
-    );
+    >
+      {children}
+    </div>
+  );
 };
 
 export default FormField;
