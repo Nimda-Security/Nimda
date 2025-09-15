@@ -1,6 +1,6 @@
-import React from 'react';
-import ArrowLeftIcon from '@/components/icons/Write';
-import ArrowRightIcon from '@/components/icons/Logout';
+import React from "react";
+import ArrowLeftIcon from "@/components/Icons/Write";
+import ArrowRightIcon from "@/components/Icons/Logout";
 
 const UserActions: React.FC = () => {
   return (

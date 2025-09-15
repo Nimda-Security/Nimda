@@ -1,13 +1,13 @@
-import React from 'react';
+import React from "react";
 
 // 버튼의 props 타입 정의
 interface ButtonProps {
   children: React.ReactNode; // 버튼콘안에 들어갈 텍스트 or 아이콘
-  onClick?: () => void;      // 버튼을 클릭했을 때 실행될 함수 (선택적)
-  type?: 'button' | 'submit'; // 버튼 type
+  onClick?: () => void; // 버튼을 클릭했을 때 실행될 함수 (선택적)
+  type?: "button" | "submit"; // 버튼 type
 }
 
-function BlackButton({ children, onClick, type = 'button' }: ButtonProps) {
+function BlackButton({ children, onClick, type = "button" }: ButtonProps) {
   return (
     <button
       type={type}
