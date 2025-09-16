@@ -9,7 +9,7 @@ case "$1" in
         echo "✅ 데이터베이스 시작됨 (localhost:3307)"
         ;;
         
-    "backend")
+    "be")
         # 기존 PID 파일 정리
         if [ -f backend.pid ]; then
             kill $(cat backend.pid) 2>/dev/null
@@ -20,7 +20,7 @@ case "$1" in
         ./mvnw spring-boot:run
         ;;
         
-    "frontend")
+    "fe")
         # 기존 PID 파일 정리
         if [ -f frontend.pid ]; then
             kill $(cat frontend.pid) 2>/dev/null

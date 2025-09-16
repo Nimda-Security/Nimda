@@ -48,6 +48,9 @@ public class User {
     @Column(unique = true, nullable = false)
     private String email;
     
+    // 기본 생성자
+    public User() {}
+    
     // 필요한 생성자 추가
     public User(String username, String password, String email) {
         this.username = username;
