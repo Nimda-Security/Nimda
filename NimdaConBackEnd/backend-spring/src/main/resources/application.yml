@@ -10,7 +10,7 @@ spring:
   
   jpa:
     hibernate:
-      ddl-auto: update # 기존 데이터 보존하면서 스키마 업데이트 
+      ddl-auto: none 
     show-sql: true
     properties:
       hibernate:
@@ -25,6 +25,12 @@ spring:
 
 server:
   port: 3001
+
+# JWT 설정
+jwt:
+  header: Authorization # JWT Token을 Request Header에서 탐색할 때 사용할 헤더 이름 
+  secret: nimda-con-secret-key-2024-very-long-secret-key-for-jwt-security #JWT 토큰 서명 검증키. 
+  expiration: 86400000 # JWT 토큰 만료 시간 24시간 (밀리초)
 
 logging:
   level:
