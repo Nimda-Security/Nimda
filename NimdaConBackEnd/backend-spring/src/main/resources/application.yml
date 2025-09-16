@@ -28,5 +28,5 @@ server:
 
 logging:
   level:
-    com.nimda.con: DEBUG
-    org.springframework.security: DEBUG
+    com.nimda.con: INFO
+    org.springframework.security: WARN

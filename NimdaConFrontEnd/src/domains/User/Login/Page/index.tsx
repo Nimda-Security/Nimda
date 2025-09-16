@@ -31,9 +31,10 @@ function LogInPage() {
 
   // 새로운 로그인 처리 함수
   const handleLogin = async (e: React.FormEvent) => {
-
     e.preventDefault();
     setError("");
+
+    console.log('로그인 시도:', { username, password });
 
     try {
       const response = await fetch('http://localhost:3001/api/auth/login', {
@@ -44,18 +45,23 @@ function LogInPage() {
         body: JSON.stringify({ username, password })
       });
 
+      console.log('응답 상태:', response.status);
       const data = await response.json();
+      console.log('응답 데이터:', data);
 
       if (response.ok) {
         // 로그인 성공
+        console.log('로그인 성공!');
         localStorage.setItem('token', data.access_token);
         localStorage.setItem('user', JSON.stringify(data.user));
         navigate('/');
       } else {
         // 로그인 실패
+        console.log('로그인 실패:', data.message);
         setError(data.message || '로그인에 실패했습니다.');
       }
     } catch (error) {
+      console.log('네트워크 에러:', error);
       setError('네트워크 오류가 발생했습니다.');
     }
   };

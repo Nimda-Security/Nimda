@@ -14,11 +14,10 @@ INSERT IGNORE INTO authority (authority_name) VALUES
 ('ROLE_USER'),
 ('ROLE_ADMIN');
 
--- 기본 관리자 계정 생성 (비밀번호: 1234)
+-- 기본 관리자 계정 생성 (비밀번호: password)
 INSERT IGNORE INTO users (username, password, email, created_at) VALUES 
-('admin', '$2a$10$N.zmdr9k7uOCQb376NoUnuTJ8iAt6Z5EHsM8lE9lBOsl7iKTVEFDi', 'admin@example.com', NOW());
+('admin', '$2a$10$92IXUNpkjO0rOQ5byMi.Ye4oKoEa3Ro9llC/.og/at2.uheWG/igi', 'admin@example.com', NOW());
 
--- 관리자에게 ADMIN 권한 부여
+-- 관리자에게 USER 권한 부여
 INSERT IGNORE INTO user_authorities (user_id, authority_id) VALUES 
-(1, 'ROLE_ADMIN'),
-(1, 'ROLE_USER');
+(LAST_INSERT_ID(), 'ROLE_USER');

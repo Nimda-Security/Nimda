@@ -16,7 +16,7 @@ import java.util.function.Function;
 @Component
 public class JwtUtil {
     
-    @Value("${jwt.secret:nimda-con-secret-key-2024}")
+    @Value("${jwt.secret:nimda-con-secret-key-2024-very-long-secret-key-for-jwt-security}")
     private String secret;
     
     @Value("${jwt.expiration:86400000}") // 24시간
