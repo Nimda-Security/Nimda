@@ -27,14 +27,14 @@ function LogInPage() {
         <h1 className="text-3xl font-bold mb-12">NIMDA CON</h1>
         <div className="text-xl font-bold mb-4">회원가입</div>
         <form onSubmit={handleLogin} className="flex flex-col gap-4">
-          <div>아이디</div>
+
           <Input placeholder="아이디" />
           <Input placeholder="비밀번호z" />
 
           <BlackButton type="submit" onClick={goToSignUp}>
             회원가입
           </BlackButton>
-          
+
           {/* test code*/}
           <BlackButton type="submit" onClick={goToLogIn}>
             로그인
