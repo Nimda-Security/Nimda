@@ -1,0 +1,20 @@
+version: '3.8'
+
+services:
+  mariadb:
+    image: mariadb:10.11 #마리아 디비 이미지 
+    container_name: nimda-mariadb #컨테이너 이름
+    restart: unless-stopped
+    environment: # 디비 환경 정보 
+      MYSQL_ROOT_PASSWORD: 908
+      MYSQL_DATABASE: nimda_con
+      MYSQL_USER: nimda
+      MYSQL_PASSWORD: nimda123
+    ports: # 마리아디비 포트 
+      - "3307:3306"
+    volumes: # 데이터 저장소 
+      - mariadb_data:/var/lib/mysql
+      - ./NimdaConBackEnd/backend-spring/src/main/resources/data.sql:/docker-entrypoint-initdb.d/data.sql
+
+volumes:
+  mariadb_data:

@@ -3,9 +3,9 @@ spring:
     name: nimda-con
   
   datasource:
-    url: jdbc:mariadb://localhost:3306/nimda_con?useSSL=false&serverTimezone=UTC&allowPublicKeyRetrieval=true
+    url: jdbc:mariadb://localhost:3307/nimda_con?useSSL=false&serverTimezone=UTC&allowPublicKeyRetrieval=true
     username: root
-    password: 0908
+    password: 908
     driver-class-name: org.mariadb.jdbc.Driver
   
   jpa:

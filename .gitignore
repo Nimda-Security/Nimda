@@ -44,3 +44,12 @@ logs/
 # Temporary files
 *.tmp
 *.temp
+
+# Process ID files
+*.pid
+backend.pid
+frontend.pid
+
+# Log files
+backend.log
+frontend.log
