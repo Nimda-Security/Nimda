@@ -16,6 +16,7 @@ function LogInPage() {
   const goToLogIn = () => {
     navigate("/login");
   };
+
   const goToSignUp = () => {
     navigate("/signup");
   };
@@ -24,20 +25,18 @@ function LogInPage() {
     <Layout>
       <div className="flex flex-col items-center justify-center pt-14">
         <h1 className="text-3xl font-bold mb-12">NIMDA CON</h1>
-        <div className="text-xl font-bold mb-4">로그인</div>
+        <div className="text-xl font-bold mb-4">회원가입</div>
         <form onSubmit={handleLogin} className="flex flex-col gap-4">
-          <div>이름</div>
-
-          <Input placeholder="이름" />
+          <div>아이디</div>
           <Input placeholder="아이디" />
-          <Input placeholder="비밀번호" />
+          <Input placeholder="비밀번호z" />
 
-          <BlackButton type="submit" onClick={goToLogIn}>
-            로그인
-          </BlackButton>
-          {/* test code*/}
           <BlackButton type="submit" onClick={goToSignUp}>
             회원가입
+          </BlackButton>
+          {/* test code*/}
+          <BlackButton type="submit" onClick={goToLogIn}>
+            로그인
           </BlackButton>
         </form>
       </div>
