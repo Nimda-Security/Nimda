@@ -22,7 +22,6 @@ import java.util.Set;
 @Table(name = "users")
 @EntityListeners(AuditingEntityListener.class)
 @Getter @Setter
-@NoArgsConstructor
 @AllArgsConstructor
 public class User {
     

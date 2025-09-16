@@ -34,6 +34,7 @@ function LogInPage() {
           <BlackButton type="submit" onClick={goToSignUp}>
             회원가입
           </BlackButton>
+          
           {/* test code*/}
           <BlackButton type="submit" onClick={goToLogIn}>
             로그인

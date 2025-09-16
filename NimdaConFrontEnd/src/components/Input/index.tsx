@@ -2,6 +2,7 @@ import { useState } from "react";
 import type { ChangeEvent } from "react";
 
 export const Input = ({ placeholder }: { placeholder: string }) => {
+  
   const [value, setValue] = useState("");
 
   return (
