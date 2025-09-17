@@ -3,6 +3,7 @@ package com.nimda.con.controller;
 import com.nimda.con.dto.JudgeResultDTO;
 import com.nimda.con.dto.SubmissionDTO;
 import com.nimda.con.service.JudgeService;
+import com.nimda.con.util.JwtUtil;
 import jakarta.validation.Valid;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -24,15 +25,39 @@ public class JudgeController {
     @Autowired
     private JudgeService judgeService;
     
+    @Autowired
+    private JwtUtil jwtUtil;
+    
     /**
      * 코드 제출 및 채점
      * @param submission 제출된 코드 정보
      * @return 채점 결과
      */
     @PostMapping("/submit")
-    public ResponseEntity<?> submitCode(@Valid @RequestBody SubmissionDTO submission) {
+    public ResponseEntity<?> submitCode(
+            @RequestHeader(value = "Authorization", required = false) String authHeader,
+            @Valid @RequestBody SubmissionDTO submission) {
         try {
-            logger.info("코드 제출 요청 - 언어: {}, 제목: {}", submission.getLanguage(), submission.getTitle());
+            String username = "익명"; // 기본값
+            
+            // Authorization 헤더가 있으면 토큰에서 사용자 추출
+            if (authHeader != null && authHeader.startsWith("Bearer ")) {
+                String token = authHeader.substring(7); // "Bearer " 제거
+                
+                try {
+                    // JwtUtil로 사용자명 추출
+                    String tokenUsername = jwtUtil.extractUsername(token);
+                    if (tokenUsername != null && !jwtUtil.isTokenExpired(token)) {
+                        username = tokenUsername;
+                    } else {
+                        logger.warn("만료된 토큰으로 제출 시도");
+                    }
+                } catch (Exception e) {
+                    logger.warn("유효하지 않은 토큰으로 제출 시도: {}", e.getMessage());
+                }
+            }
+            
+            logger.info("코드 제출 요청 - 사용자: {}, 언어: {}, 제목: {}", username, submission.getLanguage(), submission.getTitle());
             
             // 코드 채점 실행
             JudgeResultDTO result = judgeService.judgeCode(submission);
@@ -42,8 +67,9 @@ public class JudgeController {
             response.put("success", true);
             response.put("message", "채점이 완료되었습니다.");
             response.put("result", result);
+            response.put("submittedBy", username); // 제출자 정보 포함
             
-            logger.info("채점 완료 - 상태: {}, 점수: {}", result.getStatus(), result.getScore());
+            logger.info("채점 완료 - 사용자: {}, 상태: {}, 점수: {}", username, result.getStatus(), result.getScore());
             
             return ResponseEntity.ok(response);
             

@@ -40,16 +40,16 @@ export const loginAPI = async (loginData: LoginRequest): Promise<LoginResponse> 
     const result = await response.json();
 
     if (response.ok) {
-      // 로그인 성공 시 토큰 저장
-      if (result.token) {
-        localStorage.setItem('authToken', result.token);
+      // 로그인 성공 시 토큰 저장 (access_token 키로 받음)
+      if (result.access_token) {
+        localStorage.setItem('authToken', result.access_token);
         localStorage.setItem('user', JSON.stringify(result.user));
       }
       
       return {
         success: true,
         message: '로그인 성공',
-        token: result.token,
+        token: result.access_token,
         user: result.user
       };
     } else {

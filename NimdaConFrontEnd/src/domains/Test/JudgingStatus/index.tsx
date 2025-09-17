@@ -1,6 +1,7 @@
 import NavBar from "@/components/Layout/Header/NavBar";
 import { useState, useEffect } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
+import { submitCodeAPI } from "@/api/judge";
 
 interface JudgeStatus {
   status: 'JUDGING' | 'ACCEPTED' | 'WRONG_ANSWER' | 'COMPILATION_ERROR' | 'TIME_LIMIT_EXCEEDED' | 'RUNTIME_ERROR' | 'SYSTEM_ERROR';
@@ -9,6 +10,7 @@ interface JudgeStatus {
   score?: number;
   errorOutput?: string;
   memoryUsage?: number;
+  submittedBy?: string;
 }
 
 function JudgingStatusPage() {
@@ -38,28 +40,23 @@ function JudgingStatusPage() {
     // 실제 채점 API 호출
     const performJudging = async () => {
       try {
-        const response = await fetch('http://localhost:3001/api/judge/submit', {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-          },
-          body: JSON.stringify(submissionData)
-        });
-
-        const result = await response.json();
+        // 새로운 judge API 사용 (토큰 자동 포함)
+        const result = await submitCodeAPI(submissionData);
         
         // 채점 완료 후 상태 업데이트
         setTimeout(() => {
           clearInterval(dotInterval);
           
-          if (result.success) {
+          if (result.success && result.result) {
             const judgeResult = result.result;
             setJudgeStatus({
-              status: judgeResult.status,
+              status: judgeResult.status as any,
               message: judgeResult.message,
               executionTime: judgeResult.executionTime,
               score: judgeResult.score,
-              errorOutput: judgeResult.errorOutput
+              errorOutput: judgeResult.errorOutput,
+              memoryUsage: judgeResult.memoryUsage,
+              submittedBy: result.submittedBy
             });
           } else {
             setJudgeStatus({
@@ -182,7 +179,7 @@ function JudgingStatusPage() {
                     })}
                   </div>
                   <div className="text-center font-medium text-black">
-                    사용자
+                    {judgeStatus.submittedBy || '사용자'}
                   </div>
                   <div className="text-center">
                     <span className="text-blue-600 hover:underline cursor-pointer">

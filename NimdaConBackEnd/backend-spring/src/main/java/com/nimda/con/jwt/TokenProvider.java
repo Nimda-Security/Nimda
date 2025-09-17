@@ -49,7 +49,53 @@ public class TokenProvider implements InitializingBean {
         this.key = Keys.hmacShaKeyFor(keyBytes); // 
     }
 
+    /**
+     * JWT 토큰에서 사용자명 추출
+     */
+    public String getUsernameFromToken(String token) {
+        try {
+            Claims claims = Jwts.parserBuilder()
+                .setSigningKey(key)
+                .build()
+                .parseClaimsJws(token)
+                .getBody();
+            
+            return claims.getSubject(); // 사용자명 반환
+        } catch (Exception e) {
+            logger.error("토큰에서 사용자명 추출 실패", e);
+            return null;
+        }
+    }
 
+    /**
+     * JWT 토큰 유효성 검증
+     */
+    public boolean validateToken(String token) {
+        try {
+            Jwts.parserBuilder()
+                .setSigningKey(key)
+                .build()
+                .parseClaimsJws(token);
+            return true;
+        } catch (Exception e) {
+            logger.error("토큰 검증 실패", e);
+            return false;
+        }
+    }
 
+    /**
+     * JWT 토큰 생성
+     */
+    public String createToken(String username) {
+        Date now = new Date();
+        Date validity = new Date(now.getTime() + tokenValidityInMilliseconds);
+
+        return Jwts.builder()
+            .setSubject(username)
+            .setIssuedAt(now)
+            .setExpiration(validity)
+            .signWith(key, SignatureAlgorithm.HS256)
+            .compact();
+    }
 
 }
