@@ -1,7 +1,7 @@
-package com.nimda.con.service;
+package com.nimda.con.judge.service;
 
-import com.nimda.con.dto.JudgeResultDTO;
-import com.nimda.con.dto.SubmissionDTO;
+import com.nimda.con.judge.dto.JudgeResultDTO;
+import com.nimda.con.judge.dto.SubmissionDTO;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;

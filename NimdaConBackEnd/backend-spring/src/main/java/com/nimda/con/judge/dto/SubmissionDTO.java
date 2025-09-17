@@ -1,4 +1,4 @@
-package com.nimda.con.dto;
+package com.nimda.con.judge.dto;
 
 import jakarta.validation.constraints.NotBlank;
 import lombok.AllArgsConstructor;

@@ -1,9 +1,9 @@
-package com.nimda.con.controller;
+package com.nimda.con.judge.controller;
 
-import com.nimda.con.dto.JudgeResultDTO;
-import com.nimda.con.dto.SubmissionDTO;
-import com.nimda.con.service.JudgeService;
-import com.nimda.con.util.JwtUtil;
+import com.nimda.con.judge.dto.JudgeResultDTO;
+import com.nimda.con.judge.dto.SubmissionDTO;
+import com.nimda.con.judge.service.JudgeService;
+import com.nimda.con.common.util.JwtUtil;
 import jakarta.validation.Valid;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;

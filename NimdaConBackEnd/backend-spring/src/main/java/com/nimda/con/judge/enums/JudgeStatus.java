@@ -1,6 +1,7 @@
-package com.nimda.con.enums;
+package com.nimda.con.judge.enums;
 
 public enum JudgeStatus {
+    
     PENDING("대기 중"),
     JUDGING("채점 중"),
     ACCEPTED("맞았습니다!!"),

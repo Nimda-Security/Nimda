@@ -1,4 +1,4 @@
-package com.nimda.con.enums;
+package com.nimda.con.judge.enums;
 
 public enum Language {
     JAVA("Java"),

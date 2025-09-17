@@ -1,7 +1,7 @@
-package com.nimda.con.service;
+package com.nimda.con.user.service;
 
-import com.nimda.con.entity.User;
-import com.nimda.con.util.JwtUtil;
+import com.nimda.con.user.entity.User;
+import com.nimda.con.common.util.JwtUtil;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;

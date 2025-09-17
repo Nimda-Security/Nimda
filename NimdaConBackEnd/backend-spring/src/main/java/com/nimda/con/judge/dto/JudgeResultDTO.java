@@ -1,4 +1,4 @@
-package com.nimda.con.dto;
+package com.nimda.con.judge.dto;
 
 import lombok.AllArgsConstructor;
 import lombok.Data;

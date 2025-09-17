@@ -1,6 +1,6 @@
-package com.nimda.con.entity;
+package com.nimda.con.judge.entity;
 
-import com.nimda.con.enums.JudgeStatus;
+import com.nimda.con.judge.enums.JudgeStatus;
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
 import lombok.Data;

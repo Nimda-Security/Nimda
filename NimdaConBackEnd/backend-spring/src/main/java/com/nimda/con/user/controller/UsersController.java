@@ -1,7 +1,7 @@
-package com.nimda.con.controller;
+package com.nimda.con.user.controller;
 
-import com.nimda.con.entity.User;
-import com.nimda.con.service.UserService;
+import com.nimda.con.user.entity.User;
+import com.nimda.con.user.service.UserService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;

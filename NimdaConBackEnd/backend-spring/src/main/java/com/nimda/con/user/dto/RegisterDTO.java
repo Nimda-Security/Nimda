@@ -1,4 +1,4 @@
-package com.nimda.con.dto;
+package com.nimda.con.user.dto;
 
 import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.NotBlank;

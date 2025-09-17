@@ -1,9 +1,9 @@
-package com.nimda.con.controller;
+package com.nimda.con.user.controller;
 
-import com.nimda.con.dto.LoginDTO;
-import com.nimda.con.dto.RegisterDTO;
-import com.nimda.con.entity.User;
-import com.nimda.con.service.AuthService;
+import com.nimda.con.user.dto.LoginDTO;
+import com.nimda.con.user.dto.RegisterDTO;
+import com.nimda.con.user.entity.User;
+import com.nimda.con.user.service.AuthService;
 import jakarta.validation.Valid;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;

@@ -1,6 +1,6 @@
-package com.nimda.con.repository;
+package com.nimda.con.user.repository;
 
-import com.nimda.con.entity.User;
+import com.nimda.con.user.entity.User;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Repository;
 
