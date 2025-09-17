@@ -8,6 +8,7 @@ interface JudgeStatus {
   executionTime?: number;
   score?: number;
   errorOutput?: string;
+  memoryUsage?: number;
 }
 
 function JudgingStatusPage() {
