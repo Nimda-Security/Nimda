@@ -25,34 +25,29 @@ function ProblemSubmitPage() {
     }));
   };
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
-    // 폼 데이터 검증
-    if (!formData.title || !formData.difficulty || !formData.category || !formData.points || !formData.description || !formData.flag) {
-      alert("필수 항목을 모두 입력해주세요.");
+    // 기본 검증
+    if (!formData.description || !formData.category) {
+      alert("소스코드와 언어를 선택해주세요.");
       return;
     }
 
-    // 임시로 콘솔에 출력 (나중에 API 호출로 변경)
-    console.log("제출된 문제 데이터:", formData);
-    
-    alert(`🎉 문제가 성공적으로 제출되었습니다!
+    // 제출 데이터 준비
+    const submissionData = {
+      title: formData.title || "A + B",
+      code: formData.description, // 소스코드 영역의 내용
+      language: formData.category,
+      description: "두 정수 A와 B를 입력받아 A+B를 출력하는 프로그램을 작성하시오.",
+      flag: formData.flag,
+      hints: formData.hints,
+      points: parseInt(formData.points) || 100
+    };
 
-제목: ${formData.title}
-난이도: ${formData.difficulty}
-카테고리: ${formData.category}
-점수: ${formData.points}점`);
-    
-    // 폼 초기화
-    setFormData({
-      title: "",
-      difficulty: "",
-      category: "",
-      points: "",
-      description: "",
-      flag: "",
-      hints: "",
+    // 채점 상태 페이지로 이동 (제출 데이터와 함께)
+    navigate('/judging-status', { 
+      state: { submissionData } 
     });
   };
 
@@ -65,7 +60,7 @@ function ProblemSubmitPage() {
       >
         {/* 헤더 바 */}
         <div className="bg-white border-b border-gray-300 px-4 py-3 flex items-center justify-between">
-          <h1 className="text-lg font-semibold text-black">[문제 1] 진짜 둘기를 찾아봐</h1>
+          <h1 className="text-lg font-semibold text-black">[문제 1] A + B </h1>
           <button 
             onClick={handleSubmit}
             className="bg-black text-white px-3 py-1.5 text-sm rounded hover:bg-gray-800 transition-colors"
@@ -88,8 +83,9 @@ function ProblemSubmitPage() {
                 <option value="">Java</option>
                 <option value="C99">C99</option>
                 <option value="C++17">C++17</option>
-                <option value="Java" selected>Java</option>
+                <option value="Java" selected>Java</option>ㄴ
                 <option value="Python">Python</option>
+
               </select>
             </div>
             
@@ -100,7 +96,7 @@ function ProblemSubmitPage() {
             {/* 문제 내용 영역 */}
             <div className="flex-1 bg-white border-l border-gray-300">
               <div className="border-b border-gray-300 px-4 py-2 bg-gray-50">
-                <span className="text-sm font-medium text-black">문제</span>
+                <span className="text-sm font-medium text-black">소스코드</span>
               </div>
               <div className="flex-1 p-4" style={{ minHeight: '400px' }}>
                 <textarea
