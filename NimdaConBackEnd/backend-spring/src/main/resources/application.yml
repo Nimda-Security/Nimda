@@ -10,7 +10,7 @@ spring:
   
   jpa:
     hibernate:
-      ddl-auto: update # 기존 데이터 보존하면서 스키마 업데이트 
+      ddl-auto: none 
     show-sql: true
     properties:
       hibernate:
@@ -25,6 +25,12 @@ spring:
 
 server:
   port: 3001
+
+# JWT 설정
+jwt:
+  header: Authorization # JWT Token을 Request Header에서 탐색할 때 사용할 헤더 이름 
+  secret: bmltZGEtY29uLXNlY3JldC1rZXktMjAyNC12ZXJ5LWxvbmctc2VjcmV0LWtleS1mb3Itand0LXNlY3VyaXR5 # JWT 토큰 서명 검증키 (Base64 인코딩됨)
+  token-validity-in-seconds: 86400 # JWT 토큰 만료 시간 24시간 (초)
 
 logging:
   level:

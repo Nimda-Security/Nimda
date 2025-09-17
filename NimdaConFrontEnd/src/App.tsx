@@ -10,9 +10,16 @@ function App() {
     navigate("/login");
   };
 
+  const goToProblemSubmit = () => {
+    navigate("/problem-submit");
+  };
+
   return (
     <Layout>
-      <BlackLineButton onClick={goToLogIn}>버튼버튼</BlackLineButton>
+      <div className="flex flex-col items-center gap-4">
+        <BlackLineButton onClick={goToLogIn}>버튼버튼</BlackLineButton>
+        <BlackLineButton onClick={goToProblemSubmit}>[테스트페이지] 문제제출</BlackLineButton>
+      </div>
     </Layout>
   );
 }

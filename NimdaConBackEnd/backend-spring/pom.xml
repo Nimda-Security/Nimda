@@ -49,17 +49,28 @@
         </dependency>
         
         <!-- JWT -->
+        <!-- jjwt-api -->
+        <!-- JWT의 핵심 인터페이스 및 클래스 제공 -->
+        <!-- JWT 생성, 파싱, 검증을 위한 기본 API -->
         <dependency>
             <groupId>io.jsonwebtoken</groupId>
             <artifactId>jjwt-api</artifactId>
             <version>0.11.5</version>
         </dependency>
+
+        <!-- jjwt-impl -->
+        <!-- JWT 생성/파싱/검증 로직 -->
         <dependency>
             <groupId>io.jsonwebtoken</groupId>
             <artifactId>jjwt-impl</artifactId>
             <version>0.11.5</version>
             <scope>runtime</scope>
         </dependency>
+
+        <!-- JWT -->
+        <!-- jjwt-jackson -->
+        <!-- JSON 언어 처리를 위한 Jackson 통합 -->
+        <!-- JWT 클레임을 JSON으로 직렬화/역직렬화한다. -->
         <dependency>
             <groupId>io.jsonwebtoken</groupId>
             <artifactId>jjwt-jackson</artifactId>
