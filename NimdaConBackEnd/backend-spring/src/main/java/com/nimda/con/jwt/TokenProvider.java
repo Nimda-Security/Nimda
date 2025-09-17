@@ -3,81 +3,53 @@ package com.nimda.con.jwt;
 import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.SignatureAlgorithm;
+import io.jsonwebtoken.io.Decoders;
 import io.jsonwebtoken.security.Keys;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.InitializingBean;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 
 import javax.crypto.SecretKey;
-import java.util.Date;
-import java.util.HashMap;
-import java.util.Map;
+import java.util.*;
+import java.security.Key;
 
 @Component
 public class TokenProvider implements InitializingBean {
-    
-    @Value("${jwt.secret:nimda-con-secret-key-2024-very-long-secret-key-for-jwt-security}")
-    private String secret;
-    
-    @Value("${jwt.expiration:86400000}")
-    private Long expiration;
-    
-    private SecretKey key;
-    
+
+    private final Logger logger = LoggerFactory.getLogger(TokenProvider.class);
+    private final long tokenValidityInMilliseconds; 
+    private final String secret; 
+    private Key key; // JWT는 보안상 이유는 문자열을 직접 받지 않으며, Key 객체를 요구한다. 
+
+    // Logic1 : Bean 생성 후 의존성 주입 
+    // @Value("${jwt.secret}") String secret : application.yml에서 jwt.secret 탐색
+    // JWT 토큰을 서명할 때 사용하는 비밀키로, 
+    // 토큰의 무결성을 보장하는 핵심 키이다. 
+
+    public TokenProvider (
+        @Value("${jwt.secret}") String secret, 
+        @Value("${jwt.token-validity-in-seconds}") long tokenValidityInSeconds)
+    {
+        this.secret = secret;
+        this.tokenValidityInMilliseconds = tokenValidityInSeconds * 1000; // 초를 밀리초로 변환
+    }
+
+
+    // Logic2 : 주입받은 Secret Value를 Base64 Decoding 
+    // And Key value에 할당 
+    // key : JWT 서명/검증에 사용할 실제 키
+    // HMAC-SHA256 알고리즘에 맞는 키로 변환한다. 
+
     @Override
     public void afterPropertiesSet() throws Exception {
-        this.key = Keys.hmacShaKeyFor(secret.getBytes());
+        byte[] keyBytes = Decoders.BASE64.decode(secret); // BASE64 디코딩 
+        this.key = Keys.hmacShaKeyFor(keyBytes); // 
     }
-    
-    public String createToken(String username, Long userId) {
-        Map<String, Object> claims = new HashMap<>();
-        claims.put("sub", userId);
-        claims.put("username", username);
-        return createToken(claims, username);
-    }
-    
-    private String createToken(Map<String, Object> claims, String subject) {
-        return Jwts.builder()
-                .setClaims(claims)
-                .setSubject(subject)
-                .setIssuedAt(new Date(System.currentTimeMillis()))
-                .setExpiration(new Date(System.currentTimeMillis() + expiration))
-                .signWith(key, SignatureAlgorithm.HS256)
-                .compact();
-    }
-    
-    public String getUsernameFromToken(String token) {
-        return getClaimFromToken(token, Claims::getSubject);
-    }
-    
-    public Long getUserIdFromToken(String token) {
-        return getClaimFromToken(token, claims -> claims.get("sub", Long.class));
-    }
-    
-    public Date getExpirationDateFromToken(String token) {
-        return getClaimFromToken(token, Claims::getExpiration);
-    }
-    
-    public <T> T getClaimFromToken(String token, java.util.function.Function<Claims, T> claimsResolver) {
-        final Claims claims = getAllClaimsFromToken(token);
-        return claimsResolver.apply(claims);
-    }
-    
-    private Claims getAllClaimsFromToken(String token) {
-        return Jwts.parserBuilder()
-                .setSigningKey(key)
-                .build()
-                .parseClaimsJws(token)
-                .getBody();
-    }
-    
-    public Boolean isTokenExpired(String token) {
-        final Date expiration = getExpirationDateFromToken(token);
-        return expiration.before(new Date());
-    }
-    
-    public Boolean validateToken(String token, String username) {
-        final String tokenUsername = getUsernameFromToken(token);
-        return (tokenUsername.equals(username) && !isTokenExpired(token));
-    }
+
+
+
+
 }
