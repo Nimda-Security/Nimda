@@ -25,6 +25,7 @@ export interface JudgeResponse {
     score?: number;
   };
   submittedBy?: string;
+  submissionId?: number;
 }
 
 /**
@@ -58,7 +59,8 @@ export const submitCodeAPI = async (submissionData: SubmissionRequest): Promise<
         success: true,
         message: result.message || '채점이 완료되었습니다.',
         result: result.result,
-        submittedBy: result.submittedBy
+        submittedBy: result.submittedBy,
+        submissionId: result.submissionId
       };
     } else {
       return {

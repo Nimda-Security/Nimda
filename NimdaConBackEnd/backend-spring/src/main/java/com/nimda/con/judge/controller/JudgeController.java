@@ -13,7 +13,9 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
+import java.util.stream.Collectors;
 
 @RestController
 @RequestMapping("/api/judge")
@@ -59,8 +61,8 @@ public class JudgeController {
             
             logger.info("코드 제출 요청 - 사용자: {}, 언어: {}, 제목: {}", username, submission.getLanguage(), submission.getTitle());
             
-            // 코드 채점 실행
-            JudgeResultDTO result = judgeService.judgeCode(submission);
+            // 코드 채점 실행 (사용자명 포함)
+            JudgeResultDTO result = judgeService.judgeCode(submission, username);
             
             // 응답 데이터 구성
             Map<String, Object> response = new HashMap<>();
@@ -68,6 +70,13 @@ public class JudgeController {
             response.put("message", "채점이 완료되었습니다.");
             response.put("result", result);
             response.put("submittedBy", username); // 제출자 정보 포함
+            
+            // 제출 ID 추출 (메시지에서 파싱)
+            String submissionIdStr = result.getMessage();
+            if (submissionIdStr != null && submissionIdStr.startsWith("제출 ID: ")) {
+                String id = submissionIdStr.split(" - ")[0].replace("제출 ID: ", "");
+                response.put("submissionId", Long.parseLong(id));
+            }
             
             logger.info("채점 완료 - 사용자: {}, 상태: {}, 점수: {}", username, result.getStatus(), result.getScore());
             
@@ -143,6 +152,104 @@ public class JudgeController {
     }
     
     /**
+     * 제출 목록 조회 API
+     * @return 제출 목록
+     */
+    @GetMapping("/submissions")
+    public ResponseEntity<Map<String, Object>> getSubmissions() {
+        try {
+            logger.info("제출 목록 조회 요청");
+            
+            List<Map<String, Object>> submissions = judgeService.getSubmissions().stream()
+                .map(submission -> {
+                    Map<String, Object> submissionData = new HashMap<>();
+                    submissionData.put("id", submission.getId());
+                    submissionData.put("code", submission.getCode());
+                    submissionData.put("language", submission.getLanguage().name());
+                    submissionData.put("status", submission.getStatus().name());
+                    submissionData.put("submittedAt", submission.getSubmittedAt());
+                    submissionData.put("problemId", submission.getProblem().getId());
+                    submissionData.put("problemTitle", submission.getProblem().getTitle());
+                    
+                    // 사용자 정보
+                    if (submission.getUser() != null) {
+                        submissionData.put("username", submission.getUser().getUsername());
+                    } else {
+                        submissionData.put("username", "익명");
+                    }
+                    
+                    return submissionData;
+                })
+                .collect(Collectors.toList());
+            
+            Map<String, Object> response = new HashMap<>();
+            response.put("success", true);
+            response.put("message", "제출 목록을 성공적으로 조회했습니다.");
+            response.put("submissions", submissions);
+            response.put("totalCount", submissions.size());
+            
+            logger.info("제출 목록 조회 완료 - 총 {}개", submissions.size());
+            
+            return ResponseEntity.ok(response);
+            
+        } catch (Exception e) {
+            logger.error("제출 목록 조회 중 오류 발생", e);
+            
+            Map<String, Object> errorResponse = new HashMap<>();
+            errorResponse.put("success", false);
+            errorResponse.put("message", "제출 목록 조회 중 오류가 발생했습니다: " + e.getMessage());
+            
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(errorResponse);
+        }
+    }
+    
+    /**
+     * 특정 사용자의 제출 목록 조회 API
+     * @param username 사용자명
+     * @return 사용자의 제출 목록
+     */
+    @GetMapping("/submissions/user/{username}")
+    public ResponseEntity<Map<String, Object>> getSubmissionsByUser(@PathVariable String username) {
+        try {
+            logger.info("사용자별 제출 목록 조회 요청 - 사용자: {}", username);
+            
+            List<Map<String, Object>> submissions = judgeService.getSubmissionsByUser(username).stream()
+                .map(submission -> {
+                    Map<String, Object> submissionData = new HashMap<>();
+                    submissionData.put("id", submission.getId());
+                    submissionData.put("code", submission.getCode());
+                    submissionData.put("language", submission.getLanguage().name());
+                    submissionData.put("status", submission.getStatus().name());
+                    submissionData.put("submittedAt", submission.getSubmittedAt());
+                    submissionData.put("problemId", submission.getProblem().getId());
+                    submissionData.put("problemTitle", submission.getProblem().getTitle());
+                    
+                    return submissionData;
+                })
+                .collect(Collectors.toList());
+            
+            Map<String, Object> response = new HashMap<>();
+            response.put("success", true);
+            response.put("message", "사용자 '" + username + "'의 제출 목록을 성공적으로 조회했습니다.");
+            response.put("submissions", submissions);
+            response.put("totalCount", submissions.size());
+            
+            logger.info("사용자별 제출 목록 조회 완료 - 사용자: {}, 총 {}개", username, submissions.size());
+            
+            return ResponseEntity.ok(response);
+            
+        } catch (Exception e) {
+            logger.error("사용자별 제출 목록 조회 중 오류 발생", e);
+            
+            Map<String, Object> errorResponse = new HashMap<>();
+            errorResponse.put("success", false);
+            errorResponse.put("message", "제출 목록 조회 중 오류가 발생했습니다: " + e.getMessage());
+            
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(errorResponse);
+        }
+    }
+    
+    /**
      * 테스트용 간단한 채점 API
      * @return 테스트 결과
      */
@@ -167,7 +274,7 @@ public class JudgeController {
                 "}"
             );
             
-            JudgeResultDTO result = judgeService.judgeCode(testSubmission);
+            JudgeResultDTO result = judgeService.judgeCode(testSubmission, "테스트사용자");
             
             response.put("success", true);
             response.put("message", "테스트 채점이 완료되었습니다.");

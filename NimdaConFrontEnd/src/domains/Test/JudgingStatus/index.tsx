@@ -11,6 +11,7 @@ interface JudgeStatus {
   errorOutput?: string;
   memoryUsage?: number;
   submittedBy?: string;
+  submissionId?: number;
 }
 
 function JudgingStatusPage() {
@@ -18,6 +19,7 @@ function JudgingStatusPage() {
   const location = useLocation();
   const [judgeStatus, setJudgeStatus] = useState<JudgeStatus>({ status: 'JUDGING' });
   const [dots, setDots] = useState('');
+  const [submissionId, setSubmissionId] = useState<number | null>(null);
 
   // URL 파라미터에서 제출 정보 가져오기
   const submissionData = location.state?.submissionData;
@@ -56,8 +58,14 @@ function JudgingStatusPage() {
               score: judgeResult.score,
               errorOutput: judgeResult.errorOutput,
               memoryUsage: judgeResult.memoryUsage,
-              submittedBy: result.submittedBy
+              submittedBy: result.submittedBy,
+              submissionId: result.submissionId
             });
+            
+            // 실제 submission ID 설정
+            if (result.submissionId) {
+              setSubmissionId(result.submissionId);
+            }
           } else {
             setJudgeStatus({
               status: 'SYSTEM_ERROR',
@@ -167,7 +175,7 @@ function JudgingStatusPage() {
               <div className="divide-y divide-gray-200">
                 <div className="grid grid-cols-8 gap-4 px-4 py-3 text-sm hover:bg-gray-50">
                   <div className="text-center text-blue-600 font-medium">
-                    {Date.now().toString().slice(-6)}
+                    {submissionId || '대기중'}
                   </div>
                   <div className="text-center text-gray-600">
                     {new Date().toLocaleDateString('en-US', { 

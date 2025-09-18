@@ -15,9 +15,13 @@ INSERT IGNORE INTO authority (authority_name) VALUES
 ('ROLE_ADMIN');
 
 -- 기본 관리자 계정 생성 (비밀번호: password)
-INSERT IGNORE INTO users (username, password, email, created_at) VALUES 
-('admin', '$2a$10$92IXUNpkjO0rOQ5byMi.Ye4oKoEa3Ro9llC/.og/at2.uheWG/igi', 'admin@example.com', NOW());
+INSERT IGNORE INTO users (username, password, email) VALUES 
+('admin', '$2a$10$92IXUNpkjO0rOQ5byMi.Ye4oKoEa3Ro9llC/.og/at2.uheWG/igi', 'admin@example.com');
 
 -- 관리자에게 USER 권한 부여
 INSERT IGNORE INTO user_authorities (user_id, authority_id) VALUES 
-(LAST_INSERT_ID(), 'ROLE_USER');
+(1, 'ROLE_USER');
+
+-- 기본 문제 데이터 삽입 (A + B 문제)
+INSERT IGNORE INTO problems (id, title, description, flag, hints, points, time_limit, memory_limit, difficulty, created_at, updated_at) VALUES 
+(1, 'A + B', '두 정수 A와 B를 입력받아 A+B를 출력하는 프로그램을 작성하시오.', '3', '입력: 1 2, 출력: 3', 100, 5000, 262144, 'EASY', NOW(), NOW());
