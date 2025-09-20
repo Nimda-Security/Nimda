@@ -127,7 +127,10 @@ int main() {
 
     // 채점 상태 페이지로 이동 (제출 데이터와 함께)
     navigate('/judging-status', { 
-      state: { submissionData } 
+      state: { 
+        submissionData,
+        isNewSubmission: true  // 새로운 제출임을 표시
+      } 
     });
   };
 

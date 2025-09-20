@@ -151,17 +151,23 @@ public class JudgeController {
         }
     }
     
-    /**
-     * 제출 목록 조회 API
-     * @return 제출 목록
-     */
+    // * ========== 제출 목록 API ========== * 
+    // * 동작 : JudgeService에서 모든 Submission Entity를 조회합니다. 
+    // * return type : JSON, MAP<String, Object> 
+
     @GetMapping("/submissions")
     public ResponseEntity<Map<String, Object>> getSubmissions() {
         try {
+
             logger.info("제출 목록 조회 요청");
             
+            // * Logic1 * 데이터 조회 후 변환 
+            // * JudgeService에서 모든 Submission Entity를 조회후 Submission Entity를 
+            // * Map<String, Object>로 변환 
+
             List<Map<String, Object>> submissions = judgeService.getSubmissions().stream()
                 .map(submission -> {
+
                     Map<String, Object> submissionData = new HashMap<>();
                     submissionData.put("id", submission.getId());
                     submissionData.put("code", submission.getCode());
@@ -171,11 +177,22 @@ public class JudgeController {
                     submissionData.put("problemId", submission.getProblem().getId());
                     submissionData.put("problemTitle", submission.getProblem().getTitle());
                     
-                    // 사용자 정보
+                    // * 사용자 정보 검증 *
                     if (submission.getUser() != null) {
                         submissionData.put("username", submission.getUser().getUsername());
                     } else {
                         submissionData.put("username", "익명");
+                    }
+                    
+                    // JudgeResult 정보 추가
+                    if (submission.getJudgeResult() != null) {
+                        submissionData.put("executionTime", submission.getJudgeResult().getExecutionTime());
+                        submissionData.put("memoryUsage", submission.getJudgeResult().getMemoryUsage());
+                        submissionData.put("score", submission.getJudgeResult().getScore());
+                    } else {
+                        submissionData.put("executionTime", null);
+                        submissionData.put("memoryUsage", null);
+                        submissionData.put("score", null);
                     }
                     
                     return submissionData;
@@ -223,6 +240,17 @@ public class JudgeController {
                     submissionData.put("submittedAt", submission.getSubmittedAt());
                     submissionData.put("problemId", submission.getProblem().getId());
                     submissionData.put("problemTitle", submission.getProblem().getTitle());
+                    
+                    // JudgeResult 정보 추가
+                    if (submission.getJudgeResult() != null) {
+                        submissionData.put("executionTime", submission.getJudgeResult().getExecutionTime());
+                        submissionData.put("memoryUsage", submission.getJudgeResult().getMemoryUsage());
+                        submissionData.put("score", submission.getJudgeResult().getScore());
+                    } else {
+                        submissionData.put("executionTime", null);
+                        submissionData.put("memoryUsage", null);
+                        submissionData.put("score", null);
+                    }
                     
                     return submissionData;
                 })

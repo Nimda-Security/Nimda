@@ -90,3 +90,36 @@ export const getSupportedLanguagesAPI = async () => {
     return { success: false, message: '언어 목록을 가져올 수 없습니다.' };
   }
 };
+
+/**
+ * 모든 제출 목록 조회 API 
+ * backend API 주소 : api/judge/submissions 
+ */
+export const getAllSubmissionsAPI = async () => {
+  try {
+    const response = await fetch(`${API_BASE_URL}/judge/submissions`);
+    const result = await response.json();
+    
+    if (response.ok) {
+      return {
+        success: true,
+        submissions: result.submissions || [],
+        totalCount: result.totalCount || 0,
+        message: result.message
+      };
+    } else {
+      return {
+        success: false,
+        message: result.message || '제출 목록을 가져올 수 없습니다.'
+      };
+    }
+  } catch (error) {
+    console.error('제출 목록 조회 오류:', error);
+    return { 
+      success: false, 
+      message: '서버에 연결할 수 없습니다.',
+      submissions: [],
+      totalCount: 0
+    };
+  }
+};

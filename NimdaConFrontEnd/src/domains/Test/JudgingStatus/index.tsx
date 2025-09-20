@@ -1,7 +1,7 @@
 import NavBar from "@/components/Layout/Header/NavBar";
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
-import { submitCodeAPI } from "@/api/judge";
+import { submitCodeAPI, getAllSubmissionsAPI } from "@/api/judge";
 
 interface JudgeStatus {
   status: 'JUDGING' | 'ACCEPTED' | 'WRONG_ANSWER' | 'COMPILATION_ERROR' | 'TIME_LIMIT_EXCEEDED' | 'RUNTIME_ERROR' | 'SYSTEM_ERROR';
@@ -14,118 +14,114 @@ interface JudgeStatus {
   submissionId?: number;
 }
 
+interface Submission {
+  id: number;
+  code: string;
+  language: string;
+  status: string;
+  submittedAt: string;
+  problemId: number;
+  problemTitle: string;
+  username: string;
+  executionTime?: number | null;
+  memoryUsage?: number | null;
+  score?: number | null;
+}
+
 function JudgingStatusPage() {
   const navigate = useNavigate();
   const location = useLocation();
   const [judgeStatus, setJudgeStatus] = useState<JudgeStatus>({ status: 'JUDGING' });
   const [dots, setDots] = useState('');
-  const [submissionId, setSubmissionId] = useState<number | null>(null);
+  const [submissions, setSubmissions] = useState<Submission[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+  const hasSubmittedRef = useRef(false); // 중복 제출 방지용 ref
 
   // URL 파라미터에서 제출 정보 가져오기
   const submissionData = location.state?.submissionData;
+  const isNewSubmission = location.state?.isNewSubmission; // 새로운 제출인지 구분하는 플래그
 
   useEffect(() => {
-    // 제출 데이터가 없으면 문제 제출 페이지로 리다이렉트
-    if (!submissionData) {
-      navigate('/problem-submit');
-      return;
-    }
-
-    // 채점 중 애니메이션 (점 3개 반복)
-    const dotInterval = setInterval(() => {
-      setDots(prev => {
-        if (prev === '...') return '';
-        return prev + '.';
-      });
-    }, 500);
-
-    // 실제 채점 API 호출
-    const performJudging = async () => {
+    // 모든 제출 목록 가져오기
+    const fetchAllSubmissions = async () => {
       try {
-        // 새로운 judge API 사용 (토큰 자동 포함)
-        const result = await submitCodeAPI(submissionData);
+        setIsLoading(true);
+        const result = await getAllSubmissionsAPI();
         
-        // 채점 완료 후 상태 업데이트
-        setTimeout(() => {
-          clearInterval(dotInterval);
-          
-          if (result.success && result.result) {
-            const judgeResult = result.result;
-            setJudgeStatus({
-              status: judgeResult.status as any,
-              message: judgeResult.message,
-              executionTime: judgeResult.executionTime,
-              score: judgeResult.score,
-              errorOutput: judgeResult.errorOutput,
-              memoryUsage: judgeResult.memoryUsage,
-              submittedBy: result.submittedBy,
-              submissionId: result.submissionId
-            });
-            
-            // 실제 submission ID 설정
-            if (result.submissionId) {
-              setSubmissionId(result.submissionId);
-            }
-          } else {
-            setJudgeStatus({
-              status: 'SYSTEM_ERROR',
-              message: result.message
-            });
-          }
-        }, 2000); // 최소 2초 대기 (채점 중 느낌을 위해)
-        
+        if (result.success) {
+          setSubmissions(result.submissions);
+        } else {
+          console.error('제출 목록 가져오기 실패:', result.message);
+        }
       } catch (error) {
-        clearInterval(dotInterval);
-        setJudgeStatus({
-          status: 'SYSTEM_ERROR',
-          message: '채점 서버에 연결할 수 없습니다.'
-        });
+        console.error('제출 목록 가져오기 오류:', error);
+      } finally {
+        setIsLoading(false);
       }
     };
 
-    performJudging();
+    fetchAllSubmissions();
 
-    return () => clearInterval(dotInterval);
-  }, [submissionData, navigate]);
+    // 새로운 제출이 있고, 실제로 새로운 제출인 경우에만 처리 (중복 실행 방지)
+    if (submissionData && isNewSubmission && !hasSubmittedRef.current) {
+      hasSubmittedRef.current = true; // 제출 플래그 설정
+      // 채점 중 애니메이션 (점 3개 반복)
+      const dotInterval = setInterval(() => {
+        setDots(prev => {
+          if (prev === '...') return '';
+          return prev + '.';
+        });
+      }, 500);
 
-  const getStatusColor = (status: string) => {
-    switch (status) {
-      case 'JUDGING': return 'text-blue-600';
-      case 'ACCEPTED': return 'text-green-600';
-      case 'WRONG_ANSWER': return 'text-red-600';
-      case 'COMPILATION_ERROR': return 'text-orange-600';
-      case 'TIME_LIMIT_EXCEEDED': return 'text-purple-600';
-      case 'RUNTIME_ERROR': return 'text-red-500';
-      case 'SYSTEM_ERROR': return 'text-gray-600';
-      default: return 'text-gray-600';
+      // 실제 채점 API 호출
+      const performJudging = async () => {
+        try {
+          // 새로운 judge API 사용 (토큰 자동 포함)
+          const result = await submitCodeAPI(submissionData);
+          
+          // 채점 완료 후 상태 업데이트
+          setTimeout(async () => {
+            clearInterval(dotInterval);
+            
+            if (result.success && result.result) {
+              const judgeResult = result.result;
+              setJudgeStatus({
+                status: judgeResult.status as any,
+                message: judgeResult.message,
+                executionTime: judgeResult.executionTime,
+                score: judgeResult.score,
+                errorOutput: judgeResult.errorOutput,
+                memoryUsage: judgeResult.memoryUsage,
+                submittedBy: result.submittedBy,
+                submissionId: result.submissionId
+              });
+              
+
+              // 제출 목록 새로고침
+              await fetchAllSubmissions();
+            } else {
+              setJudgeStatus({
+                status: 'SYSTEM_ERROR',
+                message: result.message
+              });
+            }
+          }, 2000); // 최소 2초 대기 (채점 중 느낌을 위해)
+          
+        } catch (error) {
+          clearInterval(dotInterval);
+          setJudgeStatus({
+            status: 'SYSTEM_ERROR',
+            message: '채점 서버에 연결할 수 없습니다.'
+          });
+        }
+      };
+
+      performJudging();
+
+      return () => clearInterval(dotInterval);
     }
-  };
+  }, [submissionData, isNewSubmission, navigate]);
 
-  const getStatusText = (status: string) => {
-    switch (status) {
-      case 'JUDGING': return '채점 중';
-      case 'ACCEPTED': return '맞았습니다!!';
-      case 'WRONG_ANSWER': return '틀렸습니다';
-      case 'COMPILATION_ERROR': return '컴파일 에러';
-      case 'TIME_LIMIT_EXCEEDED': return '시간 초과';
-      case 'RUNTIME_ERROR': return '런타임 에러';
-      case 'SYSTEM_ERROR': return '시스템 에러';
-      default: return '알 수 없음';
-    }
-  };
-
-  const getStatusIcon = (status: string) => {
-    switch (status) {
-      case 'JUDGING': return '⏳';
-      case 'ACCEPTED': return '🎉';
-      case 'WRONG_ANSWER': return '❌';
-      case 'COMPILATION_ERROR': return '🔨';
-      case 'TIME_LIMIT_EXCEEDED': return '⏰';
-      case 'RUNTIME_ERROR': return '💥';
-      case 'SYSTEM_ERROR': return '⚠️';
-      default: return '❓';
-    }
-  };
 
   const goBack = () => {
     navigate('/problem-submit');
@@ -173,62 +169,76 @@ function JudgingStatusPage() {
 
               {/* 테이블 바디 */}
               <div className="divide-y divide-gray-200">
-                <div className="grid grid-cols-8 gap-4 px-4 py-3 text-sm hover:bg-gray-50">
-                  <div className="text-center text-blue-600 font-medium">
-                    {submissionId || '대기중'}
+                {isLoading ? (
+                  <div className="text-center py-8 text-gray-500">
+                    제출 목록을 불러오는 중...
                   </div>
-                  <div className="text-center text-gray-600">
-                    {new Date().toLocaleDateString('en-US', { 
-                      month: 'short', 
-                      day: '2-digit', 
-                      year: 'numeric',
-                      hour: '2-digit',
-                      minute: '2-digit'
-                    })}
+                ) : submissions.length === 0 ? (
+                  <div className="text-center py-8 text-gray-500">
+                    제출된 코드가 없습니다.
                   </div>
-                  <div className="text-center font-medium text-black">
-                    {judgeStatus.submittedBy || '사용자'}
-                  </div>
-                  <div className="text-center">
-                    <span className="text-blue-600 hover:underline cursor-pointer">
-                      {submissionData?.title || 'A + B'}
-                    </span>
-                  </div>
-                  <div className="text-center text-gray-600">
-                    {submissionData?.language || 'Java'}
-                  </div>
-                  <div className="text-center">
-                    {judgeStatus.status === 'JUDGING' && (
-                      <span className="text-gray-600">
-                        채점 중{dots}
-                      </span>
-                    )}
-                    {judgeStatus.status === 'ACCEPTED' && (
-                      <span className="text-green-600 font-medium">Accepted</span>
-                    )}
-                    {judgeStatus.status === 'WRONG_ANSWER' && (
-                      <span className="text-red-600 font-medium">Wrong answer</span>
-                    )}
-                    {judgeStatus.status === 'COMPILATION_ERROR' && (
-                      <span className="text-orange-600 font-medium">Compilation error</span>
-                    )}
-                    {judgeStatus.status === 'TIME_LIMIT_EXCEEDED' && (
-                      <span className="text-purple-600 font-medium">Time limit exceeded</span>
-                    )}
-                    {judgeStatus.status === 'RUNTIME_ERROR' && (
-                      <span className="text-red-500 font-medium">Runtime error</span>
-                    )}
-                    {judgeStatus.status === 'SYSTEM_ERROR' && (
-                      <span className="text-gray-600 font-medium">System error</span>
-                    )}
-                  </div>
-                  <div className="text-center text-gray-600">
-                    {judgeStatus.status === 'JUDGING' ? '0 ms' : `${judgeStatus.executionTime || 0} ms`}
-                  </div>
-                  <div className="text-center text-gray-600">
-                    {judgeStatus.status === 'JUDGING' ? '0 KB' : `${Math.floor((judgeStatus.memoryUsage || 0) / 1024)} KB`}
-                  </div>
-                </div>
+                ) : (
+                  submissions.map((submission) => (
+                    <div key={submission.id} className="grid grid-cols-8 gap-4 px-4 py-3 text-sm hover:bg-gray-50">
+                      <div className="text-center text-blue-600 font-medium">
+                        {submission.id}
+                      </div>
+                      <div className="text-center text-gray-600">
+                        {new Date(submission.submittedAt).toLocaleDateString('en-US', { 
+                          month: 'short', 
+                          day: '2-digit', 
+                          year: 'numeric',
+                          hour: '2-digit',
+                          minute: '2-digit'
+                        })}
+                      </div>
+                      <div className="text-center font-medium text-black">
+                        {submission.username}
+                      </div>
+                      <div className="text-center">
+                        <span className="text-blue-600 hover:underline cursor-pointer">
+                          {submission.problemTitle}
+                        </span>
+                      </div>
+                      <div className="text-center text-gray-600">
+                        {submission.language}
+                      </div>
+                      <div className="text-center">
+                        {submission.status === 'ACCEPTED' && (
+                          <span className="text-green-600 font-medium">Accepted</span>
+                        )}
+                        {submission.status === 'WRONG_ANSWER' && (
+                          <span className="text-red-600 font-medium">Wrong answer</span>
+                        )}
+                        {submission.status === 'COMPILATION_ERROR' && (
+                          <span className="text-orange-600 font-medium">Compilation error</span>
+                        )}
+                        {submission.status === 'TIME_LIMIT_EXCEEDED' && (
+                          <span className="text-purple-600 font-medium">Time limit exceeded</span>
+                        )}
+                        {submission.status === 'RUNTIME_ERROR' && (
+                          <span className="text-red-500 font-medium">Runtime error</span>
+                        )}
+                        {submission.status === 'SYSTEM_ERROR' && (
+                          <span className="text-gray-600 font-medium">System error</span>
+                        )}
+                        {submission.status === 'JUDGING' && (
+                          <span className="text-gray-600">채점 중{dots}</span>
+                        )}
+                      </div>
+                      <div className="text-center text-gray-600">
+                        {submission.executionTime !== null && submission.executionTime !== undefined 
+                          ? `${submission.executionTime} ms` 
+                          : '- ms'}
+                      </div>
+                      <div className="text-center text-gray-600">
+                        {submission.memoryUsage !== null && submission.memoryUsage !== undefined 
+                          ? `${Math.floor(submission.memoryUsage / 1024)} KB` 
+                          : '- KB'}
+                      </div>
+                    </div>
+                  ))
+                )}
               </div>
             </div>
 

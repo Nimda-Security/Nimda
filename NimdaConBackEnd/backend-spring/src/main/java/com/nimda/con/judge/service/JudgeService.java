@@ -53,10 +53,16 @@ public class JudgeService {
      */
     public JudgeResultDTO judgeCode(SubmissionDTO submissionDTO, String username) {
         try {
-            // 1. 사용자 조회 (없으면 익명 사용자 생성)
+            // 1. 사용자 조회 (없으면 익명 사용자 생성 또는 조회)
             User user = userRepository.findByUsername(username).orElse(null);
-            if (user == null && !"익명".equals(username)) {
+            if (user == null) {
                 logger.warn("사용자를 찾을 수 없음: {}", username);
+                // 익명 사용자 조회 또는 생성
+                user = userRepository.findByUsername("익명").orElseGet(() -> {
+                    // 익명 사용자가 없으면 생성
+                    User anonymousUser = new User("익명", "anonymous", "anonymous@nimda.com");
+                    return userRepository.save(anonymousUser);
+                });
                 username = "익명";
             }
             
@@ -107,10 +113,11 @@ public class JudgeService {
             judgeResult.setMemoryUsage(resultDTO.getMemoryUsage());
             judgeResult.setScore(resultDTO.getScore());
             
-            judgeResultRepository.save(judgeResult); // DB 저장
+            judgeResult = judgeResultRepository.save(judgeResult); // DB 저장
             
-            // 6. 제출 상태 업데이트
+            // 6. 제출 상태 업데이트 및 JudgeResult 연결
             submission.setStatus(JudgeStatus.valueOf(resultDTO.getStatus().name()));
+            submission.setJudgeResult(judgeResult); // JudgeResult 연결
             submissionRepository.save(submission);
             
             logger.info("채점 완료 및 저장 - 제출 ID: {}, 결과: {}", submission.getId(), resultDTO.getStatus());

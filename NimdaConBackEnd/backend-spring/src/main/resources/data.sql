@@ -16,11 +16,13 @@ INSERT IGNORE INTO authority (authority_name) VALUES
 
 -- 기본 관리자 계정 생성 (비밀번호: password)
 INSERT IGNORE INTO users (username, password, email) VALUES 
-('admin', '$2a$10$92IXUNpkjO0rOQ5byMi.Ye4oKoEa3Ro9llC/.og/at2.uheWG/igi', 'admin@example.com');
+('admin', '$2a$10$92IXUNpkjO0rOQ5byMi.Ye4oKoEa3Ro9llC/.og/at2.uheWG/igi', 'admin@example.com'),
+('익명', '$2a$10$92IXUNpkjO0rOQ5byMi.Ye4oKoEa3Ro9llC/.og/at2.uheWG/igi', 'anonymous@nimda.com');
 
 -- 관리자에게 USER 권한 부여
 INSERT IGNORE INTO user_authorities (user_id, authority_id) VALUES 
-(1, 'ROLE_USER');
+(1, 'ROLE_USER'),
+(2, 'ROLE_USER');
 
 -- 기본 문제 데이터 삽입 (A + B 문제)
 INSERT IGNORE INTO problems (id, title, description, flag, hints, points, time_limit, memory_limit, difficulty, created_at, updated_at) VALUES 
