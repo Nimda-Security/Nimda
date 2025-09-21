@@ -1,5 +1,6 @@
 package com.nimda.con.judge.entity;
 
+import com.nimda.con.common.entity.BaseTimeEntity;
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
 import lombok.Data;
@@ -21,37 +22,44 @@ public class TestCase {
     @JoinColumn(name = "problem_id", nullable = false)
     private Problem problem;
     
-    @Column(columnDefinition = "TEXT")
+    @Column(columnDefinition = "TEXT", nullable = false)
     private String input;           // 입력 데이터 (예: "1 2")
     
     @Column(columnDefinition = "TEXT", nullable = false)
-    private String expectedOutput;  // 예상 출력 (예: "3")
+    private String output;          // 예상 출력 (예: "3")
     
-    @Column(name = "created_at")
-    private LocalDateTime createdAt;
+    @Embedded
+    private BaseTimeEntity timeInfo;
     
     // 기본 생성자
-    public TestCase() {}
-    
-    // 생성용 생성자
-    public TestCase(Problem problem, String input, String expectedOutput) {
-        this.problem = problem;
-        this.input = input;
-        this.expectedOutput = expectedOutput;
+    public TestCase() {
+        this.timeInfo = BaseTimeEntity.now();
     }
     
-    @PrePersist
-    public void prePersist() {
-        this.createdAt = LocalDateTime.now();
+    // 생성용 생성자
+    public TestCase(Problem problem, String input, String output) {
+        this();
+        this.problem = problem;
+        this.input = input;
+        this.output = output;
+    }
+    
+    // 시간 정보 헬퍼 메서드
+    public LocalDateTime getCreatedAt() {
+        return timeInfo.getCreatedAt();
+    }
+    
+    public LocalDateTime getUpdatedAt() {
+        return timeInfo.getUpdatedAt();
     }
     
     /**
-     * 테스트케이스 실행 결과 검증
+     * 테스트케이스 실행 결과 검증 메서드
      */
     public boolean isCorrect(String actualOutput) {
-        if (actualOutput == null || this.expectedOutput == null) {
+        if (actualOutput == null || this.output == null) {
             return false;
         }
-        return this.expectedOutput.trim().equals(actualOutput.trim());
+        return this.output.trim().equals(actualOutput.trim());
     }
 }

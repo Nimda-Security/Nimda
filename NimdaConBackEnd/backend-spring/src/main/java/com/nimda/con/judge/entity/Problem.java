@@ -1,6 +1,7 @@
 package com.nimda.con.judge.entity;
 
 import com.nimda.con.judge.enums.Difficulty;
+import com.nimda.con.common.entity.BaseTimeEntity;
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
 import lombok.Data;
@@ -19,6 +20,7 @@ public class Problem {
     // * Id : 문제 id (pk)
     // * title : 문제 제목 
     // * description : 문제 설명 TEXT(65,535)
+    
     @Id @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
     
@@ -35,11 +37,8 @@ public class Problem {
     @Enumerated(EnumType.STRING)
     private Difficulty difficulty; 
     
-    @Column(name = "created_at")
-    private LocalDateTime createdAt;
-    
-    @Column(name = "updated_at")
-    private LocalDateTime updatedAt;
+    @Embedded
+    private BaseTimeEntity timeInfo;
     
     // 1:N 관계 - 하나의 문제에 여러 제출
     @OneToMany(mappedBy = "problem", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
@@ -51,7 +50,7 @@ public class Problem {
     
     // 기본 생성자
     public Problem() {
-        // @PrePersist에서 초기화 처리
+        this.timeInfo = BaseTimeEntity.now();
     }
     
     // 생성용 생성자
@@ -64,12 +63,7 @@ public class Problem {
     
     @PrePersist
     public void prePersist() {
-
-        LocalDateTime now = LocalDateTime.now();
-        this.createdAt = now;
-        this.updatedAt = now;
-        
-        // 기본값 설정
+        // 기본값 설정 (시간은 BaseTimeEntity에서 처리)
         if (this.points == null) {
             this.points = 100;
         }
@@ -81,16 +75,20 @@ public class Problem {
         }
     }
     
-    @PreUpdate
-    public void preUpdate() {
-        this.updatedAt = LocalDateTime.now();
+    // 시간 정보 헬퍼 메서드
+    public LocalDateTime getCreatedAt() {
+        return timeInfo.getCreatedAt();
+    }
+    
+    public LocalDateTime getUpdatedAt() {
+        return timeInfo.getUpdatedAt();
     }
     
     /**
      * 테스트케이스 추가 헬퍼 메서드
      */
-    public void addTestCase(String input, String expectedOutput) {
-        TestCase testCase = new TestCase(this, input, expectedOutput);
+    public void addTestCase(String input, String output) {
+        TestCase testCase = new TestCase(this, input, output);
         this.testCases.add(testCase);
     }
 }
