@@ -1,12 +1,11 @@
 # NimdaPage
 Nimda Security Web Page Team Project 
 
-# Docker 사용 예시 
+## BackEnd API 
+### 채점 관련 API
 
-Setting 한 번만 
-chmod +x dev.sh (권한 부여))
-./dev.sh setup
+`GET /api/judge/submissions`  - 코드 제출 목록 조회 
 
-포트 충돌 시 
-lsof -i : 3306
-brew services stop mariadb 
+### 유저 관련 API 
+
+`GET /api/auth/register` - 회원가입 API 

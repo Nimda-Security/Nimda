@@ -25,5 +25,12 @@ INSERT IGNORE INTO user_authorities (user_id, authority_id) VALUES
 (2, 'ROLE_USER');
 
 -- 기본 문제 데이터 삽입 (A + B 문제)
-INSERT IGNORE INTO problems (id, title, description, flag, hints, points, time_limit, memory_limit, difficulty, created_at, updated_at) VALUES 
-(1, 'A + B', '두 정수 A와 B를 입력받아 A+B를 출력하는 프로그램을 작성하시오.', '3', '입력: 1 2, 출력: 3', 100, 5000, 262144, 'EASY', NOW(), NOW());
+INSERT IGNORE INTO problems (id, title, description, points, time_limit, memory_limit, difficulty, created_at, updated_at) VALUES 
+(1, 'A + B', '두 정수 A와 B를 입력받아 A+B를 출력하는 프로그램을 작성하시오.', 100, 5000, 262144, 'EASY', NOW(), NOW());
+
+-- 기본 테스트케이스 데이터 삽입 (A + B 문제용)
+INSERT IGNORE INTO test_cases (problem_id, input, expected_output, created_at) VALUES 
+(1, '1 2', '3', NOW()),           -- 테스트케이스 1
+(1, '5 7', '12', NOW()),          -- 테스트케이스 2
+(1, '100 200', '300', NOW()),     -- 테스트케이스 3
+(1, '0 0', '0', NOW());           -- 테스트케이스 4

@@ -18,8 +18,6 @@ public class SubmissionDTO {
     private String language;
     
     private String description;
-    private String flag;
-    private String hints;
     private Integer points;
     
     // 기본 생성자 명시적 추가
