@@ -58,7 +58,7 @@ public class User {
     }
 
     // 사용자 권한 관리 테이블 
-    @ManyToMany(fetch = FetchType.EAGER)
+    @ManyToMany(fetch = FetchType.LAZY)  // EAGER → LAZY로 변경
     @JoinTable(
         name = "user_authorities",
         joinColumns = @JoinColumn(name = "user_id"), // FK

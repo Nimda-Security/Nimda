@@ -1,10 +1,15 @@
 import NavBar from "@/components/Layout/Header/NavBar";
 import { useState, useEffect } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useLocation } from "react-router-dom";
 import Editor from '@monaco-editor/react';
 
 function ProblemSubmitPage() {
   const navigate = useNavigate();
+  const location = useLocation();
+  
+  // URL 파라미터에서 문제 정보 가져오기
+  const problemId = location.state?.problemId || 1; // 기본값 1 (A + B)
+  const problemTitle = location.state?.problemTitle || "A + B";
   const [formData, setFormData] = useState({
     title: "",
     difficulty: "",
@@ -116,12 +121,11 @@ int main() {
 
     // 제출 데이터 준비
     const submissionData = {
-      title: formData.title || "A + B",
+      title: problemTitle,  // 선택된 문제 제목 사용
       code: formData.description, // 소스코드 영역의 내용
       language: formData.category,
-      description: "두 정수 A와 B를 입력받아 A+B를 출력하는 프로그램을 작성하시오.",
-      flag: formData.flag,
-      hints: formData.hints,
+      problemId: problemId,  // 문제 ID 추가
+      description: "문제를 해결하는 프로그램을 작성하시오.",
       points: parseInt(formData.points) || 100
     };
 
@@ -143,7 +147,7 @@ int main() {
       >
         {/* 헤더 바 */}
         <div className="bg-white border-b border-gray-300 px-4 py-3 flex items-center justify-between">
-          <h1 className="text-lg font-semibold text-black">[문제 1] A + B </h1>
+          <h1 className="text-lg font-semibold text-black">[문제 {problemId}] {problemTitle}</h1>
           <button 
             onClick={handleSubmit}
             className="bg-black text-white px-3 py-1.5 text-sm rounded hover:bg-gray-800 transition-colors"
