@@ -97,6 +97,7 @@ export default function () {
   // 3. 랜덤 문제 선택 및 코드 제출
   const selectedProblem = PROBLEMS[Math.floor(Math.random() * PROBLEMS.length)];
   console.log(`3️⃣ Solving problem: ${selectedProblem.title}`);
+  // g
 
   const submitPayload = JSON.stringify({
     title: selectedProblem.title,
