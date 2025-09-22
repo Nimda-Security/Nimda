@@ -17,6 +17,7 @@ public class SubmissionDTO {
     @NotBlank(message = "언어 선택은 필수입니다")
     private String language;
     
+    private Long problemId;        // 문제 ID
     private String description;
     private Integer points;
     

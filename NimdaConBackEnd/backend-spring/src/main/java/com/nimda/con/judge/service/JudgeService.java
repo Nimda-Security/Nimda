@@ -5,11 +5,13 @@ import com.nimda.con.judge.dto.SubmissionDTO;
 import com.nimda.con.judge.entity.Problem;
 import com.nimda.con.judge.entity.Submission;
 import com.nimda.con.judge.entity.JudgeResult;
+import com.nimda.con.judge.entity.TestCase;
 import com.nimda.con.judge.enums.Language;
 import com.nimda.con.judge.enums.JudgeStatus;
 import com.nimda.con.judge.repository.ProblemRepository;
 import com.nimda.con.judge.repository.SubmissionRepository;
 import com.nimda.con.judge.repository.JudgeResultRepository;
+import com.nimda.con.judge.repository.TestCaseRepository;
 import com.nimda.con.user.entity.User;
 import com.nimda.con.user.repository.UserRepository;
 import org.slf4j.Logger;
@@ -29,19 +31,13 @@ public class JudgeService {
     
     private static final Logger logger = LoggerFactory.getLogger(JudgeService.class);
     
-    @Autowired
-    private ProblemRepository problemRepository;
+    @Autowired private ProblemRepository problemRepository; 
+    @Autowired private SubmissionRepository submissionRepository;   
+    @Autowired private JudgeResultRepository judgeResultRepository;  
+    @Autowired private UserRepository userRepository;
+    @Autowired private TestCaseRepository testCaseRepository; // 테스트 케이스 레포지토리
     
-    @Autowired
-    private SubmissionRepository submissionRepository;
     
-    @Autowired
-    private JudgeResultRepository judgeResultRepository;
-    
-    @Autowired
-    private UserRepository userRepository;
-    
-    // 제한 설정
     private static final long TIME_LIMIT_MS = 5000; // 5초
     private static final long MEMORY_LIMIT_MB = 256; // 256MB
     
@@ -66,9 +62,10 @@ public class JudgeService {
                 username = "익명";
             }
             
-            // 2. 문제 조회 (기본 A+B 문제)
-            Problem problem = problemRepository.findById(1L)
-                .orElseThrow(() -> new RuntimeException("기본 문제를 찾을 수 없습니다."));
+            // 2. 문제 조회 (SubmissionDTO에서 problemId 가져오기)
+            Long problemId = submissionDTO.getProblemId() != null ? submissionDTO.getProblemId() : 1L; // 기본값 1L
+            Problem problem = problemRepository.findById(problemId)
+                .orElseThrow(() -> new RuntimeException("문제를 찾을 수 없습니다: " + problemId));
             
             // 3. 제출 기록 생성 및 저장
             Submission submission = new Submission();
@@ -88,11 +85,11 @@ public class JudgeService {
             JudgeResultDTO resultDTO;
             switch (language) {
                 case "java":
-                    resultDTO = judgeJavaCode(submissionDTO);
+                    resultDTO = judgeJavaCode(submissionDTO, problem);
                     break;
                 case "c++17":
                 case "cpp":
-                    resultDTO = judgeCppCode(submissionDTO);
+                    resultDTO = judgeCppCode(submissionDTO, problem);
                     break;
                 default:
                     resultDTO = new JudgeResultDTO(
@@ -137,9 +134,10 @@ public class JudgeService {
     }
     
     /**
-     * Java 코드 채점
+     * Java 코드 채점 (TestCase 기반)
+     * SubmissionDTO, Problem
      */
-    private JudgeResultDTO judgeJavaCode(SubmissionDTO submission) throws IOException, InterruptedException {
+    private JudgeResultDTO judgeJavaCode(SubmissionDTO submission, Problem problem) throws IOException, InterruptedException {
         String fileName = "Solution";
         String sourceFile = TEMP_DIR + fileName + ".java";
         String classFile = TEMP_DIR + fileName + ".class";
@@ -164,18 +162,29 @@ public class JudgeService {
             );
         }
         
-        // 실행
-        ProcessBuilder runBuilder = new ProcessBuilder("java", "-cp", TEMP_DIR, fileName);
-        runBuilder.directory(new File(TEMP_DIR));
-        
-        long startTime = System.currentTimeMillis();
-        Process runProcess = runBuilder.start();
-        
-        // 간단한 테스트 입력 (A + B 문제라고 가정)
-        try (PrintWriter writer = new PrintWriter(runProcess.getOutputStream())) {
-            writer.println("1 2");
-            writer.flush();
+        // TestCase 조회
+        List<TestCase> testCases = testCaseRepository.findByProblemId(problem.getId());
+        if (testCases.isEmpty()) {
+            return new JudgeResultDTO(
+                JudgeResultDTO.Status.SYSTEM_ERROR,
+                "테스트케이스가 없습니다",
+                ""
+            );
         }
+        
+        // 각 테스트케이스별로 실행
+        for (TestCase testCase : testCases) {
+            ProcessBuilder runBuilder = new ProcessBuilder("java", "-cp", TEMP_DIR, fileName);
+            runBuilder.directory(new File(TEMP_DIR));
+            
+            long startTime = System.currentTimeMillis();
+            Process runProcess = runBuilder.start();
+            
+            // TestCase의 입력값 사용
+            try (PrintWriter writer = new PrintWriter(runProcess.getOutputStream())) {
+                writer.println(testCase.getInput());  // 동적 입력!
+                writer.flush();
+            }
         
         boolean runFinished = runProcess.waitFor(TIME_LIMIT_MS, TimeUnit.MILLISECONDS);
         long executionTime = System.currentTimeMillis() - startTime;
@@ -196,33 +205,37 @@ public class JudgeService {
                 "런타임 에러",
                 error
             );
+            }
+            
+            // 출력 결과 확인
+            String output = readStream(runProcess.getInputStream()).trim();
+            
+            // TestCase 기반 정답 검증
+            if (!testCase.isCorrect(output)) {
+                return new JudgeResultDTO(
+                    JudgeResultDTO.Status.WRONG_ANSWER,
+                    "오답입니다. 입력: " + testCase.getInput() + 
+                    ", 예상: " + testCase.getOutput() + 
+                    ", 실제: " + output,
+                    ""
+                );
+            }
         }
         
-        // 출력 결과 확인
-        String output = readStream(runProcess.getInputStream()).trim();
-        
-        // 간단한 정답 체크 (A + B = 3)
-        if ("3".equals(output)) {
-            return new JudgeResultDTO(
-                JudgeResultDTO.Status.ACCEPTED,
-                output,
-                executionTime,
-                0, // 메모리 사용량은 추후 구현
-                100
-            );
-        } else {
-            return new JudgeResultDTO(
-                JudgeResultDTO.Status.WRONG_ANSWER,
-                "오답입니다. 출력: " + output + ", 정답: 3",
-                ""
-            );
-        }
+        // 모든 테스트케이스 통과
+        return new JudgeResultDTO(
+            JudgeResultDTO.Status.ACCEPTED,
+            "모든 테스트케이스를 통과했습니다!",
+            0, // 실행시간은 추후 개선 필요
+            0, // 메모리 사용량은 추후 구현
+            problem.getPoints()
+        );
     }
     
     /**
-     * C++ 코드 채점
+     * C++ 코드 채점 (TestCase 기반)
      */
-    private JudgeResultDTO judgeCppCode(SubmissionDTO submission) throws IOException, InterruptedException {
+    private JudgeResultDTO judgeCppCode(SubmissionDTO submission, Problem problem) throws IOException, InterruptedException {
         String fileName = "solution";
         String sourceFile = TEMP_DIR + fileName + ".cpp";
         String execFile = TEMP_DIR + fileName;
@@ -249,18 +262,29 @@ public class JudgeService {
             );
         }
         
-        // 실행
-        ProcessBuilder runBuilder = new ProcessBuilder(execFile);
-        runBuilder.directory(new File(TEMP_DIR));
-        
-        long startTime = System.currentTimeMillis();
-        Process runProcess = runBuilder.start();
-        
-        // 간단한 테스트 입력 (A + B 문제)
-        try (PrintWriter writer = new PrintWriter(runProcess.getOutputStream())) {
-            writer.println("1 2");
-            writer.flush();
+        // TestCase 조회
+        List<TestCase> testCases = testCaseRepository.findByProblemId(problem.getId());
+        if (testCases.isEmpty()) {
+            return new JudgeResultDTO(
+                JudgeResultDTO.Status.SYSTEM_ERROR,
+                "테스트케이스가 없습니다",
+                ""
+            );
         }
+        
+        // 각 테스트케이스별로 실행
+        for (TestCase testCase : testCases) {
+            ProcessBuilder runBuilder = new ProcessBuilder(execFile);
+            runBuilder.directory(new File(TEMP_DIR));
+            
+            long startTime = System.currentTimeMillis();
+            Process runProcess = runBuilder.start();
+            
+            // TestCase의 입력값 사용
+            try (PrintWriter writer = new PrintWriter(runProcess.getOutputStream())) {
+                writer.println(testCase.getInput());  // 동적 입력!
+                writer.flush();
+            }
         
         boolean runFinished = runProcess.waitFor(TIME_LIMIT_MS, TimeUnit.MILLISECONDS);
         long executionTime = System.currentTimeMillis() - startTime;
@@ -282,26 +306,30 @@ public class JudgeService {
                 error
             );
         }
-        
-        // 출력 결과 확인
-        String output = readStream(runProcess.getInputStream()).trim();
-        
-        // 간단한 정답 체크 (A + B = 3)
-        if ("3".equals(output)) {
-            return new JudgeResultDTO(
-                JudgeResultDTO.Status.ACCEPTED,
-                output,
-                executionTime,
-                0, // 메모리 사용량은 추후 구현
-                100
-            );
-        } else {
-            return new JudgeResultDTO(
-                JudgeResultDTO.Status.WRONG_ANSWER,
-                "오답입니다. 출력: " + output + ", 정답: 3",
-                ""
-            );
+            
+            // 출력 결과 확인
+            String output = readStream(runProcess.getInputStream()).trim();
+            
+            // TestCase 기반 정답 검증
+            if (!testCase.isCorrect(output)) {
+                return new JudgeResultDTO(
+                    JudgeResultDTO.Status.WRONG_ANSWER,
+                    "오답입니다. 입력: " + testCase.getInput() + 
+                    ", 예상: " + testCase.getOutput() + 
+                    ", 실제: " + output,
+                    ""
+                );
+            }
         }
+        
+        // 모든 테스트케이스 통과
+        return new JudgeResultDTO(
+            JudgeResultDTO.Status.ACCEPTED,
+            "모든 테스트케이스를 통과했습니다!",
+            0, // 실행시간은 추후 개선 필요
+            0, // 메모리 사용량은 추후 구현
+            problem.getPoints()
+        );
     }
     
     /**

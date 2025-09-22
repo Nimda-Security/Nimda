@@ -34,7 +34,8 @@ public interface ProblemRepository extends JpaRepository<Problem, Long> {
     List<Problem> findByTitleContaining(String keyword);
     
     /**
-     * 최근 생성된 문제들 조회
+     * 최근 생성된 문제들 조회 (Embedded 필드 사용)
      */
+    @Query("SELECT p FROM Problem p ORDER BY p.timeInfo.createdAt DESC LIMIT 10")
     List<Problem> findTop10ByOrderByCreatedAtDesc();
 }
