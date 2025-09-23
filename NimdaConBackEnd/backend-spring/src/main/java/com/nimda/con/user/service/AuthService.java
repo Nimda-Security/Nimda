@@ -5,6 +5,7 @@ import com.nimda.con.common.util.JwtUtil;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -13,21 +14,15 @@ import java.util.Optional;
 @Service
 public class AuthService {
     
-    @Autowired
-    private UserService userService;
+    @Autowired private UserService userService;  
+    @Autowired private PasswordEncoder passwordEncoder; 
+    @Autowired private JwtUtil jwtUtil;
     
-    @Autowired
-    private PasswordEncoder passwordEncoder;
-    
-    @Autowired
-    private JwtUtil jwtUtil;
     
     /**
      * 사용자 인증
-     * @param username 사용자명
-     * @param password 비밀번호
-     * @return 인증된 사용자 정보 (비밀번호 제외)
      */
+    @Transactional(readOnly = true)
     public Optional<User> validateUser(String username, String password) {
         Optional<User> userOpt = userService.findByUsername(username);
         
@@ -62,11 +57,8 @@ public class AuthService {
     
     /**
      * 회원가입 처리 (UserService에 위임)
-     * @param username 사용자명
-     * @param password 비밀번호
-     * @param email 이메일
-     * @return 생성된 사용자 정보 (비밀번호 제외)
      */
+    @Transactional
     public User register(String username, String password, String email) {
         // UserService에 사용자 생성 위임 (중복 확인 포함)
         User user = userService.createUser(username, password, email);
