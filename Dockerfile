@@ -1,5 +1,5 @@
 # 멀티 아키텍처 지원을 위한 베이스 이미지
-FROM --platform=linux/amd64 eclipse-temurin:17-jre
+FROM eclipse-temurin:17-jre
 
 WORKDIR /app 
 
