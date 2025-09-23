@@ -16,5 +16,17 @@ services:
       - mariadb_data:/var/lib/mysql
       - ./NimdaConBackEnd/backend-spring/src/main/resources/data.sql:/docker-entrypoint-initdb.d/data.sql
 
+  backend:
+    image: novvvv/nimda-con-backend:latest
+    container_name: nimda-backend
+    ports:
+      - "3001:3001" # 포트 매핑
+    environment: # 환경변수
+      - SPRING_DATASOURCE_URL=jdbc:mariadb://mariadb:3306/nimda_con?useSSL=false&serverTimezone=UTC&allowPublicKeyRetrieval=true
+      - SPRING_DATASOURCE_USERNAME=nimda
+      - SPRING_DATASOURCE_PASSWORD=nimda123
+    depends_on:
+      - mariadb
+
 volumes:
   mariadb_data:
