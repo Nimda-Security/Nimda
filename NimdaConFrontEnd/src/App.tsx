@@ -1,5 +1,5 @@
 import "./App.css";
-import Layout from "@/components/Layout/Layout";
+import Layout from "@/components/Layout";
 import BlackLineButton from "@/components/Button/BlackLine";
 import { useNavigate } from "react-router-dom";
 
@@ -26,9 +26,15 @@ function App() {
     <Layout>
       <div className="flex flex-col items-center gap-4">
         <BlackLineButton onClick={goToLogIn}>버튼버튼</BlackLineButton>
-        <BlackLineButton onClick={goToProblems}>[테스트페이지] 문제 모음</BlackLineButton>
-        <BlackLineButton onClick={goToProblemSubmit}>[테스트페이지] 문제제출</BlackLineButton>
-        <BlackLineButton onClick={goToJudgingStatus}>[테스트페이지] 제출현황</BlackLineButton>
+        <BlackLineButton onClick={goToProblems}>
+          [테스트페이지] 문제 모음
+        </BlackLineButton>
+        <BlackLineButton onClick={goToProblemSubmit}>
+          [테스트페이지] 문제제출
+        </BlackLineButton>
+        <BlackLineButton onClick={goToJudgingStatus}>
+          [테스트페이지] 제출현황
+        </BlackLineButton>
       </div>
     </Layout>
   );

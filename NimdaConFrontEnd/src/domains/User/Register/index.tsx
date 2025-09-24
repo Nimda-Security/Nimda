@@ -1,6 +1,6 @@
 import "@/App.css";
 import BlackButton from "@/components/Button/Black";
-import Layout from "@/components/Layout/Layout";
+import Layout from "@/components/Layout";
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { Input } from "@/components/Input";
@@ -27,7 +27,6 @@ function LogInPage() {
         <h1 className="text-3xl font-bold mb-12">NIMDA CON</h1>
         <div className="text-xl font-bold mb-4">회원가입</div>
         <form onSubmit={handleLogin} className="flex flex-col gap-4">
-
           <Input placeholder="아이디" />
           <Input placeholder="비밀번호z" />
 
