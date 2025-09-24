@@ -14,6 +14,10 @@ function App() {
     navigate("/problem-submit");
   };
 
+  const goToProblemCreate = () => {
+    navigate("/problem-create");
+  };
+
   const goToJudgingStatus = () => {
     navigate("/judging-status");
   };
@@ -31,6 +35,9 @@ function App() {
         </BlackLineButton>
         <BlackLineButton onClick={goToProblemSubmit}>
           [테스트페이지] 문제제출
+        </BlackLineButton>
+        <BlackLineButton onClick={goToProblemCreate}>
+          [관리자] 문제 출제
         </BlackLineButton>
         <BlackLineButton onClick={goToJudgingStatus}>
           [테스트페이지] 제출현황
