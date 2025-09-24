@@ -1,5 +1,5 @@
 import "./App.css";
-import Layout from "@/components/Layout/Layout";
+import Layout from "@/components/Layout";
 import BlackLineButton from "@/components/Button/BlackLine";
 import { useNavigate } from "react-router-dom";
 

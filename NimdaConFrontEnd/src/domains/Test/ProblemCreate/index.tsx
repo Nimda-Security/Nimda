@@ -1,6 +1,6 @@
 import "@/App.css";
 import BlackButton from "@/components/Button/Black";
-import Layout from "@/components/Layout/Layout";
+import Layout from "@/components/Layout";
 import { useState } from "react";
 import { Input } from "@/components/Input";
 
