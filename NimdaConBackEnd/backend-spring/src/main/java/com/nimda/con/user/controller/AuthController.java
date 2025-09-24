@@ -55,12 +55,13 @@ public class AuthController {
     
     /**
      * 회원가입
-     * @param registerRequest 회원가입 요청 데이터
-     * @return 생성된 사용자 정보
+     * Request Data : Register DTO (username, password, email)
      */
     @PostMapping("/register")
     public ResponseEntity<?> register(@Valid @RequestBody RegisterDTO registerRequest) {
+
         try {
+
             User user = authService.register(
                 registerRequest.getUsername(),
                 registerRequest.getPassword(),
@@ -68,14 +69,20 @@ public class AuthController {
             );
             
             return ResponseEntity.status(HttpStatus.CREATED).body(user);
-        } catch (RuntimeException e) {
+        } 
+        
+        catch (RuntimeException e) {
             Map<String, String> error = new HashMap<>();
             error.put("message", e.getMessage());
             return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(error);
-        } catch (Exception e) {
+        } 
+        
+        catch (Exception e) {
             Map<String, String> error = new HashMap<>();
             error.put("message", "Registration failed: " + e.getMessage());
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(error);
         }
+
     }
+
 }

@@ -60,6 +60,7 @@ public class AuthService {
      */
     @Transactional
     public User register(String username, String password, String email) {
+        
         // UserService에 사용자 생성 위임 (중복 확인 포함)
         User user = userService.createUser(username, password, email);
         

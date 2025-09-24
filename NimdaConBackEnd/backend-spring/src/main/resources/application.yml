@@ -7,6 +7,14 @@ spring:
     username: nimda
     password: nimda123
     driver-class-name: org.mariadb.jdbc.Driver
+    
+    hikari:
+      maximum-pool-size: 5
+      minimum-idle: 2
+      connection-timeout: 30000
+      idle-timeout: 600000
+      max-lifetime: 1800000
+      leak-detection-threshold: 60000
   
   jpa:
     hibernate:

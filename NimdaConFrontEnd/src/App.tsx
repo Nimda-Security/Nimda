@@ -10,8 +10,8 @@ function App() {
     navigate("/login");
   };
 
-  const goToProblemSubmit = () => {
-    navigate("/problem-submit");
+  const goToProblemCreate = () => {
+    navigate("/problem-create");
   };
 
   const goToJudgingStatus = () => {
@@ -27,7 +27,7 @@ function App() {
       <div className="flex flex-col items-center gap-4">
         <BlackLineButton onClick={goToLogIn}>버튼버튼</BlackLineButton>
         <BlackLineButton onClick={goToProblems}>[테스트페이지] 문제 모음</BlackLineButton>
-        <BlackLineButton onClick={goToProblemSubmit}>[테스트페이지] 문제제출</BlackLineButton>
+        <BlackLineButton onClick={goToProblemCreate}>[관리자] 문제 출제</BlackLineButton>
         <BlackLineButton onClick={goToJudgingStatus}>[테스트페이지] 제출현황</BlackLineButton>
       </div>
     </Layout>

@@ -17,12 +17,16 @@ INSERT IGNORE INTO authority (authority_name) VALUES
 -- 기본 관리자 계정 생성 (비밀번호: password)
 INSERT IGNORE INTO users (username, password, email) VALUES 
 ('admin', '$2a$10$92IXUNpkjO0rOQ5byMi.Ye4oKoEa3Ro9llC/.og/at2.uheWG/igi', 'admin@example.com'),
-('익명', '$2a$10$92IXUNpkjO0rOQ5byMi.Ye4oKoEa3Ro9llC/.og/at2.uheWG/igi', 'anonymous@nimda.com');
+('익명', '$2a$10$92IXUNpkjO0rOQ5byMi.Ye4oKoEa3Ro9llC/.og/at2.uheWG/igi', 'anonymous@nimda.com'),
+('seoyun', '$2a$10$92IXUNpkjO0rOQ5byMi.Ye4oKoEa3Ro9llC/.og/at2.uheWG/igi', 'seoyun@example.com');
 
--- 관리자에게 USER 권한 부여
-INSERT IGNORE INTO user_authorities (user_id, authority_id) VALUES 
-(1, 'ROLE_USER'),
-(2, 'ROLE_USER');
+-- 관리자에게 권한 부여
+INSERT IGNORE INTO user_authorities (user_id, authority_id) 
+SELECT u.id, 'ROLE_USER' FROM users u WHERE u.username = 'admin';
+INSERT IGNORE INTO user_authorities (user_id, authority_id) 
+SELECT u.id, 'ROLE_USER' FROM users u WHERE u.username = '익명';
+INSERT IGNORE INTO user_authorities (user_id, authority_id) 
+SELECT u.id, 'ROLE_ADMIN' FROM users u WHERE u.username = 'seoyun';
 
 -- 기본 문제 데이터 삽입
 INSERT IGNORE INTO problems (id, title, description, points, time_limit, memory_limit, difficulty) VALUES 

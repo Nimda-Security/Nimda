@@ -29,7 +29,7 @@ function LogInPage() {
         <form onSubmit={handleLogin} className="flex flex-col gap-4">
 
           <Input placeholder="아이디" />
-          <Input placeholder="비밀번호z" />
+          <Input placeholder="비밀번호" />
 
           <BlackButton type="submit" onClick={goToSignUp}>
             회원가입
