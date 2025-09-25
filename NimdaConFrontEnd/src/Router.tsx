@@ -6,7 +6,7 @@ import SignUp from "@/domains/User/Register";
 import ProblemSubmitPage from "@/domains/Test/ProblemSubmit"; // [DEBUG] 테스트용 코드 
 import JudgingStatusPage from "@/domains/Test/JudgingStatus";
 import ProblemsPage from "@/domains/Test/Problems";
-import ProblemCreatePage from "@/domains/Test/ProblemCreate";
+import ProblemCreatePage from "@/domains/Test/ProblemCreate/ProblemCreate.jsx";
 import Home from "@/App";
 
 const Router = () => {
