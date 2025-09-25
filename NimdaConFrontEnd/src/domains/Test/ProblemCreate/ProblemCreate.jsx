@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { createProblemAPI } from '@/api/problem';
 
 function ProblemCreatePage() {
+
   const [formData, setFormData] = useState({
     title: "",
     description: "",
@@ -74,7 +75,7 @@ function ProblemCreatePage() {
     };
 
     try {
-      const result = await createProblemAPI(problemData);
+      const result = await createProblemAPI(problemData); // problem.js api 호출부분
       
       if (result.success) {
         alert("문제가 성공적으로 출제되었습니다!");
