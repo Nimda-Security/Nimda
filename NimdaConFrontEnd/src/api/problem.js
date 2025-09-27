@@ -12,8 +12,6 @@ const API_BASE_URL = 'http://localhost:3001/api';
  * - Authorization : Http Header 이름. 
  * localStorage.getItem('authToken') : 로컬스토리지에 저장된 JWT 토큰 가져오기 
  * 
- * 
- * 
  */
 export const createProblemAPI = async (problemData) => {
 
