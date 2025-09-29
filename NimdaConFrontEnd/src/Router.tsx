@@ -7,6 +7,7 @@ import ProblemSubmitPage from "@/domains/Test/ProblemSubmit"; // [DEBUG] 테스�
 import JudgingStatusPage from "@/domains/Test/JudgingStatus";
 import ProblemsPage from "@/domains/Test/Problems";
 import ProblemCreatePage from "@/domains/Test/ProblemCreate/ProblemCreate.jsx";
+import AdminDashboard from "@/domains/admin/AdminDashboard.jsx";
 import Home from "@/App";
 
 const Router = () => {
@@ -19,6 +20,7 @@ const Router = () => {
         <Route path="/problems" element={<ProblemsPage />} />
         <Route path="/problem-submit" element={<ProblemSubmitPage />} />
         <Route path="/problem-create" element={<ProblemCreatePage />} />
+        <Route path="/admin" element={<AdminDashboard />} />
         <Route path="/judging-status" element={<JudgingStatusPage />} />
       </Routes>
     </BrowserRouter>

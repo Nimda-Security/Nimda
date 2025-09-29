@@ -18,4 +18,10 @@ export const getCurrentUsername = () => {
 // const data = JSON.parse(decoded); // {username: "admin"}
 
 // 문자열로 변환한 이유 : Http Header는 문자열만 전송 가능하기 때문.
-// localStorage 또한 문자열만 저장 가능 
+// localStorage 또한 문자열만 저장 가능
+
+// 관리자 권한 체크 (username이 'admin'인지 확인)
+export const isAdmin = () => {
+  const username = getCurrentUsername();
+  return username === 'admin';
+}; 
