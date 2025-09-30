@@ -7,6 +7,7 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.util.List;
 import java.util.Optional;
 
 @Service
@@ -71,5 +72,11 @@ public class UserService {
     @Transactional
     public User updateUser(User user) {
         return userRepository.save(user);
+    }
+    
+    // 모든 사용자 조회
+    @Transactional(readOnly = true)
+    public List<User> findAll() {
+        return userRepository.findAll();
     }
 }

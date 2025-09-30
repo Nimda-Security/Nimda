@@ -62,7 +62,7 @@ public class User {
     @JoinTable(
         name = "user_authorities",
         joinColumns = @JoinColumn(name = "user_id"), // FK
-        inverseJoinColumns = @JoinColumn(name = "authority_id") // FK
+        inverseJoinColumns = @JoinColumn(name = "authority_name") // FK - Authority의 기본키가 authority_name
     )
     @JsonIgnore
     private Set<Authority> authorities = new HashSet<>();

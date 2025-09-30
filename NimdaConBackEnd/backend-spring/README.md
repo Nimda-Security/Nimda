@@ -24,6 +24,7 @@ Nimda Contest Platform의 Spring Boot 기반 백엔드 애플리케이션입니�
 - `POST /api/auth/register` - 회원가입
 
 ### 사용자 (Users)
+- `GET /api/users` - 모든 사용자 조회
 - `GET /api/users/{id}` - 사용자 정보 조회
 - `GET /api/users/username/{username}` - 사용자명으로 사용자 조회
 

@@ -23,14 +23,6 @@ function App() {
     navigate("/login");
   };
 
-  const goToProblemCreate = () => {
-    navigate("/problem-create");
-  };
-
-  const goToJudgingStatus = () => {
-    navigate("/judging-status");
-  };
-
   const goToProblems = () => {
     navigate("/problems");
   };
@@ -42,7 +34,9 @@ function App() {
   return (
     <Layout>
       <div className="flex flex-col items-center gap-4">
+
         {/* 현재 로그인한 사용자 표시 */}
+        
         {username ? (
           <div className="text-lg font-semibold text-gray-700 mb-2">
             안녕하세요, {username}님! 👋
@@ -55,8 +49,6 @@ function App() {
         
         <BlackLineButton onClick={goToLogIn}>Login</BlackLineButton>
         <BlackLineButton onClick={goToProblems}>[테스트페이지] 문제 모음</BlackLineButton>
-        <BlackLineButton onClick={goToProblemCreate}>[관리자] 문제 출제</BlackLineButton>
-        <BlackLineButton onClick={goToJudgingStatus}>[테스트페이지] 제출현황</BlackLineButton>
         
         {/* 관리자만 보이는 버튼 */}
         {adminStatus && (

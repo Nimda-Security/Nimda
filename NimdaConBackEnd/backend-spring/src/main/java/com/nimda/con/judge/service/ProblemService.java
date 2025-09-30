@@ -33,6 +33,7 @@ public class ProblemService {
         problem.setTimeLimit(problemCreateDTO.getTimeLimit());
         problem.setMemoryLimit(problemCreateDTO.getMemoryLimit());
         problem.setDifficulty(problemCreateDTO.getDifficulty());
+        problem.setLanguage(problemCreateDTO.getLanguage());
         
         // 2. Problem 저장
         problem = problemRepository.save(problem);
@@ -56,7 +57,17 @@ public class ProblemService {
      */
     @Transactional(readOnly = true)
     public List<Problem> getAllProblems() {
-        return problemRepository.findAll();
+        System.out.println("=== ProblemService.getAllProblems() 호출됨 ===");
+        try {
+            System.out.println("=== problemRepository.findAll() 호출 중 ===");
+            List<Problem> problems = problemRepository.findAll();
+            System.out.println("=== 문제 수: " + problems.size() + " ===");
+            return problems;
+        } catch (Exception e) {
+            System.out.println("=== ProblemService에서 오류 발생: " + e.getMessage() + " ===");
+            e.printStackTrace();
+            throw e;
+        }
     }
     
     /**
