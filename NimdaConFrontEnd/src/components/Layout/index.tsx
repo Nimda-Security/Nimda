@@ -17,7 +17,7 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
   return (
     <div className="w-full">
       <NavBar menuItems={menuItems} />
-      <main className="w-3/4 mx-auto pt-24 px-8 pb-8">{children}</main>
+      <main className="w-full pt-16 pb-8">{children}</main>
     </div>
   );
 };

@@ -9,7 +9,7 @@ import { useState, useEffect } from "react";
 function Home() {
   return (
     <Layout>
-      <div className="flex flex-col items-center gap-4">
+      <div className="flex flex-col items-center gap-4 -mt-16">
         <Banner />
       </div>
     </Layout>
