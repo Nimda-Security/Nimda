@@ -3,12 +3,14 @@ import { BrowserRouter, Routes, Route } from "react-router-dom";
 import App from "@/App";
 import LoginPage from "@/domains/User/Login/Page";
 import SignUp from "@/domains/User/Register";
-import ProblemSubmitPage from "@/domains/Test/ProblemSubmit"; // [DEBUG] 테스트용 코드
-import JudgingStatusPage from "@/domains/Test/JudgingStatus";
-import ProblemsPage from "@/domains/Test/Problems";
-import ProblemCreatePage from "@/domains/Test/ProblemCreate/ProblemCreate.jsx";
-import AdminDashboard from "@/domains/admin/AdminDashboard.jsx";
+import ProblemSubmitPage from "@/domains/Contest/Problem/ProblemSubmit"; // [DEBUG] 테스트용 코드
+import JudgingStatusPage from "@/domains/Contest/Problem/JudgingStatus";
+import ProblemsPage from "@/domains/Contest/Problem/Problems";
+import ProblemCreatePage from "@/domains/Contest/Problem/ProblemCreate";
+import AdminDashboard from "@/domains/Admin/AdminDashboard.jsx";
 import Home from "@/domains/Home";
+
+import ContestHome from "@/domains/Contest/Home";
 
 const Router = () => {
   return (
@@ -23,6 +25,8 @@ const Router = () => {
         <Route path="/problem-create" element={<ProblemCreatePage />} />
         <Route path="/admin" element={<AdminDashboard />} />
         <Route path="/judging-status" element={<JudgingStatusPage />} />
+
+        <Route path="/contest-home" element={<ContestHome />} />
       </Routes>
     </BrowserRouter>
   );
