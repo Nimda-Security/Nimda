@@ -12,11 +12,12 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
     { name: "커뮤니티", href: "/" },
     { name: "대회", href: "/" },
     { name: "바로가기", href: "/" },
+    { name: "Login", href: "/login" },
   ];
   return (
     <div className="w-full">
       <NavBar menuItems={menuItems} />
-      <main className="w=3/4 mx-auto pt-24 px-8 pb-8">{children}</main>
+      <main className="w-3/4 mx-auto pt-24 px-8 pb-8">{children}</main>
     </div>
   );
 };

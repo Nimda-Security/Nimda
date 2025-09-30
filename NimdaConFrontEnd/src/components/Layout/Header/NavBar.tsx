@@ -1,5 +1,7 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import Logo from "@/components/icons/Logo";
+import { getCurrentUsername, isAdmin } from "@/utils/jwt";
+import { isLoggedIn, logoutAPI } from "@/api/auth";
 
 interface MenuItem {
   name: string;
@@ -15,6 +17,28 @@ import MobileMenuButton from "@/components/Button/MobileMenuBtn";
 const Navbar: React.FC<NavbarProps> = ({ menuItems }) => {
   // 모바일 메뉴의 열림/닫힘 상태를 관리하는 state
   const [isOpen, setIsOpen] = useState(false);
+  const [username, setUsername] = useState<string | null>(null);
+  const [adminStatus, setAdminStatus] = useState(false);
+  const [isLoggedInState, setIsLoggedInState] = useState(false);
+
+  useEffect(() => {
+    const currentUser = getCurrentUsername();
+    const adminCheck = isAdmin();
+    const loggedIn = isLoggedIn();
+    setUsername(currentUser);
+    setAdminStatus(adminCheck);
+    setIsLoggedInState(loggedIn);
+  }, []);
+
+  // 로그아웃 핸들러
+  const handleLogout = () => {
+    logoutAPI();
+    setUsername(null);
+    setAdminStatus(false);
+    setIsLoggedInState(false);
+    // 로그인 페이지로 리다이렉트
+    window.location.href = '/login';
+  };
 
   return (
     <nav className="fixed top-0 left-0 right-0 z-50 h-16 border-b border-[#E0E0E0] bg-white">
@@ -24,10 +48,10 @@ const Navbar: React.FC<NavbarProps> = ({ menuItems }) => {
             <Logo />
           </div>
 
-          {/* 데스크탑 메뉴 */}
-          <div className="hidden md:block">
-            <div className="ml-10 flex items-baseline space-x-4">
-              {menuItems.map((item) => (
+          {/* 데스크탑 메뉴 - Login 제외하고 가운데 정렬 */}
+          <div className="hidden md:block flex-1">
+            <div className="flex justify-center items-baseline space-x-4">
+              {menuItems.filter(item => item.name !== "Login").map((item) => (
                 <a
                   key={item.name}
                   href={item.href}
@@ -37,6 +61,51 @@ const Navbar: React.FC<NavbarProps> = ({ menuItems }) => {
                 </a>
               ))}
             </div>
+          </div>
+
+          {/* 오른쪽 영역 - 사용자 정보, 관리자 대시보드, 로그인 */}
+          <div className="hidden md:flex items-center space-x-4">
+            {/* 로그인한 경우 사용자명 표시 */}
+            {username && (
+              <div className="text-sm text-gray-600">
+                <span className="font-semibold">{username}</span>
+              </div>
+            )}
+            
+            {/* 관리자 대시보드 버튼 */}
+            {adminStatus && (
+              <a
+                href="/admin"
+                className="p-2 rounded-md hover:bg-gray-100 transition-colors duration-200"
+                title="관리자 대시보드"
+              >
+                <img 
+                  src="/nav_setting.png" 
+                  alt="관리자 설정" 
+                  className="w-5 h-5"
+                />
+              </a>
+            )}
+            
+            {/* 로그인/로그아웃 버튼 조건부 렌더링 */}
+            {isLoggedInState ? (
+              <button
+                onClick={handleLogout}
+                className="text-black hover:font-semibold hover:text-blue px-3 py-2 rounded-md text-sm font-medium"
+              >
+                Logout
+              </button>
+            ) : (
+              menuItems.filter(item => item.name === "Login").map((item) => (
+                <a
+                  key={item.name}
+                  href={item.href}
+                  className="text-black hover:font-semibold hover:text-blue px-3 py-2 rounded-md text-sm font-medium"
+                >
+                  {item.name}
+                </a>
+              ))
+            )}
           </div>
 
           {/* 모바일 햄버거 버튼 */}
@@ -53,7 +122,15 @@ const Navbar: React.FC<NavbarProps> = ({ menuItems }) => {
       {isOpen && (
         <div className="md:hidden" id="mobile-menu">
           <div className="bg-black px-2 pt-2 pb-3 space-y-1 sm:px-3">
-            {menuItems.map((item) => (
+            {/* 로그인한 경우 사용자명 표시 */}
+            {isLoggedInState && username && (
+              <div className="text-gray-300 px-3 py-2 text-sm">
+                <span className="font-semibold">{username}</span>
+              </div>
+            )}
+            
+            {/* 메뉴 아이템들 (Login 제외) */}
+            {menuItems.filter(item => item.name !== "Login").map((item) => (
               <a
                 key={item.name}
                 href={item.href}
@@ -62,6 +139,26 @@ const Navbar: React.FC<NavbarProps> = ({ menuItems }) => {
                 {item.name}
               </a>
             ))}
+            
+            {/* 로그인/로그아웃 버튼 */}
+            {isLoggedInState ? (
+              <button
+                onClick={handleLogout}
+                className="text-gray-300 hover:bg-gray-700 hover:text-white block px-3 py-2 rounded-md text-base font-medium w-full text-left"
+              >
+                Logout
+              </button>
+            ) : (
+              menuItems.filter(item => item.name === "Login").map((item) => (
+                <a
+                  key={item.name}
+                  href={item.href}
+                  className="text-gray-300 hover:bg-gray-700 hover:text-white block px-3 py-2 rounded-md text-base font-medium"
+                >
+                  {item.name}
+                </a>
+              ))
+            )}
           </div>
         </div>
       )}
