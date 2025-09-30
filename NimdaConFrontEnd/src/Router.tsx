@@ -8,6 +8,7 @@ import JudgingStatusPage from "@/domains/Contest/Problem/JudgingStatus";
 import ProblemsPage from "@/domains/Contest/Problem/Problems";
 import ProblemCreatePage from "@/domains/Contest/Problem/ProblemCreate";
 import AdminDashboard from "@/domains/Admin/AdminDashboard.jsx";
+import ProblemDetail from "@/domains/Contest/Problem/ProblemDetail/ProblemDetail.jsx";
 import Home from "@/domains/Home";
 
 import ContestHome from "@/domains/Contest/Home";
@@ -24,6 +25,7 @@ const Router = () => {
         <Route path="/problem-submit" element={<ProblemSubmitPage />} />
         <Route path="/problem-create" element={<ProblemCreatePage />} />
         <Route path="/admin" element={<AdminDashboard />} />
+        <Route path="/problem/:id" element={<ProblemDetail />} />
         <Route path="/judging-status" element={<JudgingStatusPage />} />
 
         <Route path="/contest-home" element={<ContestHome />} />
