@@ -10,7 +10,7 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
     { name: "새 소식", href: "/" },
     { name: "학술 게시판", href: "/" },
     { name: "커뮤니티", href: "/" },
-    { name: "대회", href: "/" },
+    { name: "대회", href: "/contest" },
     { name: "바로가기", href: "/" },
     { name: "Login", href: "/login" },
   ];
