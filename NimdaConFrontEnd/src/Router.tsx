@@ -1,6 +1,5 @@
 import { BrowserRouter, Routes, Route } from "react-router-dom";
 
-
 import LoginPage from "@/domains/User/Login/Page";
 import SignUp from "@/domains/User/Register";
 import ProblemSubmitPage from "@/domains/Contest/Problem/ProblemSubmit"; // [DEBUG] 테스트용 코드
@@ -27,7 +26,7 @@ const Router = () => {
         <Route path="/problem/:id" element={<ProblemDetail />} />
         <Route path="/judging-status" element={<JudgingStatusPage />} />
 
-        <Route path="/contest-home" element={<ContestHome />} />
+        <Route path="/contest" element={<ContestHome />} />
       </Routes>
     </BrowserRouter>
   );
