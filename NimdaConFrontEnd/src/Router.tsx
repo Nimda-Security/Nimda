@@ -7,7 +7,7 @@ import ProblemSubmitPage from "@/domains/Contest/Problem/ProblemSubmit"; // [DEB
 import JudgingStatusPage from "@/domains/Contest/Problem/JudgingStatus";
 import ProblemsPage from "@/domains/Contest/Problem/Problems";
 import ProblemCreatePage from "@/domains/Contest/Problem/ProblemCreate";
-import AdminDashboard from "@/domains/Admin/AdminDashboard.jsx";
+import AdminDashboard from "@/domains/admin/AdminDashboard.jsx";
 import ProblemDetail from "@/domains/Contest/Problem/ProblemDetail/ProblemDetail.jsx";
 import Home from "@/domains/Home";
 
