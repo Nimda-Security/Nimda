@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from "react";
+import { Link } from "react-router-dom";
 import Logo from "@/components/icons/Logo";
 import { getCurrentUsername, isAdmin } from "@/utils/jwt";
 import { isLoggedIn, logoutAPI } from "@/api/auth";
@@ -45,7 +46,9 @@ const Navbar: React.FC<NavbarProps> = ({ menuItems }) => {
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex items-center justify-between h-16">
           <div className="flex-shrink-0">
-            <Logo />
+            <Link to="/">
+              <Logo />
+            </Link>
           </div>
 
           {/* 데스크탑 메뉴 - Login 제외하고 가운데 정렬 */}
