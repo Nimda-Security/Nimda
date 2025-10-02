@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from "react";
 import { Link } from "react-router-dom";
 import Logo from "@/components/icons/Logo";
+import Logout from "@/components/icons/Logout.svg";
 import { getCurrentUsername, isAdmin } from "@/utils/jwt";
 import { isLoggedIn, logoutAPI } from "@/api/auth";
 
@@ -14,6 +15,7 @@ interface NavbarProps {
 }
 
 import MobileMenuButton from "@/components/Button/MobileMenuBtn";
+import Dropdown from "@/components/Dropdown";
 
 const Navbar: React.FC<NavbarProps> = ({ menuItems }) => {
   // 모바일 메뉴의 열림/닫힘 상태를 관리하는 state
@@ -21,6 +23,20 @@ const Navbar: React.FC<NavbarProps> = ({ menuItems }) => {
   const [username, setUsername] = useState<string | null>(null);
   const [adminStatus, setAdminStatus] = useState(false);
   const [isLoggedInState, setIsLoggedInState] = useState(false);
+  const [activeDropdown, setActiveDropdown] = useState<string | null>(null);
+
+  const dropdownItems: { [key: string]: { name: string; href: string }[] } = {
+    대회: [
+      { name: "문제", href: "/problems" },
+      { name: "채점 현황", href: "/judging-status" },
+      { name: "대회 지난 대회", href: "/past-contests" },
+      { name: "랭킹", href: "/ranking" },
+    ],
+    바로가기: [
+      { name: "NIMDA Github", href: "https://github.com/osam-nimda" },
+      { name: "OSAM", href: "https://www.osam.kr/" },
+    ],
+  };
 
   useEffect(() => {
     const currentUser = getCurrentUsername();
@@ -74,14 +90,24 @@ const Navbar: React.FC<NavbarProps> = ({ menuItems }) => {
               {menuItems
                 .filter((item) => item.name !== "Login")
                 .map((item) => (
-                  <a
+                  <div
                     key={item.name}
-                    href={item.href}
-                    onClick={(e) => handleMenuClick(e, item.name)} // 임시 팝업 생성
-                    className="text-black hover:font-semibold hover:text-blue px-3 py-2 rounded-md text-sm font-medium"
+                    className="relative"
+                    onMouseEnter={() => setActiveDropdown(item.name)}
+                    onMouseLeave={() => setActiveDropdown(null)}
                   >
-                    {item.name}
-                  </a>
+                    <a
+                      href={item.href}
+                      onClick={(e) => handleMenuClick(e, item.name)} // 임시 팝업 생성
+                      className="text-black hover:font-semibold hover:text-blue px-3 py-2 rounded-md text-sm font-medium"
+                    >
+                      {item.name}
+                    </a>
+                    {activeDropdown === item.name &&
+                      dropdownItems[item.name] && (
+                        <Dropdown items={dropdownItems[item.name]} />
+                      )}
+                  </div>
                 ))}
             </div>
           </div>
@@ -114,9 +140,10 @@ const Navbar: React.FC<NavbarProps> = ({ menuItems }) => {
             {isLoggedInState ? (
               <button
                 onClick={handleLogout}
-                className="text-black hover:font-semibold hover:text-blue px-3 py-2 rounded-md text-sm font-medium"
+                className="p-2 rounded-md hover:bg-gray-100 transition-colors duration-200"
+                title="Logout"
               >
-                Logout
+                <img src={Logout} alt="Logout" className="w-5 h-5" />
               </button>
             ) : (
               menuItems
@@ -161,7 +188,7 @@ const Navbar: React.FC<NavbarProps> = ({ menuItems }) => {
                 <a
                   key={item.name}
                   href={item.href}
-                  onClick={(e) => handleMenuClick(e, item.name)}
+                  onClick={(e) => handleMenuClick(e, item.name)} // 임시 팝업 생성
                   className="text-gray-300 hover:bg-gray-700 hover:text-white block px-3 py-2 rounded-md text-base font-medium"
                 >
                   {item.name}
