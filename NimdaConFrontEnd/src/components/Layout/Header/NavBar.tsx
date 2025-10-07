@@ -30,12 +30,12 @@ const Navbar: React.FC<NavbarProps> = ({ menuItems }) => {
     대회: [
       { name: "문제", href: "/problems" },
       { name: "채점 현황", href: "/judging-status" },
-      { name: "대회 지난 대회", href: "/past-contests" },
       { name: "랭킹", href: "/ranking" },
+      { name: "지난 대회", href: "/past-contests" },
     ],
     바로가기: [
-      { name: "NIMDA Github", href: "https://github.com/osam-nimda" },
-      { name: "OSAM", href: "https://www.osam.kr/" },
+      { name: "Baekjoon Online Judge", href: "https://www.acmicpc.net" },
+      { name: "TEST", href: "/" },
     ],
   };
 
