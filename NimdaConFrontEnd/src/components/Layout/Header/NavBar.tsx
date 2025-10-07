@@ -16,6 +16,7 @@ interface NavbarProps {
 
 import MobileMenuButton from "@/components/Button/MobileMenuBtn";
 import Dropdown from "@/components/Dropdown";
+import Right from "./Right";
 
 const Navbar: React.FC<NavbarProps> = ({ menuItems }) => {
   // 모바일 메뉴의 열림/닫힘 상태를 관리하는 state
@@ -113,52 +114,12 @@ const Navbar: React.FC<NavbarProps> = ({ menuItems }) => {
           </div>
 
           {/* 오른쪽 영역 - 사용자 정보, 관리자 대시보드, 로그인 */}
-          <div className="hidden md:flex items-center space-x-4">
-            {/* 로그인한 경우 사용자명 표시 */}
-            {username && (
-              <div className="text-sm text-gray-600">
-                <span className="font-semibold">{username}</span>
-              </div>
-            )}
-
-            {/* 관리자 대시보드 버튼 */}
-            {adminStatus && (
-              <a
-                href="/admin"
-                className="p-2 rounded-md hover:bg-gray-100 transition-colors duration-200"
-                title="관리자 대시보드"
-              >
-                <img
-                  src="/nav_setting.png"
-                  alt="관리자 설정"
-                  className="w-5 h-5"
-                />
-              </a>
-            )}
-
-            {/* 로그인/로그아웃 버튼 조건부 렌더링 */}
-            {isLoggedInState ? (
-              <button
-                onClick={handleLogout}
-                className="p-2 rounded-md hover:bg-gray-100 transition-colors duration-200"
-                title="Logout"
-              >
-                <img src={Logout} alt="Logout" className="w-5 h-5" />
-              </button>
-            ) : (
-              menuItems
-                .filter((item) => item.name === "Login")
-                .map((item) => (
-                  <a
-                    key={item.name}
-                    href={item.href}
-                    className="text-black hover:font-semibold hover:text-blue px-3 py-2 rounded-md text-sm font-medium"
-                  >
-                    {item.name}
-                  </a>
-                ))
-            )}
-          </div>
+          <Right
+            isLoggedIn={isLoggedInState}
+            username={username}
+            adminStatus={adminStatus}
+            onLogout={handleLogout}
+          />
 
           {/* 모바일 햄버거 버튼 */}
           <div className="-mr-2 flex md:hidden">
