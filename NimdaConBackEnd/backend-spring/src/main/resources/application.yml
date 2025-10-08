@@ -3,10 +3,10 @@ spring:
     name: nimda-con
   
   datasource:
-    url: jdbc:mariadb://localhost:3307/nimda_con?useSSL=false&serverTimezone=UTC&allowPublicKeyRetrieval=true
+    url: jdbc:mysql://localhost:3307/nimda_con?useSSL=false&serverTimezone=UTC&allowPublicKeyRetrieval=true
     username: nimda
     password: nimda123
-    driver-class-name: org.mariadb.jdbc.Driver
+    driver-class-name: com.mysql.cj.jdbc.Driver
     
     hikari:
       maximum-pool-size: 5
