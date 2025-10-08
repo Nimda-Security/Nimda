@@ -49,15 +49,21 @@ public class ProblemController {
      */
     @GetMapping
     public ResponseEntity<?> getAllProblems() {
+        System.out.println("=== getAllProblems() 메서드 호출됨 ===");
         try {
+            System.out.println("=== ProblemService.getAllProblems() 호출 중 ===");
             List<Problem> problems = problemService.getAllProblems();
+            System.out.println("=== 문제 수: " + problems.size() + " ===");
             
             Map<String, Object> response = new HashMap<>();
             response.put("success", true);
             response.put("problems", problems);
             
+            System.out.println("=== 응답 생성 완료 ===");
             return ResponseEntity.ok(response);
         } catch (Exception e) {
+            System.out.println("=== 오류 발생: " + e.getMessage() + " ===");
+            e.printStackTrace();
             Map<String, Object> error = new HashMap<>();
             error.put("success", false);
             error.put("message", "문제 목록 조회 중 오류가 발생했습니다: " + e.getMessage());

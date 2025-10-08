@@ -1,6 +1,5 @@
 package com.nimda.con.judge.entity;
 
-import com.nimda.con.common.entity.BaseTimeEntity;
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
 import lombok.Data;
@@ -28,12 +27,17 @@ public class TestCase {
     @Column(columnDefinition = "TEXT", nullable = false)
     private String output;          // 예상 출력 (예: "3")
     
-    @Embedded
-    private BaseTimeEntity timeInfo;
+    @Column(name = "created_at")
+    private LocalDateTime createdAt;
+    
+    @Column(name = "updated_at")
+    private LocalDateTime updatedAt;
     
     // 기본 생성자
     public TestCase() {
-        this.timeInfo = BaseTimeEntity.now();
+        LocalDateTime now = LocalDateTime.now();
+        this.createdAt = now;
+        this.updatedAt = now;
     }
     
     // 생성용 생성자
@@ -46,11 +50,27 @@ public class TestCase {
     
     // 시간 정보 헬퍼 메서드
     public LocalDateTime getCreatedAt() {
-        return timeInfo.getCreatedAt();
+        return this.createdAt;
     }
     
     public LocalDateTime getUpdatedAt() {
-        return timeInfo.getUpdatedAt();
+        return this.updatedAt;
+    }
+    
+    @PrePersist
+    public void prePersist() {
+        LocalDateTime now = LocalDateTime.now();
+        if (this.createdAt == null) {
+            this.createdAt = now;
+        }
+        if (this.updatedAt == null) {
+            this.updatedAt = now;
+        }
+    }
+    
+    @PreUpdate
+    public void preUpdate() {
+        this.updatedAt = LocalDateTime.now();
     }
     
     /**

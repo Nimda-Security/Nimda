@@ -1,7 +1,6 @@
 package com.nimda.con.judge.entity;
 
 import com.nimda.con.judge.enums.Difficulty;
-import com.nimda.con.common.entity.BaseTimeEntity;
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
 import lombok.Data;
@@ -37,20 +36,20 @@ public class Problem {
     @Enumerated(EnumType.STRING)
     private Difficulty difficulty; 
     
-    @Embedded
-    private BaseTimeEntity timeInfo;
+    @Column(length = 50)
+    private String language;  // 프로그래밍 언어
     
-    // 1:N 관계 - 하나의 문제에 여러 제출
-    @OneToMany(mappedBy = "problem", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
-    private List<Submission> submissions = new ArrayList<>();
+    @Column(name = "created_at")
+    private LocalDateTime createdAt;
     
-    // 1:N 관계 - 하나의 문제에 여러 테스트케이스
-    @OneToMany(mappedBy = "problem", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
-    private List<TestCase> testCases = new ArrayList<>();
+    @Column(name = "updated_at")
+    private LocalDateTime updatedAt;
     
     // 기본 생성자
     public Problem() {
-        this.timeInfo = BaseTimeEntity.now();
+        LocalDateTime now = LocalDateTime.now();
+        this.createdAt = now;
+        this.updatedAt = now;
     }
     
     // 생성용 생성자
@@ -63,7 +62,15 @@ public class Problem {
     
     @PrePersist
     public void prePersist() {
-        // 기본값 설정 (시간은 BaseTimeEntity에서 처리)
+        LocalDateTime now = LocalDateTime.now();
+        if (this.createdAt == null) {
+            this.createdAt = now;
+        }
+        if (this.updatedAt == null) {
+            this.updatedAt = now;
+        }
+        
+        // 기본값 설정
         if (this.points == null) {
             this.points = 100;
         }
@@ -75,20 +82,18 @@ public class Problem {
         }
     }
     
+    @PreUpdate
+    public void preUpdate() {
+        this.updatedAt = LocalDateTime.now();
+    }
+    
     // 시간 정보 헬퍼 메서드
     public LocalDateTime getCreatedAt() {
-        return timeInfo.getCreatedAt();
+        return this.createdAt;
     }
     
     public LocalDateTime getUpdatedAt() {
-        return timeInfo.getUpdatedAt();
+        return this.updatedAt;
     }
     
-    /**
-     * 테스트케이스 추가 헬퍼 메서드
-     */
-    public void addTestCase(String input, String output) {
-        TestCase testCase = new TestCase(this, input, output);
-        this.testCases.add(testCase);
-    }
 }

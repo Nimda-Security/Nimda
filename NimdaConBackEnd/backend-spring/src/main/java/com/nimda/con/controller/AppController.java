@@ -17,8 +17,6 @@ public class AppController {
         response.put("message", "Nimda Contest Platform API");
         response.put("status", "running");
         return response;
-
-
         
     }
     
