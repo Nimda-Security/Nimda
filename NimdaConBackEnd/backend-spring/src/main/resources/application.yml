@@ -3,7 +3,7 @@ spring:
     name: nimda-con
   
   datasource:
-    url: jdbc:mysql://localhost:3307/nimda_con?useSSL=false&serverTimezone=UTC&allowPublicKeyRetrieval=true
+    url: jdbc:mysql://nimda-db.cpu8uk0eauv0.ap-northeast-2.rds.amazonaws.com:3306/nimda_con?useSSL=false&serverTimezone=UTC&allowPublicKeyRetrieval=true
     username: nimda
     password: nimda123
     driver-class-name: com.mysql.cj.jdbc.Driver
@@ -37,7 +37,7 @@ spring:
       password: 1234
 
 server:
-  port: 3001
+  port: 3002
 
 # JWT 설정
 jwt:

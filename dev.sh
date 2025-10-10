@@ -37,6 +37,9 @@ case "$1" in
         
     "frontend")
         log_info "🎨 프론트엔드 서버 시작 중..."
+        # nvm 로드
+        export NVM_DIR="$HOME/.nvm"
+        [ -s "$NVM_DIR/nvm.sh" ] && \. "$NVM_DIR/nvm.sh"
         cd NimdaConFrontEnd
         npm run dev
         ;;
@@ -61,6 +64,9 @@ case "$1" in
         
         # 프론트엔드 시작
         log_info "2️⃣ 프론트엔드 서버 시작 중..."
+        # nvm 로드
+        export NVM_DIR="$HOME/.nvm"
+        [ -s "$NVM_DIR/nvm.sh" ] && \. "$NVM_DIR/nvm.sh"
         cd NimdaConFrontEnd
         npm run dev
         ;;

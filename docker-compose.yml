@@ -1,36 +1,13 @@
 version: '3.8'
 
 services:
-  mysql:
-    image: mysql:8.0 #MySQL 이미지 
-    container_name: nimda-mysql #컨테이너 이름
-    restart: unless-stopped #서버 자동 재시작 
-    environment:
-      # 디비 환경 정보 
-      MYSQL_ROOT_PASSWORD: 908
-      MYSQL_DATABASE: nimda_con
-      MYSQL_USER: nimda
-      MYSQL_PASSWORD: nimda123
-    ports:
-      # MySQL 포트 
-      - "3307:3306"
-    volumes:
-      # 데이터 저장소 
-      - mysql_data:/var/lib/mysql
-      - ./NimdaConBackEnd/backend-spring/src/main/resources/data.sql:/docker-entrypoint-initdb.d/data.sql
-
   backend:
     image: novvvv/nimda-backend:latest
     container_name: nimda-backend
     ports:
-      - "80:3001" # 포트 매핑
+      - "80:3002" # 포트 매핑
     environment:
       # 환경변수
-      - SPRING_DATASOURCE_URL=jdbc:mysql://mysql:3306/nimda_con?useSSL=false&serverTimezone=UTC&allowPublicKeyRetrieval=true
+      - SPRING_DATASOURCE_URL=jdbc:mysql://nimda-db.cpu8uk0eauv0.ap-northeast-2.rds.amazonaws.com:3306/nimda_con?useSSL=false&serverTimezone=UTC&allowPublicKeyRetrieval=true
       - SPRING_DATASOURCE_USERNAME=nimda
       - SPRING_DATASOURCE_PASSWORD=nimda123
-    depends_on:
-      - mysql
-
-volumes:
-  mysql_data:
