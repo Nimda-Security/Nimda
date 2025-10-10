@@ -20,8 +20,7 @@ services:
       - ./NimdaConBackEnd/backend-spring/src/main/resources/data.sql:/docker-entrypoint-initdb.d/data.sql
 
   backend:
-    build:
-      context: ./NimdaConBackEnd/backend-spring
+    image: novvvv/nimda-backend:latest
     container_name: nimda-backend
     ports:
       - "80:3001" # 포트 매핑
