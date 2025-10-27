@@ -8,11 +8,12 @@ import lombok.Setter;
 
 @Entity
 @Table(name = "authority")
-@Getter @Setter
+@Getter
+@Setter
 @NoArgsConstructor
 @AllArgsConstructor
 public class Authority {
-    
+
     @Id
     @Column(name = "authority_name", length = 50)
     private String authorityName;

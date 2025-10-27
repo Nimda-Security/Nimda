@@ -1,6 +1,6 @@
 // 채점 관련 API 함수들
 
-const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || "/api";
+const API_BASE_URL = "/api";
 
 export interface SubmissionRequest {
   title: string;

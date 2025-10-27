@@ -37,7 +37,7 @@ spring:
       password: 1234
 
 server:
-  port: 3002
+  port: 80
 
 # JWT 설정
 jwt:
