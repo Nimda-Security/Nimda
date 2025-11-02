@@ -86,6 +86,28 @@ jobs:
         run: docker push novvvv/nimda-backend:latest
         # 빌드된 Docker 이미지를 Docker Hub에 업로드합니다
         # docker-compose.yml에서 이 이미지를 사용합니다
+        
+      # 11단계: 서버에 SSH로 접속하여 배포
+      - name: Deploy to server
+        uses: appleboy/ssh-action@v1.0.0
+        with:
+          host: ${{ secrets.SERVER_HOST }}
+          username: ${{ secrets.SERVER_USER }}
+          key: ${{ secrets.SERVER_SSH_KEY }}
+          script: |
+            # docker-compose.yml이 있는 디렉토리로 이동
+            cd ${{ secrets.SERVER_DEPLOY_PATH }}
+            # 최신 이미지 가져오기
+            docker-compose pull
+            # 컨테이너 재시작 (새 이미지로)
+            docker-compose up -d
+            # 기존 컨테이너 정리
+            docker system prune -f
+        # Secrets 설정 필요:
+        # - SERVER_HOST: 서버 IP 주소 또는 도메인 (예: 123.456.789.0 또는 server.example.com)
+        # - SERVER_USER: SSH 사용자명 (예: ubuntu, root, ec2-user)
+        # - SERVER_SSH_KEY: SSH 개인키 전체 내용
+        # - SERVER_DEPLOY_PATH: docker-compose.yml이 있는 경로 (예: /home/ubuntu/app 또는 /opt/nimda-con)
 
 # 자동 실행 작업 정리
 # 1. 코드 가져오기
@@ -95,4 +117,6 @@ jobs:
 # 5. JAR 파일 저장
 # 6. Docker 이미지 빌드
 # 7. Docker Hub 로그인
-# 8. Docker Hub에 이미지 푸시 
+# 8. Docker Hub에 이미지 푸시
+# 9. 서버에 SSH 접속
+# 10. docker-compose pull & up (자동 배포) 
