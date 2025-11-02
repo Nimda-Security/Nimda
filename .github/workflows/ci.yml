@@ -96,7 +96,9 @@ jobs:
           key: ${{ secrets.SERVER_SSH_KEY }}
           script: |
             # docker-compose.yml이 있는 디렉토리로 이동
-            cd ${{ secrets.SERVER_DEPLOY_PATH }}
+            cd "${{ secrets.SERVER_DEPLOY_PATH }}"
+            # 현재 경로 확인 (디버깅용)
+            pwd
             # 최신 이미지 가져오기
             docker-compose pull
             # 컨테이너 재시작 (새 이미지로)
