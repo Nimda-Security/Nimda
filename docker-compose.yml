@@ -5,7 +5,7 @@ services:
     image: novvvv/nimda-backend:latest
     container_name: nimda-backend
     ports:
-      - "80:3002" # 포트 매핑
+      - "80:80" # 포트 매핑 (외부 80 → 내부 80)
     environment:
       # 환경변수
       - SPRING_DATASOURCE_URL=jdbc:mysql://nimda-db.cpu8uk0eauv0.ap-northeast-2.rds.amazonaws.com:3306/nimda_con?useSSL=false&serverTimezone=UTC&allowPublicKeyRetrieval=true
