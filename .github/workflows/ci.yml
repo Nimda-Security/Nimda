@@ -87,13 +87,21 @@ jobs:
         # 빌드된 Docker 이미지를 Docker Hub에 업로드합니다
         # docker-compose.yml에서 이 이미지를 사용합니다
         
-      # 11단계: 서버에 SSH로 접속하여 배포
+      # 11단계: SSH 키 파일 준비
+      - name: Setup SSH key
+        run: |
+          mkdir -p ~/.ssh
+          echo "${{ secrets.SERVER_SSH_KEY }}" > ~/.ssh/deploy_key
+          chmod 600 ~/.ssh/deploy_key
+          ssh-keyscan -H ${{ secrets.SERVER_HOST }} >> ~/.ssh/known_hosts 2>/dev/null || true
+          
+      # 12단계: 서버에 SSH로 접속하여 배포
       - name: Deploy to server
         uses: appleboy/ssh-action@v1.0.3
         with:
           host: ${{ secrets.SERVER_HOST }}
           username: ${{ secrets.SERVER_USER }}
-          key: ${{ secrets.SERVER_SSH_KEY }}
+          key_path: ~/.ssh/deploy_key
           timeout: 60s
           script_stop: true
           script: |
