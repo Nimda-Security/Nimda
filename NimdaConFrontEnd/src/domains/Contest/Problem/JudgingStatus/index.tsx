@@ -153,19 +153,21 @@ function JudgingStatusPage() {
               </button>
             </div>
 
+            {/* TODO: # ID 문제 결과 메모리 시간 언어 제출시간 순으로 바꾸기, 
+                      제출시간 날짜 표시하지 말고 몇초전,며칠전느김으로할까?? */}
             {/* 테이블 */}
             <div className="bg-white border border-gray-300">
               {/* 테이블 헤더 */}
               <div className="border-b border-gray-300 bg-gray-50">
                 <div className="grid grid-cols-8 gap-4 px-4 py-3 text-sm font-medium text-black">
                   <div className="text-center">#</div>
-                  <div className="text-center">When</div>
-                  <div className="text-center">Who</div>
-                  <div className="text-center">Problem</div>
-                  <div className="text-center">Lang</div>
-                  <div className="text-center">Verdict</div>
-                  <div className="text-center">Time</div>
-                  <div className="text-center">Memory</div>
+                  <div className="text-center">날짜</div>
+                  <div className="text-center">ID</div>
+                  <div className="text-center">결과</div>
+                  <div className="text-center">언어</div>
+                  <div className="text-center">제출 현황</div>
+                  <div className="text-center">시간</div>
+                  <div className="text-center">메모리</div>
                 </div>
               </div>
 
