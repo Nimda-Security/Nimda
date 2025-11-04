@@ -30,7 +30,7 @@ const Navbar: React.FC<NavbarProps> = ({ menuItems }) => {
     대회: [
       { name: "문제", href: "/problems" },
       { name: "채점 현황", href: "/judging-status" },
-      { name: "랭킹", href: "/ranking" },
+      { name: "랭킹", href: "/scoreboard" },
       { name: "지난 대회", href: "/past-contests" },
     ],
     바로가기: [
