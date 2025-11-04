@@ -7,9 +7,9 @@ import JudgingStatusPage from "@/domains/Contest/Problem/JudgingStatus";
 import ProblemsPage from "@/domains/Contest/Problem/Problems";
 import ProblemCreatePage from "@/domains/Contest/Problem/ProblemCreate";
 import AdminDashboard from "@/domains/admin/AdminDashboard.jsx";
-import ProblemDetail from "@/domains/Contest/Problem/ProblemDetail/ProblemDetail.jsx";
+import ProblemDetail from "@/domains/Contest/Problem/ProblemDetail/index.jsx";
 import Home from "@/domains/Home";
-import ScoreboardPage from "@/domains/Contest/Scoreboard";
+import Scoreboard from "@/domains/Contest/Scoreboard";
 
 import ContestHome from "@/domains/Contest/Home";
 
@@ -26,7 +26,7 @@ const Router = () => {
         <Route path="/admin" element={<AdminDashboard />} />
         <Route path="/problem/:id" element={<ProblemDetail />} />
         <Route path="/judging-status" element={<JudgingStatusPage />} />
-        <Route path="/scoreboard" element={<ScoreboardPage />} />
+        <Route path="/scoreboard" element={<Scoreboard />} />
 
         <Route path="/contest" element={<ContestHome />} />
       </Routes>
