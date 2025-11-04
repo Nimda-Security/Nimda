@@ -3,6 +3,8 @@ package com.nimda.con.word.entity;
 import jakarta.persistence.*;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.Size;
+import lombok.AllArgsConstructor;
+import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
@@ -18,6 +20,8 @@ import java.time.LocalDateTime;
 @Getter
 @Setter
 @NoArgsConstructor
+@AllArgsConstructor
+@Builder
 public class Word {
 
     @Id
@@ -45,6 +49,11 @@ public class Word {
     @Column(length = 100)
     private String pronunciation;
 
+    // 예문
+    @Size(max = 1000)
+    @Column(name = "example", length = 1000)
+    private String example;
+
     // 생성일시 (JPA Auditing으로 자동 설정)
     @CreatedDate
     @Column(name = "created_at", nullable = false, updatable = false)
@@ -60,5 +69,13 @@ public class Word {
         this.word = word;
         this.translation = translation;
         this.pronunciation = pronunciation;
+    }
+
+    // 예문 포함 생성자
+    public Word(String word, String translation, String pronunciation, String example) {
+        this.word = word;
+        this.translation = translation;
+        this.pronunciation = pronunciation;
+        this.example = example;
     }
 }
