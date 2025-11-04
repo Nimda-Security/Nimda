@@ -8,7 +8,7 @@ import org.springframework.data.jpa.repository.config.EnableJpaRepositories;
 
 @SpringBootApplication
 @EnableJpaAuditing
-@EntityScan(basePackages = {"com.nimda.con.user.entity", "com.nimda.con.judge.entity"})
+@EntityScan(basePackages = {"com.nimda.con.user.entity", "com.nimda.con.judge.entity", "com.nimda.con.word.entity"})
 @EnableJpaRepositories(basePackages = {"com.nimda.con.user.repository", "com.nimda.con.judge.repository"})
 public class NimdaConApplication {
     
