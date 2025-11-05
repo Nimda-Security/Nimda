@@ -1,4 +1,4 @@
-import NavBar from "@/components/Layout/Header/Center";
+import Layout from "@/components/Layout";
 import { useNavigate } from "react-router-dom";
 import BlackLineButton from "@/components/Button/BlackLine";
 
@@ -80,9 +80,8 @@ function ProblemsPage() {
   };
 
   return (
-    <>
-      <NavBar />
-      <div className="min-h-screen bg-white" style={{ paddingTop: "64px" }}>
+    <Layout>
+      <div className="min-h-screen bg-white" style={{ paddingTop: "32px" }}>
         <div className="container mx-auto px-4 py-6">
           <div className="max-w-6xl mx-auto">
             {/* 헤더 */}
@@ -146,7 +145,7 @@ function ProblemsPage() {
           </div>
         </div>
       </div>
-    </>
+    </Layout>
   );
 }
 

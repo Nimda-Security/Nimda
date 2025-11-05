@@ -36,8 +36,8 @@ public class Problem {
     @Enumerated(EnumType.STRING)
     private Difficulty difficulty; 
     
-    @Column(length = 50)
-    private String language;  // 프로그래밍 언어
+    // Optional 언어 (문제 출제 시 필수 아님)
+    private String language; 
     
     @Column(name = "created_at")
     private LocalDateTime createdAt;

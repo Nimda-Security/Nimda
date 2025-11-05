@@ -41,8 +41,8 @@ public class ProblemCreateDTO {
     @NotNull(message = "난이도를 선택해주세요")
     private Difficulty difficulty;
     
-    @NotBlank(message = "프로그래밍 언어를 선택해주세요")
-    private String language;
+    //@NotBlank(message = "프로그래밍 언어를 선택해주세요")
+    private String language; // Optional로 허용
     
     private List<TestCaseDTO> testCases;
     

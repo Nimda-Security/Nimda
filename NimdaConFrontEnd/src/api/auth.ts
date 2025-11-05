@@ -1,9 +1,9 @@
 // 인증 관련 API 함수들
 
-const API_BASE_URL = 'http://localhost:3001/api';
+const API_BASE_URL = "/api";
 
 export interface LoginRequest {
-  username: string;
+  userid: string;
   password: string;
 }
 
@@ -13,12 +13,13 @@ export interface LoginResponse {
   token?: string;
   user?: {
     id: number;
-    username: string;
+    userid: string;
     email: string;
   };
 }
 
 export interface RegisterRequest {
+  userid: string;
   username: string;
   password: string;
   email: string;
@@ -27,14 +28,16 @@ export interface RegisterRequest {
 /**
  * 로그인 API 호출
  */
-export const loginAPI = async (loginData: LoginRequest): Promise<LoginResponse> => {
+export const loginAPI = async (
+  loginData: LoginRequest
+): Promise<LoginResponse> => {
   try {
     const response = await fetch(`${API_BASE_URL}/auth/login`, {
-      method: 'POST',
+      method: "POST",
       headers: {
-        'Content-Type': 'application/json',
+        "Content-Type": "application/json",
       },
-      body: JSON.stringify(loginData)
+      body: JSON.stringify(loginData),
     });
 
     const result = await response.json();
@@ -42,29 +45,28 @@ export const loginAPI = async (loginData: LoginRequest): Promise<LoginResponse> 
     if (response.ok) {
       // 로그인 성공 시 토큰 저장 (access_token 키로 받음)
       if (result.access_token) {
-        localStorage.setItem('authToken', result.access_token);
-        localStorage.setItem('user', JSON.stringify(result.user));
+        localStorage.setItem("authToken", result.access_token);
+        localStorage.setItem("user", JSON.stringify(result.user));
       }
-      
+
       return {
         success: true,
-        message: '로그인 성공',
+        message: "로그인 성공",
         token: result.access_token,
-        user: result.user
+        user: result.user,
       };
     } else {
       // 로그인 실패
       return {
         success: false,
-        message: result.message || '로그인에 실패했습니다.'
+        message: result.message || "로그인에 실패했습니다.",
       };
     }
-    
   } catch (error) {
-    console.error('로그인 API 오류:', error);
+    console.error("로그인 API 오류:", error);
     return {
       success: false,
-      message: '서버에 연결할 수 없습니다. 잠시 후 다시 시도해주세요.'
+      message: "서버에 연결할 수 없습니다. 잠시 후 다시 시도해주세요.",
     };
   }
 };
@@ -72,14 +74,16 @@ export const loginAPI = async (loginData: LoginRequest): Promise<LoginResponse> 
 /**
  * 회원가입 API 호출
  */
-export const registerAPI = async (registerData: RegisterRequest): Promise<LoginResponse> => {
+export const registerAPI = async (
+  registerData: RegisterRequest
+): Promise<LoginResponse> => {
   try {
     const response = await fetch(`${API_BASE_URL}/auth/register`, {
-      method: 'POST',
+      method: "POST",
       headers: {
-        'Content-Type': 'application/json',
+        "Content-Type": "application/json",
       },
-      body: JSON.stringify(registerData)
+      body: JSON.stringify(registerData),
     });
 
     const result = await response.json();
@@ -87,21 +91,20 @@ export const registerAPI = async (registerData: RegisterRequest): Promise<LoginR
     if (response.ok) {
       return {
         success: true,
-        message: '회원가입이 완료되었습니다.',
-        user: result
+        message: "회원가입이 완료되었습니다.",
+        user: result,
       };
     } else {
       return {
         success: false,
-        message: result.message || '회원가입에 실패했습니다.'
+        message: result.message || "회원가입에 실패했습니다.",
       };
     }
-    
   } catch (error) {
-    console.error('회원가입 API 오류:', error);
+    console.error("회원가입 API 오류:", error);
     return {
       success: false,
-      message: '서버에 연결할 수 없습니다. 잠시 후 다시 시도해주세요.'
+      message: "서버에 연결할 수 없습니다. 잠시 후 다시 시도해주세요.",
     };
   }
 };
@@ -110,15 +113,15 @@ export const registerAPI = async (registerData: RegisterRequest): Promise<LoginR
  * 로그아웃
  */
 export const logoutAPI = () => {
-  localStorage.removeItem('authToken');
-  localStorage.removeItem('user');
+  localStorage.removeItem("authToken");
+  localStorage.removeItem("user");
 };
 
 /**
  * 현재 로그인된 사용자 정보 가져오기
  */
 export const getCurrentUser = () => {
-  const userStr = localStorage.getItem('user');
+  const userStr = localStorage.getItem("user");
   return userStr ? JSON.parse(userStr) : null;
 };
 
@@ -126,7 +129,7 @@ export const getCurrentUser = () => {
  * 토큰 가져오기
  */
 export const getAuthToken = () => {
-  return localStorage.getItem('authToken');
+  return localStorage.getItem("authToken");
 };
 
 /**

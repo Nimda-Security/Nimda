@@ -1,33 +1,13 @@
 version: '3.8'
 
 services:
-  mariadb:
-    image: mariadb:10.11 #마리아 디비 이미지 
-    container_name: nimda-mariadb #컨테이너 이름
-    restart: unless-stopped
-    environment: # 디비 환경 정보 
-      MARIADB_ROOT_PASSWORD: 908
-      MARIADB_DATABASE: nimda_con
-      MARIADB_USER: nimda
-      MARIADB_PASSWORD: nimda123
-    ports: # 마리아디비 포트 
-      - "3307:3306"
-    volumes: # 데이터 저장소 
-      - mariadb_data:/var/lib/mysql
-      - ./NimdaConBackEnd/backend-spring/src/main/resources/data.sql:/docker-entrypoint-initdb.d/data.sql
-
   backend:
-    build:
-      context: ./NimdaConBackEnd/backend-spring
+    image: novvvv/nimda-backend:latest
     container_name: nimda-backend
     ports:
-      - "3001:3001" # 포트 매핑
-    environment: # 환경변수
-      - SPRING_DATASOURCE_URL=jdbc:mariadb://mariadb:3306/nimda_con?useSSL=false&serverTimezone=UTC&allowPublicKeyRetrieval=true
+      - "80:80" # 포트 매핑 (외부 80 → 내부 80)
+    environment:
+      # 환경변수
+      - SPRING_DATASOURCE_URL=jdbc:mysql://nimda-db.cpu8uk0eauv0.ap-northeast-2.rds.amazonaws.com:3306/nimda_con?useSSL=false&serverTimezone=UTC&allowPublicKeyRetrieval=true
       - SPRING_DATASOURCE_USERNAME=nimda
       - SPRING_DATASOURCE_PASSWORD=nimda123
-    depends_on:
-      - mariadb
-
-volumes:
-  mariadb_data:

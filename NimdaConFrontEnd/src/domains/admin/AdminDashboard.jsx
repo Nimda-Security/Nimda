@@ -17,6 +17,10 @@ function AdminDashboard() {
     navigate('/problem-create');
   };
 
+  const goToProblemDetail = (problemId) => {
+    navigate(`/problem/${problemId}`);
+  };
+
   const loadUsers = async () => {
     setLoading(true);
     try {
@@ -138,7 +142,11 @@ function AdminDashboard() {
                   </thead>
                   <tbody className="bg-white divide-y divide-gray-200">
                     {problems.map((problem) => (
-                      <tr key={problem.id} className="hover:bg-gray-50">
+                      <tr 
+                        key={problem.id} 
+                        className="hover:bg-gray-50 cursor-pointer transition-colors"
+                        onClick={() => goToProblemDetail(problem.id)}
+                      >
                         <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
                           {problem.id}
                         </td>

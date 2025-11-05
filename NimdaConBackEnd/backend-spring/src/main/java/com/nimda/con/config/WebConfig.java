@@ -15,6 +15,14 @@ public class WebConfig implements WebMvcConfigurer {
 
     @Override
     public void addResourceHandlers(ResourceHandlerRegistry registry) {
+        // 정적 파일들 (CSS, JS, 이미지 등)을 먼저 처리
+        registry.addResourceHandler("/assets/**")
+                .addResourceLocations("classpath:/static/assets/");
+
+        registry.addResourceHandler("/*.css", "/*.js", "/*.png", "/*.jpg", "/*.jpeg", "/*.gif", "/*.svg", "/*.ico")
+                .addResourceLocations("classpath:/static/");
+
+        // 나머지 모든 요청에 대해 SPA 라우팅 처리
         registry.addResourceHandler("/**")
                 .addResourceLocations("classpath:/static/")
                 .resourceChain(true)
@@ -22,16 +30,16 @@ public class WebConfig implements WebMvcConfigurer {
                     @Override
                     protected Resource getResource(String resourcePath, Resource location) throws IOException {
                         Resource requestedResource = location.createRelative(resourcePath);
-                        
+
                         // API 요청이면 null 반환 (Spring Boot가 처리)
                         if (resourcePath.startsWith("api/")) {
                             return null;
                         }
-                        
+
                         // 파일이 존재하면 반환, 없으면 index.html 반환 (SPA 라우팅)
-                        return requestedResource.exists() && requestedResource.isReadable() 
-                            ? requestedResource 
-                            : location.createRelative("index.html");
+                        return requestedResource.exists() && requestedResource.isReadable()
+                                ? requestedResource
+                                : location.createRelative("index.html");
                     }
                 });
     }

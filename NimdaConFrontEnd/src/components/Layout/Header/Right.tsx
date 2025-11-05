@@ -1,17 +1,61 @@
 import React from "react";
-import ArrowLeftIcon from "@/components/icons/Write";
-import ArrowRightIcon from "@/components/icons/Logout";
+import Logout from "@/components/icons/Logout.svg";
 
-const UserActions: React.FC = () => {
+interface RightProps {
+  username: string | null;
+  adminStatus: boolean;
+  isLoggedIn: boolean;
+  onLogout: () => void;
+}
+
+const Right: React.FC<RightProps> = ({
+  username,
+  adminStatus,
+  isLoggedIn,
+  onLogout,
+}) => {
   return (
-    <div className="flex items-center space-x-4 xl:space-x-6">
-      <div className="text-[#1A1A1A] text-right font-pretendard text-base xl:text-lg font-semibold leading-relaxed overflow-hidden text-ellipsis">
-        admin
-      </div>
-      <ArrowLeftIcon className="w-5 h-5 xl:w-6 xl:h-6" />
-      <ArrowRightIcon className="w-5 h-5 xl:w-6 xl:h-6" />
+    <div className="hidden md:flex items-center space-x-4">
+      {isLoggedIn ? (
+        <>
+          {username && (
+            <div className="text-sm text-gray-600">
+              <span className="font-semibold">{username}</span>
+            </div>
+          )}
+
+          {adminStatus && (
+            <a
+              href="/admin"
+              className="p-2 rounded-md hover:bg-gray-100 transition-colors duration-200"
+              title="관리자 대시보드"
+            >
+              <img
+                src="/nav_setting.png"
+                alt="관리자 설정"
+                className="w-5 h-5"
+              />
+            </a>
+          )}
+
+          <button
+            onClick={onLogout}
+            className="p-2 rounded-md hover:bg-gray-100 transition-colors duration-200"
+            title="Logout"
+          >
+            <img src={Logout} alt="Logout" className="w-5 h-5" />
+          </button>
+        </>
+      ) : (
+        <a
+          href="/login"
+          className="text-black hover:font-semibold hover:text-blue px-3 py-2 rounded-md text-sm font-medium"
+        >
+          Login
+        </a>
+      )}
     </div>
   );
 };
 
-export default UserActions;
+export default Right;
