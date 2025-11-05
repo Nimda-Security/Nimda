@@ -3,7 +3,7 @@
 const API_BASE_URL = "/api";
 
 export interface LoginRequest {
-  username: string;
+  userid: string;
   password: string;
 }
 
@@ -13,12 +13,13 @@ export interface LoginResponse {
   token?: string;
   user?: {
     id: number;
-    username: string;
+    userid: string;
     email: string;
   };
 }
 
 export interface RegisterRequest {
+  userid: string;
   username: string;
   password: string;
   email: string;

@@ -12,8 +12,8 @@ function LogInPage() {
 
     // FormData로 폼의 모든 input 값 수집
     const formData = new FormData(e.target as HTMLFormElement);
-    const username = formData.get("username") as string;
-    const password = formData.get("password") as string;
+    const username = formData.get("username") as string; // 이름
+    const password = formData.get("password") as string; // 비밀번호
 
     // 입력값 검증
     if (!username || !password) {
@@ -44,7 +44,7 @@ function LogInPage() {
 
   return (
     <Layout>
-      <div className="flex flex-col items-center justify-center pt-14">
+      <div className="flex flex-col items-center justify-center pt-24">
         <h1 className="text-3xl font-bold mb-12">NIMDA CON</h1>
         <div className="text-xl font-bold mb-4">로그인</div>
         <form onSubmit={handleLogin} className="flex flex-col gap-4">
