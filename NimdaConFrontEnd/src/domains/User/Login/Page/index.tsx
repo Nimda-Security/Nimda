@@ -12,17 +12,17 @@ function LogInPage() {
 
     // FormData로 폼의 모든 input 값 수집
     const formData = new FormData(e.target as HTMLFormElement);
-    const username = formData.get("username") as string; // 이름
+    const userid = formData.get("userid") as string; // 이름
     const password = formData.get("password") as string; // 비밀번호
 
     // 입력값 검증
-    if (!username || !password) {
+    if (!userid || !password) {
       alert("아이디와 비밀번호를 입력해주세요.");
       return;
     }
 
     // 로그인 API 호출
-    const result = await loginAPI({ username, password });
+    const result = await loginAPI({ userid, password });
 
     if (result.success) {
       alert("로그인 성공!");
@@ -48,7 +48,7 @@ function LogInPage() {
         <h1 className="text-3xl font-bold mb-12">NIMDA CON</h1>
         <div className="text-xl font-bold mb-4">로그인</div>
         <form onSubmit={handleLogin} className="flex flex-col gap-4">
-          <Input name="username" placeholder="아이디" />
+          <Input name="userid" placeholder="아이디" />
           <Input name="password" placeholder="비밀번호" type="password" />
 
           <BlackButton type="submit">로그인</BlackButton>
