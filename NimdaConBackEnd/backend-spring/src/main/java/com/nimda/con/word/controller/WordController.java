@@ -12,6 +12,7 @@ import java.util.Map;
 
 @RestController
 @RequestMapping("/api/v1/words")
+@CrossOrigin(origins = "*") // 크롬 익스텐션 관련 보안 설정
 @RequiredArgsConstructor
 public class WordController {
 
