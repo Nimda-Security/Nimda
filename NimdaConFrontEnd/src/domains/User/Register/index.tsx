@@ -4,16 +4,24 @@ import Layout from "@/components/Layout";
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { Input } from "@/components/Input";
+import { registerAPI } from "@/api/auth";
 
 function LogInPage() {
   const handleLogin = (e: React.FormEvent) => {
     e.preventDefault(); // 폼의 기본 제출 동작 방지
-    // 여기에 회원가입 API 호출 로직 추가
 
     // FormData로 폼의 모든 input 값 수집
     const formData = new FormData(e.target as HTMLFormElement);
+    const username = formData.get("username") as string;
     const userid = formData.get("userid") as string;
     const password = formData.get("password") as string;
+
+    if (!username || !userid || !password) {
+      alert("모든 필드에 값을 입력해 주세요.");
+      return;
+    }
+
+    // 회원가입 API 호출...해줘...
   };
 
   const navigate = useNavigate();
