@@ -1,28 +1,29 @@
 import "@/App.css";
 import BlackButton from "@/components/Button/Black";
 import Layout from "@/components/Layout";
-import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { Input } from "@/components/Input";
 import { loginAPI } from "@/api/auth";
 
 function LogInPage() {
+  const navigate = useNavigate();
+
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault(); // 폼의 기본 제출 동작 방지
 
     // FormData로 폼의 모든 input 값 수집
     const formData = new FormData(e.target as HTMLFormElement);
-    const userid = formData.get("userid") as string; // 이름
+    const username = formData.get("userid") as string; // 이름
     const password = formData.get("password") as string; // 비밀번호
 
     // 입력값 검증
-    if (!userid || !password) {
+    if (!username || !password) {
       alert("아이디와 비밀번호를 입력해주세요.");
       return;
     }
 
     // 로그인 API 호출
-    const result = await loginAPI({ userid, password });
+    const result = await loginAPI({ username, password });
 
     if (result.success) {
       alert("로그인 성공!");
@@ -30,12 +31,6 @@ function LogInPage() {
     } else {
       alert(result.message);
     }
-  };
-
-  const navigate = useNavigate();
-
-  const goToLogIn = () => {
-    navigate("/login");
   };
 
   const goToSignUp = () => {
