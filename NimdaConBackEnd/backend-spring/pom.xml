@@ -9,9 +9,9 @@
         <relativePath/>
     </parent>
     <groupId>com.nimda</groupId>
-    <artifactId>nimda-con</artifactId>
+    <artifactId>nimda-cup</artifactId>
     <version>0.0.1-SNAPSHOT</version>
-    <name>nimda-con</name>
+    <name>nimda-cup</name>
     <description>Nimda Contest Platform</description>
     <properties>
         <java.version>17</java.version>

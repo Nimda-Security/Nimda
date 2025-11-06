@@ -1,6 +1,6 @@
 spring:
   application:
-    name: nimda-con
+    name: nimda-cup
   
   datasource:
     url: jdbc:mysql://nimda-db.cpu8uk0eauv0.ap-northeast-2.rds.amazonaws.com:3306/nimda_con?useSSL=false&serverTimezone=UTC&allowPublicKeyRetrieval=true
@@ -47,7 +47,7 @@ jwt:
 
 logging:
   level:
-    com.nimda.con: DEBUG
+    com.nimda.cup: DEBUG
     org.springframework.security: WARN
     org.hibernate.SQL: DEBUG
     org.hibernate.type.descriptor.sql.BasicBinder: TRACE

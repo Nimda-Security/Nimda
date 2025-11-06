@@ -57,7 +57,7 @@ mvn spring-boot:run
 
 # 또는 JAR 파일 빌드 후 실행
 mvn clean package
-java -jar target/nimda-con-0.0.1-SNAPSHOT.jar
+java -jar target/nimda-cup-0.0.1-SNAPSHOT.jar
 ```
 
 ## 기본 계정
@@ -67,7 +67,7 @@ java -jar target/nimda-con-0.0.1-SNAPSHOT.jar
 
 ## 프로젝트 구조
 ```
-src/main/java/com/nimda/con/
+src/main/java/com/nimda/cup/
 ├── config/          # 설정 클래스
 ├── controller/      # REST 컨트롤러
 ├── dto/            # 데이터 전송 객체

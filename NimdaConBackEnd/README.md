@@ -1,4 +1,4 @@
-# Nimda-Con 모노레포 프로젝트
+# Nimda-Cup 모노레포 프로젝트
 
 이 프로젝트는 NestJS 백엔드와 React 프론트엔드를 포함한 모노레포 구조입니다.
 
@@ -12,7 +12,7 @@
 ### 1. 프로젝트 클론
 ```bash
 git clone <repository-url>
-cd nimda-con
+cd nimda-cup
 ```
 
 ### 2. 환경 셋팅 (한 번에 모든 의존성 설치)
@@ -32,7 +32,7 @@ npm run dev
 ## 프로젝트 구조
 
 ```
-nimda-con/
+nimda-cup/
 ├── backend/          # NestJS 백엔드 애플리케이션
 ├── frontend/         # React 프론트엔드 애플리케이션
 ├── package.json      # 루트 패키지 설정
