@@ -1,5 +1,5 @@
-import React from "react";
-import Logout from "@/components/icons/Logout.svg";
+import React from 'react';
+import Logout from '@/components/icons/Logout.svg';
 
 interface RightProps {
   username: string | null;
@@ -15,7 +15,7 @@ const Right: React.FC<RightProps> = ({
   onLogout,
 }) => {
   return (
-    <div className="hidden md:flex items-center space-x-4">
+    <div className="hidden min-[820px]:flex items-center space-x-4">
       {isLoggedIn ? (
         <>
           {username && (
@@ -40,7 +40,7 @@ const Right: React.FC<RightProps> = ({
 
           <button
             onClick={onLogout}
-            className="p-2 rounded-md hover:bg-gray-100 transition-colors duration-200"
+            className="p-1 rounded-md hover:bg-gray-100 transition-colors duration-200"
             title="Logout"
           >
             <img src={Logout} alt="Logout" className="w-5 h-5" />

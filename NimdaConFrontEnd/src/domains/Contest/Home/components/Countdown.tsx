@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect } from 'react';
 
 interface TimeLeft {
   days?: number;
@@ -9,24 +9,24 @@ interface TimeLeft {
 
 interface CountdownState {
   timeLeft: TimeLeft;
-  status: "before" | "running" | "after";
+  status: 'before' | 'running' | 'after';
 }
 
 const Countdown = () => {
   const calculateCountdownState = (): CountdownState => {
     const now = new Date();
-    const contestStartDate = new Date("2025-11-27T19:30:00+09:00"); // KST
+    const contestStartDate = new Date('2025-11-27T19:30:00+09:00'); // KST
     const contestEndDate = new Date(
       contestStartDate.getTime() + 2 * 60 * 60 * 1000
     ); // 2 hours later
 
-    let status: "before" | "running" | "after" = "before";
+    let status: 'before' | 'running' | 'after' = 'before';
     let difference = contestStartDate.getTime() - now.getTime();
     let timeLeft: TimeLeft = {};
 
     if (difference > 0) {
       // Before contest
-      status = "before";
+      status = 'before';
       timeLeft = {
         days: Math.floor(difference / (1000 * 60 * 60 * 24)),
         hours: Math.floor((difference / (1000 * 60 * 60)) % 24),
@@ -38,7 +38,7 @@ const Countdown = () => {
       difference = contestEndDate.getTime() - now.getTime();
       if (difference > 0) {
         // Contest is running
-        status = "running";
+        status = 'running';
         timeLeft = {
           hours: Math.floor((difference / (1000 * 60 * 60)) % 24),
           minutes: Math.floor((difference / 1000 / 60) % 60),
@@ -46,7 +46,7 @@ const Countdown = () => {
         };
       } else {
         // Contest is over
-        status = "after";
+        status = 'after';
         timeLeft = {};
       }
     }
@@ -67,25 +67,25 @@ const Countdown = () => {
   });
 
   const formatTime = (time: number | undefined) => {
-    if (time === undefined) return "00";
+    if (time === undefined) return '00';
     return time < 10 ? `0${time}` : String(time);
   };
 
   const renderCountdown = () => {
     const { timeLeft, status } = countdownState;
 
-    const timeStyle = "text-7xl md:text-8xl font-bold text-gray-900";
-    const finishStyle = "text-7xl md:text-8xl font-bold text-red";
-    const labelStyle = "text-sm md:text-base text-gray-500";
+    const timeStyle = 'text-7xl min-[820px]:text-8xl font-bold text-black';
+    const finishStyle = 'text-7xl min-[820px]:text-8xl font-bold text-red';
+    const labelStyle = 'text-sm min-[820px]:text-base text-gray-500';
 
     switch (status) {
-      case "before":
+      case 'before':
         return (
           <>
-            <h2 className="text-3xl md:text-4xl font-semibold mb-8 text-gray-600">
+            <h2 className="text-3xl min-[820px]:text-4xl font-semibold mb-8 text-gray-600">
               대회 시작까지
             </h2>
-            <div className="flex justify-center items-baseline space-x-4 md:space-x-8">
+            <div className="flex justify-center items-baseline space-x-4 min-[820px]:space-x-8">
               <div className="text-center">
                 <div className={timeStyle}>{formatTime(timeLeft.days)}</div>
                 <div className={labelStyle}>일</div>
@@ -108,13 +108,13 @@ const Countdown = () => {
             </div>
           </>
         );
-      case "running":
+      case 'running':
         return (
           <>
-            <h2 className="text-3xl md:text-4xl font-light mb-8">
+            <h2 className="text-3xl min-[820px]:text-4xl font-light mb-8">
               대회 종료까지
             </h2>
-            <div className="flex justify-center items-baseline space-x-4 md:space-x-8">
+            <div className="flex justify-center items-baseline space-x-4 min-[820px]:space-x-8">
               <div className="text-center">
                 <div className={finishStyle}>{formatTime(timeLeft.hours)}</div>
                 <div className={labelStyle}>시간</div>
@@ -136,9 +136,9 @@ const Countdown = () => {
             </div>
           </>
         );
-      case "after":
+      case 'after':
         return (
-          <h2 className="text-4xl md:text-5xl font-bold text-gray-800">
+          <h2 className="text-4xl min-[820px]:text-5xl font-bold text-gray-800">
             대회가 종료되었습니다.
           </h2>
         );
