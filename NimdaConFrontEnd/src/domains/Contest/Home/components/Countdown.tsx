@@ -74,18 +74,18 @@ const Countdown = () => {
   const renderCountdown = () => {
     const { timeLeft, status } = countdownState;
 
-    const timeStyle = 'text-7xl md:text-8xl font-bold text-black';
-    const finishStyle = 'text-7xl md:text-8xl font-bold text-red';
-    const labelStyle = 'text-sm md:text-base text-gray-500';
+    const timeStyle = 'text-7xl min-[820px]:text-8xl font-bold text-black';
+    const finishStyle = 'text-7xl min-[820px]:text-8xl font-bold text-red';
+    const labelStyle = 'text-sm min-[820px]:text-base text-gray-500';
 
     switch (status) {
       case 'before':
         return (
           <>
-            <h2 className="text-3xl md:text-4xl font-semibold mb-8 text-gray-600">
+            <h2 className="text-3xl min-[820px]:text-4xl font-semibold mb-8 text-gray-600">
               대회 시작까지
             </h2>
-            <div className="flex justify-center items-baseline space-x-4 md:space-x-8">
+            <div className="flex justify-center items-baseline space-x-4 min-[820px]:space-x-8">
               <div className="text-center">
                 <div className={timeStyle}>{formatTime(timeLeft.days)}</div>
                 <div className={labelStyle}>일</div>
@@ -111,10 +111,10 @@ const Countdown = () => {
       case 'running':
         return (
           <>
-            <h2 className="text-3xl md:text-4xl font-light mb-8">
+            <h2 className="text-3xl min-[820px]:text-4xl font-light mb-8">
               대회 종료까지
             </h2>
-            <div className="flex justify-center items-baseline space-x-4 md:space-x-8">
+            <div className="flex justify-center items-baseline space-x-4 min-[820px]:space-x-8">
               <div className="text-center">
                 <div className={finishStyle}>{formatTime(timeLeft.hours)}</div>
                 <div className={labelStyle}>시간</div>
@@ -138,7 +138,7 @@ const Countdown = () => {
         );
       case 'after':
         return (
-          <h2 className="text-4xl md:text-5xl font-bold text-gray-800">
+          <h2 className="text-4xl min-[820px]:text-5xl font-bold text-gray-800">
             대회가 종료되었습니다.
           </h2>
         );

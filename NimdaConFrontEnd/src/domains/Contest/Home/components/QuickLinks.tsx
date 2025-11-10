@@ -17,14 +17,14 @@ export function QuickLinks() {
   ];
 
   return (
-    <div className="flex flex-col md:flex-row gap-6 justify-center">
+    <div className="flex flex-col min-[820px]:flex-row gap-6 justify-center">
       {links.map((link, index) => {
         const Icon = link.icon;
 
         return (
           <div
             key={index}
-            className="group bg-white rounded-2xl p-8 transition-all duration-300 cursor-pointer border border-[#e0e0e0] hover:border-gray-600 w-full md:w-[300px] hover:shadow-lg"
+            className="group bg-white rounded-2xl p-8 transition-all duration-300 cursor-pointer border border-[#e0e0e0] hover:border-gray-600 w-full min-[820px]:w-[250px] hover:shadow-lg"
           >
             <div className="flex flex-col items-center text-center">
               <Icon
