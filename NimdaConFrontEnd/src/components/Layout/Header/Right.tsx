@@ -15,7 +15,7 @@ const Right: React.FC<RightProps> = ({
   onLogout,
 }) => {
   return (
-    <div className="hidden md:flex items-center space-x-4">
+    <div className="hidden min-[820px]:flex items-center space-x-4">
       {isLoggedIn ? (
         <>
           {username && (

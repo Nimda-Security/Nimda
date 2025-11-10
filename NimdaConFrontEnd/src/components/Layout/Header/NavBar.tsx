@@ -1,9 +1,8 @@
-import React, { useState, useEffect } from "react";
-import { Link } from "react-router-dom";
-import Logo from "@/components/icons/Logo";
-import Logout from "@/components/icons/Logout.svg";
-import { getCurrentUsername, isAdmin } from "@/utils/jwt";
-import { isLoggedIn, logoutAPI } from "@/api/auth";
+import React, { useState, useEffect } from 'react';
+import { Link } from 'react-router-dom';
+import Logo from '@/components/icons/Logo';
+import { getCurrentUsername, isAdmin } from '@/utils/jwt';
+import { isLoggedIn, logoutAPI } from '@/api/auth';
 
 interface MenuItem {
   name: string;
@@ -14,9 +13,9 @@ interface NavbarProps {
   menuItems: MenuItem[];
 }
 
-import MobileMenuButton from "@/components/Button/MobileMenuBtn";
-import Dropdown from "@/components/Dropdown";
-import Right from "./Right";
+import MobileMenuButton from '@/components/Button/MobileMenuBtn';
+import Dropdown from '@/components/Dropdown';
+import Right from './Right';
 
 const Navbar: React.FC<NavbarProps> = ({ menuItems }) => {
   // 모바일 메뉴의 열림/닫힘 상태를 관리하는 state
@@ -28,14 +27,14 @@ const Navbar: React.FC<NavbarProps> = ({ menuItems }) => {
 
   const dropdownItems: { [key: string]: { name: string; href: string }[] } = {
     대회: [
-      { name: "문제", href: "/problems" },
-      { name: "채점 현황", href: "/judging-status" },
-      { name: "랭킹", href: "/scoreboard" },
-      { name: "지난 대회", href: "/past-contests" },
+      { name: '문제', href: '/problems' },
+      { name: '채점 현황', href: '/judging-status' },
+      { name: '랭킹', href: '/scoreboard' },
+      { name: '지난 대회', href: '/past-contests' },
     ],
     바로가기: [
-      { name: "Baekjoon Online Judge", href: "https://www.acmicpc.net" },
-      { name: "TEST", href: "/" },
+      { name: 'Baekjoon Online Judge', href: 'https://www.acmicpc.net' },
+      { name: 'TEST', href: '/' },
     ],
   };
 
@@ -55,7 +54,7 @@ const Navbar: React.FC<NavbarProps> = ({ menuItems }) => {
     setAdminStatus(false);
     setIsLoggedInState(false);
     // 로그인 페이지로 리다이렉트
-    window.location.href = "/login";
+    window.location.href = '/login';
   };
 
   // 임시 팝업 생성
@@ -64,14 +63,14 @@ const Navbar: React.FC<NavbarProps> = ({ menuItems }) => {
     itemName: string
   ) => {
     const itemsToShowAlert = [
-      "동아리 소개",
-      "새 소식",
-      "학술 게시판",
-      "커뮤니티",
+      '동아리 소개',
+      '새 소식',
+      '학술 게시판',
+      '커뮤니티',
     ];
     if (itemsToShowAlert.includes(itemName)) {
       e.preventDefault();
-      alert("준비 중입니다.");
+      alert('준비 중입니다.');
     }
   };
 
@@ -86,10 +85,10 @@ const Navbar: React.FC<NavbarProps> = ({ menuItems }) => {
           </div>
 
           {/* 데스크탑 메뉴 - Login 제외하고 가운데 정렬 */}
-          <div className="hidden md:block flex-1">
+          <div className="hidden min-[820px]:block flex-1">
             <div className="flex justify-center items-baseline space-x-4">
               {menuItems
-                .filter((item) => item.name !== "Login")
+                .filter((item) => item.name !== 'Login')
                 .map((item) => (
                   <div
                     key={item.name}
@@ -122,7 +121,7 @@ const Navbar: React.FC<NavbarProps> = ({ menuItems }) => {
           />
 
           {/* 모바일 햄버거 버튼 */}
-          <div className="-mr-2 flex md:hidden">
+          <div className="-mr-2 flex min-[820px]:hidden">
             <MobileMenuButton
               isOpen={isOpen}
               onClick={() => setIsOpen(!isOpen)}
@@ -133,7 +132,7 @@ const Navbar: React.FC<NavbarProps> = ({ menuItems }) => {
 
       {/* 4. 모바일 메뉴 (isOpen 상태에 따라 보임/숨김 처리) */}
       {isOpen && (
-        <div className="md:hidden" id="mobile-menu">
+        <div className="min-[820px]:hidden" id="mobile-menu">
           <div className="bg-black px-2 pt-2 pb-3 space-y-1 sm:px-3">
             {/* 로그인한 경우 사용자명 표시 */}
             {isLoggedInState && username && (
@@ -144,7 +143,7 @@ const Navbar: React.FC<NavbarProps> = ({ menuItems }) => {
 
             {/* 메뉴 아이템들 (Login 제외) */}
             {menuItems
-              .filter((item) => item.name !== "Login")
+              .filter((item) => item.name !== 'Login')
               .map((item) => (
                 <a
                   key={item.name}
@@ -166,7 +165,7 @@ const Navbar: React.FC<NavbarProps> = ({ menuItems }) => {
               </button>
             ) : (
               menuItems
-                .filter((item) => item.name === "Login")
+                .filter((item) => item.name === 'Login')
                 .map((item) => (
                   <a
                     key={item.name}
