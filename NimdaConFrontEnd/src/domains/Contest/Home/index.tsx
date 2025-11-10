@@ -13,24 +13,6 @@ function ContestHome() {
         <Countdown />
         <div className="flex gap-4 mt-8">
           <QuickLinks />
-          {/* <button
-            onClick={() => navigate('/problems')}
-            className="px-6 py-3 bg-black text-white font-semibold rounded-lg shadow-md hover:bg-gray-800 transition-colors"
-          >
-            문제 바로가기
-          </button>
-          <button
-            onClick={() => navigate('/judging-status')}
-            className="px-6 py-3 bg-black text-white font-semibold rounded-lg shadow-md hover:bg-gray-800 transition-colors"
-          >
-            제출 현황
-          </button>
-          <button
-            onClick={() => navigate('/scoreboard')}
-            className="px-6 py-3 bg-black text-white font-semibold rounded-lg shadow-md hover:bg-gray-800 transition-colors"
-          >
-            스코어보드
-          </button> */}
         </div>
       </div>
     </Layout>
