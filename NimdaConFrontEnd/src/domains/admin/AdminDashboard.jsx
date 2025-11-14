@@ -14,6 +14,11 @@ function AdminDashboard() {
   const [problemsLoading, setProblemsLoading] = useState(false);
   const [teams, setTeams] = useState([]);
   const [teamsLoading, setTeamsLoading] = useState(false);
+  const [newTeamName, setNewTeamName] = useState('');
+  const [newTeamMaxMembers, setNewTeamMaxMembers] = useState(5);
+  const [newTeamPublic, setNewTeamPublic] = useState(true);
+  const [newTeamCode, setNewTeamCode] = useState('');
+  const [creatingTeam, setCreatingTeam] = useState(false);
 
   const goToProblemCreate = () => {
     navigate('/problem-create');
@@ -90,6 +95,35 @@ function AdminDashboard() {
     }
   };
 
+  /**
+   * 팀 생성 UI (임시)
+   * TODO: 실제 팀 생성 API 연동
+   */
+  const handleCreateTeam = async (e) => {
+    e.preventDefault();
+    setCreatingTeam(true);
+    try {
+      await new Promise((resolve) => setTimeout(resolve, 800));
+      const mockTeam = {
+        id: Date.now(),
+        name: newTeamName || '새 팀',
+        leader: 'admin',
+        members: 1,
+        maxMembers: newTeamMaxMembers,
+        isPublic: newTeamPublic,
+        createdAt: new Date().toISOString().slice(0, 10),
+        participationCode: newTeamCode || 'TEMP-CODE',
+      };
+      setTeams((prev) => [mockTeam, ...prev]);
+      setNewTeamName('');
+      setNewTeamMaxMembers(5);
+      setNewTeamPublic(true);
+      setNewTeamCode('');
+    } finally {
+      setCreatingTeam(false);
+    }
+  };
+
   const goToSystemSettings = () => {
     alert('시스템 설정 기능 (구현 예정)');
   };
@@ -101,7 +135,8 @@ function AdminDashboard() {
   const menuItems = [
     { id: 'dashboard', label: '대시보드', icon: '📊' },
     { id: 'problems', label: '문제 관리', icon: '📝' },
-    { id: 'users', label: '사용자 관리', icon: '👥' }
+    { id: 'users', label: '사용자 관리', icon: '👥' },
+    { id: 'teams', label: '팀 관리', icon: '🧩' }
   ];
 
   const renderContent = () => {
@@ -316,15 +351,103 @@ function AdminDashboard() {
                 </button>
               </div>
             )}
+          </div>
+        );
+      case 'teams':
+        return (
+          <div className="space-y-8">
+            <div className="flex items-center justify-between">
+              <h2 className="text-2xl font-bold">팀 관리</h2>
+              <button
+                onClick={loadTeams}
+                disabled={teamsLoading}
+                className="px-4 py-2 bg-black text-white rounded-md hover:bg-gray-900 disabled:opacity-50"
+              >
+                {teamsLoading ? '로딩 중...' : '팀 목록 새로고침'}
+              </button>
+            </div>
 
-            {/* 팀 목록 UI */}
-            <div className="mt-10">
+            <div className="bg-white rounded-lg shadow-md p-6">
+              <h3 className="text-xl font-semibold mb-4">새 팀 생성</h3>
+              <form className="space-y-4" onSubmit={handleCreateTeam}>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div>
+                    <label className="block text-sm text-gray-600 mb-1">팀 이름</label>
+                    <input
+                      type="text"
+                      value={newTeamName}
+                      onChange={(e) => setNewTeamName(e.target.value)}
+                      className="w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-1 focus:ring-gray-400"
+                      placeholder="팀 이름을 입력하세요"
+                      required
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-sm text-gray-600 mb-1">최대 인원</label>
+                    <input
+                      type="number"
+                      min={1}
+                      max={20}
+                      value={newTeamMaxMembers}
+                      onChange={(e) => setNewTeamMaxMembers(Number(e.target.value))}
+                      className="w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-1 focus:ring-gray-400"
+                    />
+                  </div>
+                </div>
+
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div>
+                    <label className="block text-sm text-gray-600 mb-1">초대 코드</label>
+                    <input
+                      type="text"
+                      value={newTeamCode}
+                      onChange={(e) => setNewTeamCode(e.target.value)}
+                      className="w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-1 focus:ring-gray-400"
+                      placeholder="예: ABCD-1234"
+                    />
+                  </div>
+                  <div className="flex items-center space-x-3">
+                    <span className="text-sm text-gray-600">공개 여부</span>
+                    <button
+                      type="button"
+                      onClick={() => setNewTeamPublic(true)}
+                      className={`px-3 py-2 rounded-md border ${
+                        newTeamPublic ? 'bg-black text-white border-black' : 'border-gray-300 text-gray-700'
+                      }`}
+                    >
+                      공개
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => setNewTeamPublic(false)}
+                      className={`px-3 py-2 rounded-md border ${
+                        !newTeamPublic ? 'bg-black text-white border-black' : 'border-gray-300 text-gray-700'
+                      }`}
+                    >
+                      비공개
+                    </button>
+                  </div>
+                </div>
+
+                <div className="flex justify-end">
+                  <button
+                    type="submit"
+                    disabled={creatingTeam}
+                    className="px-6 py-2 bg-black text-white rounded-md hover:bg-gray-900 disabled:opacity-50"
+                  >
+                    {creatingTeam ? '생성 중...' : '팀 생성'}
+                  </button>
+                </div>
+              </form>
+            </div>
+
+            <div>
               <div className="flex items-center justify-between mb-4">
                 <h3 className="text-xl font-semibold">팀 목록</h3>
                 <button
                   onClick={loadTeams}
                   disabled={teamsLoading}
-                  className="px-4 py-2 bg-black text-white rounded-md hover:bg-gray-900 disabled:opacity-50"
+                  className="px-4 py-2 border border-black text-black rounded-md hover:bg-black hover:text-white disabled:opacity-50"
                 >
                   {teamsLoading ? '로딩 중...' : '팀 목록 불러오기'}
                 </button>
@@ -335,38 +458,20 @@ function AdminDashboard() {
                   <table className="min-w-full divide-y divide-gray-200">
                     <thead className="bg-gray-50">
                       <tr>
-                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                          ID
-                        </th>
-                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                          팀 이름
-                        </th>
-                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                          팀장
-                        </th>
-                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                          멤버 수
-                        </th>
-                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                          공개 여부
-                        </th>
-                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                          생성일
-                        </th>
+                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">ID</th>
+                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">팀 이름</th>
+                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">팀장</th>
+                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">멤버</th>
+                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">공개 여부</th>
+                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">생성일</th>
                       </tr>
                     </thead>
                     <tbody className="bg-white divide-y divide-gray-200">
                       {teams.map((team) => (
                         <tr key={team.id} className="hover:bg-gray-50">
-                          <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                            {team.id}
-                          </td>
-                          <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                            {team.name}
-                          </td>
-                          <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                            {team.leader}
-                          </td>
+                          <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{team.id}</td>
+                          <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{team.name}</td>
+                          <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{team.leader}</td>
                           <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
                             {team.members} / {team.maxMembers}
                           </td>
@@ -375,9 +480,7 @@ function AdminDashboard() {
                               {team.isPublic ? '공개' : '비공개'}
                             </span>
                           </td>
-                          <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                            {team.createdAt}
-                          </td>
+                          <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{team.createdAt}</td>
                         </tr>
                       ))}
                     </tbody>
@@ -385,9 +488,7 @@ function AdminDashboard() {
                 </div>
               ) : (
                 <div className="bg-white p-8 rounded-lg shadow-md text-center">
-                  <p className="text-gray-500 mb-4">
-                    팀 정보를 불러오려면 상단 버튼을 클릭하세요.
-                  </p>
+                  <p className="text-gray-500 mb-4">팀 데이터를 불러오려면 버튼을 클릭하세요.</p>
                   <button
                     onClick={loadTeams}
                     disabled={teamsLoading}
