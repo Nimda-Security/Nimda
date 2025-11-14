@@ -113,3 +113,42 @@ export const updateUserRoleAPI = async (userId, role) => {
     };
   }
 };
+
+/**
+ * 스터디 그룹 생성 API
+ */
+export const createGroupAPI = async (groupData) => {
+  try {
+    const response = await fetch(`${API_BASE_URL}/groups`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${localStorage.getItem("authToken")}`,
+      },
+      body: JSON.stringify(groupData),
+    });
+
+    const result = await parseJsonSafe(response);
+
+    if (response.ok) {
+      return {
+        success: true,
+        group: result,
+      };
+    }
+
+    return {
+      success: false,
+      status: response.status,
+      message:
+        (result && result.message) ||
+        "스터디 그룹 생성 중 오류가 발생했습니다.",
+    };
+  } catch (error) {
+    console.error("스터디 그룹 생성 API 오류:", error);
+    return {
+      success: false,
+      message: "스터디 그룹 생성 중 오류가 발생했습니다.",
+    };
+  }
+};

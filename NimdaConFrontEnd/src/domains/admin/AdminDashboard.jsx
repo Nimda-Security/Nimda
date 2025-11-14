@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import Layout from '@/components/Layout';
 import BlackLineButton from '@/components/Button/BlackLine';
 import { useNavigate } from 'react-router-dom';
-import { getAllUsersAPI } from '@/api/admin/admin';
+import { getAllUsersAPI, createGroupAPI } from '@/api/admin/admin';
 import { getAllProblemsAPI } from '@/api/problem';
 
 function AdminDashboard() {
@@ -101,24 +101,54 @@ function AdminDashboard() {
    */
   const handleCreateTeam = async (e) => {
     e.preventDefault();
+    if (!newTeamName.trim()) {
+      alert('팀 이름을 입력해주세요.');
+      return;
+    }
+    const currentUserStr = localStorage.getItem('user');
+    const currentUser = currentUserStr ? JSON.parse(currentUserStr) : null;
+    if (!currentUser?.id) {
+      alert('로그인 정보가 없습니다. 다시 로그인해주세요.');
+      return;
+    }
+
     setCreatingTeam(true);
     try {
-      await new Promise((resolve) => setTimeout(resolve, 800));
-      const mockTeam = {
-        id: Date.now(),
-        name: newTeamName || '새 팀',
-        leader: 'admin',
-        members: 1,
+      const payload = {
+        groupName: newTeamName,
         maxMembers: newTeamMaxMembers,
+        participationCode: newTeamCode || undefined,
         isPublic: newTeamPublic,
-        createdAt: new Date().toISOString().slice(0, 10),
-        participationCode: newTeamCode || 'TEMP-CODE',
+        creatorUserId: currentUser.id,
       };
-      setTeams((prev) => [mockTeam, ...prev]);
-      setNewTeamName('');
-      setNewTeamMaxMembers(5);
-      setNewTeamPublic(true);
-      setNewTeamCode('');
+      const result = await createGroupAPI(payload);
+      if (result.success && result.group) {
+        alert('팀이 생성되었습니다.');
+        setTeams((prev) => [
+          {
+            id: result.group.groupId,
+            name: result.group.groupName,
+            leader: currentUser.username || '관리자',
+            members: 1,
+            maxMembers: result.group.maxMembers,
+            isPublic: result.group.isPublic,
+            createdAt: result.group.createdAt
+              ? new Date(result.group.createdAt).toISOString().slice(0, 10)
+              : new Date().toISOString().slice(0, 10),
+            participationCode: result.group.participationCode,
+          },
+          ...prev,
+        ]);
+        setNewTeamName('');
+        setNewTeamMaxMembers(5);
+        setNewTeamPublic(true);
+        setNewTeamCode('');
+      } else {
+        alert(result.message || '팀 생성에 실패했습니다.');
+      }
+    } catch (error) {
+      console.error('팀 생성 오류:', error);
+      alert('팀 생성 중 오류가 발생했습니다.');
     } finally {
       setCreatingTeam(false);
     }
