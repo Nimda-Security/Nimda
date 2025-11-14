@@ -6,9 +6,13 @@ import com.nimda.cup.group.dto.GroupMemberResponse;
 import com.nimda.cup.group.dto.GroupResponse;
 import com.nimda.cup.group.service.GroupService;
 import jakarta.validation.Valid;
+
+import java.util.List;
+
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
@@ -35,5 +39,10 @@ public class GroupController {
             @Valid @RequestBody GroupMemberAddRequest request) {
         GroupMemberResponse response = groupService.addMember(groupId, request);
         return ResponseEntity.status(HttpStatus.CREATED).body(response);
+    }
+
+    @GetMapping
+    public ResponseEntity<List<GroupResponse>> getGroups() {
+        return ResponseEntity.ok(groupService.getAllGroups());
     }
 }

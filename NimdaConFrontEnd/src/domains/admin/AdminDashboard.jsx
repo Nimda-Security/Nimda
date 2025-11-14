@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import Layout from '@/components/Layout';
 import BlackLineButton from '@/components/Button/BlackLine';
 import { useNavigate } from 'react-router-dom';
-import { getAllUsersAPI, createGroupAPI } from '@/api/admin/admin';
+import { getAllUsersAPI, getAllGroupsAPI, createGroupAPI } from '@/api/admin/admin';
 import { getAllProblemsAPI } from '@/api/problem';
 
 function AdminDashboard() {
@@ -69,27 +69,29 @@ function AdminDashboard() {
   const loadTeams = async () => {
     setTeamsLoading(true);
     try {
-      await new Promise((resolve) => setTimeout(resolve, 600));
-      setTeams([
-        {
-          id: 1,
-          name: '알고리즘 고수들',
-          leader: 'admin',
-          members: 4,
-          maxMembers: 5,
-          isPublic: true,
-          createdAt: '2025-02-10',
-        },
-        {
-          id: 2,
-          name: 'NIMDA TEAM',
-          leader: 'seoyun',
-          members: 5,
-          maxMembers: 8,
-          isPublic: false,
-          createdAt: '2025-01-22',
-        },
-      ]);
+      const result = await getAllGroupsAPI();
+      if (result.success) {
+        const mapped = (result.groups || []).map((group) => ({
+          id: group.groupId,
+          name: group.groupName,
+          leader: group.creatorUserId
+            ? `사용자 #${group.creatorUserId}`
+            : '알 수 없음',
+          members: group.activeMemberCount ?? 0,
+          maxMembers: group.maxMembers,
+          isPublic: group.isPublic,
+          createdAt: group.createdAt
+            ? new Date(group.createdAt).toISOString().slice(0, 10)
+            : '-',
+          participationCode: group.participationCode,
+        }));
+        setTeams(mapped);
+      } else {
+        alert(result.message || '팀 목록을 불러오지 못했습니다.');
+      }
+    } catch (error) {
+      console.error('팀 목록 로드 오류:', error);
+      alert('팀 목록을 불러오는 중 오류가 발생했습니다.');
     } finally {
       setTeamsLoading(false);
     }

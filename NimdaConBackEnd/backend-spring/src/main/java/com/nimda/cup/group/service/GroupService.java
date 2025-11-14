@@ -10,6 +10,10 @@ import com.nimda.cup.group.repository.GroupMembershipRepository;
 import com.nimda.cup.group.repository.StudyGroupRepository;
 import com.nimda.cup.user.entity.User;
 import com.nimda.cup.user.service.UserService;
+
+import java.util.List;
+import java.util.stream.Collectors;
+
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -99,5 +103,23 @@ public class GroupService {
                 .joinedAt(saved.getJoinedAt())
                 .leftAt(saved.getLeftAt())
                 .build();
+    }
+
+    // * 모든 스터디 그룹 조회 API *
+    // * DB에 젖아된 모든 스터디그룹을 조회해서 GroupResponse 객체로 변환해 리턴한다.
+    @Transactional(readOnly = true)
+    public List<GroupResponse> getAllGroups() {
+        return studyGroupRepository.findAll().stream()
+                .map(group -> GroupResponse.builder()
+                        .groupId(group.getId())
+                        .groupName(group.getGroupName())
+                        .maxMembers(group.getMaxMembers())
+                        .isPublic(group.getIsPublic())
+                        .participationCode(group.getParticipationCode())
+                        .creatorUserId(group.getCreatedBy().getId())
+                        .createdAt(group.getCreatedAt())
+                        .updatedAt(group.getUpdatedAt())
+                        .build())
+                .collect(Collectors.toList());
     }
 }
