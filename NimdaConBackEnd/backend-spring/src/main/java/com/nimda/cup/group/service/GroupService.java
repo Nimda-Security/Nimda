@@ -1,7 +1,9 @@
 package com.nimda.cup.group.service;
 
+import com.nimda.cup.group.dto.GroupCreateRequest;
 import com.nimda.cup.group.dto.GroupMemberAddRequest;
 import com.nimda.cup.group.dto.GroupMemberResponse;
+import com.nimda.cup.group.dto.GroupResponse;
 import com.nimda.cup.group.entity.GroupMembership;
 import com.nimda.cup.group.entity.StudyGroup;
 import com.nimda.cup.group.repository.GroupMembershipRepository;
@@ -11,6 +13,7 @@ import com.nimda.cup.user.service.UserService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.util.StringUtils;
 
 @Service
 public class GroupService {
@@ -21,6 +24,41 @@ public class GroupService {
     private GroupMembershipRepository groupMembershipRepository;
     @Autowired
     private UserService userService;
+
+    @Transactional
+    public GroupResponse createGroup(GroupCreateRequest request) {
+
+        // * [Exception] 실제로 존재하는 사용자인지 체크 *
+        User creator = userService.findById(request.getCreatorUserId())
+                .orElseThrow(() -> new IllegalArgumentException("사용자를 찾을 수 없습니다."));
+
+        // * [Exception] 참여 코드가 이미 사용 중인지 체크 *
+        if (StringUtils.hasText(request.getParticipationCode())
+                && studyGroupRepository.existsByParticipationCode(request.getParticipationCode())) {
+            throw new IllegalStateException("이미 사용 중인 참여 코드입니다.");
+        }
+
+        // * [Entity] StudyGroup - 스터디 그룹 엔터티 생성 *
+        StudyGroup group = new StudyGroup();
+        group.setGroupName(request.getGroupName());
+        group.setMaxMembers(request.getMaxMembers());
+        group.setParticipationCode(request.getParticipationCode());
+        group.setIsPublic(Boolean.TRUE.equals(request.getIsPublic()));
+        group.setCreatedBy(creator);
+
+        StudyGroup saved = studyGroupRepository.save(group);
+
+        return GroupResponse.builder()
+                .groupId(saved.getId())
+                .groupName(saved.getGroupName())
+                .maxMembers(saved.getMaxMembers())
+                .isPublic(saved.getIsPublic())
+                .participationCode(saved.getParticipationCode())
+                .creatorUserId(saved.getCreatedBy().getId())
+                .createdAt(saved.getCreatedAt())
+                .updatedAt(saved.getUpdatedAt())
+                .build();
+    }
 
     @Transactional
     public GroupMemberResponse addMember(Long groupId, GroupMemberAddRequest request) {

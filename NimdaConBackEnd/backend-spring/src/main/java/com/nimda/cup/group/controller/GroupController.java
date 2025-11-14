@@ -1,7 +1,9 @@
 package com.nimda.cup.group.controller;
 
+import com.nimda.cup.group.dto.GroupCreateRequest;
 import com.nimda.cup.group.dto.GroupMemberAddRequest;
 import com.nimda.cup.group.dto.GroupMemberResponse;
+import com.nimda.cup.group.dto.GroupResponse;
 import com.nimda.cup.group.service.GroupService;
 import jakarta.validation.Valid;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -19,6 +21,13 @@ public class GroupController {
 
     @Autowired
     private GroupService groupService;
+
+    // * 스터디 그룹 생성 API *
+    @PostMapping
+    public ResponseEntity<GroupResponse> createGroup(@Valid @RequestBody GroupCreateRequest request) {
+        GroupResponse response = groupService.createGroup(request);
+        return ResponseEntity.status(HttpStatus.CREATED).body(response);
+    }
 
     @PostMapping("/{groupId}/members")
     public ResponseEntity<GroupMemberResponse> addMember(
