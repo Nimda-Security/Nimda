@@ -12,6 +12,8 @@ function AdminDashboard() {
   const [problems, setProblems] = useState([]);
   const [loading, setLoading] = useState(false);
   const [problemsLoading, setProblemsLoading] = useState(false);
+  const [teams, setTeams] = useState([]);
+  const [teamsLoading, setTeamsLoading] = useState(false);
 
   const goToProblemCreate = () => {
     navigate('/problem-create');
@@ -55,6 +57,39 @@ function AdminDashboard() {
     }
   };
 
+  /**
+   * 팀 목록 UI용 임시 로더
+   * TODO: 실제 팀 목록 API 연동 시 교체
+   */
+  const loadTeams = async () => {
+    setTeamsLoading(true);
+    try {
+      await new Promise((resolve) => setTimeout(resolve, 600));
+      setTeams([
+        {
+          id: 1,
+          name: '알고리즘 고수들',
+          leader: 'admin',
+          members: 4,
+          maxMembers: 5,
+          isPublic: true,
+          createdAt: '2025-02-10',
+        },
+        {
+          id: 2,
+          name: 'NIMDA TEAM',
+          leader: 'seoyun',
+          members: 5,
+          maxMembers: 8,
+          isPublic: false,
+          createdAt: '2025-01-22',
+        },
+      ]);
+    } finally {
+      setTeamsLoading(false);
+    }
+  };
+
   const goToSystemSettings = () => {
     alert('시스템 설정 기능 (구현 예정)');
   };
@@ -79,9 +114,9 @@ function AdminDashboard() {
             
             </div>
 
-            <div className="mt-8 bg-blue-50 p-6 rounded-lg">
-              <h3 className="text-lg font-semibold text-blue-800 mb-2">관리자 전용 기능</h3>
-              <ul className="text-blue-700 space-y-1">
+            <div className="mt-8 bg-gray-100 p-6 rounded-lg">
+              <h3 className="text-lg font-semibold text-gray-900 mb-2">관리자 전용 기능</h3>
+              <ul className="text-gray-700 space-y-1">
                 <li>• 문제 출제 및 관리</li>
                 <li>• 사용자 권한 관리</li>
                 <li>• 시스템 설정 변경</li>
@@ -99,13 +134,13 @@ function AdminDashboard() {
                 <button
                   onClick={loadProblems}
                   disabled={problemsLoading}
-                  className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 disabled:opacity-50"
+                  className="px-4 py-2 bg-black text-white rounded-md hover:bg-gray-900 disabled:opacity-50"
                 >
                   {problemsLoading ? '로딩 중...' : '문제 목록 새로고침'}
                 </button>
                 <button
                   onClick={goToProblemCreate}
-                  className="px-4 py-2 bg-green-600 text-white rounded-md hover:bg-green-700"
+                  className="px-4 py-2 border border-black text-black rounded-md hover:bg-black hover:text-white"
                 >
                   새 문제 출제
                 </button>
@@ -156,18 +191,12 @@ function AdminDashboard() {
                           </div>
                         </td>
                         <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                          <span className={`px-2 py-1 text-xs rounded-full ${
-                            problem.difficulty === 'EASY' 
-                              ? 'bg-green-100 text-green-800'
-                              : problem.difficulty === 'MEDIUM'
-                              ? 'bg-yellow-100 text-yellow-800'
-                              : 'bg-red-100 text-red-800'
-                          }`}>
+                          <span className="px-2 py-1 text-xs rounded-full bg-gray-200 text-gray-800">
                             {problem.difficulty}
                           </span>
                         </td>
                         <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                          <span className="px-2 py-1 text-xs rounded-full bg-blue-100 text-blue-800">
+                          <span className="px-2 py-1 text-xs rounded-full bg-gray-200 text-gray-800">
                             {problem.language}
                           </span>
                         </td>
@@ -178,7 +207,7 @@ function AdminDashboard() {
                           {problem.createdAt ? new Date(problem.createdAt).toLocaleDateString() : '-'}
                         </td>
                         <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                          <span className="px-2 py-1 text-xs rounded-full bg-green-100 text-green-800">
+                          <span className="px-2 py-1 text-xs rounded-full bg-gray-200 text-gray-800">
                             활성
                           </span>
                         </td>
@@ -193,13 +222,13 @@ function AdminDashboard() {
                 <div className="flex gap-2 justify-center">
                   <button
                     onClick={loadProblems}
-                    className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700"
+                    className="px-4 py-2 bg-black text-white rounded-md hover:bg-gray-900"
                   >
                     문제 목록 불러오기
                   </button>
                   <button
                     onClick={goToProblemCreate}
-                    className="px-4 py-2 bg-green-600 text-white rounded-md hover:bg-green-700"
+                    className="px-4 py-2 border border-black text-black rounded-md hover:bg-black hover:text-white"
                   >
                     첫 문제 출제하기
                   </button>
@@ -216,7 +245,7 @@ function AdminDashboard() {
               <button
                 onClick={loadUsers}
                 disabled={loading}
-                className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 disabled:opacity-50"
+                className="px-4 py-2 bg-black text-white rounded-md hover:bg-gray-900 disabled:opacity-50"
               >
                 {loading ? '로딩 중...' : '사용자 목록 새로고침'}
               </button>
@@ -251,13 +280,13 @@ function AdminDashboard() {
                           {user.id}
                         </td>
                         <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                          <span className={`px-2 py-1 text-xs rounded-full ${
-                            user.username === 'admin' 
-                              ? 'bg-red-100 text-red-800' 
-                              : 'bg-gray-100 text-gray-800'
-                          }`}>
+                          <span className="px-2 py-1 text-xs rounded-full bg-gray-200 text-gray-900">
                             {user.username}
-                            {user.username === 'admin' && ' (관리자)'}
+                            {user.username === 'admin' && (
+                              <span className="ml-1 text-[11px] uppercase tracking-wide text-gray-500">
+                                ADMIN
+                              </span>
+                            )}
                           </span>
                         </td>
                         <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
@@ -267,7 +296,7 @@ function AdminDashboard() {
                           {user.createdAt ? new Date(user.createdAt).toLocaleDateString() : '-'}
                         </td>
                         <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                          <span className="px-2 py-1 text-xs rounded-full bg-green-100 text-green-800">
+                          <span className="px-2 py-1 text-xs rounded-full bg-gray-200 text-gray-900">
                             활성
                           </span>
                         </td>
@@ -281,12 +310,94 @@ function AdminDashboard() {
                 <p className="text-gray-500 mb-4">사용자 목록이 비어있습니다.</p>
                 <button
                   onClick={loadUsers}
-                  className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700"
+                  className="px-4 py-2 bg-black text-white rounded-md hover:bg-gray-900"
                 >
                   사용자 목록 불러오기
                 </button>
               </div>
             )}
+
+            {/* 팀 목록 UI */}
+            <div className="mt-10">
+              <div className="flex items-center justify-between mb-4">
+                <h3 className="text-xl font-semibold">팀 목록</h3>
+                <button
+                  onClick={loadTeams}
+                  disabled={teamsLoading}
+                  className="px-4 py-2 bg-black text-white rounded-md hover:bg-gray-900 disabled:opacity-50"
+                >
+                  {teamsLoading ? '로딩 중...' : '팀 목록 불러오기'}
+                </button>
+              </div>
+
+              {teams.length > 0 ? (
+                <div className="bg-white rounded-lg shadow-md overflow-hidden">
+                  <table className="min-w-full divide-y divide-gray-200">
+                    <thead className="bg-gray-50">
+                      <tr>
+                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                          ID
+                        </th>
+                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                          팀 이름
+                        </th>
+                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                          팀장
+                        </th>
+                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                          멤버 수
+                        </th>
+                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                          공개 여부
+                        </th>
+                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                          생성일
+                        </th>
+                      </tr>
+                    </thead>
+                    <tbody className="bg-white divide-y divide-gray-200">
+                      {teams.map((team) => (
+                        <tr key={team.id} className="hover:bg-gray-50">
+                          <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                            {team.id}
+                          </td>
+                          <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                            {team.name}
+                          </td>
+                          <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                            {team.leader}
+                          </td>
+                          <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                            {team.members} / {team.maxMembers}
+                          </td>
+                          <td className="px-6 py-4 whitespace-nowrap text-sm">
+                            <span className="px-2 py-1 text-xs rounded-full bg-gray-200 text-gray-800">
+                              {team.isPublic ? '공개' : '비공개'}
+                            </span>
+                          </td>
+                          <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                            {team.createdAt}
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              ) : (
+                <div className="bg-white p-8 rounded-lg shadow-md text-center">
+                  <p className="text-gray-500 mb-4">
+                    팀 정보를 불러오려면 상단 버튼을 클릭하세요.
+                  </p>
+                  <button
+                    onClick={loadTeams}
+                    disabled={teamsLoading}
+                    className="px-4 py-2 bg-black text-white rounded-md hover:bg-gray-900 disabled:opacity-50"
+                  >
+                    {teamsLoading ? '로딩 중...' : '팀 목록 불러오기'}
+                  </button>
+                </div>
+              )}
+            </div>
           </div>
         );
       default:
@@ -318,7 +429,7 @@ function AdminDashboard() {
                 onClick={() => setActiveSection(item.id)}
                 className={`w-full text-left px-4 py-3 rounded-lg transition-colors ${
                   activeSection === item.id
-                    ? 'bg-blue-600 text-white'
+                    ? 'bg-white text-black'
                     : 'text-gray-300 hover:bg-gray-700 hover:text-white'
                 }`}
               >
