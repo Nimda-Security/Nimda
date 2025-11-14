@@ -6,15 +6,14 @@ import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.Size;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
-import lombok.NoArgsConstructor;
 import lombok.Setter;
 import org.springframework.data.annotation.CreatedDate;
 import org.springframework.data.annotation.LastModifiedDate;
 import org.springframework.data.jpa.domain.support.AuditingEntityListener;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.nimda.cup.group.entity.GroupMembership;
 
-import java.time.LocalDateTime;
 import java.util.HashSet;
 import java.util.Set;
 
@@ -66,4 +65,9 @@ public class User {
     )
     @JsonIgnore
     private Set<Authority> authorities = new HashSet<>();
+
+    // 그룹 멤버십 관계 (1:N 관계)
+    @OneToMany(mappedBy = "user", fetch = FetchType.LAZY)
+    @JsonIgnore
+    private Set<GroupMembership> groupMemberships = new HashSet<>();
 }
