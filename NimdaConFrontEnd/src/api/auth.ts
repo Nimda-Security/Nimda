@@ -41,18 +41,24 @@ export const loginAPI = async (
 
     const result = await response.json();
 
+    // 백엔드 응답 형태가 access_token(legacy) 또는 accessToken(new) 둘 다 가능
+    const accessToken = result.access_token ?? result.accessToken;
+    const userInfo = result.user;
+
     if (response.ok) {
       // 로그인 성공 시 토큰 저장 (access_token 키로 받음)
-      if (result.access_token) {
-        localStorage.setItem("authToken", result.access_token);
-        localStorage.setItem("user", JSON.stringify(result.user));
+      if (accessToken) {
+        localStorage.setItem("authToken", accessToken);
+        if (userInfo) {
+          localStorage.setItem("user", JSON.stringify(userInfo));
+        }
       }
 
       return {
         success: true,
         message: "로그인 성공",
-        token: result.access_token,
-        user: result.user,
+        token: accessToken,
+        user: userInfo,
       };
     } else {
       // 로그인 실패
