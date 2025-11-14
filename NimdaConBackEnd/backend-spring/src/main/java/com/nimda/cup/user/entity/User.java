@@ -27,7 +27,7 @@ public class User {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    @JsonIgnore
+    // @JsonIgnore
     private Long id;
     // IDNENTITY : AUTO_INCREMENT
 
