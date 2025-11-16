@@ -41,8 +41,16 @@ public class GroupController {
         return ResponseEntity.status(HttpStatus.CREATED).body(response);
     }
 
+    // * 스터디 그룹 목록 조회 API */
     @GetMapping
     public ResponseEntity<List<GroupResponse>> getGroups() {
         return ResponseEntity.ok(groupService.getAllGroups());
+    }
+
+    // * 스터디 그룹 멤버 조회 API *
+    // * @PathVariable -> groupid
+    @GetMapping("/{groupId}/members")
+    public ResponseEntity<List<GroupMemberResponse>> getGroupMembers(@PathVariable Long groupId) {
+        return ResponseEntity.ok(groupService.getGroupMembers(groupId));
     }
 }
