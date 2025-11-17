@@ -14,17 +14,17 @@ function LogInPage() {
 
     // FormData로 폼의 모든 input 값 수집
     const formData = new FormData(e.target as HTMLFormElement);
-    const username = formData.get("userid") as string; // 이름
+    const userId = formData.get("userid") as string; // 로그인 아이디
     const password = formData.get("password") as string; // 비밀번호
 
     // 입력값 검증
-    if (!username || !password) {
+    if (!userId || !password) {
       alert("아이디와 비밀번호를 입력해주세요.");
       return;
     }
 
     // 로그인 API 호출
-    const result = await loginAPI({ username, password });
+    const result = await loginAPI({ userId, password });
 
     if (result.success) {
       alert("로그인 성공!");
