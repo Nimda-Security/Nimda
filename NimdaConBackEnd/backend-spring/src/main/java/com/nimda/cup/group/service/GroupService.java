@@ -43,12 +43,12 @@ public class GroupService {
                 }
 
                 // * [Entity] StudyGroup - 스터디 그룹 엔터티 생성 *
-                StudyGroup group = new StudyGroup();
-                group.setGroupName(request.getGroupName());
-                group.setMaxMembers(request.getMaxMembers());
-                group.setParticipationCode(request.getParticipationCode());
-                group.setIsPublic(Boolean.TRUE.equals(request.getIsPublic()));
-                group.setCreatedBy(creator);
+                StudyGroup group = new StudyGroup(
+                                request.getGroupName(),
+                                request.getMaxMembers(),
+                                request.getParticipationCode(),
+                                Boolean.TRUE.equals(request.getIsPublic()),
+                                creator);
 
                 StudyGroup saved = studyGroupRepository.save(group);
 
@@ -97,7 +97,7 @@ public class GroupService {
                                 .membershipId(saved.getId())
                                 .groupId(group.getId())
                                 .userId(user.getId())
-                                .username(user.getUsername())
+                                .username(user.getNickname())
                                 .role(saved.getRole())
                                 .active(saved.isActive())
                                 .joinedAt(saved.getJoinedAt())
@@ -141,7 +141,7 @@ public class GroupService {
                                                 .membershipId(membership.getId())
                                                 .groupId(group.getId())
                                                 .userId(membership.getUser().getId())
-                                                .username(membership.getUser().getUsername())
+                                                .username(membership.getUser().getNickname())
                                                 .role(membership.getRole())
                                                 .active(membership.isActive())
                                                 .joinedAt(membership.getJoinedAt())

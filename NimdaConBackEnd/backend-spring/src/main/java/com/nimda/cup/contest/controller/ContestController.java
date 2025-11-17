@@ -48,7 +48,6 @@ public class ContestController {
     @Autowired
     private UserRepository userRepository;
 
-    
     private User getUserFromToken(String authHeader) {
         if (authHeader == null || !authHeader.startsWith("Bearer ")) {
             return null;
@@ -56,10 +55,10 @@ public class ContestController {
 
         try {
             String token = authHeader.substring(7); // "Bearer " 제거
-            String username = jwtUtil.extractUsername(token);
+            String nickname = jwtUtil.extractNickname(token);
 
-            if (username != null && !jwtUtil.isTokenExpired(token)) {
-                return userRepository.findByUsername(username).orElse(null);
+            if (nickname != null && !jwtUtil.isTokenExpired(token)) {
+                return userRepository.findByNickname(nickname).orElse(null);
             }
         } catch (Exception e) {
             // 토큰이 유효하지 않으면 null 반환
@@ -72,7 +71,7 @@ public class ContestController {
     /**
      * 대회 생성 API
      * - 관리자만 대회 생성 가능
-     * - JWT 토큰에서 사용자 정보 추출 후 권한 확인 
+     * - JWT 토큰에서 사용자 정보 추출 후 권한 확인
      *
      * - created_by 필드에 현재 사용자 설정 (관리자 권한 확인용)
      * - Authority.ROLE_ADMIN 권한 확인
@@ -292,7 +291,8 @@ public class ContestController {
             String problemAlias = request.get("problemAlias") != null ? request.get("problemAlias").toString() : null;
 
             // 대회에 문제 추가 (관리자 권한 확인 포함)
-            ContestProblem contestProblem = contestService.addProblemToContest(contestId, problemId, score, problemAlias, user);
+            ContestProblem contestProblem = contestService.addProblemToContest(contestId, problemId, score,
+                    problemAlias, user);
 
             Map<String, Object> response = new HashMap<>();
             response.put("success", true);
@@ -500,4 +500,3 @@ public class ContestController {
         }
     }
 }
-
