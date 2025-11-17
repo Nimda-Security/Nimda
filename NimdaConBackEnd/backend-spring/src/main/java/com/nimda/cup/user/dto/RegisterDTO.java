@@ -23,7 +23,7 @@ public class RegisterDTO {
     private String nickname;
 
     @NotBlank(message = "Password is required")
-    @Size(min = 4, max = 20, message = "Password must be between 4 and 20 characters")
+    @Size(min = 4, max = 255, message = "Password must be between 4 and 255 characters")
     private String password;
 
     @NotBlank(message = "Email is required")

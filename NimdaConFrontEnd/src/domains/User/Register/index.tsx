@@ -27,15 +27,15 @@ function RegisterPage() {
       return;
     }
 
-    // 회원가입 API 호출
+    // 회원가입 API 호출 (빈 문자열은 undefined로 변환)
     const result = await registerAPI({
       userId,
       nickname,
       password,
       email,
-      universityName: universityName || undefined,
-      department: department || undefined,
-      grade: grade || undefined,
+      universityName: universityName?.trim() || undefined,
+      department: department?.trim() || undefined,
+      grade: grade?.trim() || undefined,
     });
 
     if (result.success) {
