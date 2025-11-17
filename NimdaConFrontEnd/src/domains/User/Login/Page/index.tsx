@@ -6,6 +6,7 @@ import { Input } from "@/components/Input";
 import { loginAPI } from "@/api/auth";
 
 function LogInPage() {
+  
   const navigate = useNavigate();
 
   const handleLogin = async (e: React.FormEvent) => {
