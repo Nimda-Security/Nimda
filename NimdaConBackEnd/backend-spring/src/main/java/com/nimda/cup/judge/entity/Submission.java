@@ -70,9 +70,9 @@ public class Submission {
     }
 
     /**
-     * 제출자 사용자명 반환
+     * 제출자 닉네임 반환
      */
-    public String getUsername() {
+    public String getNickname() {
         return user != null ? user.getNickname() : "익명";
     }
 
