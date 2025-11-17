@@ -13,17 +13,27 @@ import lombok.Setter;
 @NoArgsConstructor
 @AllArgsConstructor
 public class RegisterDTO {
-    
-    @NotBlank(message = "Username is required")
-    @Size(min = 3, max = 20, message = "Username must be between 3 and 20 characters")
-    private String username;
-    
+
+    @NotBlank(message = "User ID is required")
+    @Size(min = 3, max = 20, message = "User ID must be between 3 and 20 characters")
+    private String userId;
+
+    @NotBlank(message = "Nickname is required")
+    @Size(min = 3, max = 20, message = "Nickname must be between 3 and 20 characters")
+    private String nickname;
+
     @NotBlank(message = "Password is required")
     @Size(min = 4, max = 20, message = "Password must be between 4 and 20 characters")
     private String password;
-    
+
     @NotBlank(message = "Email is required")
     @Email(message = "Email should be valid")
     private String email;
-    
+
+    private String universityName;
+
+    private String department;
+
+    private String grade;
+
 }

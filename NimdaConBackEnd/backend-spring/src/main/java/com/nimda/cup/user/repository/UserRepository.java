@@ -17,7 +17,7 @@ public interface UserRepository extends JpaRepository<User, Long> {
     /**
      * user_id로 사용자 찾기
      */
-    Optional<User> findByUserId(Long userId);
+    Optional<User> findByUserId(String userId);
 
     /**
      * 이메일로 사용자 찾기
@@ -32,7 +32,7 @@ public interface UserRepository extends JpaRepository<User, Long> {
     /**
      * user_id가 존재하는지 확인
      */
-    boolean existsByUserId(Long userId);
+    boolean existsByUserId(String userId);
 
     /**
      * 이메일이 존재하는지 확인

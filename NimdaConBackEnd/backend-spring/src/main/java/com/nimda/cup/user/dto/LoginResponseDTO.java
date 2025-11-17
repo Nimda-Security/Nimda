@@ -23,7 +23,8 @@ public class LoginResponseDTO {
     @AllArgsConstructor
     public static class UserInfo {
         private Long id;
-        private String username;
+        private String userId;
+        private String nickname;
         private String email;
     }
 }

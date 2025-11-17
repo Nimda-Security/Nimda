@@ -29,15 +29,17 @@ public class User {
     private Long id;
     // IDNENTITY : AUTO_INCREMENT
 
-    @Column(name = "user_id", unique = true)
-    private Long userId;
-    // 프론트엔드와의 호환성을 위한 user_id 컬럼 (Service 레이어에서 id와 동일하게 설정)
+    @NotBlank
+    @Size(min = 3, max = 20)
+    @Column(name = "user_id", unique = true, nullable = false)
+    private String userId;
+    // 로그인 아이디 (변경 불가능, 고유)
 
     @NotBlank
     @Size(min = 3, max = 20)
     @Column(name = "nickname", unique = true, nullable = false)
     private String nickname;
-    // 기존 username을 nickname으로 변경
+    // 닉네임 (변경 가능, 표시용)
 
     @NotBlank
     @Size(min = 4, max = 20)
@@ -63,14 +65,15 @@ public class User {
     }
 
     // 필요한 생성자 추가 (기존 호환성 유지)
-    public User(String nickname, String password, String email) {
+    public User(String userId, String nickname, String password, String email) {
+        this.userId = userId;
         this.nickname = nickname;
         this.password = password;
         this.email = email;
     }
 
     // 전체 필드 생성자
-    public User(Long userId, String nickname, String password, String email,
+    public User(String userId, String nickname, String password, String email,
             String universityName, String department, String grade) {
         this.userId = userId;
         this.nickname = nickname;
