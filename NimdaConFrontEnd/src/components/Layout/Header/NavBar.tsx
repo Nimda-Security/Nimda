@@ -75,9 +75,9 @@ const Navbar: React.FC<NavbarProps> = ({ menuItems }) => {
   };
 
   return (
-    <nav className="fixed top-0 left-0 right-0 z-50 h-16 border-b border-[#E0E0E0] bg-white">
+    <nav className="fixed top-0 left-0 right-0 z-50 h-15 border-b border-[#E0E0E0] bg-white">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="flex items-center justify-between h-16">
+        <div className="flex items-center justify-between h-15">
           <div className="flex-shrink-0">
             <Link to="/">
               <Logo />
