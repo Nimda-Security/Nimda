@@ -12,17 +12,16 @@ import java.util.Optional;
 
 @Service
 public class UserService {
-    
+
     @Autowired
     private UserRepository userRepository;
-    
+
     @Autowired
     private PasswordEncoder passwordEncoder; // Spring Security 비밀번호 암호화 도구
-    
-    
+
     /*
-     * CreateUser : 회원 가입 
-     */ 
+     * CreateUser : 회원 가입
+     */
     @Transactional
     public User createUser(String username, String password, String email) {
         validateUserUniqueness(username, email);
@@ -30,8 +29,8 @@ public class UserService {
         User user = new User(username, encodedPassword, email);
         return userRepository.save(user);
     }
-    
-    //  사용자 중복 확인
+
+    // 사용자 중복 확인
     private void validateUserUniqueness(String username, String email) {
 
         if (existsByUsername(username)) {
@@ -50,7 +49,7 @@ public class UserService {
         return userRepository.findById(id);
     }
 
-    // 조회 메서드 
+    // 조회 메서드
     @Transactional(readOnly = true)
     public Optional<User> findByUsername(String username) {
         return userRepository.findByUsername(username);
@@ -61,19 +60,19 @@ public class UserService {
     public boolean existsByUsername(String username) {
         return userRepository.existsByUsername(username);
     }
-    
+
     /// 이메일 중복 확인
     @Transactional(readOnly = true)
     public boolean existsByEmail(String email) {
         return userRepository.existsByEmail(email);
     }
-    
-    // 사용자 정보 업데이트 
+
+    // 사용자 정보 업데이트
     @Transactional
     public User updateUser(User user) {
         return userRepository.save(user);
     }
-    
+
     // 모든 사용자 조회
     @Transactional(readOnly = true)
     public List<User> findAll() {

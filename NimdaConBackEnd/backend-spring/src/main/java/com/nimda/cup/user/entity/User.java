@@ -7,8 +7,6 @@ import jakarta.validation.constraints.Size;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.Setter;
-import org.springframework.data.annotation.CreatedDate;
-import org.springframework.data.annotation.LastModifiedDate;
 import org.springframework.data.jpa.domain.support.AuditingEntityListener;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
@@ -31,11 +29,15 @@ public class User {
     private Long id;
     // IDNENTITY : AUTO_INCREMENT
 
+    @Column(name = "user_id", unique = true)
+    private Long userId;
+    // 프론트엔드와의 호환성을 위한 user_id 컬럼 (Service 레이어에서 id와 동일하게 설정)
+
     @NotBlank
     @Size(min = 3, max = 20)
-    @Column(unique = true, nullable = false)
-    private String username;
-    // VARCHAR(255)
+    @Column(name = "nickname", unique = true, nullable = false)
+    private String nickname;
+    // 기존 username을 nickname으로 변경
 
     @NotBlank
     @Size(min = 4, max = 20)
@@ -47,15 +49,36 @@ public class User {
     @Column(unique = true, nullable = false)
     private String email;
 
+    @Column(name = "university_name", length = 100)
+    private String universityName;
+
+    @Column(name = "department", length = 100)
+    private String department;
+
+    @Column(name = "grade", length = 20)
+    private String grade;
+
     // 기본 생성자
     public User() {
     }
 
-    // 필요한 생성자 추가
-    public User(String username, String password, String email) {
-        this.username = username;
+    // 필요한 생성자 추가 (기존 호환성 유지)
+    public User(String nickname, String password, String email) {
+        this.nickname = nickname;
         this.password = password;
         this.email = email;
+    }
+
+    // 전체 필드 생성자
+    public User(Long userId, String nickname, String password, String email,
+            String universityName, String department, String grade) {
+        this.userId = userId;
+        this.nickname = nickname;
+        this.password = password;
+        this.email = email;
+        this.universityName = universityName;
+        this.department = department;
+        this.grade = grade;
     }
 
     // 사용자 권한 관리 테이블
