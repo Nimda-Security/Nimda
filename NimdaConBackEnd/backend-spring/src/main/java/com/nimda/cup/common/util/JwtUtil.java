@@ -37,6 +37,22 @@ public class JwtUtil {
     }
 
     /**
+     * JWT 토큰 생성 (권한 정보 포함)
+     * 
+     * @param nickname    닉네임
+     * @param userId      사용자 ID
+     * @param authorities 권한 목록
+     * @return JWT 토큰
+     */
+    public String generateToken(String nickname, Long userId, java.util.List<String> authorities) {
+        Map<String, Object> claims = new HashMap<>();
+        claims.put("sub", userId);
+        claims.put("nickname", nickname);
+        claims.put("authorities", authorities);
+        return createToken(claims, nickname);
+    }
+
+    /**
      * JWT 토큰 생성 (내부 메서드)
      * 
      * @param claims  클레임
@@ -83,6 +99,21 @@ public class JwtUtil {
      */
     public Long extractUserId(String token) {
         return extractClaim(token, claims -> claims.get("sub", Long.class));
+    }
+
+    /**
+     * 토큰에서 권한 목록 추출
+     * 
+     * @param token JWT 토큰
+     * @return 권한 목록
+     */
+    @SuppressWarnings("unchecked")
+    public java.util.List<String> extractAuthorities(String token) {
+        Object authoritiesObj = extractClaim(token, claims -> claims.get("authorities"));
+        if (authoritiesObj instanceof java.util.List) {
+            return (java.util.List<String>) authoritiesObj;
+        }
+        return new java.util.ArrayList<>();
     }
 
     /**

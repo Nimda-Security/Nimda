@@ -45,14 +45,29 @@ public class AuthService {
 
     /* 로그인 처리 */
 
+    @Transactional(readOnly = true)
     public LoginResponseDTO login(User user) {
-        String token = jwtUtil.generateToken(user.getNickname(), user.getId()); // JWT 토큰 생성
+        // 권한 정보를 포함한 전체 User 객체 조회 (@EntityGraph로 권한 정보 함께 로드)
+        User fullUser = userService.findById(user.getId())
+                .orElseThrow(() -> new RuntimeException("User not found"));
+
+        // 사용자의 권한 목록 추출 (@EntityGraph로 이미 로드됨)
+        java.util.List<String> authorities = fullUser.getAuthorities().stream()
+                .map(authority -> authority.getAuthorityName())
+                .collect(java.util.stream.Collectors.toList());
+
+        // 디버깅용 로그
+        System.out.println("[AuthService] User: " + fullUser.getNickname() + " (ID: " + fullUser.getId() + ")");
+        System.out.println("[AuthService] Authority count: " + authorities.size());
+        System.out.println("[AuthService] Authorities: " + authorities);
+
+        String token = jwtUtil.generateToken(fullUser.getNickname(), fullUser.getId(), authorities); // JWT 토큰 생성
 
         LoginResponseDTO.UserInfo userInfo = LoginResponseDTO.UserInfo.builder()
-                .id(user.getId())
-                .userId(user.getUserId())
-                .nickname(user.getNickname())
-                .email(user.getEmail())
+                .id(fullUser.getId())
+                .userId(fullUser.getUserId())
+                .nickname(fullUser.getNickname())
+                .email(fullUser.getEmail())
                 .build();
 
         return LoginResponseDTO.builder()

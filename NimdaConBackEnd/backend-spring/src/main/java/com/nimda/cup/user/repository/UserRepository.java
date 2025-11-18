@@ -1,6 +1,7 @@
 package com.nimda.cup.user.repository;
 
 import com.nimda.cup.user.entity.User;
+import org.springframework.data.jpa.repository.EntityGraph;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Repository;
 
@@ -23,6 +24,13 @@ public interface UserRepository extends JpaRepository<User, Long> {
      * 이메일로 사용자 찾기
      */
     Optional<User> findByEmail(String email);
+
+    /**
+     * ID로 사용자 찾기 (권한 정보 포함)
+     */
+    @EntityGraph(attributePaths = { "authorities" })
+    @Override
+    Optional<User> findById(Long id);
 
     /**
      * 닉네임이 존재하는지 확인

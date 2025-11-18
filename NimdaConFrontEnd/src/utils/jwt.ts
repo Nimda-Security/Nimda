@@ -22,8 +22,30 @@ export const getCurrentUsername = (): string | null => {
 // 문자열로 변환한 이유 : Http Header는 문자열만 전송 가능하기 때문.
 // localStorage 또한 문자열만 저장 가능
 
-// 관리자 권한 체크 (nickname이 'admin'인지 확인)
+// 관리자 권한 체크 (JWT 토큰의 권한 정보에서 ROLE_ADMIN 확인)
 export const isAdmin = (): boolean => {
-  const nickname = getCurrentNickname();
-  return nickname === 'admin';
+  const token = localStorage.getItem('authToken');
+  if (!token) {
+    console.log('[isAdmin] No token found');
+    return false;
+  }
+  
+  try {
+    const payload = JSON.parse(atob(token.split('.')[1]));
+    console.log('[isAdmin] Full JWT payload:', payload);
+    
+    const authorities = payload.authorities || [];
+    console.log('[isAdmin] Authorities from token:', authorities);
+    console.log('[isAdmin] Is array?', Array.isArray(authorities));
+    console.log('[isAdmin] Includes ROLE_ADMIN?', Array.isArray(authorities) && authorities.includes('ROLE_ADMIN'));
+    
+    // 권한 목록에 ROLE_ADMIN이 있는지 확인
+    const isAdminResult = Array.isArray(authorities) && authorities.includes('ROLE_ADMIN');
+    console.log('[isAdmin] Final result:', isAdminResult);
+    
+    return isAdminResult;
+  } catch (error) {
+    console.error('[isAdmin] Failed to parse JWT token:', error);
+    return false;
+  }
 }; 
