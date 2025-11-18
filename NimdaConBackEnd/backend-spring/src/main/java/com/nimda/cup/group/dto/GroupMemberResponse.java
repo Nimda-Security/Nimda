@@ -13,7 +13,7 @@ public class GroupMemberResponse {
     private Long membershipId;
     private Long groupId;
     private Long userId;
-    private String username;
+    private String nickname;
     private GroupRole role;
     private boolean active;
     private LocalDateTime joinedAt;

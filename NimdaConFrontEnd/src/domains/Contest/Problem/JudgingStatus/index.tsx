@@ -29,7 +29,7 @@ interface Submission {
   submittedAt: string;
   problemId: number;
   problemTitle: string;
-  username: string;
+  nickname: string;
   executionTime?: number | null;
   memoryUsage?: number | null;
   score?: number | null;
@@ -203,7 +203,7 @@ function JudgingStatusPage() {
                         )}
                       </div>
                       <div className="text-center font-medium text-black">
-                        {submission.username}
+                        {submission.nickname}
                       </div>
                       <div className="text-center">
                         <span className="text-blue-600 hover:underline cursor-pointer">

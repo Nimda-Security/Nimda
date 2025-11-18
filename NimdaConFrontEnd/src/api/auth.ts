@@ -3,7 +3,7 @@
 const API_BASE_URL = "/api";
 
 export interface LoginRequest {
-  username: string;
+  userId: string;
   password: string;
 }
 
@@ -13,15 +13,23 @@ export interface LoginResponse {
   token?: string;
   user?: {
     id: number;
-    username: string;
+    userId: string;
+    nickname: string;
     email: string;
+    universityName?: string;
+    department?: string;
+    grade?: string;
   };
 }
 
 export interface RegisterRequest {
-  username: string;
+  userId: string;
+  nickname: string;
   password: string;
   email: string;
+  universityName?: string;
+  department?: string;
+  grade?: string;
 }
 
 /**
@@ -39,7 +47,16 @@ export const loginAPI = async (
       body: JSON.stringify(loginData),
     });
 
-    const result = await response.json();
+    let result;
+    try {
+      result = await response.json();
+    } catch (e) {
+      // JSON 파싱 실패 시
+      return {
+        success: false,
+        message: `서버 오류 (${response.status}): 응답을 파싱할 수 없습니다.`,
+      };
+    }
 
     // 백엔드 응답 형태가 access_token(legacy) 또는 accessToken(new) 둘 다 가능
     const accessToken = result.access_token ?? result.accessToken;
@@ -61,10 +78,13 @@ export const loginAPI = async (
         user: userInfo,
       };
     } else {
-      // 로그인 실패
+      // 로그인 실패 (401 Unauthorized 등)
+      const errorMessage = result.message || 
+        (response.status === 401 ? "아이디 또는 비밀번호가 올바르지 않습니다." : 
+         `로그인에 실패했습니다. (${response.status})`);
       return {
         success: false,
-        message: result.message || "로그인에 실패했습니다.",
+        message: errorMessage,
       };
     }
   } catch (error) {
@@ -83,15 +103,42 @@ export const registerAPI = async (
   registerData: RegisterRequest
 ): Promise<LoginResponse> => {
   try {
+    // 빈 문자열을 undefined로 변환하여 전송하지 않도록 처리
+    const cleanedData: any = {
+      userId: registerData.userId,
+      nickname: registerData.nickname,
+      password: registerData.password,
+      email: registerData.email,
+    };
+    
+    if (registerData.universityName?.trim()) {
+      cleanedData.universityName = registerData.universityName.trim();
+    }
+    if (registerData.department?.trim()) {
+      cleanedData.department = registerData.department.trim();
+    }
+    if (registerData.grade?.trim()) {
+      cleanedData.grade = registerData.grade.trim();
+    }
+    
     const response = await fetch(`${API_BASE_URL}/auth/register`, {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
       },
-      body: JSON.stringify(registerData),
+      body: JSON.stringify(cleanedData),
     });
 
-    const result = await response.json();
+    let result;
+    try {
+      result = await response.json();
+    } catch (e) {
+      // JSON 파싱 실패 시
+      return {
+        success: false,
+        message: `서버 오류 (${response.status}): 응답을 파싱할 수 없습니다.`,
+      };
+    }
 
     if (response.ok) {
       return {
@@ -100,9 +147,13 @@ export const registerAPI = async (
         user: result,
       };
     } else {
+      // 회원가입 실패 (400 Bad Request 등)
+      const errorMessage = result.message || 
+        (response.status === 400 ? "입력한 정보를 확인해주세요." : 
+         `회원가입에 실패했습니다. (${response.status})`);
       return {
         success: false,
-        message: result.message || "회원가입에 실패했습니다.",
+        message: errorMessage,
       };
     }
   } catch (error) {

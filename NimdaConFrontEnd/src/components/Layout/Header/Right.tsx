@@ -2,14 +2,14 @@ import React from 'react';
 import Logout from '@/components/icons/Logout.svg';
 
 interface RightProps {
-  username: string | null;
+  username: string | null; // nickname을 전달받지만 하위 호환성을 위해 prop 이름은 유지
   adminStatus: boolean;
   isLoggedIn: boolean;
   onLogout: () => void;
 }
 
 const Right: React.FC<RightProps> = ({
-  username,
+  username, // 실제로는 nickname 값이 전달됨
   adminStatus,
   isLoggedIn,
   onLogout,

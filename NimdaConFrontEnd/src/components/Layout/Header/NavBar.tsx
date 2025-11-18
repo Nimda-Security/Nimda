@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import Logo from '@/components/icons/Logo';
-import { getCurrentUsername, isAdmin } from '@/utils/jwt';
+import { getCurrentNickname, isAdmin } from '@/utils/jwt';
 import { isLoggedIn, logoutAPI } from '@/api/auth';
 
 interface MenuItem {
@@ -20,7 +20,7 @@ import Right from './Right';
 const Navbar: React.FC<NavbarProps> = ({ menuItems }) => {
   // 모바일 메뉴의 열림/닫힘 상태를 관리하는 state
   const [isOpen, setIsOpen] = useState(false);
-  const [username, setUsername] = useState<string | null>(null);
+  const [nickname, setNickname] = useState<string | null>(null);
   const [adminStatus, setAdminStatus] = useState(false);
   const [isLoggedInState, setIsLoggedInState] = useState(false);
   const [activeDropdown, setActiveDropdown] = useState<string | null>(null);
@@ -39,10 +39,10 @@ const Navbar: React.FC<NavbarProps> = ({ menuItems }) => {
   };
 
   useEffect(() => {
-    const currentUser = getCurrentUsername();
+    const currentNickname = getCurrentNickname();
     const adminCheck = isAdmin();
     const loggedIn = isLoggedIn();
-    setUsername(currentUser);
+    setNickname(currentNickname);
     setAdminStatus(adminCheck);
     setIsLoggedInState(loggedIn);
   }, []);
@@ -50,7 +50,7 @@ const Navbar: React.FC<NavbarProps> = ({ menuItems }) => {
   // 로그아웃 핸들러
   const handleLogout = () => {
     logoutAPI();
-    setUsername(null);
+    setNickname(null);
     setAdminStatus(false);
     setIsLoggedInState(false);
     // 로그인 페이지로 리다이렉트
@@ -115,7 +115,7 @@ const Navbar: React.FC<NavbarProps> = ({ menuItems }) => {
           {/* 오른쪽 영역 - 사용자 정보, 관리자 대시보드, 로그인 */}
           <Right
             isLoggedIn={isLoggedInState}
-            username={username}
+            username={nickname}
             adminStatus={adminStatus}
             onLogout={handleLogout}
           />
@@ -135,9 +135,9 @@ const Navbar: React.FC<NavbarProps> = ({ menuItems }) => {
         <div className="min-[820px]:hidden" id="mobile-menu">
           <div className="bg-black px-2 pt-2 pb-3 space-y-1 sm:px-3">
             {/* 로그인한 경우 사용자명 표시 */}
-            {isLoggedInState && username && (
+            {isLoggedInState && nickname && (
               <div className="text-gray-300 px-3 py-2 text-sm">
-                <span className="font-semibold">{username}</span>
+                <span className="font-semibold">{nickname}</span>
               </div>
             )}
 

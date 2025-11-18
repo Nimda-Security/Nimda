@@ -130,7 +130,7 @@ function AdminDashboard() {
           {
             id: result.group.groupId,
             name: result.group.groupName,
-            leader: currentUser.username || '관리자',
+            leader: currentUser.nickname || currentUser.userId || '관리자',
             members: 1,
             maxMembers: result.group.maxMembers,
             isPublic: result.group.isPublic,
@@ -348,8 +348,8 @@ function AdminDashboard() {
                         </td>
                         <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
                           <span className="px-2 py-1 text-xs rounded-full bg-gray-200 text-gray-900">
-                            {user.username}
-                            {user.username === 'admin' && (
+                            {user.nickname || user.userId}
+                            {(user.nickname === 'admin' || user.userId === 'admin') && (
                               <span className="ml-1 text-[11px] uppercase tracking-wide text-gray-500">
                                 ADMIN
                               </span>

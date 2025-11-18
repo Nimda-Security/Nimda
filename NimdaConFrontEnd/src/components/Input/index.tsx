@@ -1,11 +1,10 @@
 import type { ChangeEvent } from "react";
 
 /**
- * 2025.09.17
- * Input Component 변동사항
- * Form Data 사용을 위한 name, type props 추가 
- * 2025.09.24
- * FormData 호환을 위해 내부 상태 제거
+ * * Component * 
+ * * placeholder : 필수, 입력 필드 안내 텍스트 
+ * * name : 선택, HTML Input의 name 속성 
+ * * type : 선택, 기본값 "Text", password, email ... 
  */
 export const Input = ({ 
   placeholder, 

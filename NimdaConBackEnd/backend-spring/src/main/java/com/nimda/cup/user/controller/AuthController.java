@@ -34,7 +34,7 @@ public class AuthController {
         try {
             // 사용자 인증
             Optional<User> userOpt = authService.validateUser(
-                    loginRequest.getUsername(),
+                    loginRequest.getUserId(),
                     loginRequest.getPassword());
 
             if (userOpt.isPresent()) {
@@ -44,7 +44,7 @@ public class AuthController {
             } else {
                 // 인증 실패
                 return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
-                        .body(Map.of("message", "Invalid username or password"));
+                        .body(Map.of("message", "Invalid user ID or password"));
             }
         } catch (Exception e) {
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
@@ -54,7 +54,8 @@ public class AuthController {
 
     /**
      * 회원가입
-     * Request Data : Register DTO (username, password, email)
+     * Request Data : Register DTO (userId, nickname, password, email,
+     * universityName, department, grade)
      */
     @PostMapping("/register")
     public ResponseEntity<?> register(@Valid @RequestBody RegisterDTO registerRequest) {
@@ -62,9 +63,13 @@ public class AuthController {
         try {
 
             User user = authService.register(
-                    registerRequest.getUsername(),
+                    registerRequest.getUserId(),
+                    registerRequest.getNickname(),
                     registerRequest.getPassword(),
-                    registerRequest.getEmail());
+                    registerRequest.getEmail(),
+                    registerRequest.getUniversityName(),
+                    registerRequest.getDepartment(),
+                    registerRequest.getGrade());
 
             return ResponseEntity.status(HttpStatus.CREATED).body(user);
         }
