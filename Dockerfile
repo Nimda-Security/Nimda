@@ -1,10 +1,13 @@
 # 멀티 아키텍처 지원을 위한 베이스 이미지
-FROM eclipse-temurin:17-jre
+# JDK를 사용하여 javac 컴파일러 포함
+# FROM 베이스 이미지 지정 - JDK 17 버전 사용 
+# Java 실행 환경 (JRE) + 개발 도구 (JDK), javac 컴파일러 
+FROM eclipse-temurin:17-jdk
 
 # C++ 컴파일러 및 빌드 도구 설치
 RUN apt-get update && apt-get install -y \
-    g++ \
-    gcc \
+    g++ \ 
+    gcc \ 
     build-essential \
     && apt-get clean \
     && rm -rf /var/lib/apt/lists/*
