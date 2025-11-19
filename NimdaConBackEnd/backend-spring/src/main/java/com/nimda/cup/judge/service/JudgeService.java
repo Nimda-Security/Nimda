@@ -355,6 +355,19 @@ public class JudgeService {
     }
 
     /**
+     * 특정 사용자의 특정 문제에 대한 제출 목록 조회
+     */
+    public List<Submission> getSubmissionsByUserAndProblem(Long userId, Long problemId) {
+        logger.info("사용자별 문제별 제출 목록 조회 요청 - 사용자 ID: {}, 문제 ID: {}", userId, problemId);
+        User user = userRepository.findById(userId).orElse(null);
+        if (user == null) {
+            logger.warn("사용자를 찾을 수 없음: {}", userId);
+            return List.of();
+        }
+        return submissionRepository.findByUserAndProblemIdOrderBySubmittedAtDesc(user, problemId);
+    }
+
+    /**
      * InputStream을 문자열로 변환
      */
     private String readStream(InputStream inputStream) throws IOException {

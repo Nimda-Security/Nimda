@@ -282,6 +282,79 @@ public class JudgeController {
     }
 
     /**
+     * 특정 사용자의 특정 문제에 대한 제출 목록 조회 API
+     * 
+     * @param userId    사용자 ID
+     * @param problemId 문제 ID
+     * @return 사용자의 특정 문제에 대한 제출 목록
+     */
+    @GetMapping("/submissions/user/{userId}/problem/{problemId}")
+    public ResponseEntity<Map<String, Object>> getSubmissionsByUserAndProblem(
+            @PathVariable Long userId,
+            @PathVariable Long problemId) {
+
+        try {
+            logger.info("사용자별 문제별 제출 목록 조회 요청 - 사용자 ID: {}, 문제 ID: {}", userId, problemId);
+
+            // * JudgeService에 위임한 getSubmissionsByUserAndProblem 메서드를 통해 사용자 제출 데이털르 가져온다.
+            // *
+            List<Map<String, Object>> submissions = judgeService.getSubmissionsByUserAndProblem(userId, problemId)
+                    .stream()
+                    .map(submission -> {
+                        Map<String, Object> submissionData = new HashMap<>();
+                        submissionData.put("id", submission.getId());
+                        submissionData.put("code", submission.getCode());
+                        submissionData.put("language", submission.getLanguage().name());
+                        submissionData.put("status", submission.getStatus().name());
+                        submissionData.put("submittedAt", submission.getSubmittedAt());
+                        submissionData.put("problemId", submission.getProblem().getId());
+                        submissionData.put("problemTitle", submission.getProblem().getTitle());
+
+                        // * 사용자 정보 추가 *
+                        if (submission.getUser() != null) {
+                            submissionData.put("userId", submission.getUser().getId());
+                            submissionData.put("nickname", submission.getUser().getNickname());
+                        } else {
+                            submissionData.put("userId", null);
+                            submissionData.put("nickname", "익명");
+                        }
+
+                        // * JudgeResult 정보 추가 *
+                        if (submission.getJudgeResult() != null) {
+                            submissionData.put("executionTime", submission.getJudgeResult().getExecutionTime());
+                            submissionData.put("memoryUsage", submission.getJudgeResult().getMemoryUsage());
+                            submissionData.put("score", submission.getJudgeResult().getScore());
+                        } else {
+                            submissionData.put("executionTime", null);
+                            submissionData.put("memoryUsage", null);
+                            submissionData.put("score", null);
+                        }
+
+                        return submissionData;
+                    })
+                    .collect(Collectors.toList());
+
+            // * HashpMap에 응답 데이터를 담아서 리턴 *
+            Map<String, Object> response = new HashMap<>();
+            response.put("success", true);
+            response.put("message", "사용자 ID " + userId + "의 문제 ID " + problemId + "에 대한 제출 목록을 성공적으로 조회했습니다.");
+            response.put("submissions", submissions);
+            response.put("totalCount", submissions.size());
+            logger.info("사용자별 문제별 제출 목록 조회 완료 - 사용자 ID: {}, 문제 ID: {}, 총 {}개", userId, problemId, submissions.size());
+            return ResponseEntity.ok(response);
+
+        } catch (Exception e) {
+            logger.error("사용자별 문제별 제출 목록 조회 중 오류 발생", e);
+
+            Map<String, Object> errorResponse = new HashMap<>();
+            errorResponse.put("success", false);
+            errorResponse.put("message", "제출 목록 조회 중 오류가 발생했습니다: " + e.getMessage());
+
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(errorResponse);
+        }
+    }
+
+    /**
      * 테스트용 간단한 채점 API
      * 
      * @return 테스트 결과
