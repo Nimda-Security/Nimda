@@ -16,7 +16,11 @@ const useProblems = () => {
         const res = await fetch('/api/problems');
         if (!res.ok) throw new Error('응답 에러');
         const data = await res.json();
-        setProblems(data.problems);
+        if (data.problems && Array.isArray(data.problems)) {
+          setProblems(data.problems);
+        } else {
+          setProblems([]);
+        }
       } catch (err) {
         setError(err instanceof Error ? err.message : '알 수 없는 오류');
       } finally {

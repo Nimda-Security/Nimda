@@ -34,14 +34,11 @@ export default function ProblemItem({ problem, onSolve }: Props) {
       </div>
 
       {/* 바로가기 버튼 */}
-      <div className="ml-6 shrink-0">
-        <BlackLineButton onClick={(e) => {
-          e.stopPropagation(); // 카드 클릭 이벤트와 중복 방지
-          onSolve(problem.id, problem.title);
-        }}>
+      {/* <div className="ml-6 shrink-0">
+        <BlackLineButton onClick={() => onSolve(problem.id, problem.title)}>
           문제 풀기
         </BlackLineButton>
-      </div>
+      </div> */}
     </div>
   );
 }
