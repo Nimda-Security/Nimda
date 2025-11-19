@@ -13,18 +13,19 @@ import java.util.List;
 
 @Service
 public class ProblemService {
-    
-    @Autowired private ProblemRepository problemRepository;
-    
-    @Autowired private TestCaseRepository testCaseRepository;
-    
-    
+
+    @Autowired
+    private ProblemRepository problemRepository;
+
+    @Autowired
+    private TestCaseRepository testCaseRepository;
+
     /**
      * 문제 생성
      */
     @Transactional
     public Problem createProblem(ProblemCreateDTO problemCreateDTO) {
-        
+
         // 1. Problem 엔티티 생성
         Problem problem = new Problem();
         problem.setTitle(problemCreateDTO.getTitle());
@@ -34,10 +35,10 @@ public class ProblemService {
         problem.setMemoryLimit(problemCreateDTO.getMemoryLimit());
         problem.setDifficulty(problemCreateDTO.getDifficulty());
         problem.setLanguage(problemCreateDTO.getLanguage());
-        
+
         // 2. Problem 저장
         problem = problemRepository.save(problem);
-        
+
         // 3. TestCase 생성 및 저장
         if (problemCreateDTO.getTestCases() != null && !problemCreateDTO.getTestCases().isEmpty()) {
             for (ProblemCreateDTO.TestCaseDTO testCaseDTO : problemCreateDTO.getTestCases()) {
@@ -45,13 +46,15 @@ public class ProblemService {
                 testCase.setProblem(problem);
                 testCase.setInput(testCaseDTO.getInput());
                 testCase.setOutput(testCaseDTO.getOutput());
+                // isPublic 설정 (null이면 기본값 false)
+                testCase.setIsPublic(testCaseDTO.getIsPublic() != null ? testCaseDTO.getIsPublic() : false);
                 testCaseRepository.save(testCase);
             }
         }
-        
+
         return problem;
     }
-    
+
     /**
      * 모든 문제 조회
      */
@@ -69,16 +72,16 @@ public class ProblemService {
             throw e;
         }
     }
-    
+
     /**
      * ID로 문제 조회
      */
     @Transactional(readOnly = true)
     public Problem getProblemById(Long id) {
         return problemRepository.findById(id)
-            .orElseThrow(() -> new RuntimeException("문제를 찾을 수 없습니다: " + id));
+                .orElseThrow(() -> new RuntimeException("문제를 찾을 수 없습니다: " + id));
     }
-    
+
     /**
      * 문제 삭제
      */
