@@ -6,6 +6,7 @@ export interface SubmissionRequest {
   title: string;
   code: string;
   language: string;
+  problemId?: number; // 문제 ID 추가
   description?: string;
   flag?: string;
   hints?: string;
