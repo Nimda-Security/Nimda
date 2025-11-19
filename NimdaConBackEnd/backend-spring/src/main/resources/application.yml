@@ -29,7 +29,7 @@ spring:
   
   sql:
     init:
-      mode: always 
+      mode: never  # RDS에 데이터가 이미 있으므로 data.sql 실행 안 함 
   
   security:
     user:
