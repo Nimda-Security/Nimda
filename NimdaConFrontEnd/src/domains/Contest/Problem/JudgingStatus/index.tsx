@@ -1,17 +1,17 @@
-import Layout from "@/components/Layout";
-import { useState, useEffect, useRef } from "react";
-import { useNavigate, useLocation } from "react-router-dom";
-import { submitCodeAPI, getAllSubmissionsAPI } from "@/api/judge";
+import Layout from '@/components/Layout';
+import { useState, useEffect, useRef } from 'react';
+import { useNavigate, useLocation } from 'react-router-dom';
+import { submitCodeAPI, getAllSubmissionsAPI } from '@/api/judge';
 
 interface JudgeStatus {
   status:
-    | "JUDGING"
-    | "ACCEPTED"
-    | "WRONG_ANSWER"
-    | "COMPILATION_ERROR"
-    | "TIME_LIMIT_EXCEEDED"
-    | "RUNTIME_ERROR"
-    | "SYSTEM_ERROR";
+    | 'JUDGING'
+    | 'ACCEPTED'
+    | 'WRONG_ANSWER'
+    | 'COMPILATION_ERROR'
+    | 'TIME_LIMIT_EXCEEDED'
+    | 'RUNTIME_ERROR'
+    | 'SYSTEM_ERROR';
   message?: string;
   executionTime?: number;
   score?: number;
@@ -39,9 +39,9 @@ function JudgingStatusPage() {
   const navigate = useNavigate();
   const location = useLocation();
   const [judgeStatus, setJudgeStatus] = useState<JudgeStatus>({
-    status: "JUDGING",
+    status: 'JUDGING',
   });
-  const [dots, setDots] = useState("");
+  const [dots, setDots] = useState('');
   const [submissions, setSubmissions] = useState<Submission[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const hasSubmittedRef = useRef(false); // 중복 제출 방지용 ref
@@ -60,10 +60,10 @@ function JudgingStatusPage() {
         if (result.success) {
           setSubmissions(result.submissions);
         } else {
-          console.error("제출 목록 가져오기 실패:", result.message);
+          console.error('제출 목록 가져오기 실패:', result.message);
         }
       } catch (error) {
-        console.error("제출 목록 가져오기 오류:", error);
+        console.error('제출 목록 가져오기 오류:', error);
       } finally {
         setIsLoading(false);
       }
@@ -77,8 +77,8 @@ function JudgingStatusPage() {
       // 채점 중 애니메이션 (점 3개 반복)
       const dotInterval = setInterval(() => {
         setDots((prev) => {
-          if (prev === "...") return "";
-          return prev + ".";
+          if (prev === '...') return '';
+          return prev + '.';
         });
       }, 500);
 
@@ -109,7 +109,7 @@ function JudgingStatusPage() {
               await fetchAllSubmissions();
             } else {
               setJudgeStatus({
-                status: "SYSTEM_ERROR",
+                status: 'SYSTEM_ERROR',
                 message: result.message,
               });
             }
@@ -117,8 +117,8 @@ function JudgingStatusPage() {
         } catch (error) {
           clearInterval(dotInterval);
           setJudgeStatus({
-            status: "SYSTEM_ERROR",
-            message: "채점 서버에 연결할 수 없습니다.",
+            status: 'SYSTEM_ERROR',
+            message: '채점 서버에 연결할 수 없습니다.',
           });
         }
       };
@@ -130,16 +130,16 @@ function JudgingStatusPage() {
   }, [submissionData, isNewSubmission, navigate]);
 
   const goBack = () => {
-    navigate("/problem-submit");
+    navigate('/problem-submit');
   };
 
   const goToHome = () => {
-    navigate("/");
+    navigate('/');
   };
 
   return (
     <Layout>
-      <div className="min-h-screen bg-white" style={{ paddingTop: "32px" }}>
+      <div className="min-h-screen bg-white pt-8">
         <div className="container mx-auto px-4 py-6">
           <div className="max-w-6xl mx-auto">
             {/* 헤더 */}
@@ -192,13 +192,13 @@ function JudgingStatusPage() {
                       </div>
                       <div className="text-center text-gray-600">
                         {new Date(submission.submittedAt).toLocaleDateString(
-                          "en-US",
+                          'en-US',
                           {
-                            month: "short",
-                            day: "2-digit",
-                            year: "numeric",
-                            hour: "2-digit",
-                            minute: "2-digit",
+                            month: 'short',
+                            day: '2-digit',
+                            year: 'numeric',
+                            hour: '2-digit',
+                            minute: '2-digit',
                           }
                         )}
                       </div>
@@ -214,37 +214,37 @@ function JudgingStatusPage() {
                         {submission.language}
                       </div>
                       <div className="text-center">
-                        {submission.status === "ACCEPTED" && (
+                        {submission.status === 'ACCEPTED' && (
                           <span className="text-green-600 font-medium">
                             Accepted
                           </span>
                         )}
-                        {submission.status === "WRONG_ANSWER" && (
+                        {submission.status === 'WRONG_ANSWER' && (
                           <span className="text-red-600 font-medium">
                             Wrong answer
                           </span>
                         )}
-                        {submission.status === "COMPILATION_ERROR" && (
+                        {submission.status === 'COMPILATION_ERROR' && (
                           <span className="text-orange-600 font-medium">
                             Compilation error
                           </span>
                         )}
-                        {submission.status === "TIME_LIMIT_EXCEEDED" && (
+                        {submission.status === 'TIME_LIMIT_EXCEEDED' && (
                           <span className="text-purple-600 font-medium">
                             Time limit exceeded
                           </span>
                         )}
-                        {submission.status === "RUNTIME_ERROR" && (
+                        {submission.status === 'RUNTIME_ERROR' && (
                           <span className="text-red-500 font-medium">
                             Runtime error
                           </span>
                         )}
-                        {submission.status === "SYSTEM_ERROR" && (
+                        {submission.status === 'SYSTEM_ERROR' && (
                           <span className="text-gray-600 font-medium">
                             System error
                           </span>
                         )}
-                        {submission.status === "JUDGING" && (
+                        {submission.status === 'JUDGING' && (
                           <span className="text-gray-600">채점 중{dots}</span>
                         )}
                       </div>
@@ -252,13 +252,13 @@ function JudgingStatusPage() {
                         {submission.executionTime !== null &&
                         submission.executionTime !== undefined
                           ? `${submission.executionTime} ms`
-                          : "- ms"}
+                          : '- ms'}
                       </div>
                       <div className="text-center text-gray-600">
                         {submission.memoryUsage !== null &&
                         submission.memoryUsage !== undefined
                           ? `${Math.floor(submission.memoryUsage / 1024)} KB`
-                          : "- KB"}
+                          : '- KB'}
                       </div>
                     </div>
                   ))
@@ -267,7 +267,7 @@ function JudgingStatusPage() {
             </div>
 
             {/* 상세 정보 (채점 완료 후) */}
-            {judgeStatus.status !== "JUDGING" && (
+            {judgeStatus.status !== 'JUDGING' && (
               <div className="mt-6 bg-white border border-gray-300">
                 <div className="border-b border-gray-300 bg-gray-50 px-4 py-3">
                   <h3 className="text-lg font-medium text-black">
@@ -275,7 +275,7 @@ function JudgingStatusPage() {
                   </h3>
                 </div>
                 <div className="p-4">
-                  {judgeStatus.status === "ACCEPTED" && (
+                  {judgeStatus.status === 'ACCEPTED' && (
                     <div className="space-y-2">
                       <div className="flex justify-between">
                         <span className="text-gray-600">상태:</span>
@@ -298,7 +298,7 @@ function JudgingStatusPage() {
                     </div>
                   )}
 
-                  {judgeStatus.message && judgeStatus.status !== "ACCEPTED" && (
+                  {judgeStatus.message && judgeStatus.status !== 'ACCEPTED' && (
                     <div className="space-y-2">
                       <div>
                         <span className="text-gray-600 font-medium">
