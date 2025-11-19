@@ -1,7 +1,6 @@
 import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import Layout from '@/components/Layout';
-// 분리한 컴포넌트 import (경로는 실제 파일 위치에 맞춰 조정해주세요)
 import ProblemItem, { type Problem } from './components/ProblemItem';
 
 // 로직만 따로 관리하는 커스텀 훅
