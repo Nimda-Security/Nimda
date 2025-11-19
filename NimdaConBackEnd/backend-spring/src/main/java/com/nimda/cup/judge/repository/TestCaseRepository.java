@@ -11,18 +11,24 @@ import java.util.List;
 
 @Repository
 public interface TestCaseRepository extends JpaRepository<TestCase, Long> {
-    
+
     /**
      * 특정 문제의 모든 테스트케이스 조회
      */
     List<TestCase> findByProblemOrderById(Problem problem);
-    
+
     /**
-     * 문제 ID로 테스트케이스 조회
+     * 문제 ID로 테스트케이스 조회 (모든 테스트케이스 - 백엔드 채점용)
      */
     @Query("SELECT tc FROM TestCase tc WHERE tc.problem.id = :problemId ORDER BY tc.id")
     List<TestCase> findByProblemId(@Param("problemId") Long problemId);
-    
+
+    /**
+     * 문제 ID로 공개된 테스트케이스만 조회 (프론트엔드용)
+     */
+    @Query("SELECT tc FROM TestCase tc WHERE tc.problem.id = :problemId AND tc.isPublic = true ORDER BY tc.id")
+    List<TestCase> findByProblemIdAndIsPublicTrue(@Param("problemId") Long problemId);
+
     /**
      * 특정 문제의 테스트케이스 개수 조회
      */
