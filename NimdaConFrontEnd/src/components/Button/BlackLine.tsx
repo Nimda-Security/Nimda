@@ -1,17 +1,17 @@
-import React from "react";
+import React from 'react';
 
 // 버튼의 props 타입 정의
 interface ButtonProps {
   children: React.ReactNode; // 버튼콘안에 들어갈 텍스트 or 아이콘
   onClick?: () => void; // 버튼을 클릭했을 때 실행될 함수 (선택적)
-  type?: "button" | "submit"; // 버튼 type
+  type?: 'button' | 'submit'; // 버튼 type
   className?: string; // 추가 사용자 정의 클래스
 }
 
 function BlackLineButton({
   children,
   onClick,
-  type = "button",
+  type = 'button',
   className,
 }: ButtonProps) {
   return (
@@ -19,7 +19,7 @@ function BlackLineButton({
       type={type}
       onClick={onClick}
       // Tailwind
-      className={`${className ? className + " " : ""}
+      className={`${className ? className + ' ' : ''}
         bg-transparent    /* 배경색: 투명 */
         border-2            /* 테두리 추가 */
         border-black      /* 테두리 색: 검은색 */
