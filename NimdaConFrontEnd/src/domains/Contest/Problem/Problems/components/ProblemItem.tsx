@@ -18,23 +18,21 @@ export default function ProblemItem({ problem, onSolve }: Props) {
   return (
     <div className="bg-white border border-gray-300 p-6 hover:shadow-md transition-shadow flex items-center justify-between">
       <div className="flex-1">
-        <div className="flex items-center gap-3 mb-2">
-          <h2 className="text-lg font-semibold text-black">
+        <div className="flex items-center gap-3">
+          <h2 className="text-xl font-semibold text-black">
             {problem.id}. {problem.title}
           </h2>
           <DifficultyBadge difficulty={problem.difficulty} />
           <span className="text-sm text-gray-600">{problem.points}점</span>
         </div>
-        <p className="text-gray-700 text-sm mb-4 line-clamp-2">
-          {problem.description}
-        </p>
       </div>
 
-      <div className="ml-6 shrink-0">
+      {/* 바로가기 버튼 */}
+      {/* <div className="ml-6 shrink-0">
         <BlackLineButton onClick={() => onSolve(problem.id, problem.title)}>
           문제 풀기
         </BlackLineButton>
-      </div>
+      </div> */}
     </div>
   );
 }
