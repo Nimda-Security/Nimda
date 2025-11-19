@@ -119,6 +119,78 @@ public class ProblemController {
     }
 
     /**
+     * ID로 문제 조회 (관리자용 - 모든 테스트케이스 포함)
+     */
+    @GetMapping("/{id}/admin")
+    public ResponseEntity<?> getProblemByIdForAdmin(@PathVariable Long id) {
+        try {
+            Problem problem = problemService.getProblemById(id);
+
+            // 모든 테스트케이스 조회 (관리자용)
+            List<TestCase> allTestCases = testCaseRepository.findByProblemId(id);
+
+            // 테스트케이스를 Map으로 변환
+            List<Map<String, Object>> testCaseList = allTestCases.stream()
+                    .map(tc -> {
+                        Map<String, Object> tcMap = new HashMap<>();
+                        tcMap.put("id", tc.getId());
+                        tcMap.put("input", tc.getInput());
+                        tcMap.put("output", tc.getOutput());
+                        tcMap.put("isPublic", tc.getIsPublic());
+                        return tcMap;
+                    })
+                    .collect(Collectors.toList());
+
+            Map<String, Object> response = new HashMap<>();
+            response.put("success", true);
+            response.put("problem", problem);
+            response.put("testCases", testCaseList); // 모든 테스트케이스 포함
+
+            return ResponseEntity.ok(response);
+        } catch (RuntimeException e) {
+            Map<String, Object> error = new HashMap<>();
+            error.put("success", false);
+            error.put("message", e.getMessage());
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(error);
+        } catch (Exception e) {
+            Map<String, Object> error = new HashMap<>();
+            error.put("success", false);
+            error.put("message", "문제 조회 중 오류가 발생했습니다: " + e.getMessage());
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(error);
+        }
+    }
+
+    /**
+     * 문제 수정
+     */
+    @PutMapping("/{id}")
+    public ResponseEntity<?> updateProblem(
+            @PathVariable Long id,
+            @Valid @RequestBody ProblemCreateDTO problemCreateDTO) {
+
+        try {
+            Problem problem = problemService.updateProblem(id, problemCreateDTO);
+
+            Map<String, Object> response = new HashMap<>();
+            response.put("success", true);
+            response.put("message", "문제가 성공적으로 수정되었습니다");
+            response.put("problem", problem);
+
+            return ResponseEntity.ok(response);
+        } catch (RuntimeException e) {
+            Map<String, Object> error = new HashMap<>();
+            error.put("success", false);
+            error.put("message", e.getMessage());
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(error);
+        } catch (Exception e) {
+            Map<String, Object> error = new HashMap<>();
+            error.put("success", false);
+            error.put("message", "문제 수정 중 오류가 발생했습니다: " + e.getMessage());
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(error);
+        }
+    }
+
+    /**
      * 문제 삭제
      */
     @DeleteMapping("/{id}")

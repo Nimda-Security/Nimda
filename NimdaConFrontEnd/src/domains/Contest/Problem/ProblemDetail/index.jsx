@@ -1,12 +1,15 @@
 import React, { useState, useEffect } from 'react';
-import { useParams, useNavigate } from 'react-router-dom';
+import { useParams, useNavigate, useLocation } from 'react-router-dom';
 import Layout from '@/components/Layout';
 import BlackLineButton from '@/components/Button/BlackLine';
 
 function ProblemDetail() {
   const { id } = useParams();
   const navigate = useNavigate();
+  const location = useLocation();
+  const from = location.state?.from;
   const [problem, setProblem] = useState(null);
+  const [testCases, setTestCases] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
 
@@ -32,6 +35,7 @@ function ProblemDetail() {
       }
 
       setProblem(data.problem);
+      setTestCases(data.testCases || []);
     } catch (error) {
       console.error('문제 로드 오류:', error);
       setError('문제를 불러오는 중 오류가 발생했습니다.');
@@ -41,7 +45,11 @@ function ProblemDetail() {
   };
 
   const goBack = () => {
-    navigate('/problems');
+    if (from === 'admin') {
+      navigate('/admin');
+    } else {
+      navigate('/problems');
+    }
   };
 
   const editProblem = () => {
@@ -89,13 +97,12 @@ function ProblemDetail() {
     );
   }
 
-  const testCases = Array.isArray(problem.testCases) ? problem.testCases : [];
   const timeLimit = problem.timeLimit ? `${problem.timeLimit}초` : '미정';
   const memoryLimit = problem.memoryLimit ? `${problem.memoryLimit}MB` : '미정';
   const inputFormat = problem.inputFormat || '없음';
   const outputFormat = problem.outputFormat || '없음';
-  const sampleInput = problem.sampleInput || ' ';
-  const sampleOutput = problem.sampleOutput || ' ';
+  const sampleInput = testCases.length > 0 ? testCases[0].input : '예제가 없습니다';
+  const sampleOutput = testCases.length > 0 ? testCases[0].output : '예제가 없습니다';
 
   return (
     <Layout>
@@ -105,7 +112,11 @@ function ProblemDetail() {
           <div className="flex justify-between items-center mb-6">
             <h1 className="text-2xl font-bold text-black">문제 상세</h1>
             <div className="flex gap-2">
-              <BlackLineButton onClick={goToSubmit}>제출하기</BlackLineButton>
+              {from === 'admin' ? (
+                <BlackLineButton onClick={editProblem}>문제 수정</BlackLineButton>
+              ) : (
+                <BlackLineButton onClick={goToSubmit}>제출하기</BlackLineButton>
+              )}
               <BlackLineButton onClick={goBack}>돌아가기</BlackLineButton>
             </div>
           </div>
@@ -180,36 +191,6 @@ function ProblemDetail() {
               </div>
             </div>
 
-            {/* 테스트 케이스 */}
-            <div className="mb-6">
-              <h3 className="text-lg font-semibold text-gray-800 mb-3">
-                테스트 케이스
-              </h3>
-              <div className="space-y-4">
-                {testCases.map((testCase, index) => (
-                  <div key={index} className="border rounded-lg p-4">
-                    <h4 className="font-medium text-gray-700 mb-2">
-                      테스트 케이스 {index + 1}
-                    </h4>
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                      <div>
-                        <p className="text-sm text-gray-600 mb-1">입력:</p>
-                        <div className="bg-gray-100 p-2 rounded font-mono text-sm">
-                          <pre>{testCase.input}</pre>
-                        </div>
-                      </div>
-                      <div>
-                        <p className="text-sm text-gray-600 mb-1">출력:</p>
-                        <div className="bg-gray-100 p-2 rounded font-mono text-sm">
-                          <pre>{testCase.output}</pre>
-                        </div>
-                      </div>
-                    </div>
-                  </div>
-                ))}
-              </div>
-            </div>
-
             {/* 메타 정보 */}
             <div className="border-t pt-4">
               <div className="text-sm text-gray-500">
@@ -220,10 +201,12 @@ function ProblemDetail() {
           </div>
 
           {/* 제출 버튼 */}
-          <div className="flex justify-center gap-4 mt-6">
-            <BlackLineButton onClick={goToSubmit}>코드 제출하기</BlackLineButton>
-            <BlackLineButton onClick={goBack}>문제 목록으로</BlackLineButton>
-          </div>
+          {from !== 'admin' && (
+            <div className="flex justify-center gap-4 mt-6">
+              <BlackLineButton onClick={goToSubmit}>코드 제출하기</BlackLineButton>
+              <BlackLineButton onClick={goBack}>문제 목록으로</BlackLineButton>
+            </div>
+          )}
         </div>
       </div>
     </Layout>

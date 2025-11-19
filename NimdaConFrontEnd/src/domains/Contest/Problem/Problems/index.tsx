@@ -34,8 +34,10 @@ function ProblemsPage() {
   const { problems, loading, error } = useProblems();
 
   const handleGoBack = () => navigate('/contest');
-  const handleSolve = (id: number, title: string) => {
-    navigate(`/problem/${id}`);
+  const handleSolve = (id: number) => {
+    navigate(`/problem/${id}`, {
+      state: { from: 'problems' }
+    });
   };
 
   return (

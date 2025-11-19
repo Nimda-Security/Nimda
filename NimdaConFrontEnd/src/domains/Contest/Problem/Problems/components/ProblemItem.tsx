@@ -10,12 +10,12 @@ export interface Problem {
 
 interface Props {
   problem: Problem;
-  onSolve: (id: number, title: string) => void;
+  onSolve: (id: number) => void;
 }
 
 export default function ProblemItem({ problem, onSolve }: Props) {
   const handleClick = () => {
-    onSolve(problem.id, problem.title);
+    onSolve(problem.id);
   };
 
   return (

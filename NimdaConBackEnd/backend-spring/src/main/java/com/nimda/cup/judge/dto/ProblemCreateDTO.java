@@ -44,6 +44,10 @@ public class ProblemCreateDTO {
     // @NotBlank(message = "프로그래밍 언어를 선택해주세요")
     private String language; // Optional로 허용
 
+    private String inputFormat; // 입력 형식 (Optional)
+
+    private String outputFormat; // 출력 형식 (Optional)
+
     private List<TestCaseDTO> testCases;
 
     @Getter

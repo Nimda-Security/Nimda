@@ -25,7 +25,9 @@ function AdminDashboard() {
   };
 
   const goToProblemDetail = (problemId) => {
-    navigate(`/problem/${problemId}`);
+    navigate(`/problem/${problemId}`, {
+      state: { from: 'admin' }
+    });
   };
 
   const loadUsers = async () => {

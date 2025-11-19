@@ -128,3 +128,80 @@ export const getProblemByIdAPI = async (id) => {
     return { success: false, message: "문제를 불러올 수 없습니다." };
   }
 };
+
+/**
+ * 특정 문제 조회 API (관리자용 - 모든 테스트케이스 포함)
+ */
+export const getProblemByIdForAdminAPI = async (id) => {
+  try {
+    const response = await fetch(`${API_BASE_URL}/problems/${id}/admin`, {
+      method: "GET",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${localStorage.getItem("authToken")}`,
+      },
+    });
+
+    const result = await parseJsonSafe(response);
+    if (response.ok) {
+      return result ?? { success: true };
+    }
+    return {
+      success: false,
+      status: response.status,
+      message:
+        (result && result.message) ||
+        (response.status === 403
+          ? "권한이 없습니다. 관리자 계정으로 로그인하세요."
+          : "문제를 불러올 수 없습니다."),
+    };
+  } catch (error) {
+    console.error("문제 조회 API 오류:", error);
+    return { success: false, message: "문제를 불러올 수 없습니다." };
+  }
+};
+
+/**
+ * 문제 수정 API 호출
+ * URL : /api/problems/{id}
+ * method: PUT
+ */
+export const updateProblemAPI = async (id, problemData) => {
+  try {
+    const response = await fetch(`${API_BASE_URL}/problems/${id}`, {
+      method: "PUT",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${localStorage.getItem("authToken")}`,
+      },
+      body: JSON.stringify(problemData),
+    });
+
+    const result = await parseJsonSafe(response);
+
+    if (response.ok) {
+      return {
+        success: true,
+        message:
+          (result && result.message) || "문제가 성공적으로 수정되었습니다.",
+        problem: result && result.problem,
+      };
+    } else {
+      return {
+        success: false,
+        status: response.status,
+        message:
+          (result && result.message) ||
+          (response.status === 403
+            ? "권한이 없습니다. 관리자 계정으로 로그인하세요."
+            : "문제 수정에 실패했습니다."),
+      };
+    }
+  } catch (error) {
+    console.error("문제 수정 API 오류:", error);
+    return {
+      success: false,
+      message: "서버에 연결할 수 없습니다. 잠시 후 다시 시도해주세요.",
+    };
+  }
+};
