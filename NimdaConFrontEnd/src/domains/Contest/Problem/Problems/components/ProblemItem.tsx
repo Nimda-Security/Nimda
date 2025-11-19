@@ -1,4 +1,3 @@
-import BlackLineButton from '@/components/Button/BlackLine';
 import DifficultyBadge from './DifficultyBadge';
 
 export interface Problem {
@@ -15,8 +14,15 @@ interface Props {
 }
 
 export default function ProblemItem({ problem, onSolve }: Props) {
+  const handleClick = () => {
+    onSolve(problem.id, problem.title);
+  };
+
   return (
-    <div className="bg-white border border-gray-300 p-6 hover:shadow-md transition-shadow flex items-center justify-between">
+    <div 
+      className="bg-white border border-gray-300 p-6 hover:shadow-md transition-shadow flex items-center justify-between cursor-pointer"
+      onClick={handleClick}
+    >
       <div className="flex-1">
         <div className="flex items-center gap-3">
           <h2 className="text-xl font-semibold text-black">

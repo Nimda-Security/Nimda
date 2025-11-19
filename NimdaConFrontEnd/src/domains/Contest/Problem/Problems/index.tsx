@@ -35,9 +35,7 @@ function ProblemsPage() {
 
   const handleGoBack = () => navigate('/contest');
   const handleSolve = (id: number, title: string) => {
-    navigate('/problem-submit', {
-      state: { problemId: id, problemTitle: title },
-    });
+    navigate(`/problem/${id}`);
   };
 
   return (
@@ -86,7 +84,7 @@ function ProblemsPage() {
 
           {/* 푸터 */}
           <footer className="mt-8 p-4 bg-gray-100 text-center text-sm text-gray-600">
-            문제를 선택하면 코드 제출 페이지로 이동합니다.
+            문제를 클릭하면 문제 상세 페이지로 이동합니다.
           </footer>
         </div>
       </div>

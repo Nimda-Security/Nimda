@@ -41,11 +41,17 @@ function ProblemDetail() {
   };
 
   const goBack = () => {
-    navigate('/admin');
+    navigate('/problems');
   };
 
   const editProblem = () => {
     navigate(`/problem-edit/${id}`);
+  };
+
+  const goToSubmit = () => {
+    navigate('/problem-submit', {
+      state: { problemId: Number(id), problemTitle: problem?.title },
+    });
   };
 
   if (loading) {
@@ -99,7 +105,7 @@ function ProblemDetail() {
           <div className="flex justify-between items-center mb-6">
             <h1 className="text-2xl font-bold text-black">문제 상세</h1>
             <div className="flex gap-2">
-              <BlackLineButton onClick={editProblem}>문제 수정</BlackLineButton>
+              <BlackLineButton onClick={goToSubmit}>제출하기</BlackLineButton>
               <BlackLineButton onClick={goBack}>돌아가기</BlackLineButton>
             </div>
           </div>
@@ -211,6 +217,12 @@ function ProblemDetail() {
                 <p>수정일: {problem.updatedAt}</p>
               </div>
             </div>
+          </div>
+
+          {/* 제출 버튼 */}
+          <div className="flex justify-center gap-4 mt-6">
+            <BlackLineButton onClick={goToSubmit}>코드 제출하기</BlackLineButton>
+            <BlackLineButton onClick={goBack}>문제 목록으로</BlackLineButton>
           </div>
         </div>
       </div>
