@@ -18,9 +18,7 @@ function ProblemDetail() {
     setLoading(true);
     setError(null);
     try {
-      const response = await fetch(
-        `http://52.78.249.69/api/problems/${encodeURIComponent(id)}`
-      );
+      const response = await fetch(`/api/problems/${encodeURIComponent(id)}`);
 
       if (!response.ok) {
         throw new Error(
