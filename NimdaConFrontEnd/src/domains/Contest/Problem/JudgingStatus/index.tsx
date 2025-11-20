@@ -35,6 +35,38 @@ interface Submission {
   score?: number | null;
 }
 
+function getRelativeTime(dateString: string): string {
+  const now = new Date();
+  // 서버에서 주는 시간이 UTC라고 가정하고, 타임존 정보가 없으면 Z를 붙여서 UTC로 처리
+  const dateValue =
+    !dateString.endsWith('Z') && !dateString.includes('+')
+      ? `${dateString}Z`
+      : dateString;
+  const date = new Date(dateValue);
+  const diff = now.getTime() - date.getTime();
+
+  const seconds = Math.floor(diff / 1000);
+  const minutes = Math.floor(seconds / 60);
+  const hours = Math.floor(minutes / 60);
+  const days = Math.floor(hours / 24);
+  const months = Math.floor(days / 30);
+  const years = Math.floor(days / 365);
+
+  if (seconds < 60) {
+    return `${seconds}초 전`;
+  } else if (minutes < 60) {
+    return `${minutes}분 전`;
+  } else if (hours < 24) {
+    return `${hours}시간 전`;
+  } else if (days < 30) {
+    return `${days}일 전`;
+  } else if (months < 12) {
+    return `${months}달 전`;
+  } else {
+    return `${years}년 전`;
+  }
+}
+
 function JudgingStatusPage() {
   const navigate = useNavigate();
   const location = useLocation();
@@ -161,13 +193,13 @@ function JudgingStatusPage() {
               <div className="border-b border-gray-300 bg-gray-50">
                 <div className="grid grid-cols-8 gap-4 px-4 py-3 text-sm font-medium text-black">
                   <div className="text-center">#</div>
-                  <div className="text-center">날짜</div>
                   <div className="text-center">ID</div>
                   <div className="text-center">결과</div>
                   <div className="text-center">언어</div>
                   <div className="text-center">제출 현황</div>
                   <div className="text-center">시간</div>
                   <div className="text-center">메모리</div>
+                  <div className="text-center">날짜</div>
                 </div>
               </div>
 
@@ -190,18 +222,7 @@ function JudgingStatusPage() {
                       <div className="text-center text-blue-600 font-medium">
                         {submission.id}
                       </div>
-                      <div className="text-center text-gray-600">
-                        {new Date(submission.submittedAt).toLocaleDateString(
-                          'en-US',
-                          {
-                            month: 'short',
-                            day: '2-digit',
-                            year: 'numeric',
-                            hour: '2-digit',
-                            minute: '2-digit',
-                          }
-                        )}
-                      </div>
+
                       <div className="text-center font-medium text-black">
                         {submission.nickname}
                       </div>
@@ -259,6 +280,9 @@ function JudgingStatusPage() {
                         submission.memoryUsage !== undefined
                           ? `${Math.floor(submission.memoryUsage / 1024)} KB`
                           : '- KB'}
+                      </div>
+                      <div className="text-center text-gray-600">
+                        {getRelativeTime(submission.submittedAt)}
                       </div>
                     </div>
                   ))
