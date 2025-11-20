@@ -5,6 +5,8 @@ import org.springframework.data.jpa.repository.EntityGraph;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Repository;
 
+import java.util.Collection;
+import java.util.List;
 import java.util.Optional;
 
 @Repository
@@ -46,5 +48,10 @@ public interface UserRepository extends JpaRepository<User, Long> {
      * 이메일이 존재하는지 확인
      */
     boolean existsByEmail(String email);
+
+    /**
+     * 여러 user_id 목록으로 사용자 조회
+     */
+    List<User> findByUserIdIn(Collection<String> userIds);
 
 }

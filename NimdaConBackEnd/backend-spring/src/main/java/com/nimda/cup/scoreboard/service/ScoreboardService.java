@@ -49,6 +49,16 @@ public class ScoreboardService {
     
     // 문제 ID 목록 (1~7)
     private static final List<Long> PROBLEM_IDS = Arrays.asList(1L, 2L, 3L, 4L, 5L, 6L, 7L);
+
+    // 스코어보드에 노출할 팀(user_id) 화이트리스트
+    private static final Set<String> SCOREBOARD_TEAM_USER_IDS = Set.of(
+            "team1",
+            "team2",
+            "team3",
+            "team4",
+            "team5",
+            "team6"
+    );
     
     @Autowired
     private UserRepository userRepository;
@@ -68,8 +78,10 @@ public class ScoreboardService {
     @Transactional(readOnly = true)
     public ScoreboardResponseDTO getScoreboard() {
         try {
-            // 1. 모든 사용자 조회
-            List<User> users = userRepository.findAll();
+            // 1. 스코어보드 대상 사용자 조회 (지정된 팀만)
+            List<User> users = SCOREBOARD_TEAM_USER_IDS.isEmpty()
+                    ? userRepository.findAll()
+                    : userRepository.findByUserIdIn(SCOREBOARD_TEAM_USER_IDS);
             
             // 2. 문제 목록 조회 (1~7번)
             List<Problem> problems = problemRepository.findAllById(new ArrayList<>(PROBLEM_IDS));
