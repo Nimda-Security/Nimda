@@ -165,8 +165,8 @@ function JudgingStatusPage() {
     navigate('/problem-submit');
   };
 
-  const goToHome = () => {
-    navigate('/');
+  const goToProblems = () => {
+    navigate('/problems');
   };
 
   return (
@@ -194,11 +194,11 @@ function JudgingStatusPage() {
                 <div className="grid grid-cols-8 gap-4 px-4 py-3 text-sm font-medium text-black">
                   <div className="text-center">#</div>
                   <div className="text-center">ID</div>
+                  <div className="text-center">문제</div>
                   <div className="text-center">결과</div>
-                  <div className="text-center">언어</div>
-                  <div className="text-center">제출 현황</div>
                   <div className="text-center">시간</div>
                   <div className="text-center">메모리</div>
+                  <div className="text-center">언어</div>
                   <div className="text-center">날짜</div>
                 </div>
               </div>
@@ -227,12 +227,14 @@ function JudgingStatusPage() {
                         {submission.nickname}
                       </div>
                       <div className="text-center">
-                        <span className="text-blue-600 hover:underline cursor-pointer">
+                        <span
+                          className="text-blue-600 hover:underline cursor-pointer"
+                          onClick={() =>
+                            navigate(`/problems/${submission.problemId}`)
+                          }
+                        >
                           {submission.problemTitle}
                         </span>
-                      </div>
-                      <div className="text-center text-gray-600">
-                        {submission.language}
                       </div>
                       <div className="text-center">
                         {submission.status === 'ACCEPTED' && (
@@ -280,6 +282,25 @@ function JudgingStatusPage() {
                         submission.memoryUsage !== undefined
                           ? `${Math.floor(submission.memoryUsage / 1024)} KB`
                           : '- KB'}
+                      </div>
+                      <div className="text-center text-gray-600">
+                        {submission.language}
+                        <span className="mx-2 text-gray-300">|</span>
+                        <button
+                          onClick={() =>
+                            navigate('/problem-submit', {
+                              state: {
+                                problemId: submission.problemId,
+                                problemTitle: submission.problemTitle,
+                                code: submission.code,
+                                language: submission.language,
+                              },
+                            })
+                          }
+                          className="text-gray-500 hover:text-black hover:underline text-xs"
+                        >
+                          수정
+                        </button>
                       </div>
                       <div className="text-center text-gray-600">
                         {getRelativeTime(submission.submittedAt)}
@@ -358,10 +379,10 @@ function JudgingStatusPage() {
                 다시 제출하기
               </button>
               <button
-                onClick={goToHome}
+                onClick={goToProblems}
                 className="bg-gray-600 text-white px-6 py-2 text-sm font-medium hover:bg-gray-700 transition-colors"
               >
-                메인으로 가기
+                문제 목록
               </button>
             </div>
           </div>
