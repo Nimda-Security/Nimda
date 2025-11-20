@@ -72,6 +72,11 @@ const Navbar: React.FC<NavbarProps> = ({ menuItems }) => {
     }
   };
 
+  const displayNickname =
+    nickname && nickname.length > 8
+      ? `${nickname.substring(0, 7)}...`
+      : nickname;
+
   return (
     <nav className="fixed top-0 left-0 right-0 z-50 h-15 border-b border-[#E0E0E0] bg-white">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
@@ -113,7 +118,7 @@ const Navbar: React.FC<NavbarProps> = ({ menuItems }) => {
           {/* 오른쪽 영역 - 사용자 정보, 관리자 대시보드, 로그인 */}
           <Right
             isLoggedIn={isLoggedInState}
-            username={nickname}
+            username={displayNickname}
             adminStatus={adminStatus}
             onLogout={handleLogout}
           />
@@ -135,7 +140,7 @@ const Navbar: React.FC<NavbarProps> = ({ menuItems }) => {
             {/* 로그인한 경우 사용자명 표시 */}
             {isLoggedInState && nickname && (
               <div className="text-gray-300 px-3 py-2 text-sm">
-                <span className="font-semibold">{nickname}</span>
+                <span className="font-semibold">{displayNickname}</span>
               </div>
             )}
 

@@ -2,9 +2,20 @@
 export const getCurrentNickname = (): string | null => {
   const token = localStorage.getItem('authToken'); // 1. 로컬 스토리지에서 저장된 JWT 토큰 가져오기 
   if (!token) return null; // 2. 토큰이 없다면 Null 
-  const payload = JSON.parse(atob(token.split('.')[1])); 
+  const base64Url = token.split('.')[1];
+  const base64 = base64Url.replace(/-/g, '+').replace(/_/g, '/');
+  const jsonPayload = decodeURIComponent(
+    atob(base64)
+      .split('')
+      .map(function (c) {
+        return '%' + ('00' + c.charCodeAt(0).toString(16)).slice(-2);
+      })
+      .join('')
+  );
+
+  const payload = JSON.parse(jsonPayload);
   // 백엔드에서 subject에 nickname을 저장하므로 sub 또는 nickname 필드 사용
-  return payload.nickname || payload.sub || null; // 닉네임 추출 
+  return payload.nickname || payload.sub || null; // 닉네임 추출
 };
 
 // 하위 호환성을 위한 함수 (deprecated)
@@ -31,7 +42,18 @@ export const isAdmin = (): boolean => {
   }
   
   try {
-    const payload = JSON.parse(atob(token.split('.')[1]));
+    const base64Url = token.split('.')[1];
+    const base64 = base64Url.replace(/-/g, '+').replace(/_/g, '/');
+    const jsonPayload = decodeURIComponent(
+      atob(base64)
+        .split('')
+        .map(function (c) {
+          return '%' + ('00' + c.charCodeAt(0).toString(16)).slice(-2);
+        })
+        .join('')
+    );
+
+    const payload = JSON.parse(jsonPayload);
     console.log('[isAdmin] Full JWT payload:', payload);
     
     const authorities = payload.authorities || [];
