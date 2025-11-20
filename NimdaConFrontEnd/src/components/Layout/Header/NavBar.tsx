@@ -30,11 +30,9 @@ const Navbar: React.FC<NavbarProps> = ({ menuItems }) => {
       { name: '문제', href: '/problems' },
       { name: '채점 현황', href: '/judging-status' },
       { name: '랭킹', href: '/scoreboard' },
-      { name: '지난 대회', href: '/past-contests' },
     ],
     바로가기: [
-      { name: 'Baekjoon Online Judge', href: 'https://www.acmicpc.net' },
-      { name: 'TEST', href: '/' },
+      { name: 'Baekjoon Online Judge', href: 'https://www.acmicpc.net' }, 
     ],
   };
 
