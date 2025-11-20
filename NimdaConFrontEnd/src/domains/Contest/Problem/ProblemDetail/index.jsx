@@ -101,8 +101,7 @@ function ProblemDetail() {
   const memoryLimit = problem.memoryLimit ? `${problem.memoryLimit}MB` : '미정';
   const inputFormat = problem.inputFormat || '없음';
   const outputFormat = problem.outputFormat || '없음';
-  const sampleInput = testCases.length > 0 ? testCases[0].input : '예제가 없습니다';
-  const sampleOutput = testCases.length > 0 ? testCases[0].output : '예제가 없습니다';
+  const hasTestCases = Array.isArray(testCases) && testCases.length > 0;
 
   return (
     <Layout>
@@ -172,23 +171,43 @@ function ProblemDetail() {
             </div>
 
             {/* 예제 입력/출력 */}
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
-              <div>
-                <h3 className="text-lg font-semibold text-gray-800 mb-3">
-                  예제 입력
-                </h3>
-                <div className="bg-gray-900 text-green-400 p-4 rounded-lg font-mono text-sm">
-                  <pre>{sampleInput}</pre>
+            <div className="mb-6">
+              <h3 className="text-lg font-semibold text-gray-800 mb-3">
+                예제 입력/출력
+              </h3>
+              {hasTestCases ? (
+                <div className="space-y-4">
+                  {testCases.map((testCase, index) => (
+                    <div
+                      key={index}
+                      className="grid grid-cols-1 md:grid-cols-2 gap-4 border border-gray-200 rounded-lg p-4"
+                    >
+                      <div>
+                        <h4 className="text-sm font-semibold text-gray-700 mb-2">
+                          예제 입력 {index + 1}
+                        </h4>
+                        <div className="bg-gray-900 text-green-400 p-4 rounded-lg font-mono text-sm">
+                          <pre className="whitespace-pre-wrap">
+                            {testCase.input || ''}
+                          </pre>
+                        </div>
+                      </div>
+                      <div>
+                        <h4 className="text-sm font-semibold text-gray-700 mb-2">
+                          예제 출력 {index + 1}
+                        </h4>
+                        <div className="bg-gray-900 text-green-400 p-4 rounded-lg font-mono text-sm">
+                          <pre className="whitespace-pre-wrap">
+                            {testCase.output || ''}
+                          </pre>
+                        </div>
+                      </div>
+                    </div>
+                  ))}
                 </div>
-              </div>
-              <div>
-                <h3 className="text-lg font-semibold text-gray-800 mb-3">
-                  예제 출력
-                </h3>
-                <div className="bg-gray-900 text-green-400 p-4 rounded-lg font-mono text-sm">
-                  <pre>{sampleOutput}</pre>
-                </div>
-              </div>
+              ) : (
+                <div className="text-gray-600">예제가 없습니다.</div>
+              )}
             </div>
 
             {/* 메타 정보 */}
