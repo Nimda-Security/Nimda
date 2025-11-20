@@ -184,9 +184,6 @@ function JudgingStatusPage() {
                 ← 문제로 돌아가기
               </button>
             </div>
-
-            {/* TODO: # ID 문제 결과 메모리 시간 언어 제출시간 순으로 바꾸기, 
-                      제출시간 날짜 표시하지 말고 몇초전,며칠전느김으로할까?? */}
             {/* 테이블 */}
             <div className="bg-white border border-gray-300">
               {/* 테이블 헤더 */}
