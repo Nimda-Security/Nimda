@@ -26,7 +26,7 @@ const Router = () => {
         <Route path="/problem-create" element={<ProblemCreatePage />} />
         <Route path="/problem-edit/:id" element={<ProblemEditPage />} />
         <Route path="/admin" element={<AdminDashboard />} />
-        <Route path="/problem/:id" element={<ProblemDetail />} />
+        <Route path="/problems/:id" element={<ProblemDetail />} />
         <Route path="/judging-status" element={<JudgingStatusPage />} />
         <Route path="/scoreboard" element={<Scoreboard />} />
 

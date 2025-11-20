@@ -39,7 +39,7 @@ function ProblemsPage() {
 
   const handleGoBack = () => navigate('/contest');
   const handleSolve = (id: number) => {
-    navigate(`/problem/${id}`, {
+    navigate(`/problems/${id}`, {
       state: { from: 'problems' }
     });
   };

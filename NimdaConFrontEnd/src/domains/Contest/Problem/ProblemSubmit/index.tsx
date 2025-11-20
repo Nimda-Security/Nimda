@@ -20,9 +20,18 @@ function ProblemSubmitPage() {
     hints: '',
   });
 
-  // 컴포넌트 마운트 시 C++ 템플릿 설정
+  // 컴포넌트 마운트 시 초기값 설정
   useEffect(() => {
-    if (!formData.description.trim()) {
+    const initialCode = location.state?.code;
+    const initialLanguage = location.state?.language;
+
+    if (initialCode && initialLanguage) {
+      setFormData((prev) => ({
+        ...prev,
+        description: initialCode,
+        category: initialLanguage,
+      }));
+    } else if (!formData.description.trim()) {
       const template = getLanguageTemplate('C++17');
       setFormData((prev) => ({
         ...prev,

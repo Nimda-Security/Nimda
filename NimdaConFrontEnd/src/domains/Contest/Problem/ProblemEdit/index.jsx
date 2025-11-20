@@ -145,7 +145,7 @@ function ProblemEditPage() {
       
       if (result.success) {
         alert("문제가 성공적으로 수정되었습니다!");
-        navigate(`/problem/${id}`);
+        navigate(`/problems/${id}`);
       } else {
         alert(`오류: ${result.message}`);
       }
@@ -191,7 +191,7 @@ function ProblemEditPage() {
       <div className="flex items-center justify-between mb-8">
         <h1 className="text-3xl font-bold">문제 수정</h1>
         <button
-          onClick={() => navigate(`/problem/${id}`)}
+          onClick={() => navigate(`/problems/${id}`)}
           className="px-4 py-2 border border-gray-300 rounded-md hover:bg-gray-50"
         >
           취소
@@ -410,7 +410,7 @@ function ProblemEditPage() {
         <div className="flex justify-center gap-4 pt-6">
           <button
             type="button"
-            onClick={() => navigate(`/problem/${id}`)}
+            onClick={() => navigate(`/problems/${id}`)}
             className="px-8 py-3 border border-gray-300 rounded-md hover:bg-gray-50"
           >
             취소
