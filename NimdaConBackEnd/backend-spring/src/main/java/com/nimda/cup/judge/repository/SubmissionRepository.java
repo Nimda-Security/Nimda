@@ -61,4 +61,18 @@ public interface SubmissionRepository extends JpaRepository<Submission, Long> {
      */
     @Query("SELECT COUNT(s) FROM Submission s WHERE s.user = :user AND s.status = 'ACCEPTED'")
     Long countAcceptedSubmissionsByUser(@Param("user") User user);
+    
+
+    // ↓↓ Scoreboard code ↓↓
+    /**
+     * 사용자의 특정 문제에 대한 최초 AC 제출 시점 & 존재 여부 확인
+     */
+    @Query("SELECT s FROM Submission s WHERE s.user = :user AND s.problem.id = :problemId AND s.status = 'ACCEPTED' ORDER BY s.submittedAt ASC")
+    List<Submission> findAcceptedSubmissionsByUserAndProblem(@Param("user") User user, @Param("problemId") Long problemId);
+    
+    /**
+     * 사용자의 특정 문제에 대한 정답까지의 전체 시도 수, 오답 횟수, 채점 중 여부 판단 (시간순)
+     */
+    @Query("SELECT s FROM Submission s WHERE s.user = :user AND s.problem.id = :problemId ORDER BY s.submittedAt ASC")
+    List<Submission> findAllSubmissionsByUserAndProblem(@Param("user") User user, @Param("problemId") Long problemId);
 }
