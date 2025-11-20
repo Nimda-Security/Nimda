@@ -52,12 +52,12 @@ public class ScoreboardService {
 
     // 스코어보드에 노출할 팀(user_id) 화이트리스트
     private static final Set<String> SCOREBOARD_TEAM_USER_IDS = Set.of(
-            "91",
-            "92",
-            "93",
-            "94",
-            "95",
-            "96"
+            "team1",
+            "team2",
+            "team3",
+            "team4",
+            "team5",
+            "team6"
     );
     
     @Autowired
