@@ -94,16 +94,17 @@ const ScoreboardTable: React.FC<ScoreboardTableProps> = ({
             <th className="px-4 py-3 text-center font-semibold text-gray-600">
               Total
             </th>
-            <th className="px-4 py-3 text-center font-semibold text-gray-600">
+            {/* Time 컬럼은 나중을 위해 주석 처리 (랭킹 정렬에는 사용하지 않음) */}
+            {/* <th className="px-4 py-3 text-center font-semibold text-gray-600">
               Time
-            </th>
+            </th> */}
           </tr>
         </thead>
         <tbody className="bg-white divide-y divide-gray-100">
           {entries.length === 0 && (
             <tr>
               <td
-                colSpan={problems.length + 4}
+                colSpan={problems.length + 3}
                 className="px-4 py-10 text-center text-gray-500"
               >
                 {isLoading ? "스코어보드를 불러오는 중입니다..." : "표시할 데이터가 없습니다."}
@@ -134,9 +135,10 @@ const ScoreboardTable: React.FC<ScoreboardTableProps> = ({
               <td className="px-4 py-3 text-center font-bold text-gray-900">
                 {entry.totalScore}
               </td>
-              <td className="px-4 py-3 text-center text-gray-700">
+              {/* Time 컬럼은 나중을 위해 주석 처리 (랭킹 정렬에는 사용하지 않음) */}
+              {/* <td className="px-4 py-3 text-center text-gray-700">
                 {formatMinutes(entry.totalTimeMinutes)}
-              </td>
+              </td> */}
             </tr>
           ))}
         </tbody>
