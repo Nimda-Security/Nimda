@@ -39,12 +39,12 @@ public class ScoreboardService {
     private static final Map<Long, Integer> PROBLEM_POINTS = new HashMap<>();
     static {
         PROBLEM_POINTS.put(1L, 5);   // 1번: 5점
-        PROBLEM_POINTS.put(2L, 10);  // 2번: 10점
-        PROBLEM_POINTS.put(3L, 15);  // 3번: 15점
-        PROBLEM_POINTS.put(4L, 20);  // 4번: 20점
-        PROBLEM_POINTS.put(5L, 20);  // 5번: 20점
-        PROBLEM_POINTS.put(6L, 15);  // 6번: 15점
-        PROBLEM_POINTS.put(7L, 15);  // 7번: 15점
+        PROBLEM_POINTS.put(2L, 5);  // 2번: 5점
+        PROBLEM_POINTS.put(3L, 10);  // 3번: 10점
+        PROBLEM_POINTS.put(4L, 10);  // 4번: 10점
+        PROBLEM_POINTS.put(5L, 15);  // 5번: 15점
+        PROBLEM_POINTS.put(6L, 25);  // 6번: 25점
+        PROBLEM_POINTS.put(7L, 30);  // 7번: 30점
     }
     
     // 문제 ID 목록 (1~7)
