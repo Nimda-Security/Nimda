@@ -1,9 +1,5 @@
-import React from "react";
-import type {
-  ProblemInfo,
-  ProblemScore,
-  ScoreboardEntry,
-} from "./types";
+import React from 'react';
+import type { ProblemInfo, ProblemScore, ScoreboardEntry } from './types';
 
 interface ScoreboardTableProps {
   entries: ScoreboardEntry[];
@@ -20,35 +16,35 @@ const getProblemLabel = (index: number, fallback: string) => {
 
 const getCellStyle = (score: ProblemScore) => {
   switch (score.status) {
-    case "ACCEPTED":
-      return "bg-green-600 text-white";
-    case "WRONG_ANSWER":
-      return "bg-red-500 text-white";
-    case "NOT_SUBMITTED":
-      return "bg-gray-200 text-gray-500";
-    case "JUDGING":
-      return "bg-yellow-300 text-gray-800";
+    case 'ACCEPTED':
+      return 'bg-green-600 text-white';
+    case 'WRONG_ANSWER':
+      return 'bg-red-500 text-white';
+    case 'NOT_SUBMITTED':
+      return 'bg-gray-200 text-gray-500';
+    case 'JUDGING':
+      return 'bg-yellow-300 text-gray-800';
     default:
-      return "bg-gray-100 text-gray-600";
+      return 'bg-gray-100 text-gray-600';
   }
 };
 
 const getCellText = (score: ProblemScore) => {
-  if (score.status === "ACCEPTED") {
+  if (score.status === 'ACCEPTED') {
     return `+${score.attemptCount}`;
   }
-  if (score.status === "WRONG_ANSWER") {
-    return score.attemptCount > 0 ? `-${score.attemptCount}` : "-";
+  if (score.status === 'WRONG_ANSWER') {
+    return score.attemptCount > 0 ? `-${score.attemptCount}` : '-';
   }
-  if (score.status === "JUDGING") {
-    return "채점중";
+  if (score.status === 'JUDGING') {
+    return '채점중';
   }
-  return "";
+  return '';
 };
 
 const formatMinutes = (minutes?: number) => {
   if (minutes === undefined || minutes === null) {
-    return "-";
+    return '-';
   }
   return `${minutes} min.`;
 };
@@ -61,16 +57,6 @@ const ScoreboardTable: React.FC<ScoreboardTableProps> = ({
 }) => {
   return (
     <div className="overflow-x-auto border border-gray-200 rounded-lg shadow-sm">
-      <div className="flex items-center justify-between px-4 py-2 border-b bg-gray-50 text-sm text-gray-600">
-        <span>실시간 스코어보드</span>
-        <span>
-          {isLoading
-            ? "동기화 중..."
-            : lastUpdated
-            ? `최근 업데이트: ${lastUpdated.toLocaleTimeString()}`
-            : "대기 중"}
-        </span>
-      </div>
       <table className="min-w-full divide-y divide-gray-200 text-sm">
         <thead className="bg-gray-100">
           <tr>
@@ -94,10 +80,6 @@ const ScoreboardTable: React.FC<ScoreboardTableProps> = ({
             <th className="px-4 py-3 text-center font-semibold text-gray-600">
               Total
             </th>
-            {/* Time 컬럼은 나중을 위해 주석 처리 (랭킹 정렬에는 사용하지 않음) */}
-            {/* <th className="px-4 py-3 text-center font-semibold text-gray-600">
-              Time
-            </th> */}
           </tr>
         </thead>
         <tbody className="bg-white divide-y divide-gray-100">
@@ -107,7 +89,9 @@ const ScoreboardTable: React.FC<ScoreboardTableProps> = ({
                 colSpan={problems.length + 3}
                 className="px-4 py-10 text-center text-gray-500"
               >
-                {isLoading ? "스코어보드를 불러오는 중입니다..." : "표시할 데이터가 없습니다."}
+                {isLoading
+                  ? '스코어보드를 불러오는 중입니다...'
+                  : '표시할 데이터가 없습니다.'}
               </td>
             </tr>
           )}
@@ -135,17 +119,21 @@ const ScoreboardTable: React.FC<ScoreboardTableProps> = ({
               <td className="px-4 py-3 text-center font-bold text-gray-900">
                 {entry.totalScore}
               </td>
-              {/* Time 컬럼은 나중을 위해 주석 처리 (랭킹 정렬에는 사용하지 않음) */}
-              {/* <td className="px-4 py-3 text-center text-gray-700">
-                {formatMinutes(entry.totalTimeMinutes)}
-              </td> */}
             </tr>
           ))}
         </tbody>
       </table>
+      <div className="justify-between px-4 py-2 bg-gray-50 text-sm text-gray-500 text-right">
+        <span>
+          {isLoading
+            ? '동기화 중...'
+            : lastUpdated
+              ? `최근 업데이트: ${lastUpdated.toLocaleTimeString()}`
+              : '대기 중'}
+        </span>
+      </div>
     </div>
   );
 };
 
 export default ScoreboardTable;
-

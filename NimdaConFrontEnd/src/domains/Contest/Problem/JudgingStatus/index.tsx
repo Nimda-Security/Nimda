@@ -2,6 +2,7 @@ import Layout from '@/components/Layout';
 import { useState, useEffect, useRef } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { submitCodeAPI, getAllSubmissionsAPI } from '@/api/judge';
+import { getCurrentNickname } from '@/utils/jwt';
 
 interface JudgeStatus {
   status:
@@ -90,7 +91,11 @@ function JudgingStatusPage() {
         const result = await getAllSubmissionsAPI();
 
         if (result.success) {
-          setSubmissions(result.submissions);
+          const currentNickname = getCurrentNickname();
+          const userSubmissions = result.submissions.filter(
+            (submission: Submission) => submission.nickname === currentNickname
+          ).sort((a: Submission, b: Submission) => b.id - a.id);
+          setSubmissions(userSubmissions);
         } else {
           console.error('제출 목록 가져오기 실패:', result.message);
         }
@@ -105,7 +110,22 @@ function JudgingStatusPage() {
 
     // 새로운 제출이 있고, 실제로 새로운 제출인 경우에만 처리 (중복 실행 방지)
     if (submissionData && isNewSubmission && !hasSubmittedRef.current) {
+      // Nonce 체크 (새로고침 시 중복 제출 방지)
+      const nonce = submissionData.nonce;
+      if (nonce) {
+        const processedKey = `processed_submission_${nonce}`;
+        if (sessionStorage.getItem(processedKey)) {
+          console.log('이미 처리된 제출입니다.');
+          return;
+        }
+        sessionStorage.setItem(processedKey, 'true');
+      }
+
       hasSubmittedRef.current = true; // 제출 플래그 설정
+
+      // URL 상태 초기화 (새로고침 시 중복 제출 방지) - 보조 수단으로 유지
+      navigate(location.pathname, { replace: true, state: {} });
+
       // 채점 중 애니메이션 (점 3개 반복)
       const dotInterval = setInterval(() => {
         setDots((prev) => {
@@ -184,13 +204,10 @@ function JudgingStatusPage() {
                 ← 문제로 돌아가기
               </button>
             </div>
-
-            {/* TODO: # ID 문제 결과 메모리 시간 언어 제출시간 순으로 바꾸기, 
-                      제출시간 날짜 표시하지 말고 몇초전,며칠전느김으로할까?? */}
             {/* 테이블 */}
             <div className="bg-white border border-gray-300">
               {/* 테이블 헤더 */}
-              <div className="border-b border-gray-300 bg-gray-50">
+              <div className="border-b border-gray-300">
                 <div className="grid grid-cols-8 gap-4 px-4 py-3 text-sm font-medium text-black">
                   <div className="text-center">#</div>
                   <div className="text-center">ID</div>
@@ -214,13 +231,13 @@ function JudgingStatusPage() {
                     제출된 코드가 없습니다.
                   </div>
                 ) : (
-                  submissions.map((submission) => (
+                  submissions.map((submission, index) => (
                     <div
                       key={submission.id}
                       className="grid grid-cols-8 gap-4 px-4 py-3 text-sm hover:bg-gray-50"
                     >
                       <div className="text-center text-blue-600 font-medium">
-                        {submission.id}
+                        {submissions.length - index}
                       </div>
 
                       <div className="text-center font-medium text-black">

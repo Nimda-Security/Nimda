@@ -1,13 +1,14 @@
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate, useLocation } from 'react-router-dom';
 import Layout from '@/components/Layout';
-import BlackLineButton from '@/components/Button/BlackLine';
+import ContentCard from '@/domains/Contest/components/ContentCard'; // 카드 컴포넌트 import
 
 function ProblemDetail() {
   const { id } = useParams();
   const navigate = useNavigate();
   const location = useLocation();
-  const from = location.state?.from;
+  const from = location.state?.from; // admin 등에서 왔는지 확인
+
   const [problem, setProblem] = useState(null);
   const [testCases, setTestCases] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -30,8 +31,11 @@ function ProblemDetail() {
       }
 
       const data = await response.json();
-      if (!data?.success || !data?.problem) {
-        throw new Error('유효한 문제 데이터를 받지 못했습니다.');
+      // 데이터 구조 유효성 체크
+      if (!data?.success && !data?.problem) {
+        // API 응답 구조에 따라 success 플래그가 없을 수도 있으므로 problem 객체 유무로 2차 체크
+        if (!data.problem)
+          throw new Error('유효한 문제 데이터를 받지 못했습니다.');
       }
 
       setProblem(data.problem);
@@ -44,15 +48,16 @@ function ProblemDetail() {
     }
   };
 
+  // --- 네비게이션 핸들러 ---
   const goBack = () => {
     if (from === 'admin') {
       navigate('/admin');
     } else {
-      navigate('/problems');
+      navigate('/contest'); // 혹은 /problems
     }
   };
 
-  const editProblem = () => {
+  const goToEdit = () => {
     navigate(`/problem-edit/${id}`);
   };
 
@@ -62,170 +67,171 @@ function ProblemDetail() {
     });
   };
 
+  // --- 로딩 및 에러 화면 ---
   if (loading) {
     return (
       <Layout>
-        <div className="flex justify-center items-center min-h-screen">
-          <div className="text-center">
-            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto mb-4"></div>
-            <div className="text-lg text-gray-600">문제를 불러오는 중...</div>
+        <div className="flex flex-col items-center justify-center min-h-screen">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-black mx-auto mb-4"></div>
+          <div className="text-gray-600">문제를 불러오는 중...</div>
+        </div>
+      </Layout>
+    );
+  }
+
+  if (error || !problem) {
+    return (
+      <Layout>
+        <div className="flex flex-col items-center justify-center min-h-screen">
+          <div className="text-red-600 text-lg mb-6">
+            {error || '문제를 찾을 수 없습니다.'}
           </div>
+          <button
+            onClick={goBack}
+            className="px-6 py-2 bg-white border border-gray-300 rounded hover:bg-gray-50"
+          >
+            돌아가기
+          </button>
         </div>
       </Layout>
     );
   }
 
-  if (error) {
-    return (
-      <Layout>
-        <div className="flex flex-col items-center justify-center min-h-screen">
-          <div className="text-red-600 text-lg mb-4">{error}</div>
-          <BlackLineButton onClick={goBack}>돌아가기</BlackLineButton>
-        </div>
-      </Layout>
-    );
-  }
-
-  if (!problem) {
-    return (
-      <Layout>
-        <div className="flex flex-col items-center justify-center min-h-screen">
-          <div className="text-lg mb-4">문제를 찾을 수 없습니다.</div>
-          <BlackLineButton onClick={goBack}>돌아가기</BlackLineButton>
-        </div>
-      </Layout>
-    );
-  }
-
-  const timeLimit = problem.timeLimit ? `${problem.timeLimit}초` : '미정';
-  const memoryLimit = problem.memoryLimit ? `${problem.memoryLimit}MB` : '미정';
-  const inputFormat = problem.inputFormat || '없음';
-  const outputFormat = problem.outputFormat || '없음';
-  const hasTestCases = Array.isArray(testCases) && testCases.length > 0;
+  // --- 데이터 가공 ---
+  const timeLimit = problem.timeLimit ? `${problem.timeLimit} 초` : '미정';
+  const memoryLimit = problem.memoryLimit
+    ? `${problem.memoryLimit} MB`
+    : '미정';
+  // 제출, 정답, 비율 데이터는 API에 없으면 '-' 표시 (나중에 추가되면 변수 교체)
+  const submitCount = problem.submitCount || '-';
+  const correctCount = problem.correctCount || '-';
+  const correctRate = problem.correctRate || '-';
 
   return (
     <Layout>
-      <div className="min-h-screen bg-white pt-8">
+      <div className="min-h-screen pt-8">
         <div className="container mx-auto px-4 py-6 max-w-6xl">
-          {/* 헤더 */}
-          <div className="flex justify-between items-center mb-6">
-            <h1 className="text-2xl font-bold text-black">문제 상세</h1>
+          {/* 1. 헤더 영역 (제목 + 버튼 그룹) */}
+          <div className="flex items-center justify-between mb-8">
+            <h1 className="text-3xl font-bold text-black">
+              [{problem.id}] {problem.title}
+            </h1>
+
             <div className="flex gap-2">
               {from === 'admin' ? (
-                <BlackLineButton onClick={editProblem}>문제 수정</BlackLineButton>
+                <>
+                  <button
+                    onClick={goToEdit}
+                    className="px-4 py-1.5 bg-black text-white text-md rounded hover:bg-blue transition-colors"
+                  >
+                    수정
+                  </button>
+                  <button
+                    onClick={goBack}
+                    className="px-4 py-1.5 bg-white border border-gray-300 text-black text-md rounded hover:bg-gray-100 transition-colors"
+                  >
+                    뒤로가기
+                  </button>
+                </>
               ) : (
-                <BlackLineButton onClick={goToSubmit}>제출하기</BlackLineButton>
+                <>
+                  <button
+                    onClick={goToSubmit}
+                    className="px-4 py-1.5 bg-black text-white text-md rounded hover:bg-blue transition-colors"
+                  >
+                    제출
+                  </button>
+                  <button className="px-4 py-1.5 bg-black text-white text-md rounded hover:bg-blue transition-colors">
+                    채점 현황
+                  </button>
+                </>
               )}
-              <BlackLineButton onClick={goBack}>돌아가기</BlackLineButton>
             </div>
           </div>
 
-          {/* 문제 정보 카드 */}
-          <div className="bg-white rounded-lg shadow-md p-6 mb-6">
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
+          {/* 2. 정보 테이블 (시간, 메모리 등) */}
+          <div className="border-t border-b border-gray-200 py-4 mb-8">
+            <div className="grid grid-cols-5 gap-4">
+              {/* 시간 제한 */}
               <div>
-                <h2 className="text-xl font-semibold text-gray-800 mb-2">
-                  {problem.title}
-                </h2>
-                <p className="text-gray-600">문제 ID: {problem.id}</p>
+                <div className="text-xs text-gray-500 mb-1">시간 제한</div>
+                <div className="text-sm font-medium">{timeLimit}</div>
               </div>
-              <div className="text-right">
-                <span className="inline-block bg-blue-100 text-blue-800 px-3 py-1 rounded-full text-sm font-medium">
-                  {problem.difficulty}
-                </span>
-                <div className="mt-2 text-sm text-gray-600">
-                  <p>시간 제한: {timeLimit}</p>
-                  <p>메모리 제한: {memoryLimit}</p>
-                </div>
+              {/* 메모리 제한 */}
+              <div>
+                <div className="text-xs text-gray-500 mb-1">메모리 제한</div>
+                <div className="text-sm font-medium">{memoryLimit}</div>
               </div>
-            </div>
-
-            {/* 문제 설명 */}
-            <div className="mb-6">
-              <h3 className="text-lg font-semibold text-gray-800 mb-3">
-                문제 설명
-              </h3>
-              <div className="bg-gray-50 p-4 rounded-lg">
-                <p className="whitespace-pre-wrap">{problem.description}</p>
+              {/* 제출 */}
+              <div>
+                <div className="text-xs text-gray-500 mb-1">제출</div>
+                <div className="text-sm font-medium">{submitCount}</div>
               </div>
-            </div>
-
-            {/* 입력 형식 */}
-            <div className="mb-6">
-              <h3 className="text-lg font-semibold text-gray-800 mb-3">
-                입력 형식
-              </h3>
-              <div className="bg-gray-50 p-4 rounded-lg">
-                <p className="whitespace-pre-wrap">{inputFormat}</p>
+              {/* 정답 */}
+              <div>
+                <div className="text-xs text-gray-500 mb-1">정답</div>
+                <div className="text-sm font-medium">{correctCount}</div>
               </div>
-            </div>
-
-            {/* 출력 형식 */}
-            <div className="mb-6">
-              <h3 className="text-lg font-semibold text-gray-800 mb-3">
-                출력 형식
-              </h3>
-              <div className="bg-gray-50 p-4 rounded-lg">
-                <p className="whitespace-pre-wrap">{outputFormat}</p>
-              </div>
-            </div>
-
-            {/* 예제 입력/출력 */}
-            <div className="mb-6">
-              <h3 className="text-lg font-semibold text-gray-800 mb-3">
-                예제 입력/출력
-              </h3>
-              {hasTestCases ? (
-                <div className="space-y-4">
-                  {testCases.map((testCase, index) => (
-                    <div
-                      key={index}
-                      className="grid grid-cols-1 md:grid-cols-2 gap-4 border border-gray-200 rounded-lg p-4"
-                    >
-                      <div>
-                        <h4 className="text-sm font-semibold text-gray-700 mb-2">
-                          예제 입력 {index + 1}
-                        </h4>
-                        <div className="bg-gray-900 text-green-400 p-4 rounded-lg font-mono text-sm">
-                          <pre className="whitespace-pre-wrap">
-                            {testCase.input || ''}
-                          </pre>
-                        </div>
-                      </div>
-                      <div>
-                        <h4 className="text-sm font-semibold text-gray-700 mb-2">
-                          예제 출력 {index + 1}
-                        </h4>
-                        <div className="bg-gray-900 text-green-400 p-4 rounded-lg font-mono text-sm">
-                          <pre className="whitespace-pre-wrap">
-                            {testCase.output || ''}
-                          </pre>
-                        </div>
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              ) : (
-                <div className="text-gray-600">예제가 없습니다.</div>
-              )}
-            </div>
-
-            {/* 메타 정보 */}
-            <div className="border-t pt-4">
-              <div className="text-sm text-gray-500">
-                <p>생성일: {problem.createdAt}</p>
-                <p>수정일: {problem.updatedAt}</p>
+              {/* 정답 비율 */}
+              <div>
+                <div className="text-xs text-gray-500 mb-1">정답 비율</div>
+                <div className="text-sm font-medium">{correctRate}</div>
               </div>
             </div>
           </div>
 
-          {/* 제출 버튼 */}
-          {from !== 'admin' && (
-            <div className="flex justify-center gap-4 mt-6">
-              <BlackLineButton onClick={goToSubmit}>코드 제출하기</BlackLineButton>
-              <BlackLineButton onClick={goBack}>문제 목록으로</BlackLineButton>
-            </div>
-          )}
+          {/* 3. 메인 내용 영역 (카드 배치) */}
+          <div className="space-y-6">
+            {/* 문제 설명 */}
+            <ContentCard
+              title="문제"
+              content={problem.description || '설명이 없습니다.'}
+              className="shadow-sm"
+            />
+
+            {/* 입력 설명 */}
+            {problem.inputFormat && (
+              <ContentCard
+                title="입력"
+                content={problem.inputFormat}
+                className="shadow-sm"
+              />
+            )}
+
+            {/* 출력 설명 */}
+            {problem.outputFormat && (
+              <ContentCard
+                title="출력"
+                content={problem.outputFormat}
+                className="shadow-sm"
+              />
+            )}
+
+            {/* 예제 영역 (2열 그리드) */}
+            {testCases && testCases.length > 0 ? (
+              testCases.map((tc, index) => (
+                <div
+                  key={index}
+                  className="grid grid-cols-1 md:grid-cols-2 gap-6"
+                >
+                  <ContentCard
+                    title={`입력 예시 ${index + 1}`}
+                    content={tc.input}
+                    className="h-full shadow-sm"
+                  />
+                  <ContentCard
+                    title={`출력 예시 ${index + 1}`}
+                    content={tc.output}
+                    className="h-full shadow-sm"
+                  />
+                </div>
+              ))
+            ) : (
+              <div className="text-center py-8 text-gray-500">
+                등록된 예제가 없습니다.
+              </div>
+            )}
+          </div>
         </div>
       </div>
     </Layout>
