@@ -94,6 +94,7 @@ public class JudgeService {
                     break;
                 case "c":
                 case "c11":
+                case "c99":
                     resultDTO = judgeCCode(submission, problem);
                     break;
                 case "c++17":
