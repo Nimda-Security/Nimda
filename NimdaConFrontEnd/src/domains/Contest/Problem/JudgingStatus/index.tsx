@@ -94,7 +94,7 @@ function JudgingStatusPage() {
           const currentNickname = getCurrentNickname();
           const userSubmissions = result.submissions.filter(
             (submission: Submission) => submission.nickname === currentNickname
-          );
+          ).sort((a: Submission, b: Submission) => b.id - a.id);
           setSubmissions(userSubmissions);
         } else {
           console.error('제출 목록 가져오기 실패:', result.message);
@@ -231,13 +231,13 @@ function JudgingStatusPage() {
                     제출된 코드가 없습니다.
                   </div>
                 ) : (
-                  submissions.map((submission) => (
+                  submissions.map((submission, index) => (
                     <div
                       key={submission.id}
                       className="grid grid-cols-8 gap-4 px-4 py-3 text-sm hover:bg-gray-50"
                     >
                       <div className="text-center text-blue-600 font-medium">
-                        {submission.id}
+                        {submissions.length - index}
                       </div>
 
                       <div className="text-center font-medium text-black">
