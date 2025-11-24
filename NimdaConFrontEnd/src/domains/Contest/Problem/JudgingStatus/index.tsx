@@ -105,7 +105,22 @@ function JudgingStatusPage() {
 
     // 새로운 제출이 있고, 실제로 새로운 제출인 경우에만 처리 (중복 실행 방지)
     if (submissionData && isNewSubmission && !hasSubmittedRef.current) {
+      // Nonce 체크 (새로고침 시 중복 제출 방지)
+      const nonce = submissionData.nonce;
+      if (nonce) {
+        const processedKey = `processed_submission_${nonce}`;
+        if (sessionStorage.getItem(processedKey)) {
+          console.log('이미 처리된 제출입니다.');
+          return;
+        }
+        sessionStorage.setItem(processedKey, 'true');
+      }
+
       hasSubmittedRef.current = true; // 제출 플래그 설정
+
+      // URL 상태 초기화 (새로고침 시 중복 제출 방지) - 보조 수단으로 유지
+      navigate(location.pathname, { replace: true, state: {} });
+
       // 채점 중 애니메이션 (점 3개 반복)
       const dotInterval = setInterval(() => {
         setDots((prev) => {
