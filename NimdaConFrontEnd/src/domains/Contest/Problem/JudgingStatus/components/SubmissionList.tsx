@@ -44,13 +44,11 @@ function SubmissionList({
     <div className="bg-white border border-gray-300">
       {/* 테이블 헤더 */}
       <div className="border-b border-gray-300">
-        <div className="grid grid-cols-8 gap-4 px-4 py-3 text-sm font-medium text-black">
+        <div className="grid grid-cols-6 gap-6 px-4 py-3 text-sm font-medium text-black">
           <div className="text-center">#</div>
           <div className="text-center">ID</div>
           <div className="text-center">문제</div>
           <div className="text-center">결과</div>
-          <div className="text-center">시간</div>
-          <div className="text-center">메모리</div>
           <div className="text-center">언어</div>
           <div className="text-center">날짜</div>
         </div>
@@ -70,7 +68,7 @@ function SubmissionList({
           submissions.map((submission, index) => (
             <div
               key={submission.id}
-              className="grid grid-cols-8 gap-4 px-4 py-3 text-sm hover:bg-gray-50"
+              className="grid grid-cols-6 gap-6 px-4 py-3 text-sm hover:bg-gray-50"
             >
               <div className="text-center text-blue-600 font-medium">
                 {submissions.length - index}
@@ -118,18 +116,7 @@ function SubmissionList({
                   <span className="text-gray-600">채점 중{dots}</span>
                 )}
               </div>
-              <div className="text-center text-gray-600">
-                {submission.executionTime !== null &&
-                submission.executionTime !== undefined
-                  ? `${submission.executionTime} ms`
-                  : '- ms'}
-              </div>
-              <div className="text-center text-gray-600">
-                {submission.memoryUsage !== null &&
-                submission.memoryUsage !== undefined
-                  ? `${Math.floor(submission.memoryUsage / 1024)} KB`
-                  : '- KB'}
-              </div>
+
               <div className="text-center text-gray-600">
                 {submission.language}
                 <span className="mx-2 text-gray-300">|</span>
