@@ -24,6 +24,7 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.List;
+
 import java.util.concurrent.TimeUnit;
 
 @Service
@@ -89,11 +90,15 @@ public class JudgeService {
             JudgeResultDTO resultDTO;
             switch (language) {
                 case "java":
-                    resultDTO = judgeJavaCode(submissionDTO, problem);
+                    resultDTO = judgeJavaCode(submission, problem);
+                    break;
+                case "c":
+                case "c11":
+                    resultDTO = judgeCCode(submission, problem);
                     break;
                 case "c++17":
                 case "cpp":
-                    resultDTO = judgeCppCode(submissionDTO, problem);
+                    resultDTO = judgeCppCode(submission, problem);
                     break;
                 default:
                     resultDTO = new JudgeResultDTO(
@@ -137,13 +142,18 @@ public class JudgeService {
 
     /**
      * Java 코드 채점 (TestCase 기반)
-     * SubmissionDTO, Problem
+     * Submission, Problem
      */
-    private JudgeResultDTO judgeJavaCode(SubmissionDTO submission, Problem problem)
+    private JudgeResultDTO judgeJavaCode(Submission submission, Problem problem)
             throws IOException, InterruptedException {
+        String nickname = submission.getUser().getNickname().replaceAll("[^a-zA-Z0-9]", "_");
+        String folderName = String.format("%s_%d_%d", nickname, problem.getId(), submission.getId());
+        String workDir = TEMP_DIR + folderName + "/";
+        Files.createDirectories(Paths.get(workDir));
+
         String fileName = "Solution";
-        String sourceFile = TEMP_DIR + fileName + ".java";
-        String classFile = TEMP_DIR + fileName + ".class";
+        String sourceFile = workDir + fileName + ".java";
+        String classFile = workDir + fileName + ".class";
 
         // 소스 코드를 파일로 저장
         try (FileWriter writer = new FileWriter(sourceFile)) {
@@ -152,7 +162,7 @@ public class JudgeService {
 
         // 컴파일
         ProcessBuilder compileBuilder = new ProcessBuilder("javac", sourceFile);
-        compileBuilder.directory(new File(TEMP_DIR));
+        compileBuilder.directory(new File(workDir));
         Process compileProcess = compileBuilder.start();
 
         boolean compileFinished = compileProcess.waitFor(10, TimeUnit.SECONDS);
@@ -175,8 +185,107 @@ public class JudgeService {
 
         // 각 테스트케이스별로 실행
         for (TestCase testCase : testCases) {
-            ProcessBuilder runBuilder = new ProcessBuilder("java", "-cp", TEMP_DIR, fileName);
-            runBuilder.directory(new File(TEMP_DIR));
+            ProcessBuilder runBuilder = new ProcessBuilder("java", "-cp", workDir, fileName);
+            runBuilder.directory(new File(workDir));
+
+            long startTime = System.currentTimeMillis();
+            Process runProcess = runBuilder.start();
+
+            // TestCase의 입력값 사용
+            try (PrintWriter writer = new PrintWriter(runProcess.getOutputStream())) {
+                writer.println(testCase.getInput()); // 동적 입력!
+                writer.flush();
+            }
+
+            boolean runFinished = runProcess.waitFor(TIME_LIMIT_MS, TimeUnit.MILLISECONDS);
+            long executionTime = System.currentTimeMillis() - startTime;
+
+            if (!runFinished) {
+                runProcess.destroyForcibly();
+                return new JudgeResultDTO(
+                        JudgeResultDTO.Status.TIME_LIMIT_EXCEEDED,
+                        "시간 초과",
+                        "");
+            }
+
+            if (runProcess.exitValue() != 0) {
+                String error = readStream(runProcess.getErrorStream());
+                return new JudgeResultDTO(
+                        JudgeResultDTO.Status.RUNTIME_ERROR,
+                        "런타임 에러",
+                        error);
+            }
+
+            // 출력 결과 확인
+            String output = readStream(runProcess.getInputStream()).trim();
+
+            // TestCase 기반 정답 검증
+            if (!testCase.isCorrect(output)) {
+                return new JudgeResultDTO(
+                        JudgeResultDTO.Status.WRONG_ANSWER,
+                        "오답입니다. 입력: " + testCase.getInput() +
+                                ", 예상: " + testCase.getOutput() +
+                                ", 실제: " + output,
+                        "");
+            }
+        }
+
+        // 모든 테스트케이스 통과
+        return new JudgeResultDTO(
+                JudgeResultDTO.Status.ACCEPTED,
+                "모든 테스트케이스를 통과했습니다!",
+                0, // 실행시간은 추후 개선 필요
+                0, // 메모리 사용량은 추후 구현
+                problem.getPoints());
+    }
+
+    /**
+     * C 코드 채점 (TestCase 기반)
+     */
+    private JudgeResultDTO judgeCCode(Submission submission, Problem problem)
+            throws IOException, InterruptedException {
+        String nickname = submission.getUser().getNickname().replaceAll("[^a-zA-Z0-9]", "_");
+        String folderName = String.format("%s_%d_%d", nickname, problem.getId(), submission.getId());
+        String workDir = TEMP_DIR + folderName + "/";
+        Files.createDirectories(Paths.get(workDir));
+
+        String fileName = "solution";
+        String sourceFile = workDir + fileName + ".c";
+        String execFile = workDir + fileName;
+
+        // 소스 코드를 파일로 저장
+        try (FileWriter writer = new FileWriter(sourceFile)) {
+            writer.write(submission.getCode());
+        }
+
+        // 컴파일
+        ProcessBuilder compileBuilder = new ProcessBuilder(
+                "gcc", "-std=c11", "-O2", "-o", execFile, sourceFile);
+        compileBuilder.directory(new File(workDir));
+        Process compileProcess = compileBuilder.start();
+
+        boolean compileFinished = compileProcess.waitFor(10, TimeUnit.SECONDS);
+        if (!compileFinished || compileProcess.exitValue() != 0) {
+            String error = readStream(compileProcess.getErrorStream());
+            return new JudgeResultDTO(
+                    JudgeResultDTO.Status.COMPILATION_ERROR,
+                    "컴파일 에러",
+                    error);
+        }
+
+        // TestCase 조회
+        List<TestCase> testCases = testCaseRepository.findByProblemId(problem.getId());
+        if (testCases.isEmpty()) {
+            return new JudgeResultDTO(
+                    JudgeResultDTO.Status.SYSTEM_ERROR,
+                    "테스트케이스가 없습니다",
+                    "");
+        }
+
+        // 각 테스트케이스별로 실행
+        for (TestCase testCase : testCases) {
+            ProcessBuilder runBuilder = new ProcessBuilder(execFile);
+            runBuilder.directory(new File(workDir));
 
             long startTime = System.currentTimeMillis();
             Process runProcess = runBuilder.start();
@@ -232,11 +341,16 @@ public class JudgeService {
     /**
      * C++ 코드 채점 (TestCase 기반)
      */
-    private JudgeResultDTO judgeCppCode(SubmissionDTO submission, Problem problem)
+    private JudgeResultDTO judgeCppCode(Submission submission, Problem problem)
             throws IOException, InterruptedException {
+        String nickname = submission.getUser().getNickname().replaceAll("[^a-zA-Z0-9]", "_");
+        String folderName = String.format("%s_%d_%d", nickname, problem.getId(), submission.getId());
+        String workDir = TEMP_DIR + folderName + "/";
+        Files.createDirectories(Paths.get(workDir));
+
         String fileName = "solution";
-        String sourceFile = TEMP_DIR + fileName + ".cpp";
-        String execFile = TEMP_DIR + fileName;
+        String sourceFile = workDir + fileName + ".cpp";
+        String execFile = workDir + fileName;
 
         // 소스 코드를 파일로 저장
         try (FileWriter writer = new FileWriter(sourceFile)) {
@@ -246,7 +360,7 @@ public class JudgeService {
         // 컴파일
         ProcessBuilder compileBuilder = new ProcessBuilder(
                 "g++", "-std=c++17", "-O2", "-o", execFile, sourceFile);
-        compileBuilder.directory(new File(TEMP_DIR));
+        compileBuilder.directory(new File(workDir));
         Process compileProcess = compileBuilder.start();
 
         boolean compileFinished = compileProcess.waitFor(10, TimeUnit.SECONDS);
@@ -270,7 +384,7 @@ public class JudgeService {
         // 각 테스트케이스별로 실행
         for (TestCase testCase : testCases) {
             ProcessBuilder runBuilder = new ProcessBuilder(execFile);
-            runBuilder.directory(new File(TEMP_DIR));
+            runBuilder.directory(new File(workDir));
 
             long startTime = System.currentTimeMillis();
             Process runProcess = runBuilder.start();

@@ -21,8 +21,9 @@ export interface ScoreboardEntry {
   nickname: string;
   totalScore: number;
   solvedCount: number;
-  totalTime: number;
-  totalTimeMinutes: number;
+  totalTime: number; // 나중을 위해 보관 (랭킹에는 사용 안 함)
+  totalTimeMinutes: number; // 나중을 위해 보관 (랭킹에는 사용 안 함)
+  totalAttemptCount: number; // 총 제출 횟수 (랭킹 정렬 2차 기준)
   problemScores: ProblemScore[];
 }
 
