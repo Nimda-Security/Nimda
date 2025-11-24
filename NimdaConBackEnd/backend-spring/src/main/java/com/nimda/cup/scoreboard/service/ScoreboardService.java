@@ -17,7 +17,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDateTime;
-import java.time.temporal.ChronoUnit;
+// import java.time.temporal.ChronoUnit; // 주석 처리됨 (나중을 위해 보관 - 시간 계산에 사용)
 import java.util.*;
 import java.util.stream.Collectors;
 
@@ -32,19 +32,19 @@ public class ScoreboardService {
     
     private static final Logger logger = LoggerFactory.getLogger(ScoreboardService.class);
     
-    // 대회 시작 시간: 2024년 11월 27일 (목) 19:10:00
-    private static final LocalDateTime CONTEST_START_TIME = LocalDateTime.of(2024, 11, 27, 19, 10, 0);
+    // 대회 시작 시간: 2024년 11월 27일 (목) 19:10:00 - 주석 처리됨 (나중을 위해 보관)
+    // private static final LocalDateTime CONTEST_START_TIME = LocalDateTime.of(2024, 11, 27, 19, 10, 0);
     
     // 문제별 점수 (1번~7번)
     private static final Map<Long, Integer> PROBLEM_POINTS = new HashMap<>();
     static {
         PROBLEM_POINTS.put(1L, 5);   // 1번: 5점
-        PROBLEM_POINTS.put(2L, 10);  // 2번: 10점
-        PROBLEM_POINTS.put(3L, 15);  // 3번: 15점
-        PROBLEM_POINTS.put(4L, 20);  // 4번: 20점
-        PROBLEM_POINTS.put(5L, 20);  // 5번: 20점
-        PROBLEM_POINTS.put(6L, 15);  // 6번: 15점
-        PROBLEM_POINTS.put(7L, 15);  // 7번: 15점
+        PROBLEM_POINTS.put(2L, 5);  // 2번: 5점
+        PROBLEM_POINTS.put(3L, 10);  // 3번: 10점
+        PROBLEM_POINTS.put(4L, 10);  // 4번: 10점
+        PROBLEM_POINTS.put(5L, 15);  // 5번: 15점
+        PROBLEM_POINTS.put(6L, 25);  // 6번: 25점
+        PROBLEM_POINTS.put(7L, 30);  // 7번: 30점
     }
     
     // 문제 ID 목록 (1~7)
@@ -100,28 +100,31 @@ public class ScoreboardService {
             }
             
             // 4. 랭킹 정렬
-            //    - 1차: 총점 내림차순
-            //    - 2차: 총 시간 합계 오름차순 (값이 없으면 가장 큰 값으로 간주하여 뒤로 보낸다)
+            //    - 1차: 총점 내림차순 (높을수록 위)
+            //    - 2차: 총 제출 횟수 오름차순 (적을수록 위)
             entries.sort((a, b) -> {
                 int scoreCompare = Integer.compare(b.getTotalScore(), a.getTotalScore());
                 if (scoreCompare != 0) {
                     return scoreCompare;
                 }
-                // 총점이 같으면 시간 합계 오름차순
-                return Long.compare(a.getTotalTime() != null ? a.getTotalTime() : Long.MAX_VALUE,
-                                  b.getTotalTime() != null ? b.getTotalTime() : Long.MAX_VALUE);
+                // 총점이 같으면 총 제출 횟수 오름차순 (적을수록 위)
+                int attemptCompare = Integer.compare(
+                    a.getTotalAttemptCount() != null ? a.getTotalAttemptCount() : Integer.MAX_VALUE,
+                    b.getTotalAttemptCount() != null ? b.getTotalAttemptCount() : Integer.MAX_VALUE
+                );
+                return attemptCompare;
             });
             
             // 5. 순위 부여
-            //    바로 앞 항목과 총점/시간이 모두 같으면 같은 순위를 부여한다.
+            //    바로 앞 항목과 총점/제출 횟수가 모두 같으면 같은 순위를 부여한다.
             int rank = 1;
             for (int i = 0; i < entries.size(); i++) {
                 if (i > 0) {
                     ScoreboardEntryDTO prev = entries.get(i - 1);
                     ScoreboardEntryDTO current = entries.get(i);
-                    // 이전과 점수와 시간이 모두 같으면 같은 순위
+                    // 이전과 점수와 제출 횟수가 모두 같으면 같은 순위
                     if (!prev.getTotalScore().equals(current.getTotalScore()) ||
-                        !Objects.equals(prev.getTotalTime(), current.getTotalTime())) {
+                        !Objects.equals(prev.getTotalAttemptCount(), current.getTotalAttemptCount())) {
                         rank = i + 1;
                     }
                 } else {
@@ -161,13 +164,16 @@ public class ScoreboardService {
      * 사용자별 점수 계산
      *
      * - 문제 1~7에 대해 차례로 ProblemScoreDTO를 만든다.
-     * - 누적 총점, 해결 수, 시간 합계를 함께 계산한다.
+     * - 누적 총점, 해결 수를 함께 계산한다.
+     * - 총 제출 횟수는 ScoreboardEntryDTO 생성자에서 자동 계산된다.
      */
     private ScoreboardEntryDTO calculateUserScore(User user, Map<Long, Problem> problemMap) {
         List<ProblemScoreDTO> problemScores = new ArrayList<>();
         int totalScore = 0;
         int solvedCount = 0;
-        long totalTime = 0;
+        // 시간 합계 계산은 주석 처리됨 (나중을 위해 보관 - 현재는 랭킹 정렬에 사용하지 않음)
+        // long totalTime = 0;
+        long totalTime = 0L; // DTO 생성에 필요하지만 계산하지 않음 (나중을 위해 0으로 설정)
         
         // 각 문제별로 계산
         // ProblemScoreDTO 내부에 정답/오답/미제출 정보를 모두 담는다.
@@ -186,10 +192,11 @@ public class ScoreboardService {
             // 정답 수 계산
             if ("ACCEPTED".equals(problemScore.getStatus())) {
                 solvedCount++;
-                // 시간 합계 계산 (ACCEPTED 문제만)
-                if (problemScore.getTimeFromStart() != null) {
-                    totalTime += problemScore.getTimeFromStart();
-                }
+                // 시간 합계 계산 (ACCEPTED 문제만) - 주석 처리됨 (나중을 위해 보관)
+                // 현재 랭킹 정렬에는 사용하지 않음
+                // if (problemScore.getTimeFromStart() != null) {
+                //     totalTime += problemScore.getTimeFromStart();
+                // }
             }
         }
         
@@ -198,7 +205,7 @@ public class ScoreboardService {
                 user.getNickname(),
                 totalScore,
                 solvedCount,
-                totalTime,
+                totalTime, // 0으로 고정 (나중을 위해 필드는 유지)
                 problemScores
         );
     }
@@ -253,8 +260,10 @@ public class ScoreboardService {
                 }
             }
             
-            // 시작 시간으로부터의 경과 시간 계산 (초 단위)
-            long timeFromStart = ChronoUnit.SECONDS.between(CONTEST_START_TIME, firstAccepted.getSubmittedAt());
+            // 시작 시간으로부터의 경과 시간 계산 (초 단위) - 주석 처리됨 (나중을 위해 보관)
+            // 현재 랭킹 정렬에는 사용하지 않음
+            // long timeFromStart = ChronoUnit.SECONDS.between(CONTEST_START_TIME, firstAccepted.getSubmittedAt());
+            Long timeFromStart = null; // 나중을 위해 null로 설정 (필드는 유지)
             
             return new ProblemScoreDTO(
                     problemId,
@@ -262,7 +271,7 @@ public class ScoreboardService {
                     problemPoints,
                     attemptCount,
                     firstAccepted.getSubmittedAt(),
-                    timeFromStart
+                    timeFromStart // null로 전달 (나중을 위해 필드는 유지)
             );
         } else {
             // 오답만 있음

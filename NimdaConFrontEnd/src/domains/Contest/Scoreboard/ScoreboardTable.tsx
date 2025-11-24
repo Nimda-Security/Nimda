@@ -86,7 +86,7 @@ const ScoreboardTable: React.FC<ScoreboardTableProps> = ({
           {entries.length === 0 && (
             <tr>
               <td
-                colSpan={problems.length + 4}
+                colSpan={problems.length + 3}
                 className="px-4 py-10 text-center text-gray-500"
               >
                 {isLoading
