@@ -2,6 +2,7 @@ import Layout from '@/components/Layout';
 import { useState, useEffect, useRef } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { submitCodeAPI, getAllSubmissionsAPI } from '@/api/judge';
+import { getCurrentNickname } from '@/utils/jwt';
 
 interface JudgeStatus {
   status:
@@ -90,7 +91,11 @@ function JudgingStatusPage() {
         const result = await getAllSubmissionsAPI();
 
         if (result.success) {
-          setSubmissions(result.submissions);
+          const currentNickname = getCurrentNickname();
+          const userSubmissions = result.submissions.filter(
+            (submission: Submission) => submission.nickname === currentNickname
+          );
+          setSubmissions(userSubmissions);
         } else {
           console.error('제출 목록 가져오기 실패:', result.message);
         }
