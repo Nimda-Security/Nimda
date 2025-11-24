@@ -6,14 +6,14 @@ interface ContentCardProps {
 
 const ContentCard = ({ title, content, className = '' }: ContentCardProps) => {
   return (
-    <div className={`bg-white border border-gray-200 rounded-xl p-8 ${className}`}>
+    <div
+      className={`bg-white border border-gray-200 rounded-xl p-7 ${className}`}
+    >
       {/* 카드 제목 */}
-      <h3 className="text-xl font-bold text-black mb-6">
-        {title}
-      </h3>
-      
+      <h3 className="text-left text-xl font-bold text-black mb-6">{title}</h3>
+
       {/* 내용 (줄바꿈 유지) */}
-      <div className="whitespace-pre-wrap text-gray-800 leading-relaxed text-base font-medium">
+      <div className="text-left whitespace-pre-wrap text-gray-800 leading-relaxed text-base font-medium">
         {content}
       </div>
     </div>

@@ -187,7 +187,7 @@ function JudgingStatusPage() {
             {/* 테이블 */}
             <div className="bg-white border border-gray-300">
               {/* 테이블 헤더 */}
-              <div className="border-b border-gray-300 bg-gray-50">
+              <div className="border-b border-gray-300">
                 <div className="grid grid-cols-8 gap-4 px-4 py-3 text-sm font-medium text-black">
                   <div className="text-center">#</div>
                   <div className="text-center">ID</div>
