@@ -122,13 +122,13 @@ function ProblemDetail() {
                 <>
                   <button
                     onClick={goToEdit}
-                    className="px-4 py-1.5 bg-black text-white text-sm rounded hover:bg-gray-800 transition-colors"
+                    className="px-4 py-1.5 bg-black text-white text-md rounded hover:bg-blue transition-colors"
                   >
                     수정
                   </button>
                   <button
                     onClick={goBack}
-                    className="px-4 py-1.5 bg-white border border-gray-300 text-black text-sm rounded hover:bg-gray-50 transition-colors"
+                    className="px-4 py-1.5 bg-white border border-gray-300 text-black text-md rounded hover:bg-gray-100 transition-colors"
                   >
                     뒤로가기
                   </button>
