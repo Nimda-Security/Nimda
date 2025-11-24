@@ -20,6 +20,15 @@ function ProblemSubmitPage() {
     hints: '',
   });
 
+  // 언어 명칭 정규화 함수
+  const normalizeLanguage = (lang: string) => {
+    const lowerLang = lang.toLowerCase();
+    if (lowerLang.includes('c++') || lowerLang === 'cpp') return 'C++17';
+    if (lowerLang === 'c' || lowerLang === 'c99') return 'C99';
+    if (lowerLang === 'java') return 'Java';
+    return 'C++17'; // 기본값
+  };
+
   // 컴포넌트 마운트 시 초기값 설정
   useEffect(() => {
     const initialCode = location.state?.code;
@@ -29,7 +38,7 @@ function ProblemSubmitPage() {
       setFormData((prev) => ({
         ...prev,
         description: initialCode,
-        category: initialLanguage,
+        category: normalizeLanguage(initialLanguage),
       }));
     } else if (!formData.description.trim()) {
       const template = getLanguageTemplate('C++17');
