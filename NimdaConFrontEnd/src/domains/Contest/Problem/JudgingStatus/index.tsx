@@ -40,6 +40,31 @@ function JudgingStatusPage() {
     });
   };
 
+  const handleRetry = () => {
+    if (submissions.length > 0) {
+      const latestSubmission = submissions[0];
+      navigate('/problem-submit', {
+        state: {
+          problemId: latestSubmission.problemId,
+          problemTitle: latestSubmission.problemTitle,
+          code: latestSubmission.code,
+          language: latestSubmission.language,
+        },
+      });
+    } else if (location.state?.problemId) {
+      // 제출 내역이 없지만 문제 정보가 있는 경우
+      navigate('/problem-submit', {
+        state: {
+          problemId: location.state.problemId,
+          problemTitle: location.state.problemTitle,
+        },
+      });
+    } else {
+      // 정보가 없는 경우 기본 페이지로 이동
+      navigate('/problem-submit');
+    }
+  };
+
   return (
     <Layout>
       <div className="min-h-screen bg-white pt-8">
@@ -57,7 +82,7 @@ function JudgingStatusPage() {
 
             <JudgingResult judgeStatus={judgeStatus} />
 
-            <JudgingActions onRetry={goBack} onGoToProblems={goToProblems} />
+            <JudgingActions onRetry={handleRetry} onGoToProblems={goToProblems} />
           </div>
         </div>
       </div>

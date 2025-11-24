@@ -57,11 +57,20 @@ export function useJudgingStatus(locationState: any) {
 
       if (result.success) {
         const currentNickname = getCurrentNickname();
-        const userSubmissions = result.submissions
+        let userSubmissions = result.submissions
           .filter(
             (submission: Submission) => submission.nickname === currentNickname
           )
           .sort((a: Submission, b: Submission) => b.id - a.id);
+
+        // problemId가 있으면 해당 문제의 제출만 필터링
+        if (locationState?.problemId) {
+          userSubmissions = userSubmissions.filter(
+            (submission: Submission) =>
+              submission.problemId === Number(locationState.problemId)
+          );
+        }
+
         setSubmissions(userSubmissions);
       } else {
         console.error('제출 목록 가져오기 실패:', result.message);
@@ -144,7 +153,7 @@ export function useJudgingStatus(locationState: any) {
 
       return () => clearInterval(dotInterval);
     }
-  }, [submissionData, isNewSubmission, navigate]);
+  }, [submissionData, isNewSubmission, navigate, locationState?.problemId]);
 
   return {
     judgeStatus,

@@ -1,6 +1,8 @@
 import React from 'react';
+import { useNavigate } from 'react-router-dom';
 
 function ProblemHeader({ problem, from, onEdit, onBack, onSubmit }) {
+  const navigate = useNavigate();
   return (
     <div className="flex items-center justify-between mb-8">
       <h1 className="text-3xl font-bold text-black">
@@ -31,7 +33,17 @@ function ProblemHeader({ problem, from, onEdit, onBack, onSubmit }) {
             >
               제출
             </button>
-            <button className="px-4 py-1.5 bg-black text-white text-md rounded hover:bg-blue transition-colors">
+            <button
+              onClick={() =>
+                navigate('/judging-status', {
+                  state: {
+                    problemId: problem.id,
+                    problemTitle: problem.title,
+                  },
+                })
+              }
+              className="px-4 py-1.5 bg-black text-white text-md rounded hover:bg-blue transition-colors"
+            >
               채점 현황
             </button>
           </>
