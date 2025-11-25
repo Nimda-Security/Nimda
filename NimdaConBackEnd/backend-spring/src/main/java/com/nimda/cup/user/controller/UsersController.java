@@ -15,12 +15,13 @@ import java.util.Optional;
 @RequestMapping("/api/users")
 @CrossOrigin(origins = "*")
 public class UsersController {
-    
+
     @Autowired
     private UserService userService;
-    
+
     /**
      * 모든 사용자 조회
+     * 
      * @return 사용자 목록
      */
     @GetMapping
@@ -30,11 +31,11 @@ public class UsersController {
             System.out.println("=== UserService.findAll() 호출 중 ===");
             List<User> users = userService.findAll();
             System.out.println("=== 사용자 수: " + users.size() + " ===");
-            
+
             Map<String, Object> response = new HashMap<>();
             response.put("success", true);
             response.put("users", users);
-            
+
             System.out.println("=== 응답 생성 완료 ===");
             return ResponseEntity.ok(response);
         } catch (Exception e) {
@@ -46,9 +47,10 @@ public class UsersController {
             return ResponseEntity.status(500).body(error);
         }
     }
-    
+
     /**
      * 사용자 정보 조회
+     * 
      * @param id 사용자 ID
      * @return 사용자 정보
      */
@@ -56,7 +58,7 @@ public class UsersController {
     public ResponseEntity<?> getUserById(@PathVariable Long id) {
         try {
             Optional<User> userOpt = userService.findById(id);
-            
+
             if (userOpt.isPresent()) {
                 return ResponseEntity.ok(userOpt.get());
             } else {
@@ -70,17 +72,43 @@ public class UsersController {
             return ResponseEntity.status(500).body(error);
         }
     }
-    
+
     /**
-     * 사용자명으로 사용자 조회
-     * @param username 사용자명
+     * user_id로 사용자 조회
+     * 
+     * @param userId 로그인 아이디
      * @return 사용자 정보
      */
-    @GetMapping("/username/{username}")
-    public ResponseEntity<?> getUserByUsername(@PathVariable String username) {
+    @GetMapping("/user-id/{userId}")
+    public ResponseEntity<?> getUserByUserId(@PathVariable String userId) {
         try {
-            Optional<User> userOpt = userService.findByUsername(username);
-            
+            Optional<User> userOpt = userService.findByUserId(userId);
+
+            if (userOpt.isPresent()) {
+                return ResponseEntity.ok(userOpt.get());
+            } else {
+                Map<String, String> error = new HashMap<>();
+                error.put("message", "User not found");
+                return ResponseEntity.status(404).body(error);
+            }
+        } catch (Exception e) {
+            Map<String, String> error = new HashMap<>();
+            error.put("message", "Failed to get user: " + e.getMessage());
+            return ResponseEntity.status(500).body(error);
+        }
+    }
+
+    /**
+     * 닉네임으로 사용자 조회
+     * 
+     * @param nickname 닉네임
+     * @return 사용자 정보
+     */
+    @GetMapping("/nickname/{nickname}")
+    public ResponseEntity<?> getUserByNickname(@PathVariable String nickname) {
+        try {
+            Optional<User> userOpt = userService.findByNickname(nickname);
+
             if (userOpt.isPresent()) {
                 return ResponseEntity.ok(userOpt.get());
             } else {

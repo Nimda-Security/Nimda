@@ -12,30 +12,35 @@ import java.util.Optional;
 
 @Service
 public class UserService {
-    
+
     @Autowired
     private UserRepository userRepository;
-    
+
     @Autowired
     private PasswordEncoder passwordEncoder; // Spring Security 비밀번호 암호화 도구
-    
-    
+
     /*
-     * CreateUser : 회원 가입 
-     */ 
+     * CreateUser : 회원 가입
+     */
     @Transactional
-    public User createUser(String username, String password, String email) {
-        validateUserUniqueness(username, email);
+    public User createUser(String userId, String nickname, String password, String email,
+            String universityName, String department, String grade) {
+        validateUserUniqueness(userId, nickname, email);
         String encodedPassword = passwordEncoder.encode(password);
-        User user = new User(username, encodedPassword, email);
+        User user = new User(userId, nickname, encodedPassword, email,
+                universityName, department, grade);
         return userRepository.save(user);
     }
-    
-    //  사용자 중복 확인
-    private void validateUserUniqueness(String username, String email) {
 
-        if (existsByUsername(username)) {
-            throw new RuntimeException("Username already exists");
+    // 사용자 중복 확인
+    private void validateUserUniqueness(String userId, String nickname, String email) {
+
+        if (existsByUserId(userId)) {
+            throw new RuntimeException("User ID already exists");
+        }
+
+        if (existsByNickname(nickname)) {
+            throw new RuntimeException("Nickname already exists");
         }
 
         if (existsByEmail(email)) {
@@ -50,30 +55,42 @@ public class UserService {
         return userRepository.findById(id);
     }
 
-    // 조회 메서드 
+    // user_id로 사용자 찾기
     @Transactional(readOnly = true)
-    public Optional<User> findByUsername(String username) {
-        return userRepository.findByUsername(username);
+    public Optional<User> findByUserId(String userId) {
+        return userRepository.findByUserId(userId);
     }
 
-    // 사용자명 중복 확인
+    // 닉네임으로 사용자 찾기
     @Transactional(readOnly = true)
-    public boolean existsByUsername(String username) {
-        return userRepository.existsByUsername(username);
+    public Optional<User> findByNickname(String nickname) {
+        return userRepository.findByNickname(nickname);
     }
-    
+
+    // user_id 중복 확인
+    @Transactional(readOnly = true)
+    public boolean existsByUserId(String userId) {
+        return userRepository.existsByUserId(userId);
+    }
+
+    // 닉네임 중복 확인
+    @Transactional(readOnly = true)
+    public boolean existsByNickname(String nickname) {
+        return userRepository.existsByNickname(nickname);
+    }
+
     /// 이메일 중복 확인
     @Transactional(readOnly = true)
     public boolean existsByEmail(String email) {
         return userRepository.existsByEmail(email);
     }
-    
-    // 사용자 정보 업데이트 
+
+    // 사용자 정보 업데이트
     @Transactional
     public User updateUser(User user) {
         return userRepository.save(user);
     }
-    
+
     // 모든 사용자 조회
     @Transactional(readOnly = true)
     public List<User> findAll() {

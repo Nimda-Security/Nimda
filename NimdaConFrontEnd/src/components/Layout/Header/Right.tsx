@@ -1,21 +1,21 @@
-import React from "react";
-import Logout from "@/components/icons/Logout.svg";
+import React from 'react';
+import Logout from '@/components/icons/Logout.svg';
 
 interface RightProps {
-  username: string | null;
+  username: string | null; // nickname을 전달받지만 하위 호환성을 위해 prop 이름은 유지
   adminStatus: boolean;
   isLoggedIn: boolean;
   onLogout: () => void;
 }
 
 const Right: React.FC<RightProps> = ({
-  username,
+  username, // 실제로는 nickname 값이 전달됨
   adminStatus,
   isLoggedIn,
   onLogout,
 }) => {
   return (
-    <div className="hidden md:flex items-center space-x-4">
+    <div className="hidden min-[820px]:flex items-center space-x-4">
       {isLoggedIn ? (
         <>
           {username && (
@@ -40,7 +40,7 @@ const Right: React.FC<RightProps> = ({
 
           <button
             onClick={onLogout}
-            className="p-2 rounded-md hover:bg-gray-100 transition-colors duration-200"
+            className="p-1 rounded-md hover:bg-gray-100 transition-colors duration-200"
             title="Logout"
           >
             <img src={Logout} alt="Logout" className="w-5 h-5" />

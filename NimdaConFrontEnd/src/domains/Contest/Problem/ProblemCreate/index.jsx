@@ -13,7 +13,7 @@ function ProblemCreatePage() {
   });
 
   const [testCases, setTestCases] = useState([
-    { input: "", output: "" }
+    { input: "", output: "", isPublic: false }
   ]);
 
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -33,7 +33,7 @@ function ProblemCreatePage() {
   };
 
   const addTestCase = () => {
-    setTestCases([...testCases, { input: "", output: "" }]);
+    setTestCases([...testCases, { input: "", output: "", isPublic: false }]);
   };
 
   const removeTestCase = (index) => {
@@ -56,7 +56,13 @@ function ProblemCreatePage() {
     }
 
     // 테스트 케이스 검증
-    const validTestCases = testCases.filter(tc => tc.input.trim() && tc.output.trim());
+    const validTestCases = testCases
+      .filter(tc => tc.input.trim() && tc.output.trim())
+      .map(tc => ({
+        input: tc.input.trim(),
+        output: tc.output.trim(),
+        isPublic: tc.isPublic || false // isPublic 필드 보장
+      }));
     if (validTestCases.length === 0) {
       alert("최소 하나의 테스트 케이스를 입력해주세요.");
       setIsSubmitting(false);
@@ -88,7 +94,7 @@ function ProblemCreatePage() {
           memoryLimit: "",
           difficulty: "EASY"
         });
-        setTestCases([{ input: "", output: "" }]);
+        setTestCases([{ input: "", output: "", isPublic: false }]);
       } else {
         alert(`오류: ${result.message}`);
       }
@@ -235,8 +241,17 @@ function ProblemCreatePage() {
                     className="w-full px-4 py-2 border border-gray-200 rounded-md outline-none resize-none"
                   />
                 </div>
-                {testCases.length > 1 && (
-                  <div className="col-span-2 flex justify-end">
+                <div className="col-span-2 flex items-center justify-between">
+                  <label className="flex items-center gap-2 cursor-pointer">
+                    <input
+                      type="checkbox"
+                      checked={testCase.isPublic || false}
+                      onChange={(e) => handleTestCaseChange(index, 'isPublic', e.target.checked)}
+                      className="w-4 h-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500"
+                    />
+                    <span className="text-sm text-gray-700">공개 테스트케이스 (프론트엔드에 표시)</span>
+                  </label>
+                  {testCases.length > 1 && (
                     <button
                       type="button"
                       onClick={() => removeTestCase(index)}
@@ -244,8 +259,8 @@ function ProblemCreatePage() {
                     >
                       삭제
                     </button>
-                  </div>
-                )}
+                  )}
+                </div>
               </div>
             ))}
             <button

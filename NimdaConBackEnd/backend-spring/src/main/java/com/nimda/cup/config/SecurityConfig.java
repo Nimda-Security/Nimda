@@ -26,8 +26,14 @@ public class SecurityConfig {
     @Bean
     public CorsConfigurationSource corsConfigurationSource() {
         CorsConfiguration configuration = new CorsConfiguration();
-        configuration.setAllowedOriginPatterns(Arrays.asList("*")); // 크롬 익스텐션 허용
-        configuration.setAllowedMethods(Arrays.asList("GET", "POST", "PUT", "DELETE", "OPTIONS")); // 모든 메서드 허용
+        // allowCredentials(true) 사용 시 정확한 Origin 명시 필요
+        configuration.setAllowedOrigins(Arrays.asList(
+                "http://localhost:3000", // 로컬 개발 (React/Next.js)
+                "http://localhost:5173", // 로컬 개발 (Vite)
+                "http://localhost:5174", // 로컬 개발 (Vite 대체 포트)
+                "https://nimda-page.vercel.app" // Vercel 프로덕션
+        ));
+        configuration.setAllowedMethods(Arrays.asList("GET", "POST", "PUT", "DELETE", "PATCH", "OPTIONS"));
         configuration.setAllowedHeaders(Arrays.asList("*"));
         configuration.setAllowCredentials(true);
 

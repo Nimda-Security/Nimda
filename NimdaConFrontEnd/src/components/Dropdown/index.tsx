@@ -1,5 +1,5 @@
-import React from "react";
-import { Link } from "react-router-dom";
+import React from 'react';
+import { Link } from 'react-router-dom';
 
 interface DropdownItem {
   name: string;
@@ -12,7 +12,7 @@ interface DropdownProps {
 
 const Dropdown: React.FC<DropdownProps> = ({ items }) => {
   return (
-    <div className="absolute mt-2 w-36 rounded-md shadow-lg bg-white ring-1 ring-gray-300 ring-opacity-5">
+    <div className="absolute mt-1 w-36 rounded-md shadow-lg bg-white ring-1 ring-gray-300 ring-opacity-5">
       <div
         className="py-1"
         role="menu"
