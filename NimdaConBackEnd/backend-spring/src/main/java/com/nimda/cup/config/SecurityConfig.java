@@ -33,6 +33,7 @@ public class SecurityConfig {
                 "http://localhost:5174", // 로컬 개발 (Vite 대체 포트)
                 "https://nimda-page.vercel.app" // Vercel 프로덕션
         ));
+
         configuration.setAllowedMethods(Arrays.asList("GET", "POST", "PUT", "DELETE", "PATCH", "OPTIONS"));
         configuration.setAllowedHeaders(Arrays.asList("*"));
         configuration.setAllowCredentials(true);
