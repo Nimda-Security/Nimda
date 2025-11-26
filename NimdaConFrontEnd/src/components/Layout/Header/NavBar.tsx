@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import Logo from '@/components/icons/Logo';
 import { getCurrentNickname, isAdmin } from '@/utils/jwt';
 import { isLoggedIn, logoutAPI } from '@/api/auth';
@@ -18,6 +18,7 @@ import Dropdown from '@/components/Dropdown';
 import Right from './Right';
 
 const Navbar: React.FC<NavbarProps> = ({ menuItems }) => {
+  const navigate = useNavigate();
   // 모바일 메뉴의 열림/닫힘 상태를 관리하는 state
   const [isOpen, setIsOpen] = useState(false);
   const [nickname, setNickname] = useState<string | null>(null);
@@ -108,7 +109,25 @@ const Navbar: React.FC<NavbarProps> = ({ menuItems }) => {
                     </a>
                     {activeDropdown === item.name &&
                       dropdownItems[item.name] && (
-                        <Dropdown items={dropdownItems[item.name]} />
+                        <Dropdown
+                          items={dropdownItems[item.name]}
+                          onItemClick={
+                            item.name === '대회'
+                              ? (href) => {
+                                  const contestStartTime = new Date(
+                                    '2025-11-27T19:30:00'
+                                  );
+                                  const now = new Date();
+
+                                  if (now < contestStartTime && !isAdmin()) {
+                                    alert('대회 시작 전입니다.');
+                                    return;
+                                  }
+                                  navigate(href);
+                                }
+                              : undefined
+                          }
+                        />
                       )}
                   </div>
                 ))}

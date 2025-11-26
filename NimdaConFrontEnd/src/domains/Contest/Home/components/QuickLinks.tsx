@@ -1,7 +1,9 @@
 import { FileText, CheckCircle, Trophy } from 'lucide-react';
-import { Link } from 'react-router-dom';
+import { useNavigate } from 'react-router-dom';
+import { isAdmin } from '@/utils/jwt';
 
 export function QuickLinks() {
+  const navigate = useNavigate();
   const links = [
     {
       icon: FileText,
@@ -20,15 +22,27 @@ export function QuickLinks() {
     },
   ];
 
+  const handleLinkClick = (path: string) => {
+    const contestStartTime = new Date('2025-11-27T19:30:00');
+    const now = new Date();
+
+    if (now < contestStartTime && !isAdmin()) {
+      alert('대회 시작 전입니다.');
+      return;
+    }
+
+    navigate(path);
+  };
+
   return (
     <div className="flex flex-col min-[820px]:flex-row gap-6 justify-center">
       {links.map((link, index) => {
         const Icon = link.icon;
 
         return (
-          <Link
+          <div
             key={index}
-            to={link.path}
+            onClick={() => handleLinkClick(link.path)}
             className="group bg-white rounded-2xl p-8 transition-all duration-300 cursor-pointer border border-[#e0e0e0] hover:border-gray-600 w-full min-[820px]:w-[250px] hover:shadow-lg"
           >
             <div className="flex flex-col items-center text-center">
@@ -40,7 +54,7 @@ export function QuickLinks() {
                 {link.title}
               </h3>
             </div>
-          </Link>
+          </div>
         );
       })}
     </div>
