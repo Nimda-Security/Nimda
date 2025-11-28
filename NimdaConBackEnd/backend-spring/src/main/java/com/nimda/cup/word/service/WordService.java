@@ -21,8 +21,8 @@ public class WordService {
     @Transactional
     public WordResponse saveWord(WordRequest request) {
 
-        // OAuth 미구현 시 userId가 null이면 기본값 설정
-        String userId = resolveUserId(request.getUserId());
+        // TODO: OAuth 미구현: 어떤 값이 오든 임시 사용자로 통일
+        String userId = "anonymous";
 
         // 중복 체크 (같은 사용자가 같은 단어를 여러 번 저장하는 것 방지)
         boolean exists = wordRepository.existsByUserIdAndWord(
@@ -41,6 +41,7 @@ public class WordService {
                     .findFirst()
                     .orElseThrow();
 
+            word.setUserId(userId); // 기존 레코드도 anonymous로 통일
             word.setTranslation(request.getTranslation());
             word.setPronunciation(request.getPronunciation());
             word.setExample(request.getExample());
