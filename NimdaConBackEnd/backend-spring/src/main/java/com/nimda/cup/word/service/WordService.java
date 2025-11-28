@@ -12,6 +12,8 @@ import com.nimda.cup.word.repository.WordRepository;
 import java.time.Instant;
 import java.time.LocalDateTime;
 import java.time.ZoneId;
+import java.util.List;
+import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
@@ -59,6 +61,25 @@ public class WordService {
 
         Word savedWord = wordRepository.save(word);
         return WordResponse.from(savedWord);
+    }
+
+    // method: getWordByUserId : 특정 사용자의 모든 단어 목록을 최신순으로 가져온다. 
+    public List<WordResponse> getWordsByUserId(String userId) {
+        String resolvedUserId = resolveUserId(userId); // null이면 anonymous 설정
+        return wordRepository.findAllByUserIdOrderByUpdatedAtDesc(resolvedUserId)
+                .stream()
+                .map(WordResponse::from)
+                .collect(Collectors.toList());
+    }
+
+    // method: getWordsSince : 증분 동기화 메서드로 마지막 동기화 이후 추가되거나 수정된 단어만 내려준다. 
+    public List<WordResponse> getWordsSince(String userId, long timestamp) {
+        String resolvedUserId = resolveUserId(userId);
+        LocalDateTime since = timestampToLocalDateTime(timestamp);
+        return wordRepository.findByUserIdAndUpdatedAfter(resolvedUserId, since)
+                .stream()
+                .map(WordResponse::from)
+                .collect(Collectors.toList());
     }
 
     // method: 특정 사용자 (userId)가 마지막으로 동기화한 시점 이후에 서버에 추가된 단어의 개수를 계산한다. 
