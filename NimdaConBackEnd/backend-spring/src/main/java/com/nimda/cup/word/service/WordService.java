@@ -1,12 +1,17 @@
 package com.nimda.cup.word.service;
 
-import org.springframework.stereotype.Service;
-import lombok.RequiredArgsConstructor;
 import jakarta.transaction.Transactional;
-import com.nimda.cup.word.repository.WordRepository;
+import lombok.RequiredArgsConstructor;
+import org.springframework.stereotype.Service;
+
 import com.nimda.cup.word.dto.WordRequest;
 import com.nimda.cup.word.dto.WordResponse;
 import com.nimda.cup.word.entity.Word;
+import com.nimda.cup.word.repository.WordRepository;
+
+import java.time.Instant;
+import java.time.LocalDateTime;
+import java.time.ZoneId;
 
 @Service
 @RequiredArgsConstructor
@@ -17,10 +22,7 @@ public class WordService {
     public WordResponse saveWord(WordRequest request) {
 
         // OAuth 미구현 시 userId가 null이면 기본값 설정
-        String userId = request.getUserId();
-        if (userId == null || userId.trim().isEmpty()) {
-            userId = "anonymous"; // 또는 "temp_user_" + System.currentTimeMillis()
-        }
+        String userId = resolveUserId(request.getUserId());
 
         // 중복 체크 (같은 사용자가 같은 단어를 여러 번 저장하는 것 방지)
         boolean exists = wordRepository.existsByUserIdAndWord(
@@ -56,5 +58,28 @@ public class WordService {
 
         Word savedWord = wordRepository.save(word);
         return WordResponse.from(savedWord);
+    }
+
+    // method: 특정 사용자 (userId)가 마지막으로 동기화한 시점 이후에 서버에 추가된 단어의 개수를 계산한다. 
+    public int getNewWordCount(String userId, long timestamp) {
+        String resolvedUserId = resolveUserId(userId); // null이면 anonymous 설정
+        LocalDateTime since = timestampToLocalDateTime(timestamp);
+        return (int) wordRepository.countUpdatedAfter(resolvedUserId, since);
+    }
+
+    // method: userId가 null이면 anonymous 설정 - 사용자 인증 미구현 고려 nullable 처리 
+    private String resolveUserId(String userId) {
+        return (userId == null || userId.trim().isEmpty())
+                ? "anonymous"
+                : userId.trim();
+    }
+
+    // method: timestamp를 LocalDateTime으로 변환한다.
+    // timestamp: 1970-01-01 00:00:00 UTC 이후의 밀리초 단위 시간
+    private LocalDateTime timestampToLocalDateTime(long timestamp) {
+        if (timestamp <= 0) {
+            return LocalDateTime.ofInstant(Instant.EPOCH, ZoneId.systemDefault());
+        }
+        return LocalDateTime.ofInstant(Instant.ofEpochMilli(timestamp), ZoneId.systemDefault());
     }
 }
