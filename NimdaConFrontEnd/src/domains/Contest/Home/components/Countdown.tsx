@@ -111,7 +111,7 @@ const Countdown = () => {
       case 'running':
         return (
           <>
-            <h2 className="text-3xl min-[820px]:text-4xl font-light mb-8">
+            <h2 className="text-3xl min-[820px]:text-4xl font-semibold mb-8">
               대회 종료까지
             </h2>
             <div className="flex justify-center items-baseline space-x-4 min-[820px]:space-x-8">
@@ -138,7 +138,7 @@ const Countdown = () => {
         );
       case 'after':
         return (
-          <h2 className="text-4xl min-[820px]:text-5xl font-bold text-gray-800">
+          <h2 className="text-4xl min-[820px]:text-5xl font-semibold text-gray-800">
             대회가 종료되었습니다.
           </h2>
         );

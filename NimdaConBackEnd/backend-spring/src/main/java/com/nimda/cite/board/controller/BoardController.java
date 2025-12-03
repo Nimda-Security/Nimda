@@ -157,10 +157,10 @@ public class BoardController {
             if (authHeader != null && authHeader.startsWith("Bearer ")) {
                 String token = authHeader.substring(7); // "Bearer " 제거
                 try {
-                    String username = jwtUtil.extractUsername(token);
-                    if (username != null && !jwtUtil.isTokenExpired(token)) {
-                        author = userRepository.findByUsername(username)
-                                .orElseThrow(() -> new RuntimeException("사용자를 찾을 수 없습니다: " + username));
+                    Long userId = jwtUtil.extractUserId(token);
+                    if (userId != null && !jwtUtil.isTokenExpired(token)) {
+                        author = userRepository.findById(userId)
+                                .orElseThrow(() -> new RuntimeException("사용자를 찾을 수 없습니다: " + userId));
                     }
                 } catch (Exception e) {
                     // 토큰이 유효하지 않으면 익명 사용자로 처리
@@ -299,10 +299,10 @@ public class BoardController {
             if (authHeader != null && authHeader.startsWith("Bearer ")) {
                 String token = authHeader.substring(7);
                 try {
-                    String username = jwtUtil.extractUsername(token);
-                    if (username != null && !jwtUtil.isTokenExpired(token)) {
-                        currentUser = userRepository.findByUsername(username)
-                                .orElseThrow(() -> new RuntimeException("사용자를 찾을 수 없습니다: " + username));
+                    Long userId = jwtUtil.extractUserId(token);
+                    if (userId != null && !jwtUtil.isTokenExpired(token)) {
+                        currentUser = userRepository.findById(userId)
+                                .orElseThrow(() -> new RuntimeException("사용자를 찾을 수 없습니다: " + userId));
                     }
                 } catch (Exception e) {
                     // 토큰이 유효하지 않으면 에러 반환
@@ -387,10 +387,10 @@ public class BoardController {
             if (authHeader != null && authHeader.startsWith("Bearer ")) {
                 String token = authHeader.substring(7);
                 try {
-                    String username = jwtUtil.extractUsername(token);
-                    if (username != null && !jwtUtil.isTokenExpired(token)) {
-                        currentUser = userRepository.findByUsername(username)
-                                .orElseThrow(() -> new RuntimeException("사용자를 찾을 수 없습니다: " + username));
+                    Long userId = jwtUtil.extractUserId(token);
+                    if (userId != null && !jwtUtil.isTokenExpired(token)) {
+                        currentUser = userRepository.findById(userId)
+                                .orElseThrow(() -> new RuntimeException("사용자를 찾을 수 없습니다: " + userId));
                     }
                 } catch (Exception e) {
                     // 토큰이 유효하지 않으면 에러 반환

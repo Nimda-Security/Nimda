@@ -8,9 +8,10 @@ interface DropdownItem {
 
 interface DropdownProps {
   items: DropdownItem[];
+  onItemClick?: (href: string) => void;
 }
 
-const Dropdown: React.FC<DropdownProps> = ({ items }) => {
+const Dropdown: React.FC<DropdownProps> = ({ items, onItemClick }) => {
   return (
     <div className="absolute mt-1 w-36 rounded-md shadow-lg bg-white ring-1 ring-gray-300 ring-opacity-5">
       <div
@@ -19,16 +20,27 @@ const Dropdown: React.FC<DropdownProps> = ({ items }) => {
         aria-orientation="vertical"
         aria-labelledby="options-menu"
       >
-        {items.map((item) => (
-          <Link
-            key={item.name}
-            to={item.href}
-            className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 hover:font-semibold"
-            role="menuitem"
-          >
-            {item.name}
-          </Link>
-        ))}
+        {items.map((item) =>
+          onItemClick ? (
+            <div
+              key={item.name}
+              onClick={() => onItemClick(item.href)}
+              className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 hover:font-semibold cursor-pointer"
+              role="menuitem"
+            >
+              {item.name}
+            </div>
+          ) : (
+            <Link
+              key={item.name}
+              to={item.href}
+              className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 hover:font-semibold"
+              role="menuitem"
+            >
+              {item.name}
+            </Link>
+          )
+        )}
       </div>
     </div>
   );

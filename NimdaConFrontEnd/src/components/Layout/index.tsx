@@ -7,9 +7,9 @@ interface LayoutProps {
 const Layout: React.FC<LayoutProps> = ({ children }) => {
   const menuItems = [
     { name: "동아리 소개", href: "/" },
-    { name: "새 소식", href: "/" },
-    { name: "학술 게시판", href: "/" },
-    { name: "커뮤니티", href: "/" },
+    { name: "새 소식", href: "/board/news" },
+    { name: "학술 게시판", href: "/board/academic" },
+    { name: "커뮤니티", href: "/board/community" },
     { name: "대회", href: "/contest" },
     { name: "바로가기", href: "/" },
     { name: "Login", href: "/login" },

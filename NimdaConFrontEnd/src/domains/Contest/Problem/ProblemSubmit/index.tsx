@@ -149,8 +149,6 @@ int main() {
       state: {
         submissionData,
         isNewSubmission: true, // 새로운 제출임을 표시
-        problemId: problemId,
-        problemTitle: problemTitle,
       },
     });
   };

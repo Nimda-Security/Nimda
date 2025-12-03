@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import Logo from '@/components/icons/Logo';
 import { getCurrentNickname, isAdmin } from '@/utils/jwt';
 import { isLoggedIn, logoutAPI } from '@/api/auth';
@@ -18,6 +18,7 @@ import Dropdown from '@/components/Dropdown';
 import Right from './Right';
 
 const Navbar: React.FC<NavbarProps> = ({ menuItems }) => {
+  const navigate = useNavigate();
   // 모바일 메뉴의 열림/닫힘 상태를 관리하는 state
   const [isOpen, setIsOpen] = useState(false);
   const [nickname, setNickname] = useState<string | null>(null);
@@ -55,16 +56,13 @@ const Navbar: React.FC<NavbarProps> = ({ menuItems }) => {
     window.location.href = '/login';
   };
 
-  // 임시 팝업 생성
+  // 임시 팝업 생성 (동아리 소개만)
   const handleMenuClick = (
     e: React.MouseEvent<HTMLAnchorElement>,
     itemName: string
   ) => {
     const itemsToShowAlert = [
       '동아리 소개',
-      '새 소식',
-      '학술 게시판',
-      '커뮤니티',
     ];
     if (itemsToShowAlert.includes(itemName)) {
       e.preventDefault();
@@ -99,16 +97,43 @@ const Navbar: React.FC<NavbarProps> = ({ menuItems }) => {
                     onMouseEnter={() => setActiveDropdown(item.name)}
                     onMouseLeave={() => setActiveDropdown(null)}
                   >
-                    <a
-                      href={item.href}
-                      onClick={(e) => handleMenuClick(e, item.name)} // 임시 팝업 생성
-                      className="text-black hover:font-semibold hover:text-blue px-3 py-2 rounded-md text-sm font-medium"
-                    >
-                      {item.name}
-                    </a>
+                    {item.name === '동아리 소개' ? (
+                      <a
+                        href={item.href}
+                        onClick={(e) => handleMenuClick(e, item.name)}
+                        className="text-black hover:font-semibold hover:text-blue px-3 py-2 rounded-md text-sm font-medium"
+                      >
+                        {item.name}
+                      </a>
+                    ) : (
+                      <Link
+                        to={item.href}
+                        className="text-black hover:font-semibold hover:text-blue px-3 py-2 rounded-md text-sm font-medium"
+                      >
+                        {item.name}
+                      </Link>
+                    )}
                     {activeDropdown === item.name &&
                       dropdownItems[item.name] && (
-                        <Dropdown items={dropdownItems[item.name]} />
+                        <Dropdown
+                          items={dropdownItems[item.name]}
+                          onItemClick={
+                            item.name === '대회'
+                              ? (href) => {
+                                  const contestStartTime = new Date(
+                                    '2025-11-27T19:30:00'
+                                  );
+                                  const now = new Date();
+
+                                  if (now < contestStartTime && !isAdmin()) {
+                                    alert('대회 시작 전입니다.');
+                                    return;
+                                  }
+                                  navigate(href);
+                                }
+                              : undefined
+                          }
+                        />
                       )}
                   </div>
                 ))}
@@ -148,14 +173,24 @@ const Navbar: React.FC<NavbarProps> = ({ menuItems }) => {
             {menuItems
               .filter((item) => item.name !== 'Login')
               .map((item) => (
-                <a
-                  key={item.name}
-                  href={item.href}
-                  onClick={(e) => handleMenuClick(e, item.name)} // 임시 팝업 생성
-                  className="text-gray-300 hover:bg-gray-700 hover:text-white block px-3 py-2 rounded-md text-base font-medium"
-                >
-                  {item.name}
-                </a>
+                item.name === '동아리 소개' ? (
+                  <a
+                    key={item.name}
+                    href={item.href}
+                    onClick={(e) => handleMenuClick(e, item.name)}
+                    className="text-gray-300 hover:bg-gray-700 hover:text-white block px-3 py-2 rounded-md text-base font-medium"
+                  >
+                    {item.name}
+                  </a>
+                ) : (
+                  <Link
+                    key={item.name}
+                    to={item.href}
+                    className="text-gray-300 hover:bg-gray-700 hover:text-white block px-3 py-2 rounded-md text-base font-medium"
+                  >
+                    {item.name}
+                  </Link>
+                )
               ))}
 
             {/* 로그인/로그아웃 버튼 */}

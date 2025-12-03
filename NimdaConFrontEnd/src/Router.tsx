@@ -13,6 +13,10 @@ import Home from "@/domains/Home";
 import Scoreboard from "@/domains/Contest/Scoreboard";
 
 import ContestHome from "@/domains/Contest/Home";
+import BoardListPage from "@/domains/Board/BoardList";
+import BoardDetailPage from "@/domains/Board/BoardDetail";
+import BoardWritePage from "@/domains/Board/BoardWrite";
+import BoardEditPage from "@/domains/Board/BoardEdit";
 
 const Router = () => {
   return (
@@ -31,6 +35,12 @@ const Router = () => {
         <Route path="/scoreboard" element={<Scoreboard />} />
 
         <Route path="/contest" element={<ContestHome />} />
+
+        {/* Board Routes */}
+        <Route path="/board/:boardType" element={<BoardListPage />} />
+        <Route path="/board/:boardType/:id" element={<BoardDetailPage />} />
+        <Route path="/board/:boardType/write" element={<BoardWritePage />} />
+        <Route path="/board/:boardType/edit/:id" element={<BoardEditPage />} />
       </Routes>
     </BrowserRouter>
   );

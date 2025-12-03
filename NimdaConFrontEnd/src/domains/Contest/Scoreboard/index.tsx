@@ -19,7 +19,7 @@ function ScoreboardPage() {
   const [autoRefreshEnabled, setAutoRefreshEnabled] = useState<boolean>(false);
 
   const goBack = () => {
-    navigate('/');
+    navigate('/contest');
   };
 
   // [New] API 호출 함수
