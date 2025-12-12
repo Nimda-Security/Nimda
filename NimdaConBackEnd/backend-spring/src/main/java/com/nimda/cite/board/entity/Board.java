@@ -30,6 +30,7 @@ package com.nimda.cite.board.entity;
  * ========================================
  */
 
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.nimda.cite.board.enums.BoardType;
 import com.nimda.cup.user.entity.User;
 import jakarta.persistence.*;
@@ -75,6 +76,7 @@ public class Board {
     // [이유] 게시글 작성자 정보 관리, JWT 토큰에서 사용자 정보 추출하여 설정
     @ManyToOne(fetch = FetchType.LAZY)  // LAZY 로딩 (현재 프로젝트 스타일)
     @JoinColumn(name = "user_id", nullable = false)
+    @JsonIgnoreProperties({"hibernateLazyInitializer", "handler"})  // LAZY 로딩 프록시 객체 직렬화 문제 해결
     private User author;  // 작성자
 
     // ========== [통합 포인트 #3] ==========

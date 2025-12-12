@@ -44,6 +44,7 @@ public class User {
     @NotBlank
     @Size(min = 4, max = 255)
     @Column(nullable = false, length = 255)
+    @JsonIgnore  // 보안: 비밀번호는 JSON 응답에서 제외
     private String password;
 
     @Email
