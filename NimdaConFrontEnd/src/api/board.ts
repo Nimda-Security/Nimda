@@ -146,6 +146,8 @@ export const createBoardAPI = async (
 ): Promise<BoardWriteResponse | BoardErrorResponse> => {
   try {
     const token = localStorage.getItem('authToken');
+    console.log('[createBoardAPI] 토큰 확인:', token ? `존재함 (길이: ${token.length})` : '없음');
+    
     if (!token) {
       return {
         success: false,
@@ -161,6 +163,14 @@ export const createBoardAPI = async (
       formData.append('file', data.file);
     }
 
+    console.log('[createBoardAPI] 요청 전송:', {
+      url: API_BASE_URL,
+      method: 'POST',
+      hasToken: !!token,
+      boardType: data.boardType,
+      title: data.title,
+    });
+
     const response = await fetch(API_BASE_URL, {
       method: 'POST',
       headers: {
@@ -169,6 +179,8 @@ export const createBoardAPI = async (
       },
       body: formData,
     });
+
+    console.log('[createBoardAPI] 응답 상태:', response.status, response.statusText);
 
     const result = await parseJsonSafe(response);
 
