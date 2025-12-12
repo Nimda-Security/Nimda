@@ -34,6 +34,8 @@ import com.nimda.cite.board.service.BoardService;
 import com.nimda.cup.common.util.JwtUtil;
 import com.nimda.cup.user.entity.User;
 import com.nimda.cup.user.repository.UserRepository;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -51,6 +53,8 @@ import java.util.Map;
 @RequestMapping("/api/cite/board")  // [수정] /api/board → /api/cite/board
 @CrossOrigin(origins = "*")
 public class BoardController {
+
+    private static final Logger logger = LoggerFactory.getLogger(BoardController.class);
 
     @Autowired
     private BoardService boardService;
@@ -154,21 +158,47 @@ public class BoardController {
             // [기존] 작성자 정보 없음
             // [수정] JWT 토큰에서 작성자 정보 추출 (현재 프로젝트 스타일)
             User author = null;
+            
+            logger.debug("게시글 작성 요청 - Authorization 헤더: {}", authHeader != null ? "존재함" : "없음");
+            
             if (authHeader != null && authHeader.startsWith("Bearer ")) {
                 String token = authHeader.substring(7); // "Bearer " 제거
+                logger.debug("토큰 추출 완료, 토큰 길이: {}", token.length());
+                
                 try {
+                    // 토큰 만료 확인
+                    if (jwtUtil.isTokenExpired(token)) {
+                        logger.warn("만료된 토큰으로 게시글 작성 시도");
+                        Map<String, Object> errorResponse = new HashMap<>();
+                        errorResponse.put("success", false);
+                        errorResponse.put("message", "토큰이 만료되었습니다. 다시 로그인해주세요.");
+                        return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(errorResponse);
+                    }
+
                     Long userId = jwtUtil.extractUserId(token);
-                    if (userId != null && !jwtUtil.isTokenExpired(token)) {
+                    logger.debug("토큰에서 추출한 userId: {}", userId);
+                    
+                    if (userId != null) {
                         author = userRepository.findById(userId)
                                 .orElseThrow(() -> new RuntimeException("사용자를 찾을 수 없습니다: " + userId));
+                        logger.info("게시글 작성자 인증 성공 - userId: {}, nickname: {}", userId, author.getNickname());
+                    } else {
+                        logger.warn("토큰에서 userId 추출 실패 - userId가 null");
                     }
                 } catch (Exception e) {
-                    // 토큰이 유효하지 않으면 익명 사용자로 처리
+                    logger.error("JWT 토큰 파싱 오류: {}", e.getMessage(), e);
+                    Map<String, Object> errorResponse = new HashMap<>();
+                    errorResponse.put("success", false);
+                    errorResponse.put("message", "유효하지 않은 토큰입니다. 다시 로그인해주세요. (오류: " + e.getMessage() + ")");
+                    return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(errorResponse);
                 }
+            } else {
+                logger.warn("Authorization 헤더가 없거나 Bearer 형식이 아님 - 헤더: {}", authHeader);
             }
 
             // 작성자가 없으면 에러 반환 (선택사항: 익명 사용자 허용 가능)
             if (author == null) {
+                logger.warn("게시글 작성 실패 - 작성자 인증 실패");
                 Map<String, Object> errorResponse = new HashMap<>();
                 errorResponse.put("success", false);
                 errorResponse.put("message", "로그인이 필요합니다.");
