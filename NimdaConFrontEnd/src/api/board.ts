@@ -326,8 +326,8 @@ export const getFileDownloadURL = (filepath: string | null | undefined): string 
     return filepath;
   }
   
-  // 상대 경로면 API 베이스 URL 추가
-  const baseURL = import.meta.env.VITE_API_BASE_URL || '';
-  return `${baseURL}${filepath}`;
+  // filepath가 /api/download/ 형식이면 그대로 사용
+  // 파일명에 특수문자가 있을 수 있으므로 인코딩은 브라우저가 자동 처리
+  return filepath;
 };
 
