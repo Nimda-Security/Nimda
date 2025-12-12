@@ -58,9 +58,13 @@ public class FileDownloadController {
     @GetMapping("/{fileName:.+}")
     public ResponseEntity<?> downloadFile(@PathVariable("fileName") String fileName) {
         try {
+            logger.info("파일 다운로드 요청: {}", fileName);
+            logger.debug("업로드 디렉토리: {}", UPLOAD_DIR);
+            
             // ========== [보안 검증 #1] ==========
             // Path Traversal 공격 방지: 상대 경로(../)나 절대 경로(/) 포함 여부 확인
-            if (fileName.contains("..") || fileName.contains("/") || fileName.contains("\\")) {
+            // 단, 파일명에는 언더스코어(_)가 포함될 수 있으므로 제외
+            if (fileName.contains("..") || fileName.startsWith("/") || fileName.startsWith("\\")) {
                 logger.warn("Path Traversal 시도 감지: {}", fileName);
                 Map<String, Object> errorResponse = new HashMap<>();
                 errorResponse.put("success", false);
@@ -89,9 +93,11 @@ public class FileDownloadController {
             // ========== [파일 존재 확인] ==========
             if (!file.exists() || !file.isFile()) {
                 logger.warn("파일을 찾을 수 없음: {}", filePath);
+                logger.warn("파일 존재 여부: exists={}, isFile={}", file.exists(), file.isFile());
                 Map<String, Object> errorResponse = new HashMap<>();
                 errorResponse.put("success", false);
                 errorResponse.put("message", "파일을 찾을 수 없습니다.");
+                errorResponse.put("filePath", filePath.toString());
                 
                 return ResponseEntity.status(HttpStatus.NOT_FOUND).body(errorResponse);
             }
