@@ -26,6 +26,7 @@ import com.nimda.cite.board.entity.Board;
 import com.nimda.cite.board.enums.BoardType;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
+import org.springframework.data.jpa.repository.EntityGraph;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Repository;
 
@@ -37,6 +38,8 @@ public interface BoardRepository extends JpaRepository<Board, Long> {  // [수�
     // [신규] BoardType으로 게시판 타입별 조회 (현재 프로젝트 핵심 기능)
     // [이유] 게시판 타입별 필터링 (NEWS, ACADEMIC, COMMUNITY, QNA, FREE)
     // [사용] GET /api/cite/board?boardType=NEWS
+    // [개선] @EntityGraph로 author를 함께 로드하여 N+1 쿼리 문제 해결
+    @EntityGraph(attributePaths = {"author"})
     Page<Board> findByBoardType(BoardType boardType, Pageable pageable);
 
     // ========== [기존 코드 유지] ==========
@@ -49,6 +52,8 @@ public interface BoardRepository extends JpaRepository<Board, Long> {  // [수�
     // [신규] BoardType + 제목 검색 조합 메서드
     // [이유] 게시판 타입별 검색 기능 지원
     // [사용] GET /api/cite/board?boardType=NEWS&searchKeyword=검색어
+    // [개선] @EntityGraph로 author를 함께 로드하여 N+1 쿼리 문제 해결
+    @EntityGraph(attributePaths = {"author"})
     Page<Board> findByBoardTypeAndTitleContaining(BoardType boardType, String searchKeyword, Pageable pageable);
 }
 
