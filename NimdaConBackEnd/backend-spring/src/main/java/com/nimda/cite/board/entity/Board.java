@@ -1,0 +1,115 @@
+package com.nimda.cite.board.entity;
+
+/**
+ * ========================================
+ * Board.java (게시판 엔티티)
+ * ========================================
+ * 
+ * [기존 게시판 코드 기준]
+ * - 기본 구조: 유지 (title, content, filename, filepath)
+ * - ID 타입: Integer → Long으로 변경
+ * - 패키지: com.Board.Board.entity → com.nimda.cite.board.entity
+ * - 어노테이션: @Data → @Getter, @Setter, @EntityListeners로 변경
+ * 
+ * [현재 프로젝트 통합 사항]
+ * 1. User 엔티티 관계 추가 (작성자 정보) - com.nimda.cup.user.entity.User 사용
+ * 2. BoardType enum 추가 (게시판 타입 필터링) - NEWS, ACADEMIC, COMMUNITY, QNA, FREE
+ * 3. JPA Auditing 추가 (생성일시, 수정일시 자동 관리)
+ * 4. ID 타입: Long으로 통일 (현재 프로젝트 스타일)
+ * 5. 파일 업로드 기능: 유지 (filename, filepath)
+ * 
+ * [주요 변경점]
+ * - 기존: @Data 사용
+ * - 현재: @Getter, @Setter, @EntityListeners 사용 (JPA Auditing 지원)
+ * - 기존: Integer id
+ * - 현재: Long id
+ * - 기존: 작성자 정보 없음
+ * - 현재: User author 관계 추가 (LAZY 로딩)
+ * - 기존: 게시판 타입 없음
+ * - 현재: BoardType boardType 추가 (필터링용)
+ * ========================================
+ */
+
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
+import com.nimda.cite.board.enums.BoardType;
+import com.nimda.cup.user.entity.User;
+import jakarta.persistence.*;
+import lombok.AllArgsConstructor;
+import lombok.Getter;
+import lombok.NoArgsConstructor;
+import lombok.Setter;
+import org.springframework.data.annotation.CreatedDate;
+import org.springframework.data.annotation.LastModifiedDate;
+import org.springframework.data.jpa.domain.support.AuditingEntityListener;
+
+import java.time.LocalDateTime;
+
+@Entity
+@Table(name = "board")
+@EntityListeners(AuditingEntityListener.class)  // [신규] JPA Auditing 활성화
+@Getter
+@Setter
+@NoArgsConstructor
+@AllArgsConstructor
+public class Board {
+
+    // ========== [통합 포인트 #1] ==========
+    // [기존] @Id @GeneratedValue(strategy = GenerationType.IDENTITY) private Integer id;
+    // [수정] 현재 프로젝트는 Long 타입 사용 (User 엔티티와 일관성 유지)
+    @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    private Long id;
+
+    // ========== [기존 코드 유지] ==========
+    // [기존] 게시글 제목 - 변경 없음
+    @Column(nullable = false, length = 200)
+    private String title;
+
+    // ========== [기존 코드 유지] ==========
+    // [기존] 게시글 내용 - 변경 없음
+    @Column(columnDefinition = "TEXT", nullable = false)
+    private String content;
+
+    // ========== [통합 포인트 #2] ==========
+    // [기존] 없음
+    // [신규] User 작성자 관계 추가 (현재 프로젝트 User 엔티티 사용)
+    // [이유] 게시글 작성자 정보 관리, JWT 토큰에서 사용자 정보 추출하여 설정
+    @ManyToOne(fetch = FetchType.LAZY)  // LAZY 로딩 (현재 프로젝트 스타일)
+    @JoinColumn(name = "user_id", nullable = false)
+    @JsonIgnoreProperties({"hibernateLazyInitializer", "handler"})  // LAZY 로딩 프록시 객체 직렬화 문제 해결
+    private User author;  // 작성자
+
+    // ========== [통합 포인트 #3] ==========
+    // [기존] 없음
+    // [신규] BoardType enum 추가 (게시판 타입 필터링용)
+    // [이유] 게시판 타입별 필터링 (NEWS, ACADEMIC, COMMUNITY, QNA, FREE)
+    @Enumerated(EnumType.STRING)
+    @Column(name = "board_type", nullable = false)
+    private BoardType boardType;
+
+    // ========== [기존 코드 유지] ==========
+    // [기존] 파일명 - 변경 없음 (파일 업로드 기능 유지)
+    @Column(length = 255)
+    private String filename;
+
+    // ========== [기존 코드 유지] ==========
+    // [기존] 파일 경로 - 변경 없음 (파일 업로드 기능 유지)
+    @Column(length = 500)
+    private String filepath;
+
+    // ========== [통합 포인트 #4] ==========
+    // [기존] 없음
+    // [신규] JPA Auditing으로 생성일시 자동 관리
+    // [이유] 현재 프로젝트 스타일 (User 엔티티와 동일한 방식)
+    @CreatedDate
+    @Column(name = "created_at", nullable = false, updatable = false)
+    private LocalDateTime createdAt;
+
+    // ========== [통합 포인트 #5] ==========
+    // [기존] 없음
+    // [신규] JPA Auditing으로 수정일시 자동 관리
+    // [이유] 현재 프로젝트 스타일 (User 엔티티와 동일한 방식)
+    @LastModifiedDate
+    @Column(name = "updated_at", nullable = false)
+    private LocalDateTime updatedAt;
+}

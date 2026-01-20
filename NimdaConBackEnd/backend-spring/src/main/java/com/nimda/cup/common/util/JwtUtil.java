@@ -31,7 +31,9 @@ public class JwtUtil {
      */
     public String generateToken(String nickname, Long userId) {
         Map<String, Object> claims = new HashMap<>();
-        claims.put("sub", userId);
+        // 기존 코드 (문제 있음): claims.put("sub", userId);
+        // 문제: setSubject()가 sub 필드를 String으로 덮어써서 userId 추출 실패
+        claims.put("userId", userId);  // 수정: sub 대신 userId 클레임 사용
         claims.put("nickname", nickname);
         return createToken(claims, nickname);
     }
@@ -46,7 +48,9 @@ public class JwtUtil {
      */
     public String generateToken(String nickname, Long userId, java.util.List<String> authorities) {
         Map<String, Object> claims = new HashMap<>();
-        claims.put("sub", userId);
+        // 기존 코드 (문제 있음): claims.put("sub", userId);
+        // 문제: setSubject()가 sub 필드를 String으로 덮어써서 userId 추출 실패
+        claims.put("userId", userId);  // 수정: sub 대신 userId 클레임 사용
         claims.put("nickname", nickname);
         claims.put("authorities", authorities);
         return createToken(claims, nickname);
@@ -62,6 +66,8 @@ public class JwtUtil {
     private String createToken(Map<String, Object> claims, String subject) {
         return Jwts.builder()
                 .setClaims(claims)
+                // 주의: setSubject()는 claims의 "sub" 필드를 String으로 덮어씁니다!
+                // 따라서 userId는 "sub"가 아닌 "userId" 클레임에 저장해야 합니다.
                 .setSubject(subject)
                 .setIssuedAt(new Date(System.currentTimeMillis()))
                 .setExpiration(new Date(System.currentTimeMillis() + expiration))
@@ -98,7 +104,20 @@ public class JwtUtil {
      * @return 사용자 ID
      */
     public Long extractUserId(String token) {
-        return extractClaim(token, claims -> claims.get("sub", Long.class));
+        // 기존 코드 (문제 있음): return extractClaim(token, claims -> claims.get("sub", Long.class));
+        // 문제: sub 필드가 String(닉네임)으로 덮어써져서 Long으로 변환 실패 → null 반환
+        // 수정: userId 클레임에서 추출
+        return extractClaim(token, claims -> {
+            Object userIdObj = claims.get("userId");
+            if (userIdObj instanceof Long) {
+                return (Long) userIdObj;
+            } else if (userIdObj instanceof Integer) {
+                return ((Integer) userIdObj).longValue();
+            } else if (userIdObj instanceof Number) {
+                return ((Number) userIdObj).longValue();
+            }
+            return null;
+        });
     }
 
     /**
