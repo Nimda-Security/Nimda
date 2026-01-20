@@ -43,13 +43,20 @@ check_k6() {
 
 # 서버 상태 확인
 check_server() {
-    log_info "서버 상태 확인 중..."
-    if curl -s http://localhost:3001/api > /dev/null; then
-        log_success "서버가 실행 중입니다."
+    local server_url=${BASE_URL:-http://localhost:80}
+    log_info "서버 상태 확인 중: $server_url..."
+    if curl -s "$server_url/api" > /dev/null 2>&1; then
+        log_success "서버가 실행 중입니다: $server_url"
     else
-        log_error "서버가 실행되지 않았습니다. 먼저 서버를 시작하세요."
+        log_warning "서버 응답을 확인할 수 없습니다: $server_url"
+        log_info "서버가 실행 중인지 확인하세요."
         log_info "서버 시작: cd NimdaConBackEnd/backend-spring && ./mvnw spring-boot:run"
-        exit 1
+        log_info "또는 환경변수로 서버 URL 설정: BASE_URL=http://your-server:80 ./run-tests.sh judge"
+        read -p "계속하시겠습니까? (y/n) " -n 1 -r
+        echo
+        if [[ ! $REPLY =~ ^[Yy]$ ]]; then
+            exit 1
+        fi
     fi
 }
 
@@ -71,11 +78,18 @@ run_login_test() {
 # 채점 테스트 실행
 run_judge_test() {
     log_info "⚖️ 채점 시스템 부하 테스트 시작..."
+    
+    # 서버 URL 설정 (환경변수 또는 기본값)
+    BASE_URL=${BASE_URL:-http://localhost:80}
+    log_info "테스트 대상 서버: $BASE_URL"
+    
     k6 run \
-        --out json=results/judge-test-$(date +%Y%m%d_%H%M%S).json \
-        scripts/judge/submit-test.js
+        -e BASE_URL=$BASE_URL \
+        --out json=results/judge-load-test-$(date +%Y%m%d_%H%M%S).json \
+        scripts/judge/judge-load-test.js
     log_success "채점 테스트 완료!"
 }
+
 
 # 통합 시나리오 테스트 실행
 run_full_test() {
@@ -119,13 +133,15 @@ show_help() {
     echo ""
     echo "옵션:"
     echo "  login    - 로그인 API 부하 테스트"
-    echo "  judge    - 채점 시스템 부하 테스트"
+    echo "  judge    - 채점 시스템 부하 테스트 (보고서 기반 보수적 접근)"
     echo "  full     - 통합 시나리오 부하 테스트"
     echo "  all      - 모든 테스트 실행 (기본값)"
     echo "  help     - 이 도움말 표시"
     echo ""
     echo "예시:"
     echo "  ./run-tests.sh login"
+    echo "  ./run-tests.sh judge"
+    echo "  BASE_URL=http://your-server:80 ./run-tests.sh judge"
     echo "  ./run-tests.sh all"
 }
 
@@ -146,6 +162,8 @@ main() {
             run_login_test
             ;;
         "judge")
+            log_warning "이 테스트는 실제 대회 규모를 재현한 후 점진적으로 부하를 증가시킵니다."
+            log_warning "CloudWatch에서 CPU Utilization을 모니터링하세요 (목표: 70% 도달 지점 측정)"
             run_judge_test
             ;;
         "full")
