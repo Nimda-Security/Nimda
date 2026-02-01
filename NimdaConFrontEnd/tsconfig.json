@@ -1,16 +1,22 @@
 {
   "files": [],
   "references": [
-    { "path": "./tsconfig.app.json" },
-    { "path": "./tsconfig.node.json" }
+    {
+      "path": "./tsconfig.app.json"
+    },
+    {
+      "path": "./tsconfig.node.json"
+    }
   ],
   // 절대 경로 설정
   "compilerOptions": {
     "baseUrl": ".",
+    "noUnusedLocals": false, // 쓰지 않는 지역 변수 에러 무시 [Vercel 배포용도]
+    "noUnusedParameters": false, // 쓰지 않는 지역 변수 에러 무시 [Vercel 배포용도]
     "paths": {
-      "@/*": ["./src/*"]
+      "@/*": [
+        "./src/*"
+      ]
     }
   }
 }
-
-
