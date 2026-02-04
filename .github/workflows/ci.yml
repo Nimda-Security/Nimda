@@ -67,10 +67,11 @@ jobs:
         
       # 8단계: Docker 이미지 빌드
       - name: Build Docker image
+        working-directory: NimdaConBackEnd/backend-spring
         run: |
           docker build -t novvvv/nimda-backend:latest .
           # Dockerfile을 사용하여 Docker 이미지를 빌드합니다
-          # JAR 파일은 이미 빌드되어 있어서 Dockerfile에서 복사됩니다
+          # Dockerfile이 backend-spring 디렉토리에 있으므로 해당 디렉토리에서 빌드
           
       # 9단계: Docker Hub에 로그인
       - name: Login to Docker Hub

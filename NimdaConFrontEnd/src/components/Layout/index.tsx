@@ -12,7 +12,7 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
     { name: "커뮤니티", href: "/board/community" },
     { name: "대회", href: "/contest" },
     { name: "바로가기", href: "/" },
-    { name: "Test", href: "/login" },
+    { name: "Login", href: "/login" },
   ];
   return (
     <div className="w-full">
