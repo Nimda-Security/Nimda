@@ -32,7 +32,9 @@ public class SecurityConfig {
         // allowCredentials(true) 사용 시 패턴 사용 필요
         configuration.setAllowedOriginPatterns(Arrays.asList(
                 "http://localhost:*", // 로컬 개발 (모든 포트)
-                "https://nimda-page.vercel.app", // Vercel 프로덕션
+                "https://nimda.kr", // 프로덕션 도메인
+                "https://*.nimda.kr", // 서브도메인 포함
+                "https://nimda-page.vercel.app", // Vercel 프로덕션 (레거시)
                 "chrome-extension://*" // ✅ Chrome Extension 추가
         ));
 
