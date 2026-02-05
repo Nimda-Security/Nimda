@@ -1,13 +1,60 @@
 version: '3.8'
 
 services:
+  # MySQL 데이터베이스 서비스
+  mysql:
+    image: mysql:8.0
+    container_name: nimda-mysql
+    restart: always
+    environment:
+      MYSQL_ROOT_PASSWORD: rootpassword # 루트 비밀번호
+      MYSQL_DATABASE: nimda_con
+      MYSQL_USER: nimda
+      MYSQL_PASSWORD: nimda123
+      # 메모리 제한 설정 (1GB RAM 환경)
+      MYSQL_INNODB_BUFFER_POOL_SIZE: 256M
+    ports:
+      - "3306:3306" # 외부 접근이 필요하면 포트 열기 (보안상 필요없으면 제거 가능)
+    volumes:
+      - mysql_data:/var/lib/mysql # 데이터 영속성을 위한 볼륨
+    healthcheck:
+      test: [ "CMD", "mysqladmin", "ping", "-h", "localhost", "-u", "root", "-prootpassword" ]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # Spring Boot 백엔드 서비스
   backend:
     image: novvvv/nimda-backend:latest
     container_name: nimda-backend
-    ports:
-      - "80:80" # 포트 매핑 (외부 80 → 내부 80)
+    depends_on:
+      mysql:
+        condition: service_healthy # MySQL이 준비될 때까지 대기
+    # 포트 매핑 제거 (내부 네트워크에서만 접근, nginx를 통해 접근)
+    expose:
+      - "8080" # 내부 네트워크에서만 접근 가능
     environment:
-      # 환경변수
-      - SPRING_DATASOURCE_URL=jdbc:mysql://nimda-db.cpu8uk0eauv0.ap-northeast-2.rds.amazonaws.com:3306/nimda_con?useSSL=false&serverTimezone=UTC&allowPublicKeyRetrieval=true
+      # MySQL 연결 정보 (docker-compose 내부 네트워크에서 서비스 이름으로 접근)
+      - SPRING_DATASOURCE_URL=jdbc:mysql://mysql:3306/nimda_con?useSSL=false&serverTimezone=UTC&allowPublicKeyRetrieval=true
       - SPRING_DATASOURCE_USERNAME=nimda
       - SPRING_DATASOURCE_PASSWORD=nimda123
+      # Spring Boot 포트 설정
+      - SERVER_PORT=8080
+    restart: always
+
+  # Nginx 리버스 프록시 서비스
+  nginx:
+    image: nginx:alpine
+    container_name: nimda-nginx
+    depends_on:
+      - backend # 백엔드가 준비될 때까지 대기
+    ports:
+      - "80:80" # HTTP
+      - "443:443" # HTTPS (나중에 SSL 설정 시 사용)
+    volumes:
+      - ./nginx/nginx.conf:/etc/nginx/nginx.conf:ro # nginx 설정 파일 마운트
+    restart: always
+
+# 볼륨 정의 (데이터 영속성)
+volumes:
+  mysql_data:

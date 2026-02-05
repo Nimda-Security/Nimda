@@ -3,9 +3,11 @@ spring:
     name: nimda-cup
   
   datasource:
-    url: jdbc:mysql://nimda-db.cpu8uk0eauv0.ap-northeast-2.rds.amazonaws.com:3306/nimda_con?useSSL=false&serverTimezone=UTC&allowPublicKeyRetrieval=true
-    username: nimda
-    password: nimda123
+    # 환경변수로 오버라이드 가능 (docker-compose.yml에서 설정)
+    # 기본값: docker-compose의 MySQL 서비스 이름으로 연결
+    url: ${SPRING_DATASOURCE_URL:jdbc:mysql://mysql:3306/nimda_con?useSSL=false&serverTimezone=UTC&allowPublicKeyRetrieval=true}
+    username: ${SPRING_DATASOURCE_USERNAME:nimda}
+    password: ${SPRING_DATASOURCE_PASSWORD:nimda123}
     driver-class-name: com.mysql.cj.jdbc.Driver
     
     hikari:
@@ -29,7 +31,7 @@ spring:
   
   sql:
     init:
-      mode: never  # RDS에 데이터가 이미 있으므로 data.sql 실행 안 함 
+      mode: never  # 초기 데이터는 수동으로 import 또는 data.sql 사용 
   
   security:
     user:
@@ -37,7 +39,9 @@ spring:
       password: 1234
 
 server:
-  port: 80
+  # 환경변수로 오버라이드 가능 (docker-compose.yml에서 설정)
+  # 기본값: 8080 (nginx가 프록시하므로 내부 포트 사용)
+  port: ${SERVER_PORT:8080}
 
 # JWT 설정
 jwt:
