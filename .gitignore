@@ -32,10 +32,14 @@ logs/
 
 # Environment variables
 .env
+.env.*
 .env.local
+.env.development
 .env.development.local
-.env.test.local
+.env.production
 .env.production.local
+.env.test.local
+!.env.example
 
 # Database
 *.db
@@ -53,3 +57,22 @@ frontend.pid
 # Log files
 backend.log
 frontend.log
+
+# SSL Certificates (민감 정보)
+*.pem
+*.key
+*.crt
+*.cert
+certbot-conf/
+certbot-www/
+
+# Database backups (민감 정보)
+*.sql
+!schema.sql
+
+# Test results
+load-tests/results/
+*.zip
+
+# Docker volumes
+mysql_data/

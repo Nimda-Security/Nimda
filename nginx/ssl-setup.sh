@@ -12,9 +12,9 @@ echo "이메일: $EMAIL"
 echo ""
 
 # certbot 컨테이너 실행하여 인증서 발급
+# docker-compose로 생성한 볼륨을 사용하기 위해 nginx 컨테이너의 볼륨을 공유
 docker run -it --rm \
-  -v certbot-www:/var/www/certbot \
-  -v certbot-conf:/etc/letsencrypt \
+  --volumes-from nimda-nginx \
   certbot/certbot certonly \
   --webroot \
   --webroot-path=/var/www/certbot \
