@@ -28,7 +28,6 @@ public class SecurityConfig {
     public CorsConfigurationSource corsConfigurationSource() {
         CorsConfiguration configuration = new CorsConfiguration();
 
-        // ✅ 수정: setAllowedOriginPatterns 사용 (Chrome Extension 지원)
         // allowCredentials(true) 사용 시 패턴 사용 필요
         configuration.setAllowedOriginPatterns(Arrays.asList(
                 "http://localhost:*", // 로컬 개발 (모든 포트)
