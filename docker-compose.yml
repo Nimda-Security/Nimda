@@ -50,11 +50,15 @@ services:
       - backend # 백엔드가 준비될 때까지 대기
     ports:
       - "80:80" # HTTP
-      - "443:443" # HTTPS (나중에 SSL 설정 시 사용)
+      - "443:443" # HTTPS
     volumes:
       - ./nginx/nginx.conf:/etc/nginx/nginx.conf:ro # nginx 설정 파일 마운트
+      - certbot-www:/var/www/certbot # Let's Encrypt 인증용 웹루트
+      - certbot-conf:/etc/letsencrypt # Let's Encrypt 인증서 저장소
     restart: always
 
 # 볼륨 정의 (데이터 영속성)
 volumes:
   mysql_data:
+  certbot-www: # Let's Encrypt 인증용 웹루트
+  certbot-conf: # Let's Encrypt 인증서 저장소
