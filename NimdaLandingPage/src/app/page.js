@@ -105,7 +105,7 @@ export default function Page() {
           <nav className="nav">
             <a className="brand" href="#top" aria-label="Go to top">
               <img
-                src="/nimdalogo.png"
+                src="/nimdalogo1.png"
                 alt="NIMDA 로고"
                 className="brandIcon"
               />
@@ -139,23 +139,22 @@ export default function Page() {
 
       {/* Hero */}
       <main id="top" className="hero">
-        <div className="heroBg" aria-hidden="true" />
         <Container>
           <div className="heroGrid">
-            <div className="heroLeft">
-              <h1 className="h1">
-                {CLUB.tagline}
-              </h1>
-              <p className="p heroP">
-                {CLUB.shortIntro.map((line, i) => (
-                  <span key={i}>
-                    {line}
-                    <br/>
-                  </span>
-                ))}
-              </p>
+            <div className="heroLeftCentered">
+              {/* '개발 동아리' 타이틀 */}
+              <h1 className="h1">{CLUB.tagline}</h1>
+              
+              {/* 'NIMDA' 메인 글자 */}
+              <div className="heroP">
+                {CLUB.name}
+              </div>
+
+              {/* 전등 켜지면 나타날 로고 (따로 분리) */}
+              <div className="spotlight-logo">
+                <img src="/nimdalogo2.png" alt="Nimda Logo" style={{ width: '100%' }} /> 
+              </div>
             </div>
-            <div className="glow" aria-hidden="true" />
           </div>
         </Container>
       </main>

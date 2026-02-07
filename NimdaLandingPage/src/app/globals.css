@@ -59,12 +59,14 @@ ul{ margin: 0; padding-left: 18px; }
 /* Typography */
 .h1{
   font-family: 'SubtitleFont', sans-serif;
-  font-size: clamp(24px, 3vw, 40px);
+  font-size: clamp(20px, 2.5vw, 32px);
   line-height: 1.08;
-  margin: 14px 0 10px;
+  margin: -20px 0 10px;
   letter-spacing: -0.02em;
   text-align: center;
-  font-weight: 900;
+  font-weight: 500;
+  animation:  
+    fadeOut 0.1s ease-in-out 2.0s forwards;
 }
 
 @media (max-width: 768px){
@@ -183,34 +185,53 @@ ul{ margin: 0; padding-left: 18px; }
 }
 
 /* Hero */
-.hero{
+.hero {
   position: relative;
   overflow: hidden;
-  display: flex;
-  flex-direction: column;
-  justify-content: flex-start;
-  align-items: center;
-  
   height: 100vh;
   width: 100%;
-  padding-top: 100px;         /* 이 값을 조절해서 '얼마나 위로 올릴지' 결정하세요 */
-  box-sizing: border-box;
+  display: flex;
+  justify-content: center;
+  align-items: center;
   background-color: #ffffff;
+  padding-top: 0px;
 }
 
 /* 1. 애니메이션 정의: 튕기는 폭을 더 크게 조절했습니다 */
 @keyframes bounceAtBottom {
-  0% { 
-    transform: scaleY(0); 
+  to { transform: scaleY(1); }
+}
+
+@keyframes spotlightOn {
+  0% {
+    background: radial-gradient(
+      circle at center 30%,
+      rgba(0,0,0,1) 0%, rgba(0,0,0,1) 100%);
   }
-  70% { 
-    transform: scaleY(1.15); /* 화면보다 15% 더 길게 늘어나 바닥을 치는 효과 */
+  /* 2.5s 시작 후 0.2초 지점: 살짝 밝아짐 (깜빡 1) */
+  20% {
+    background: radial-gradient(
+      circle at center 45%, 
+      transparent 10%, 
+      rgba(0, 0, 0, 0.90) 50%, 
+      rgba(0, 0, 0, 1) 90%
+    );
   }
-  85% { 
-    transform: scaleY(0.92); /* 반동으로 확 줄어듦 */
+  /* 0.3초 지점: 다시 어두워짐 */
+  30% {
+    background: radial-gradient(
+      circle at center 45%,
+      rgba(0,0,0,1) 0%,
+      rgba(0,0,0,1) 100%);
   }
-  100% { 
-    transform: scaleY(1);    /* 최종 정착 */
+  /* 0.4초 지점: 최종적으로 탁! 켜짐 */
+  40%, 100% {
+    background: radial-gradient(
+      circle at center 45%, 
+      transparent 30%,   /* 이전에 설정한 넓은 범위 유지 */
+      rgba(0, 0, 0, 0.90) 50%, 
+      rgba(0, 0, 0, 1) 90%
+    );
   }
 }
 
@@ -224,19 +245,48 @@ ul{ margin: 0; padding-left: 18px; }
   height: 100%;
   background-color: #000000;
   z-index: 10;
-  
-  /* 위쪽을 축으로 고정 (매우 중요: 이게 없으면 위아래로 튑니다) */
   transform-origin: top;
-  
-  /* 실행 시간 0.7초, 대기 시간 1.2초 */
-  /* forwards를 꼭 써야 애니메이션 끝난 뒤 검은 화면이 유지됩니다 */
-  animation: bounceAtBottom 0.7s cubic-bezier(0.25, 1, 0.5, 1) 1.8s forwards;
-  
-  /* 초기 상태는 안 보이게 설정 */
   transform: scaleY(0);
+  
+  /* 2.0s에 막 하강 완료 -> 3.0s에 전등이 부드럽게 켜짐 */
+  animation:
+    bounceAtBottom 0.7s cubic-bezier(0.175, 0.885, 0.32, 1.275) 2.0s forwards,
+    spotlightOn 1.0s ease-in-out 3.0s forwards;
 }
 
+/* 로고 기본 스타일 */
+.spotlight-logo {
+  /* ... 기존 위치 및 크기 속성 유지 ... */
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  z-index: 15;
+  width: 400px;
+  opacity: 0;
+  filter: brightness(0) invert(1)
+          drop-shadow(3px 3px 4px rgba(0, 0, 0, 0.6))   /* 깊이감 있는 그림자 */
+          drop-shadow(-1px -1px 2px rgba(255, 255, 255, 0.8)); /* 밝은 하이라이트 */
 
+
+
+
+  /* [수정] 전등 애니메이션과 동일한 시간(1.5s) 및 지연 시간(2.0s) 설정 */
+  animation: logoFlicker 1.0s ease-in-out 3.0s forwards;
+}
+
+@keyframes logoFlicker {
+  0% { opacity: 0; }
+  /* 전등 첫 번째 깜빡임 (20%) */
+  20% { opacity: 0.5; } 
+  /* 다시 암전 (30%) */
+  30% { opacity: 0; }
+  /* 최종 탁! 켜짐 (40% ~ 100%) */
+  40%, 100% { 
+    opacity: 1;
+    transform: translate(-50%, -50%) scale(1); 
+  }
+}
 .heroBg{
   display: none;
 }
@@ -249,6 +299,7 @@ ul{ margin: 0; padding-left: 18px; }
   width: 100%;
   max-width: var(--max);
   gap: 28px;
+  margin-top: -100px;
 }
 @media (max-width: 980px){
   .heroGrid{ grid-template-columns: 1fr; }
@@ -292,43 +343,36 @@ ul{ margin: 0; padding-left: 18px; }
   font-size: 12px;
   color: var(--muted);
 }
-.heroP{ 
+.heroP {
   font-family: 'TitleFont', sans-serif;
-  font-size: 10em;
-  max-width: 720px;
-  margin: 0 auto;             /* 상자 자체를 중앙으로 */
-  margin-top: 0;
-  text-align: center;
+  font-size: 7em;
   font-weight: 900;
+  text-align: center;
   background: linear-gradient(135deg, #7c3aed 0%, #06b6d4 100%);
-  
-  /* 2. 배경을 글자 모양으로 자르기 */
   -webkit-background-clip: text;
   background-clip: text;
-  
-  /* 3. 원래 글자 색상을 투명하게 만들기 */
   -webkit-text-fill-color: transparent;
   
-  /* 간격 조정 (아까 정한 대로 가깝게) */
-  margin: 14px 0 10px;
-  text-align: center;
-
-  animation: revealUp 0.8s ease-out forwards;
-  animation-delay: 0.3s;
+  position: relative;
+  z-index: 5;
   opacity: 0;
+  margin: 5px;
+
+  /* 등장(0.8s) -> 1.8s 대기 후 퇴장 */
+  animation: 
+    revealUp 1.2s ease-out forwards, 
+    fadeOut 0.1s ease-in-out 2.0s forwards;
 }
 
 @keyframes revealUp {
-  from {
-    transform: translateY(30px);
-    opacity: 0;
-  }
-  to {
-    transform: translateY(0);
-    opacity: 1;
-  }
+  from { transform: translateY(30px); opacity: 0; }
+  to { transform: translateY(0); opacity: 1; }
 }
 
+@keyframes fadeOut {
+  /* 글자가 완전히 사라지게 처리 */
+  to { opacity: 0; visibility: hidden; pointer-events: none; }
+}
 .heroButtons{
   display:flex;
   gap: 12px;
