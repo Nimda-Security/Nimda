@@ -1,7 +1,7 @@
 
 const CLUB = {
   name: "NIMDA",
-  tagline: "개발 동아리",
+  tagline: "보안 동아리",
   shortIntro: [
     "NIMDA",
   ],
