@@ -149,11 +149,6 @@ export default function Page() {
               <div className="heroP">
                 {CLUB.name}
               </div>
-
-              {/* 전등 켜지면 나타날 로고 (따로 분리) */}
-              <div className="spotlight-logo">
-                <img src="/nimdalogo2.png" alt="Nimda Logo" style={{ width: '100%' }} /> 
-              </div>
             </div>
           </div>
         </Container>
@@ -163,45 +158,16 @@ export default function Page() {
       <section id="about" className="section">
         <Container>
           <SectionHeader
-            eyebrow="About"
             title="동아리는 어떤 곳인가요?"
-            desc="실전 중심의 프로젝트와 스터디로 성장을 가속합니다. 함께 만들고, 함께 회고하며, 다음 성과로 연결합니다."
+            desc={
+              <>
+              NIMDA는 <span className="highlight1">컴퓨터 언어</span>를 기반으로 <span className="highlight2">웹 개발</span>과 <span className="highlight2">정보보안</span> 분야를 함께 공부하고 성장하는 동아리입니다.<br/>
+              멘토–멘티 활동과 스터디, 실전 프로젝트와 대회 참여를 통해 <span className="highlight3">‘직접 해보며 배우는 경험’</span>을 가장 중요하게 생각합니다.
+              </>
+            }
           />
 
-          <div className="grid3">
-            <Card
-              title="실전 프로젝트"
-              desc="작게 만들고 빠르게 배포합니다."
-            >
-              <ul className="list">
-                <li>기획서/요구사항 기반 개발</li>
-                <li>코드리뷰, 테스트, 문서화</li>
-                <li>배포 및 운영 경험</li>
-              </ul>
-            </Card>
-
-            <Card
-              title="성장 루프"
-              desc="스터디 → 실습 → 발표 → 회고"
-            >
-              <ul className="list">
-                <li>기초/심화 트랙 분리 운영</li>
-                <li>정기 세션과 과제 기반 학습</li>
-                <li>공유 문화(발표/글/리포트)</li>
-              </ul>
-            </Card>
-
-            <Card
-              title="네트워킹"
-              desc="팀워크와 협업을 최우선으로"
-            >
-              <ul className="list">
-                <li>멘토/OB 네트워크</li>
-                <li>해커톤/공모전 팀 매칭</li>
-                <li>협업 툴 기반 워크플로우</li>
-              </ul>
-            </Card>
-          </div>
+          
         </Container>
       </section>
 
@@ -209,7 +175,6 @@ export default function Page() {
       <section id="activities" className="section sectionAlt">
         <Container>
           <SectionHeader
-            eyebrow="Activities"
             title="활동 내용"
             desc="프로젝트/스터디/대회 참여를 균형 있게 운영합니다. 아래에는 수상 실적도 함께 정리했습니다."
           />
@@ -288,7 +253,6 @@ export default function Page() {
       <section className="section">
         <Container>
           <SectionHeader
-            eyebrow="FAQ"
             title="자주 묻는 질문"
           />
 

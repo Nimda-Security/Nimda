@@ -51,10 +51,16 @@ ul{ margin: 0; padding-left: 18px; }
   font-style: normal;
 }
 
+@font-face {
+  font-family: 'BoldFont';
+  src: url('./fonts/atoz/atoz-6SemiBold.woff2') format('woff2');
+  font-weight: normal;
+  font-style: normal;
+}
 .page{
   min-height: 100vh;
-  background-color: #ffffff;
-  color: #000000;
+  background-color: #000000;
+  color: #ffffff;
   font-family: 'PageFont', sans-serif;
 }
 
@@ -75,7 +81,8 @@ ul{ margin: 0; padding-left: 18px; }
   text-align: center;
   font-weight: 500;
   animation:  
-    fadeOut 0.1s ease-in-out 2.0s forwards;
+    fadeIn 0.1s ease-in-out 2.0s forwards;
+    color : #000000;
 }
 
 @media (max-width: 768px){
@@ -157,7 +164,7 @@ ul{ margin: 0; padding-left: 18px; }
   box-shadow: 0 0 0 4px rgba(124,58,237,0.14);
 }
 .brandText{
-  font-weight: 700;
+  font-family: 'BoldFont', sans-serif;
   letter-spacing: -0.01em;
   color: #ffffff;
 }
@@ -207,6 +214,7 @@ ul{ margin: 0; padding-left: 18px; }
 
 
 .brandText{
+
   font-size: 18px;
   font-weight: 800;
   letter-spacing: -0.02em;
@@ -474,18 +482,68 @@ ul{ margin: 0; padding-left: 18px; }
 
 /* Sections */
 .section{
-  padding: 72px 0;
+  /* 최소 높이를 화면 높이의 100%로 설정 */
+  min-height: 100vh; 
+  
+  /* 내부 콘텐츠가 중앙에 오도록 flex박스 설정 (선택 사항) */
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+
+  /* 기존 패딩 유지 또는 조정 */
+  padding: 80px 0; 
+  box-sizing: border-box; /* 패딩이 높이에 영향을 주지 않도록 설정 */
 }
 .sectionAlt{
+  .sectionAlt {
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  
+  /* 기존 그라데이션 유지 */
   background: linear-gradient(180deg, rgba(255,255,255,0.03), transparent 60%);
-  border-top: 1px solid var(--line);
-  border-bottom: 1px solid var(--line);
+}
 }
 .sectionHeader{
-  max-width: 720px;
+  max-width: 1500px;
   margin-bottom: 28px;
 }
-.sectionHeader .p{ margin-top: 10px; }
+.sectionHeader .p{ 
+  margin-top: 40px;
+  font-size: 20px;
+  width: 100%;
+  max-width: 100%; /* 부모 너비를 가득 채우도록 설정 */
+}
+/* 형광펜 효과 스타일 */
+.highlight1 {
+  background: linear-gradient(to top, rgba(64, 237, 58, 0.4) 40%, transparent 40%);
+  border-radius: 2px;
+  padding: 0 2px;
+  font-weight: 600;
+  color: #ffffff;
+}
+
+.highlight2 {
+  background: linear-gradient(to top, rgba(6, 182, 212, 0.4) 40%, transparent 40%);
+  border-radius: 2px;
+  padding: 0 2px;
+  font-weight: 600;
+  color: #ffffff;
+}
+
+.highlight3 {
+  background: linear-gradient(to top, rgba(237, 225, 58, 0.4) 40%, transparent 40%);
+  border-radius: 2px;
+  padding: 0 2px;
+  font-weight: 600;
+  color: #ffffff;
+}
+
+.eyebrow {
+  display: none !important;
+}
 
 .grid3{
   display:grid;
