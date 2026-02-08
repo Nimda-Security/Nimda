@@ -545,25 +545,98 @@ ul{ margin: 0; padding-left: 18px; }
   display: none !important;
 }
 
-.grid3{
-  display:grid;
-  grid-template-columns: repeat(3, minmax(0,1fr));
-  gap: 14px;
-}
-@media (max-width: 980px){
-  .grid3{ grid-template-columns: 1fr; }
+/* 로드맵 컨테이너: 가로 일렬 정렬 */
+.roadmap-container {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  position: relative;
+  padding: 100px 0;
+  max-width: 900px;
+  margin: 60px auto;
 }
 
-.card{
-  border-radius: var(--radius2);
-  border: 1px solid var(--line);
-  background: rgba(255,255,255,0.04);
-  box-shadow: 0 18px 60px rgba(0,0,0,0.22);
-  padding: 18px;
+/* 가로 연결선 */
+.roadmap-container::before {
+  content: '';
+  position: absolute;
+  top: 43%;
+  left: 17%; /* 첫 번째 점 중심 */
+  right: 17%; /* 마지막 점 중심 */
+  height: 2px;
+  background: #00ff41;
+  opacity: 0.3;
+  z-index: 1;
+  transform: translateY(-50%);
 }
-.cardTop{ margin-bottom: 12px; }
+
+.roadmap-item {
+  position: relative;
+  z-index: 2;
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.point {
+  width: 30px;
+  height: 30px;
+  background: #00ff41;
+  border-radius: 50%;
+  border: 4px solid #000;
+  box-shadow: 0 0 15px rgba(0, 255, 65, 0.4);
+  cursor: pointer;
+  transition: transform 0.2s ease;
+}
+
+/* 타이틀: 점 아래에 고정 */
+.roadmap-title {
+  margin-top: 15px;
+  font-weight: 700;
+  font-size: 20px;
+  color: #ffffff;
+  white-space: nowrap;
+}
+
+.roadmap-card {
+  position: absolute;
+  bottom: 40px; /* 점 위쪽 공간 */
+  left: 50%;
+  transform: translateX(-50%) translateY(10px);
+  width: 280px;
+  opacity: 0;
+  visibility: hidden;
+  transition: all 0.3s ease;
+  z-index: 100;
+  pointer-events: none;
+}
+
+.roadmap-item:hover .point { 
+  transform: scale(1.3); 
+  background: #ffffff; /* 호버 시 점 색상 변경으로 강조 */
+}
+
+.roadmap-item:hover .roadmap-card {
+  opacity: 1;
+  visibility: visible;
+  transform: translateX(-50%) translateY(130%);
+  pointer-events: auto;
+}
+
+
+/* 기존 Card 컴포넌트 디자인 보정 */
+.card {
+  background: rgba(15, 18, 32, 0.95);
+  border: 1px solid var(--line);
+  padding: 20px;
+  border-radius: var(--radius);
+  box-shadow: var(--shadow);
+  backdrop-filter: blur(10px);
+}
+
 .list{
-  margin-top: 8px;
+  margin-top: 20px;
   color: var(--muted);
   line-height: 1.7;
 }

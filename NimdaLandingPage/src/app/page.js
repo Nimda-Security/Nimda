@@ -18,19 +18,28 @@ const CLUB = {
 
 const ACTIVITIES = [
   {
-    title: "프로젝트 빌드",
-    desc: "웹/모바일/블록체인/보안 등 관심 분야에서 팀을 꾸려 실제 사용자 문제를 해결합니다.",
-    items: ["기획 → 설계 → 개발 → 배포", "코드리뷰 & 테스트 문화", "데모데이 발표"],
+    point: "학습",
+    title: "멘토·멘티 활동과 스터디",
+    items: [
+      <>
+      기초 프로그래밍 언어 멘토·멘티 활동<br/>
+      (C, C++, JavaScript 등)
+      </>,
+      <>
+      웹 개발 스터디<br/>
+      (HTML/CSS, 프론트엔드·백엔드 기초)
+      </>, "웹 해킹, 시스템 보안, CTF 기초 스터디"],
   },
   {
-    title: "스터디 트랙",
-    desc: "입문부터 심화까지 단계별 스터디로 실력을 끌어올립니다.",
-    items: ["기초 CS / 웹", "스마트컨트랙트 보안", "리버싱/포렌식 실습"],
+    point: "도전",
+    title: "대회 & 해커톤 참여",
+    items: ["ICPC·UCPC 참여", "해커톤 참여", "동아리 자체 대회(님다콘) 참여"],
   },
   {
-    title: "해커톤 & 대회",
-    desc: "정기적으로 해커톤/CTF/공모전에 참여하고, 성과를 함께 만듭니다.",
-    items: ["팀 매칭 & 멘토링", "제출물/발표 리허설", "회고로 다음 성과 연결"],
+    point: "응용",
+    title: "프로젝트 & 실습 활동",
+    desc: "",
+    items: ["ICPC·UCPC 참여", "제출물/발표 리허설", "회고로 다음 성과 연결"],
   },
 ];
 
@@ -162,7 +171,7 @@ export default function Page() {
             desc={
               <>
               NIMDA는 <span className="highlight1">컴퓨터 언어</span>를 기반으로 <span className="highlight2">웹 개발</span>과 <span className="highlight2">정보보안</span> 분야를 함께 공부하고 성장하는 동아리입니다.<br/>
-              멘토–멘티 활동과 스터디, 실전 프로젝트와 대회 참여를 통해 <span className="highlight3">‘직접 해보며 배우는 경험’</span>을 가장 중요하게 생각합니다.
+              멘토·멘티 활동과 스터디, 실전 프로젝트와 대회 참여를 통해 <span className="highlight3">‘직접 해보며 배우는 경험’</span>을 가장 중요하게 생각합니다.
               </>
             }
           />
@@ -175,22 +184,38 @@ export default function Page() {
       <section id="activities" className="section sectionAlt">
         <Container>
           <SectionHeader
-            title="활동 내용"
-            desc="프로젝트/스터디/대회 참여를 균형 있게 운영합니다. 아래에는 수상 실적도 함께 정리했습니다."
+            title="동아리 활동"
+            desc={
+              <>
+              님다의 활동은 크게 <span className="highlight1">'학습 → 도전 → 응용'</span>의 흐름으로 공부에만 그치지 않고, <span className="highlight3">‘경험’</span>으로 이어집니다
+              </>
+            }
           />
 
-          <div className="grid3">
-            {ACTIVITIES.map((a) => (
-              <Card key={a.title} title={a.title} desc={a.desc}>
-                <ul className="list">
-                  {a.items.map((it) => (
-                    <li key={it}>{it}</li>
-                  ))}
-                </ul>
-              </Card>
+          <div className="grid3 roadmap-container">            
+            {ACTIVITIES.map((a, index) => (
+              <div key={a.title} className="roadmap-item">
+                {/* 점 */}
+                <div className="point"></div>
+                
+                {/* 타이틀 (점 아래) */}
+                <div className="roadmap-title">{a.point}</div>
+                
+                {/* 호버 카드 (점 위) */}
+                <div className="roadmap-card">
+                  <Card title={a.title} desc={a.desc}>
+                    {Array.isArray(a.items) && (
+                      <ul className="list">
+                        {a.items.map((it, idx) => (
+                          <li key={idx} style={{fontSize: '13px', color: '#ccc'}}>{it}</li>
+                        ))}
+                      </ul>
+                    )}
+                  </Card>
+                </div>
+              </div>
             ))}
           </div>
-
           <div className="spacer" />
 
           <div className="awardsWrap">
