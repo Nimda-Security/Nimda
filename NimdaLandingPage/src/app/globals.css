@@ -501,15 +501,22 @@ ul{ margin: 0; padding-left: 18px; }
   display: flex;
   flex-direction: column;
   justify-content: center;
-  
   /* 기존 그라데이션 유지 */
   background: linear-gradient(180deg, rgba(255,255,255,0.03), transparent 60%);
 }
 }
+
+/* globals.css 수정 */
+#activities .sectionHeader {
+  margin-top: -150px; /* 원하는 만큼 음수 값을 주어 위로 끌어올림 */
+  margin-bottom: 20px;
+}
+
 .sectionHeader{
   max-width: 1500px;
   margin-bottom: 28px;
 }
+
 .sectionHeader .p{ 
   margin-top: 40px;
   font-size: 20px;
@@ -541,33 +548,37 @@ ul{ margin: 0; padding-left: 18px; }
   color: #ffffff;
 }
 
+.emphasis{
+  font-weight: 600;
+  color: #ffffff;
+}
+
 .eyebrow {
   display: none !important;
 }
 
-/* 로드맵 컨테이너: 가로 일렬 정렬 */
+/* 로드맵 전체 컨테이너: Header 바로 아래 붙도록 설정 */
 .roadmap-container {
   display: flex;
   justify-content: space-between;
-  align-items: center;
+  align-items: flex-start; /* 아이템들을 위쪽 정렬 */
   position: relative;
-  padding: 100px 0;
-  max-width: 900px;
-  margin: 60px auto;
+  padding: 100px 0 50px 0; /* 상단 여백을 주어 박스가 내려올 공간 확보 */
+  max-width: 1000px;
+  margin: 0 auto;
 }
 
 /* 가로 연결선 */
 .roadmap-container::before {
   content: '';
   position: absolute;
-  top: 43%;
-  left: 17%; /* 첫 번째 점 중심 */
-  right: 17%; /* 마지막 점 중심 */
-  height: 2px;
-  background: #00ff41;
-  opacity: 0.3;
+  top: 90px; /* 점(point)의 위치에 정확히 맞춤 */
+  left: 15%;
+  right: 15%;
+  height: 1px;
+  background: #ffffff;
+  opacity: 0.5;
   z-index: 1;
-  transform: translateY(-50%);
 }
 
 .roadmap-item {
@@ -579,67 +590,91 @@ ul{ margin: 0; padding-left: 18px; }
   align-items: center;
 }
 
+/* 로드맵 점 (연결선 위에 위치) */
 .point {
-  width: 30px;
-  height: 30px;
-  background: #00ff41;
+  width: 40px;
+  height: 40px;
+  background: #ffffff;
   border-radius: 50%;
   border: 4px solid #000;
-  box-shadow: 0 0 15px rgba(0, 255, 65, 0.4);
-  cursor: pointer;
-  transition: transform 0.2s ease;
+  box-shadow: 0 0 20px rgba(249, 249, 249, 0.4);
+  margin-bottom: 15px; /* 점 아래 타이틀과의 간격 */
+  margin-top: -30px;
+  margin-left: 0px;
 }
 
-/* 타이틀: 점 아래에 고정 */
+/* 타이틀 (점 바로 아래) */
 .roadmap-title {
-  margin-top: 15px;
   font-weight: 700;
   font-size: 20px;
   color: #ffffff;
   white-space: nowrap;
 }
 
+/* 떨어지는 카드 박스 */
 .roadmap-card {
   position: absolute;
-  bottom: 40px; /* 점 위쪽 공간 */
-  left: 50%;
-  transform: translateX(-50%) translateY(10px);
+  top: 85px; /* 점(point) 바로 밑에서 끝나도록 위치 */
   width: 280px;
-  opacity: 0;
-  visibility: hidden;
-  transition: all 0.3s ease;
-  z-index: 100;
-  pointer-events: none;
+  opacity: 0; /* 시작은 투명하게 */
+  pointer-events: none; /* 애니메이션 전까지는 클릭 방지 */
+  transform-origin: top; /* 위에서 시작 */
+  text-align: center;
 }
 
-.roadmap-item:hover .point { 
-  transform: scale(1.3); 
-  background: #ffffff; /* 호버 시 점 색상 변경으로 강조 */
+/* 떨어지는 애니메이션 정의 */
+@keyframes dropIn {
+  0% {
+    opacity: 0;
+    transform: translateY(-50px); /* 위에서 시작 */
+  }
+  100% {
+    opacity: 1;
+    transform: translateY(0); /* 원래 위치(점 바로 위)로 안착 */
+  }
 }
 
-.roadmap-item:hover .roadmap-card {
-  opacity: 1;
-  visibility: visible;
-  transform: translateX(-50%) translateY(130%);
-  pointer-events: auto;
+/* 각 아이템별 순차적 애니메이션 적용 */
+.roadmap-item:nth-child(1) .roadmap-card {
+  animation: dropIn 0.8s ease-out 0.5s forwards;
 }
-
-
-/* 기존 Card 컴포넌트 디자인 보정 */
-.card {
-  background: rgba(15, 18, 32, 0.95);
-  border: 1px solid var(--line);
-  padding: 20px;
-  border-radius: var(--radius);
-  box-shadow: var(--shadow);
-  backdrop-filter: blur(10px);
+.roadmap-item:nth-child(2) .roadmap-card {
+  animation: dropIn 0.8s ease-out 1.0s forwards;
+}
+.roadmap-item:nth-child(3) .roadmap-card {
+  animation: dropIn 0.8s ease-out 1.5s forwards;
 }
 
 .list{
+  content: '';
+  font-size: 13px;
+  text-align: left;
+  padding-left: 0;
+  margin-left: 20px;
   margin-top: 20px;
   color: var(--muted);
   line-height: 1.7;
 }
+/* 기존 Card 컴포넌트 디자인 보정 */
+.card {
+  /* 1. 배경 설정: 내부 배경색과 테두리용 그라데이션을 동시에 선언 */
+  background: #111111;
+  /* 2. 투명 테두리 설정: 굵기는 여기서 조절 */
+  border: 1px solid #3c3c3c; 
+  
+  /* 3. 모서리 둥글게 (border-radius와 호환됨) */
+  border-radius: var(--radius);
+  
+  padding: 20px;
+  box-shadow: var(--shadow);
+  backdrop-filter: blur(10px);
+  
+  /* 박스 내부 정렬 */
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+}
+
 .list li{ margin: 6px 0; }
 
 .spacer{ height: 24px; }
@@ -685,6 +720,7 @@ ul{ margin: 0; padding-left: 18px; }
   color: rgba(255,255,255,0.9);
 }
 .awardName{
+  font-size: 16px;
   font-weight: 720;
   margin-bottom: 4px;
 }
@@ -693,7 +729,13 @@ ul{ margin: 0; padding-left: 18px; }
   color: var(--muted);
   line-height: 1.6;
 }
-
+.awardImage{
+  width: 100%;
+  height: auto;
+  margin-top: 10px;
+  border-radius: 12px;
+  box-shadow: var(--shadow);
+}
 /* CTA */
 .ctaSection{ padding-top: 0; }
 .ctaBox{

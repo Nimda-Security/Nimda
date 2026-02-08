@@ -33,35 +33,27 @@ const ACTIVITIES = [
   {
     point: "도전",
     title: "대회 & 해커톤 참여",
-    items: ["ICPC·UCPC 참여", "해커톤 참여", "동아리 자체 대회(님다콘) 참여"],
+    items: ["대회(ICPC·UCPC) 참여", "해커톤 참여", "동아리 자체 대회(님다콘) 개최"],
   },
   {
     point: "응용",
     title: "프로젝트 & 실습 활동",
-    desc: "",
-    items: ["ICPC·UCPC 참여", "제출물/발표 리허설", "회고로 다음 성과 연결"],
+    items: ["웹 서비스 제작", "보안 문제 풀이 및 취약점 분석 실습"],
   },
 ];
 
 const AWARDS = [
   {
-    year: "2025",
-    name: "OO 해커톤",
-    result: "대상",
-    note: "Pay-per-use 결제 기반 서비스 프로토타입",
-  },
-  {
-    year: "2025",
-    name: "OO CTF",
-    result: "Top 10",
-    note: "Web3/크립토 트랙 집중 공략",
+    year: "2020",
+    name: "K-사이버 시큐리티 챌린지 2020",
+    result: "충청권 지역예선 1등",
   },
   {
     year: "2024",
-    name: "OO 공모전",
-    result: "최우수상",
-    note: "보안 취약점 분석 및 재현 보고서",
+    name: "2024년 프로보노 ICT멘토링 공모전",
+    result: "입선",
   },
+ 
 ];
 
 const FAQ = [
@@ -125,6 +117,7 @@ export default function Page() {
             <div className="navLinks">
               <a className="navLink" href="#about">동아리 소개</a>
               <a className="navLink" href="#activities">동아리 활동</a>
+              <a className="navLink" href="#awards">수상 실적</a>
               <a
                 className="navLink"
                 href={CLUB.links.homepage}
@@ -180,67 +173,77 @@ export default function Page() {
         </Container>
       </section>
 
-      {/* Activities + Awards */}
+      {/* Activities*/}
       <section id="activities" className="section sectionAlt">
         <Container>
           <SectionHeader
             title="동아리 활동"
             desc={
               <>
-              님다의 활동은 크게 <span className="highlight1">'학습 → 도전 → 응용'</span>의 흐름으로 공부에만 그치지 않고, <span className="highlight3">‘경험’</span>으로 이어집니다
+              님다의 활동은 크게 <span className="highlight2">'학습 → 도전 → 응용'</span>의 흐름으로 공부에만 그치지 않고, <span className="highlight3">‘경험’</span>으로 이어집니다.
               </>
             }
           />
-
-          <div className="grid3 roadmap-container">            
+          <div className="grid3 roadmap-container">
+            {/* CSS ::before 가 가로선을 그립니다 */}
+            
             {ACTIVITIES.map((a, index) => (
               <div key={a.title} className="roadmap-item">
-                {/* 점 */}
-                <div className="point"></div>
-                
-                {/* 타이틀 (점 아래) */}
-                <div className="roadmap-title">{a.point}</div>
-                
-                {/* 호버 카드 (점 위) */}
+                {/* 1. 위에서 떨어질 카드 박스 (점 위쪽 위치) */}
                 <div className="roadmap-card">
-                  <Card title={a.title} desc={a.desc}>
+                  <Card title={a.title}>
                     {Array.isArray(a.items) && (
                       <ul className="list">
                         {a.items.map((it, idx) => (
-                          <li key={idx} style={{fontSize: '13px', color: '#ccc'}}>{it}</li>
+                          <li key={idx}>{it}</li>
                         ))}
                       </ul>
                     )}
                   </Card>
                 </div>
+
+                {/* 2. 중앙의 점 */}
+                <div className="point"></div>
+                
+                {/* 3. 점 아래의 타이틀 */}
+                <div className="roadmap-title">{a.point}</div>
               </div>
             ))}
           </div>
+        
+        </Container>
+      </section>
+
+      {/* Awords */}
+      <section id="awards" className="section">
+        <Container>
           <div className="spacer" />
 
           <div className="awardsWrap">
             <div className="awardsHeader">
               <h3 className="h2 small">수상 실적</h3>
-              <p className="p muted">
-                실제 데이터로 교체해서 업데이트하세요. (연도/대회명/성과/한 줄 요약)
-              </p>
             </div>
 
             <div className="awardsGrid">
-              {AWARDS.map((a) => (
+              {AWARDS.map((a,n) => (
                 <div key={`${a.year}-${a.name}`} className="awardCard">
                   <div className="awardTop">
                     <div className="badge">{a.year}</div>
                     <div className="awardResult">{a.result}</div>
                   </div>
                   <div className="awardName">{a.name}</div>
-                  <div className="awardNote">{a.note}</div>
+                  <img
+                    src={`/award${n+1}.png`}
+                    alt={`AWARD ${n+1}`}
+                    className="awardImage"
+                  />
                 </div>
               ))}
             </div>
           </div>
         </Container>
       </section>
+
 
       {/* CTA */}
       <section className="section ctaSection">
