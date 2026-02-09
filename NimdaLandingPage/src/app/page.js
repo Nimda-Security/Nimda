@@ -221,40 +221,19 @@ export default function Page() {
           <SectionHeader
             title="수상 실적"
           />
-          <div className="awardsWrap">
-            <div className="awardsGrid">
-              {AWARDS.map((a,n) => (
-                <div key={`${a.year}-${a.name}`} className="awardCard">
-                  <div className="awardTop">
-                    <div className="badge">{a.year}</div>
-                    <div className="awardResult">{a.result}</div>
-                  </div>
-                  <div className="awardName">{a.name}</div>
-                  <img
-                    src={`/award${n+1}.png`}
-                    alt={`AWARD ${n+1}`}
-                    className="awardImage"
-                  />
+          <div className="awardsGrid">
+            {AWARDS.map((a,n) => (
+              <div key={`${a.year}-${a.name}`} className="awardCard">
+                <div className="awardTop">
+                  <div className="badge">{a.year}</div>
                 </div>
-              ))}
-            </div>
-          </div>
-        </Container>
-      </section>
-
-      {/* FAQ */}
-      <section className="section">
-        <Container>
-          <SectionHeader
-            title="자주 묻는 질문"
-          />
-
-          <div className="faq">
-            {FAQ.map((f) => (
-              <details key={f.q} className="faqItem">
-                <summary className="faqQ">{f.q}</summary>
-                <div className="faqA">{f.a}</div>
-              </details>
+                <div className="awardName">{a.name}</div>
+                <img
+                  src={`/award${n+1}.png`}
+                  alt={`AWARD ${n+1}`}
+                  className="awardImage"
+                />
+              </div>
             ))}
           </div>
         </Container>
@@ -266,23 +245,27 @@ export default function Page() {
           <div className="footerGrid">
             <div>
               <div className="footerBrand">
-                <span className="brandMark" />
+                <img
+                  src="/footerlogo.png"
+                  alt="NIMDA 로고"
+                  className="brandMark"
+                />
                 <span className="brandText">{CLUB.name}</span>
               </div>
-              <p className="p muted">
+              <p id="footerCopyright" className="p muted">
                 © {new Date().getFullYear()} {CLUB.name}. All rights reserved.
               </p>
             </div>
 
-            <div className="footerLinks">
-              <a href="#about">동아리 소개</a>
-              <a href="#activities">동아리 활동</a>
-              <a href={CLUB.links.homepage} target="_blank" rel="noreferrer">
-                홈페이지
-              </a>
-              <a href={CLUB.links.apply} target="_blank" rel="noreferrer">
-                지원하기
-              </a>
+            <div className="footeritems">
+              <h3 className="footerTitle">Contact</h3>
+              <p className="footertext">{
+                <>
+                <u>amazingnimda@gmail.com</u><br/>
+                <a>학생회관 3층 305호</a>
+                </>
+              }
+              </p>
             </div>
           </div>
         </Container>

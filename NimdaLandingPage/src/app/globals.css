@@ -157,16 +157,13 @@ ul{ margin: 0; padding-left: 18px; }
   gap:10px;
 }
 .brandMark{
-  width: 12px;
-  height: 12px;
-  border-radius: 6px;
-  background: linear-gradient(135deg, var(--accentA), var(--accentC));
-  box-shadow: 0 0 0 4px rgba(124,58,237,0.14);
+  height: 28px;
+  width: auto;
+  display: block;
 }
 .brandText{
   font-family: 'BoldFont', sans-serif;
   letter-spacing: -0.01em;
-  color: #ffffff;
 }
 .navLinks{
   display:flex;
@@ -576,7 +573,7 @@ ul{ margin: 0; padding-left: 18px; }
   left: 15%;
   right: 15%;
   height: 1px;
-  background: #a795f4;
+  background: #ffffff;
   opacity: 0.5;
   z-index: 1;
 }
@@ -594,7 +591,7 @@ ul{ margin: 0; padding-left: 18px; }
 .point {
   width: 40px;
   height: 40px;
-  background: #a795f4;
+  background: #ffffff;
   border-radius: 50%;
   border: 4px solid #000;
   box-shadow: 0 0 20px rgba(249, 249, 249, 0.4);
@@ -657,10 +654,11 @@ ul{ margin: 0; padding-left: 18px; }
 }
 /* 기존 Card 컴포넌트 디자인 보정 */
 .card {
-  /* 1. 배경 설정: 내부 배경색과 테두리용 그라데이션을 동시에 선언 */
-  background: #111111;
   /* 2. 투명 테두리 설정: 굵기는 여기서 조절 */
-  border: 1px solid #3c3c3c; 
+  border: 1px solid transparent; /* 투명 테두리 필수 */
+  background: 
+    linear-gradient(#111111, #111111) padding-box, 
+    linear-gradient(135deg, #7c3aed, #06b6d4) border-box; /* 테두리 그라데이션 */;
   
   /* 3. 모서리 둥글게 (border-radius와 호환됨) */
   border-radius: var(--radius);
@@ -680,6 +678,9 @@ ul{ margin: 0; padding-left: 18px; }
 .spacer{ height: 24px; }
 
 /* Awards */
+#awards{
+  padding-top: 100px !important;
+}
 .awardsHeader{ margin-bottom: 12px; }
 .awardsGrid{
   margin-top: 30px;
@@ -698,6 +699,7 @@ ul{ margin: 0; padding-left: 18px; }
     linear-gradient(#151515, #151515) padding-box,
     linear-gradient(135deg, #7c3aed, #06b6d4) border-box; /* 테두리 그라데이션 */;
   padding: 30px;
+  padding-bottom: 20px;
   width: 320PX;
 }
 
@@ -714,10 +716,13 @@ ul{ margin: 0; padding-left: 18px; }
   border: 1px solid var(--line);
   background: rgba(255,255,255,0.03);
   color: var(--muted);
+  margin-bottom: 10px;
 }
 .awardResult{
   font-weight: 760;
   color: rgba(255,255,255,0.9);
+  margin-bottom: 20px;
+  text-align: left;
 }
 .awardName{
   font-size: 16px;
@@ -779,10 +784,14 @@ ul{ margin: 0; padding-left: 18px; }
 }
 
 /* Footer */
+#footerCopyright{
+  font-size: 12px;
+}
+
 .footer{
   padding: 44px 0;
   border-top: 1px solid var(--line);
-  background: rgba(0,0,0,0.20);
+  background: rgba(49, 49, 49, 0.2);
 }
 .footerGrid{
   display:flex;
@@ -795,7 +804,7 @@ ul{ margin: 0; padding-left: 18px; }
   display:flex;
   align-items:center;
   gap: 10px;
-  margin-bottom: 8px;
+  padding-top: -20px;
 }
 .footerLinks{
   display:flex;
@@ -804,3 +813,22 @@ ul{ margin: 0; padding-left: 18px; }
   font-size: 14px;
 }
 .footerLinks a:hover{ color: var(--text); }
+.footeritems{
+  display:flex;
+  gap: 14px;
+  color: var(--muted);
+  font-size: 14px;
+}
+.footerTitle{
+  margin-top: 0px;
+  padding-left: -70px;
+  font-weight: 100;
+  color: var(--muted);
+}
+.footertext{
+  margin-top: 30px;
+  margin-left: -100px;
+  padding-left: 30px;
+  color: var(--muted);
+  line-height: 1.7;
+}
