@@ -217,13 +217,11 @@ export default function Page() {
       {/* Awords */}
       <section id="awards" className="section">
         <Container>
-          <div className="spacer" />
-
+          <div className="spacer"/>
+          <SectionHeader
+            title="수상 실적"
+          />
           <div className="awardsWrap">
-            <div className="awardsHeader">
-              <h3 className="h2 small">수상 실적</h3>
-            </div>
-
             <div className="awardsGrid">
               {AWARDS.map((a,n) => (
                 <div key={`${a.year}-${a.name}`} className="awardCard">
@@ -239,39 +237,6 @@ export default function Page() {
                   />
                 </div>
               ))}
-            </div>
-          </div>
-        </Container>
-      </section>
-
-
-      {/* CTA */}
-      <section className="section ctaSection">
-        <Container>
-          <div className="ctaBox">
-            <div className="ctaLeft">
-              <h3 className="h2">지금 함께할 사람을 찾고 있어요</h3>
-              <p className="p muted">
-                경험보다 중요한 건 꾸준함과 협업 태도입니다. 지원하고, 팀을 만나고, 바로 만들어 봅시다.
-              </p>
-            </div>
-            <div className="ctaRight">
-              <a
-                className="btnPrimary"
-                href={CLUB.links.apply}
-                target="_blank"
-                rel="noreferrer"
-              >
-                지원하러 가기
-              </a>
-              <a
-                className="btnGhost"
-                href={CLUB.links.homepage}
-                target="_blank"
-                rel="noreferrer"
-              >
-                동아리 홈페이지
-              </a>
             </div>
           </div>
         </Container>

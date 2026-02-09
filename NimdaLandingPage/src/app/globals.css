@@ -576,7 +576,7 @@ ul{ margin: 0; padding-left: 18px; }
   left: 15%;
   right: 15%;
   height: 1px;
-  background: #ffffff;
+  background: #a795f4;
   opacity: 0.5;
   z-index: 1;
 }
@@ -594,7 +594,7 @@ ul{ margin: 0; padding-left: 18px; }
 .point {
   width: 40px;
   height: 40px;
-  background: #ffffff;
+  background: #a795f4;
   border-radius: 50%;
   border: 4px solid #000;
   box-shadow: 0 0 20px rgba(249, 249, 249, 0.4);
@@ -680,17 +680,13 @@ ul{ margin: 0; padding-left: 18px; }
 .spacer{ height: 24px; }
 
 /* Awards */
-.awardsWrap{
-  border-radius: var(--radius2);
-  border: 1px solid var(--line);
-  background: rgba(255,255,255,0.03);
-  padding: 18px;
-}
 .awardsHeader{ margin-bottom: 12px; }
 .awardsGrid{
+  margin-top: 30px;
   display:grid;
-  grid-template-columns: repeat(3, minmax(0,1fr));
-  gap: 12px;
+  grid-template-columns: repeat(2, auto);
+  gap: 100px;
+  justify-content: center;
 }
 @media (max-width: 980px){
   .awardsGrid{ grid-template-columns: 1fr; }
@@ -698,9 +694,13 @@ ul{ margin: 0; padding-left: 18px; }
 .awardCard{
   border-radius: 18px;
   border: 1px solid rgba(255,255,255,0.10);
-  background: rgba(0,0,0,0.18);
-  padding: 14px;
+  background:
+    linear-gradient(#151515, #151515) padding-box,
+    linear-gradient(135deg, #7c3aed, #06b6d4) border-box; /* 테두리 그라데이션 */;
+  padding: 30px;
+  width: 320PX;
 }
+
 .awardTop{
   display:flex;
   align-items:center;
@@ -744,7 +744,7 @@ ul{ margin: 0; padding-left: 18px; }
   background: radial-gradient(900px 260px at 20% 0%, rgba(6,182,212,0.14), transparent 60%),
               radial-gradient(900px 260px at 80% 0%, rgba(124,58,237,0.16), transparent 65%),
               rgba(255,255,255,0.03);
-  padding: 22px;
+  padding: 40px;
   display:flex;
   align-items:center;
   justify-content: space-between;
