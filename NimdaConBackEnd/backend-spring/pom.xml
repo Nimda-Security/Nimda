@@ -92,6 +92,13 @@
             <scope>test</scope>
         </dependency>
         
+        <!-- H2 Database (테스트용 인메모리 데이터베이스) -->
+        <dependency>
+            <groupId>com.h2database</groupId>
+            <artifactId>h2</artifactId>
+            <scope>test</scope>
+        </dependency>
+        
         <!-- Lombok -->
         <dependency>
             <groupId>org.projectlombok</groupId>

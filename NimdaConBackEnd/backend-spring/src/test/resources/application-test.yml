@@ -1,0 +1,40 @@
+spring:
+  datasource:
+    # 테스트용 H2 인메모리 데이터베이스 사용 (실제 MySQL 연결 불필요)
+    url: jdbc:h2:mem:testdb;MODE=MySQL;DB_CLOSE_DELAY=-1;DB_CLOSE_ON_EXIT=FALSE
+    driver-class-name: org.h2.Driver
+    username: sa
+    password: 
+  
+  jpa:
+    hibernate:
+      ddl-auto: create-drop  # 테스트 시작 시 스키마 생성, 종료 시 삭제
+    show-sql: false  # 테스트에서는 SQL 로그 비활성화
+    properties:
+      hibernate:
+        dialect: org.hibernate.dialect.H2Dialect
+    defer-datasource-initialization: false
+  
+  sql:
+    init:
+      mode: never
+  
+  security:
+    user:
+      name: admin
+      password: 1234
+
+server:
+  port: 0  # 랜덤 포트 사용 (테스트 간 충돌 방지)
+
+# JWT 설정 (기본값과 동일)
+jwt:
+  header: Authorization
+  secret: bmltZGEtY29uLXNlY3JldC1rZXktMjAyNC12ZXJ5LWxvbmctc2VjcmV0LWtleS1mb3Itand0LXNlY3VyaXR5
+  token-validity-in-seconds: 86400
+
+logging:
+  level:
+    com.nimda.cup: INFO
+    org.springframework.security: WARN
+    org.hibernate: WARN
