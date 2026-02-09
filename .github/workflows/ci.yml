@@ -94,10 +94,12 @@ jobs:
           ssh-keyscan -H ${{ secrets.SERVER_HOST }} >> ~/.ssh/known_hosts 2>/dev/null || true
           ssh -i ~/.ssh/deploy_key -o StrictHostKeyChecking=no ${{ secrets.SERVER_USER }}@${{ secrets.SERVER_HOST }} "
             cd ${{ secrets.SERVER_DEPLOY_PATH }} && 
+            echo '=== 기존 컨테이너 정리 ===' &&
+            docker-compose down || true &&
             echo '=== 새로운 이미지 Pull ===' &&
             docker-compose pull && 
-            echo '=== 컨테이너 재시작 (변경사항 적용) ===' &&
-            docker-compose up -d --force-recreate --remove-orphans && 
+            echo '=== 컨테이너 시작 (최신 이미지 적용) ===' &&
+            docker-compose up -d --remove-orphans && 
             echo '=== 사용하지 않는 이미지 정리 ===' &&
             docker image prune -a -f &&
             echo '=== 배포 완료 ==='
