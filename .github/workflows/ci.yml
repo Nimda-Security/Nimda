@@ -92,7 +92,16 @@ jobs:
           echo "${{ secrets.SERVER_SSH_KEY }}" > ~/.ssh/deploy_key
           chmod 600 ~/.ssh/deploy_key
           ssh-keyscan -H ${{ secrets.SERVER_HOST }} >> ~/.ssh/known_hosts 2>/dev/null || true
-          ssh -i ~/.ssh/deploy_key -o StrictHostKeyChecking=no ${{ secrets.SERVER_USER }}@${{ secrets.SERVER_HOST }} "cd ${{ secrets.SERVER_DEPLOY_PATH }} && pwd && docker-compose pull && docker-compose up -d && docker image prune -a -f || true"
+          ssh -i ~/.ssh/deploy_key -o StrictHostKeyChecking=no ${{ secrets.SERVER_USER }}@${{ secrets.SERVER_HOST }} "
+            cd ${{ secrets.SERVER_DEPLOY_PATH }} && 
+            echo '=== 새로운 이미지 Pull ===' &&
+            docker-compose pull && 
+            echo '=== 컨테이너 재시작 (변경사항 적용) ===' &&
+            docker-compose up -d --force-recreate --remove-orphans && 
+            echo '=== 사용하지 않는 이미지 정리 ===' &&
+            docker image prune -a -f &&
+            echo '=== 배포 완료 ==='
+          "
         # Secrets 설정 필요:
         # - SERVER_HOST: 서버 IP 주소 또는 도메인 (예: 123.456.789.0 또는 server.example.com)
         # - SERVER_USER: SSH 사용자명 (예: ubuntu, root, ec2-user)
