@@ -1,12 +1,12 @@
 :root{
-  --bg: #0b0c10;
+  --bg: #ffffff;
   --bg2: #0f1220;
-  --card: rgba(255,255,255,0.06);
-  --card2: rgba(255,255,255,0.08);
-  --text: rgba(255,255,255,0.92);
-  --muted: rgba(255,255,255,0.68);
-  --line: rgba(255,255,255,0.10);
-  --shadow: 0 16px 48px rgba(0,0,0,0.45);
+  --card: rgba(0,0,0,0.02);
+  --card2: rgba(0,0,0,0.04);
+  --text: #1d1d1f;
+  --muted: #6e6e73;
+  --line: rgba(0,0,0,0.1);
+  --shadow: 0 16px 48px rgba(148, 147, 147, 0.45);
   --radius: 18px;
   --radius2: 24px;
   --max: 1120px;
@@ -17,13 +17,22 @@
 }
 
 *{ box-sizing: border-box; }
-html,body{ padding:0; margin:0; }
+html,body{
+  padding:0;
+  margin:0;
+  height: 100%;
+  overflow: hidden; /*body 자체 스크롤 방지*/
+}
+
 body{
   font-family: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, "Noto Sans KR", "Apple SD Gothic Neo", Arial, sans-serif;
   background: #ffffff;
   color: var(--text);
   padding: 0;
   margin: 0;
+  /*스크롤 딱딱 끊기게*/
+  scroll-behavior: smooth;
+  scroll-snap-type: y mandatory;
 }
 
 a{ color: inherit; text-decoration: none; }
@@ -58,9 +67,13 @@ ul{ margin: 0; padding-left: 18px; }
   font-style: normal;
 }
 .page{
-  min-height: 100vh;
-  background-color: #000000;
-  color: #ffffff;
+  height: 100vh; /* 화면 높이에 맞춤 */
+  overflow-y: auto; /* 내부에서 스크롤 발생 */
+  scroll-behavior: smooth;
+  scroll-snap-type: y mandatory; /* 세로 스냅 강제 */
+  
+  background-color: #ffffff;
+  color: #000000;
   font-family: 'PageFont', sans-serif;
 }
 
@@ -127,7 +140,7 @@ ul{ margin: 0; padding-left: 18px; }
   opacity: 0;
   transition: all 0.3s ease;
   backdrop-filter: blur(10px);
-  background: rgba(11,12,16,0.62);
+  background: rgba(255,255,255,0.8);
   border-bottom: 1px solid var(--line);
 
   animation: navSlideDown 0.8s cubic-bezier(0.25, 0.46, 0.45, 0.94) 4.0s forwards;
@@ -205,8 +218,6 @@ ul{ margin: 0; padding-left: 18px; }
   width: auto;
   display: block;
 
-  /* 검정 → 흰색 */
-  filter: brightness(0) invert(1);
 }
 
 
@@ -502,14 +513,33 @@ ul{ margin: 0; padding-left: 18px; }
   background: linear-gradient(180deg, rgba(255,255,255,0.03), transparent 60%);
 }
 }
-
+.section, .sectionAlt, .hero{
+  /* 모든 섹션은 화면을 꽉 채우도록 설정 */
+  min-height: 100vh; 
+  height: 100vh; /* 스냅이 정확히 걸리려면 고정 높이 권장 */
+  scroll-snap-align: start; /* 섹션 시작 지점에 딱 붙음 */
+  scroll-snap-stop: always; /* 스크롤 시 섹션을 건너뛰지 않음 */
+  
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+}
 /* globals.css 수정 */
 #activities .sectionHeader {
-  margin-top: -150px; /* 원하는 만큼 음수 값을 주어 위로 끌어올림 */
   margin-bottom: 20px;
 }
 
-.sectionHeader{
+#activities2025 {
+  margin-top: 0 !important; /* 원하는 만큼 음수 값을 주어 위로 끌어올림 */
+  margin-bottom: 20px;
+}
+.title2025 {
+  margin-top: -300px;
+
+}
+.sectionHeader {
+  margin-top: -150px;
   max-width: 1500px;
   margin-bottom: 28px;
 }
@@ -526,7 +556,7 @@ ul{ margin: 0; padding-left: 18px; }
   border-radius: 2px;
   padding: 0 2px;
   font-weight: 600;
-  color: #ffffff;
+  color: #000000;
 }
 
 .highlight2 {
@@ -534,7 +564,7 @@ ul{ margin: 0; padding-left: 18px; }
   border-radius: 2px;
   padding: 0 2px;
   font-weight: 600;
-  color: #ffffff;
+  color: #000000;
 }
 
 .highlight3 {
@@ -542,12 +572,12 @@ ul{ margin: 0; padding-left: 18px; }
   border-radius: 2px;
   padding: 0 2px;
   font-weight: 600;
-  color: #ffffff;
+  color: #000000;
 }
 
 .emphasis{
   font-weight: 600;
-  color: #ffffff;
+  color: #000000;
 }
 
 .eyebrow {
@@ -573,7 +603,7 @@ ul{ margin: 0; padding-left: 18px; }
   left: 15%;
   right: 15%;
   height: 1px;
-  background: #ffffff;
+  background: #c1c1c1;
   opacity: 0.5;
   z-index: 1;
 }
@@ -588,13 +618,29 @@ ul{ margin: 0; padding-left: 18px; }
 }
 
 /* 로드맵 점 (연결선 위에 위치) */
-.point {
+.point2 {
   width: 40px;
   height: 40px;
-  background: #ffffff;
+  background: #c6ffb6;
   border-radius: 50%;
-  border: 4px solid #000;
-  box-shadow: 0 0 20px rgba(249, 249, 249, 0.4);
+  margin-bottom: 15px; /* 점 아래 타이틀과의 간격 */
+  margin-top: -30px;
+  margin-left: 0px;
+}
+.point3{
+  width: 40px;
+  height: 40px;
+  background: #abc5fc;
+  border-radius: 50%;
+  margin-bottom: 15px; /* 점 아래 타이틀과의 간격 */
+  margin-top: -30px;
+  margin-left: 0px;
+}
+.point1{
+  width: 40px;
+  height: 40px;
+  background: #fff7ba;
+  border-radius: 50%;
   margin-bottom: 15px; /* 점 아래 타이틀과의 간격 */
   margin-top: -30px;
   margin-left: 0px;
@@ -604,7 +650,7 @@ ul{ margin: 0; padding-left: 18px; }
 .roadmap-title {
   font-weight: 700;
   font-size: 20px;
-  color: #ffffff;
+  color: #000000;
   white-space: nowrap;
 }
 
@@ -613,7 +659,6 @@ ul{ margin: 0; padding-left: 18px; }
   position: absolute;
   top: 85px; /* 점(point) 바로 밑에서 끝나도록 위치 */
   width: 280px;
-  opacity: 0; /* 시작은 투명하게 */
   pointer-events: none; /* 애니메이션 전까지는 클릭 방지 */
   transform-origin: top; /* 위에서 시작 */
   text-align: center;
@@ -631,17 +676,6 @@ ul{ margin: 0; padding-left: 18px; }
   }
 }
 
-/* 각 아이템별 순차적 애니메이션 적용 */
-.roadmap-item:nth-child(1) .roadmap-card {
-  animation: dropIn 0.8s ease-out 0.5s forwards;
-}
-.roadmap-item:nth-child(2) .roadmap-card {
-  animation: dropIn 0.8s ease-out 1.0s forwards;
-}
-.roadmap-item:nth-child(3) .roadmap-card {
-  animation: dropIn 0.8s ease-out 1.5s forwards;
-}
-
 .list{
   content: '';
   font-size: 13px;
@@ -656,9 +690,7 @@ ul{ margin: 0; padding-left: 18px; }
 .card {
   /* 2. 투명 테두리 설정: 굵기는 여기서 조절 */
   border: 1px solid transparent; /* 투명 테두리 필수 */
-  background: 
-    linear-gradient(#111111, #111111) padding-box, 
-    linear-gradient(135deg, #7c3aed, #06b6d4) border-box; /* 테두리 그라데이션 */;
+  background: linear-gradient(#ffffff, #ffffff) padding-box;
   
   /* 3. 모서리 둥글게 (border-radius와 호환됨) */
   border-radius: var(--radius);
@@ -676,6 +708,83 @@ ul{ margin: 0; padding-left: 18px; }
 .list li{ margin: 6px 0; }
 
 .spacer{ height: 24px; }
+/* 애니메이션 정의 */
+@keyframes scroll {
+  from {
+    transform: translateX(0);
+  }
+  to {
+    transform: translateX(-50%); /* 전체(원본+복제)의 절반만큼 이동 */
+  }
+}
+
+.scroll-container {
+  overflow: hidden;
+  width: 100%;
+  padding: 20px 0;
+  position: relative;
+  -webkit-mask-image: linear-gradient(to right, transparent, black 15%, black 85%, transparent);
+  mask-image: linear-gradient(to right, transparent, black 15%, black 85%, transparent);
+}
+
+/* 카드를 담는 긴 줄 */
+.scroll-track {
+  display: flex;
+  width: max-content; /* 내부 콘텐츠 길이에 맞춤 */
+  animation: scroll 30s linear infinite; /* 30초 동안 한 바퀴 */
+}
+
+/* 마우스 올리면 일시정지 (선택 사항) */
+.scroll-track:hover {
+  animation-play-state: paused;
+}
+.scroll-card:hover {
+  transform: translateY(-10px); /* 마우스 올렸을 때 살짝 들림 */
+}
+
+.scroll-card-tag {
+  font-size: 12px;
+  font-weight: 700;
+  color: #7c3aed; /* 포인트 컬러 */
+  margin-bottom: 12px;
+}
+
+.scroll-card-title {
+  font-size: 22px;
+  font-weight: 800;
+  margin: 0 0 10px 0;
+  letter-spacing: -0.03em;
+}
+
+.scroll-card-desc {
+  font-size: 15px;
+  color: #636366;
+  line-height: 1.5;
+  margin: 0;
+}
+/* ★ 밝은 카드 디자인 ★ */
+.scroll-card {
+  width: 300px;
+  height: 200px;
+  margin: 0 15px;
+  padding: 30px;
+  
+  /* 테두리 제거 및 밝은 배경 */
+  border: none; 
+  background: #ffffff; /* 또는 rgba(255, 255, 255, 0.95) */
+  border-radius: 24px;
+  
+  /* 텍스트 색상을 어두운 색으로 변경 */
+  color: #1d1d1f; 
+  
+  /* 부드러운 그림자로 입체감 부여 */
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+  
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  transition: transform 0.3s ease;
+}
 
 /* Awards */
 #awards{
@@ -683,7 +792,8 @@ ul{ margin: 0; padding-left: 18px; }
 }
 .awardsHeader{ margin-bottom: 12px; }
 .awardsGrid{
-  margin-top: 30px;
+  margin-top: 50px;
+  margin-bottom: -150px;
   display:grid;
   grid-template-columns: repeat(2, auto);
   gap: 100px;
@@ -695,12 +805,11 @@ ul{ margin: 0; padding-left: 18px; }
 .awardCard{
   border-radius: 18px;
   border: 1px solid rgba(255,255,255,0.10);
-  background:
-    linear-gradient(#151515, #151515) padding-box,
-    linear-gradient(135deg, #7c3aed, #06b6d4) border-box; /* 테두리 그라데이션 */;
+  background: linear-gradient(#ffffff, #ffffff) padding-box;
   padding: 30px;
   padding-bottom: 20px;
   width: 320PX;
+  box-shadow: var(--shadow);
 }
 
 .awardTop{
@@ -720,7 +829,7 @@ ul{ margin: 0; padding-left: 18px; }
 }
 .awardResult{
   font-weight: 760;
-  color: rgba(255,255,255,0.9);
+  color: rgba(9, 9, 9, 0.9);
   margin-bottom: 20px;
   text-align: left;
 }
@@ -739,7 +848,6 @@ ul{ margin: 0; padding-left: 18px; }
   height: auto;
   margin-top: 10px;
   border-radius: 12px;
-  box-shadow: var(--shadow);
 }
 /* CTA */
 .ctaSection{ padding-top: 0; }
@@ -792,6 +900,10 @@ ul{ margin: 0; padding-left: 18px; }
   padding: 44px 0;
   border-top: 1px solid var(--line);
   background: rgba(49, 49, 49, 0.2);
+
+  /* 스크롤 스냅 추가 */
+  scroll-snap-align: end; /* 푸터는 하단에 맞춰지도록 end 권장 */
+  scroll-snap-stop: always;
 }
 .footerGrid{
   display:flex;
@@ -820,13 +932,12 @@ ul{ margin: 0; padding-left: 18px; }
   font-size: 14px;
 }
 .footerTitle{
-  margin-top: 0px;
   padding-left: -70px;
   font-weight: 100;
   color: var(--muted);
 }
 .footertext{
-  margin-top: 30px;
+  margin-top: 40px;
   margin-left: -100px;
   padding-left: 30px;
   color: var(--muted);

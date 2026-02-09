@@ -1,3 +1,5 @@
+'use client';
+import { motion } from "framer-motion";
 
 const CLUB = {
   name: "NIMDA",
@@ -56,20 +58,16 @@ const AWARDS = [
  
 ];
 
-const FAQ = [
-  {
-    q: "경험이 없어도 지원할 수 있나요?",
-    a: "가능합니다. 입문자를 위한 온보딩과 스터디 트랙이 있으며, 프로젝트는 난이도별로 팀을 구성합니다.",
-  },
-  {
-    q: "활동 방식은 어떤가요?",
-    a: "정기 모임 + 팀별 프로젝트 진행이 기본입니다. 시험/일정에 맞춰 유연하게 조정합니다.",
-  },
-  {
-    q: "무엇을 가장 중요하게 보나요?",
-    a: "꾸준함, 협업 태도, 배움에 대한 의지입니다. 결과보다 과정과 성장도 함께 봅니다.",
-  },
-];
+/* 2025년 활동 데이터 (예시) */
+const ACTIVITIES_2025 = [
+  { title: "3월~5월 멘토링", desc: "프로그래밍 언어와 알고리즘의 기초 과정 스터디를 진행했습니다." },
+  { title: "6월 UCPC 참가", desc: "총 o개의 팀으로 ICPC에 참가했습니다." },
+  { title: "8월 여름 MT", desc: "함께 즐거운 추억을 쌓았습니다." },
+  { title: "8월~9월 멘토링, 스터디", desc: "알고리즘 중급 과정 스터디를 진행했습니다." },
+  { title: "10월 ICPC 참가", desc: "함께 땀 흘즐거운 추억을 쌓았습니다." },
+  { title: "11월 님다콘 개최", desc: "첫 동아리 자체 대회를 개최하여 그동안 쌓아온 실력을 발휘할 수 있는 장을 마련했습니다. " }
+
+]
 
 function Container({ children }) {
   return <div className="container">{children}</div>;
@@ -180,17 +178,26 @@ export default function Page() {
             title="동아리 활동"
             desc={
               <>
-              님다의 활동은 크게 <span className="highlight2">'학습 → 도전 → 응용'</span>의 흐름으로 공부에만 그치지 않고, <span className="highlight3">‘경험’</span>으로 이어집니다.
+              님다의 활동은 크게 <span className="emphasis">‘학습 → 도전 → 응용’</span>의 흐름으로 공부에만 그치지 않고, <span className="emphasis">‘경험’</span>으로 이어집니다.
               </>
             }
           />
           <div className="grid3 roadmap-container">
             {/* CSS ::before 가 가로선을 그립니다 */}
-            
             {ACTIVITIES.map((a, index) => (
               <div key={a.title} className="roadmap-item">
-                {/* 1. 위에서 떨어질 카드 박스 (점 위쪽 위치) */}
-                <div className="roadmap-card">
+                {/* 1. 위에서 떨어질 카드 박스: motion.div로 변경 */}
+                <motion.div 
+                  className="roadmap-card"
+                  initial={{ opacity: 0, y: -50 }}      // 시작 상태: 투명하고 위로 50px
+                  whileInView={{ opacity: 1, y: 0 }}   // 화면에 들어왔을 때: 불투명하고 제자리로
+                  viewport={{ once: false, amount: 0.3 }} // ★ once: false가 핵심 (볼 때마다 애니메이션 실행)
+                  transition={{ 
+                    duration: 0.6, 
+                    delay: index * 0.2,               // 순차적으로 떨어지는 효과
+                    ease: "easeOut" 
+                  }}
+                >
                   <Card title={a.title}>
                     {Array.isArray(a.items) && (
                       <ul className="list">
@@ -200,10 +207,10 @@ export default function Page() {
                       </ul>
                     )}
                   </Card>
-                </div>
+                </motion.div>
 
-                {/* 2. 중앙의 점 */}
-                <div className="point"></div>
+                {/* 2. 중앙의 점 (여기도 원하시면 같이 애니메이션을 줄 수 있습니다) */}
+                <div className={`point${index+1}`}></div>
                 
                 {/* 3. 점 아래의 타이틀 */}
                 <div className="roadmap-title">{a.point}</div>
@@ -213,7 +220,38 @@ export default function Page() {
         
         </Container>
       </section>
+      
+      {/* Activities2025 (무한 스크롤 버전) */}
+      <section id="activities2025" className="section">
+        <Container>
+          <SectionHeader
+            title="2025년에는 무엇을 했을까요?"
+            desc="님다의 2025년 순간들"
+          />
+        </Container>
 
+        <div className="scroll-container">
+          <div className="scroll-track">
+            {/* 첫 번째 세트 */}
+            {ACTIVITIES_2025.map((act, i) => (
+              <div key={`set1-${i}`} className="scroll-card">
+                <div className="scroll-card-tag">{act.date}</div>
+                <h3 className="scroll-card-title">{act.title}</h3>
+                <p className="scroll-card-desc">{act.desc}</p>
+              </div>
+            ))}
+            {/* 두 번째 세트 (무한 루프를 위해 복제) */}
+            {ACTIVITIES_2025.map((act, i) => (
+              <div key={`set2-${i}`} className="scroll-card">
+                <div className="scroll-card-tag">{act.date}</div>
+                <h3 className="scroll-card-title">{act.title}</h3>
+                <p className="scroll-card-desc">{act.desc}</p>
+              </div>
+            ))}
+          </div>
+        </div>
+      </section>
+      
       {/* Awords */}
       <section id="awards" className="section">
         <Container>
