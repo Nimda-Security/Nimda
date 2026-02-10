@@ -40,7 +40,7 @@ const ACTIVITIES = [
   {
     point: "응용",
     title: "프로젝트 & 실습 활동",
-    items: ["웹 서비스 제작", "보안 문제 풀이 및 취약점 분석 실습"],
+    items: ["NIMDA 페이지 기능 추가", "보안 문제 풀이 및 취약점 분석 실습"],
   },
 ];
 
@@ -62,7 +62,7 @@ const AWARDS = [
 const ACTIVITIES_2025 = [
   { title: "3월~5월 멘토링",
     desc: "프로그래밍 언어와 알고리즘의 기초 과정 스터디를 진행했습니다.",
-    image: ""
+    image: "cpp.jpg"
   },
   { title: "6월 UCPC 참가",
     desc: "총 3개의 팀으로 UCPC에 참가했습니다.",
@@ -74,11 +74,11 @@ const ACTIVITIES_2025 = [
   },
   { title: "8월~9월 멘토링, 스터디",
     desc: "알고리즘 스터디를 진행했습니다.",
-    image: ""
+    image: "Algorithm_study.jpg"
   },
   { title: "10월 ICPC 참가",
-    desc: "총 0개의 팀으로 ICPC에 참가했습니다.",
-    image: ""
+    desc: "총 o개의 팀으로 ICPC에 참가했습니다.",
+    image: "ICPC.jpg"
   },
   { title: "11월 님다콘 개최",
     desc: "첫 동아리 자체 대회를 개최하여 그동안 쌓아온 실력을 발휘할 수 있는 장을 마련했습니다. ",
