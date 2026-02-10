@@ -35,7 +35,7 @@ const ACTIVITIES = [
   {
     point: "도전",
     title: "대회 & 해커톤 참여",
-    items: ["대회(ICPC·UCPC) 참여", "해커톤 참여", "동아리 자체 대회(님다콘) 개최"],
+    items: ["대회(ICPC·UCPC) 참여", "교내 해커톤 참여", "동아리 자체 대회(님다콘) 개최"],
   },
   {
     point: "응용",
@@ -60,12 +60,30 @@ const AWARDS = [
 
 /* 2025년 활동 데이터 (예시) */
 const ACTIVITIES_2025 = [
-  { title: "3월~5월 멘토링", desc: "프로그래밍 언어와 알고리즘의 기초 과정 스터디를 진행했습니다." },
-  { title: "6월 UCPC 참가", desc: "총 o개의 팀으로 ICPC에 참가했습니다." },
-  { title: "8월 여름 MT", desc: "함께 즐거운 추억을 쌓았습니다." },
-  { title: "8월~9월 멘토링, 스터디", desc: "알고리즘 중급 과정 스터디를 진행했습니다." },
-  { title: "10월 ICPC 참가", desc: "함께 땀 흘즐거운 추억을 쌓았습니다." },
-  { title: "11월 님다콘 개최", desc: "첫 동아리 자체 대회를 개최하여 그동안 쌓아온 실력을 발휘할 수 있는 장을 마련했습니다. " }
+  { title: "3월~5월 멘토링",
+    desc: "프로그래밍 언어와 알고리즘의 기초 과정 스터디를 진행했습니다.",
+    image: ""
+  },
+  { title: "6월 UCPC 참가",
+    desc: "총 3개의 팀으로 UCPC에 참가했습니다.",
+    image: "UCPC.jpg"
+  },
+  { title: "8월 여름 MT",
+    desc: "함께 즐거운 추억을 쌓았습니다.",
+    image: "nimda_MT.jpg"
+  },
+  { title: "8월~9월 멘토링, 스터디",
+    desc: "알고리즘 스터디를 진행했습니다.",
+    image: ""
+  },
+  { title: "10월 ICPC 참가",
+    desc: "총 0개의 팀으로 ICPC에 참가했습니다.",
+    image: ""
+  },
+  { title: "11월 님다콘 개최",
+    desc: "첫 동아리 자체 대회를 개최하여 그동안 쌓아온 실력을 발휘할 수 있는 장을 마련했습니다. ",
+    image: "activity_nimdacon.jpg"
+  }
 
 ]
 
@@ -238,6 +256,9 @@ export default function Page() {
                 <div className="scroll-card-tag">{act.date}</div>
                 <h3 className="scroll-card-title">{act.title}</h3>
                 <p className="scroll-card-desc">{act.desc}</p>
+                <div className="image-sticker-wrapper">
+                  {act.image && <img src={act.image} alt={act.title} className="scroll-card-image" />}
+                </div>
               </div>
             ))}
             {/* 두 번째 세트 (무한 루프를 위해 복제) */}
@@ -246,6 +267,9 @@ export default function Page() {
                 <div className="scroll-card-tag">{act.date}</div>
                 <h3 className="scroll-card-title">{act.title}</h3>
                 <p className="scroll-card-desc">{act.desc}</p>
+                <div className="image-sticker-wrapper">
+                  {act.image && <img src={act.image} alt={act.title} className="scroll-card-image" />}
+                </div>
               </div>
             ))}
           </div>
