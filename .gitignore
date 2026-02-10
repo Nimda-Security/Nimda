@@ -41,6 +41,14 @@ logs/
 .env.test.local
 !.env.example
 
+# Spring Boot configuration files
+application.yml
+application.properties
+application-*.yml
+application-*.properties
+!application-test.yml
+!application-test.properties
+
 # Database
 *.db
 *.sqlite
