@@ -8,9 +8,11 @@ import org.springframework.security.config.http.SessionCreationPolicy;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.web.SecurityFilterChain;
+import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
 import org.springframework.web.cors.CorsConfiguration;
 import org.springframework.web.cors.CorsConfigurationSource;
 import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
+import org.springframework.beans.factory.annotation.Autowired;
 
 import java.util.Arrays;
 
@@ -18,11 +20,15 @@ import java.util.Arrays;
 @EnableWebSecurity
 public class SecurityConfig {
 
+    @Autowired
+    private JwtAuthenticationFilter jwtAuthenticationFilter;
+
     @Bean
     public PasswordEncoder passwordEncoder() {
         return new BCryptPasswordEncoder();
     }
 
+    // Note. URL 기반 접근 제어
     @Bean
     public CorsConfigurationSource corsConfigurationSource() {
         CorsConfiguration configuration = new CorsConfiguration();
@@ -31,9 +37,7 @@ public class SecurityConfig {
         configuration.setAllowedOriginPatterns(Arrays.asList(
                 "http://localhost:*", // 로컬 개발 (모든 포트)
                 "https://nimda.kr", // 프로덕션 도메인
-                "https://*.nimda.kr", // 서브도메인 포함
-                "https://nimda-page.vercel.app", // Vercel 프로덕션 (레거시)
-                "chrome-extension://*" // ✅ Chrome Extension 추가
+                "https://*.nimda.kr" // 서브도메인 포함
         ));
 
         configuration.setAllowedMethods(Arrays.asList("GET", "POST", "PUT", "DELETE", "PATCH", "OPTIONS"));
@@ -44,6 +48,7 @@ public class SecurityConfig {
         source.registerCorsConfiguration("/**", configuration);
 
         return source;
+
     }
 
     // Note. Spring Security FilterChain
@@ -64,7 +69,11 @@ public class SecurityConfig {
                 // 3. 세션 정책 설정
                 .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
 
-                // 4. 요청별 권한 제어
+                // 4. JWT 필터 추가 (UsernamePasswordAuthenticationFilter 전에 실행)
+                // 폼 로그인용 필터라 JWT 방식에서는 사용되지 않으나, 표준 관례상 기준점으로 사용
+                .addFilterBefore(jwtAuthenticationFilter, UsernamePasswordAuthenticationFilter.class)
+
+                // 5. 요청별 권한 제어
                 .authorizeHttpRequests(authz -> authz
                         // 공개 API (인증 불필요)
                         .requestMatchers("/api/auth/**").permitAll() // 로그인, 회원가입
