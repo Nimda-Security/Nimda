@@ -198,8 +198,8 @@ ul{ margin: 0; padding-left: 18px; }
   font-weight: 650;
   padding: 10px 14px;
   border-radius: 12px;
-  background: linear-gradient(135deg, rgba(124,58,237,0.95), rgba(6,182,212,0.9));
-  box-shadow: 0 12px 28px rgba(124,58,237,0.18);
+  background: linear-gradient(135deg, rgba(87, 197, 252, 0.95), rgba(172, 240, 247, 0.9));
+  box-shadow: var(--shadow);
 }
 .navCta:hover{ opacity: 0.95; }
 
@@ -227,6 +227,80 @@ ul{ margin: 0; padding-left: 18px; }
   font-weight: 800;
   letter-spacing: -0.02em;
 }
+/* 오프닝 전체 배경 */
+.opening-sequence {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100vw;
+  height: 100vh;
+  background: #000000;
+  z-index: 9999;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  overflow: hidden;
+}
+
+/* 로고: 처음부터 나타나 있는 상태 */
+.opening-logo {
+  position: absolute;
+  width: 400px; /* 크기는 적절히 조절 */
+  filter: brightness(0) invert(1);
+  pointer-events: none;
+}
+
+/* 코드 영역: 글자가 겹치지 않게 pre-wrap 설정 */
+.opening-code {
+  color: #f8f8f2; 
+  white-space: pre-wrap;
+  z-index: 10001;
+}
+/* 문법 하이라이트 색상 */
+.code-directive { color: #ff79c6; }   /* #include - 핑크 */
+.code-header { color: #50fa7b; }      /* <stdio.h> - 그린 */
+.code-comment { color: #6272a4; font-style: italic; } /* 주석 - 보라회색 */
+.code-keyword { color: #8be9fd; font-weight: bold; }  /* int, char, return - 하늘색 */
+.code-function { color: #50fa7b; }    /* main - 그린 */
+.code-func-call { color: #f1fa8c; }   /* printf - 노란색 */
+.code-string { color: #f1fa8c; }      /* "문자열" - 노란색 */
+.code-number { color: #bd93f9; }      /* 0 - 보라색 */
+.code-plain { color: #f8f8f2; }       /* 일반 텍스트 */
+
+/* 개별 코드 라인 */
+.code-line {
+  min-height: 1.6em;
+}
+
+/* 커서 스타일 보완 */
+.typing-cursor {
+  display: inline-block;
+  width: 8px;
+  height: 1.1em;
+  background-color: #f1fa8c;
+  margin-left: 2px;
+  vertical-align: middle;
+}
+/* 깜빡이는 커서 */
+.typing-cursor {
+  display: inline-block;
+  width: 10px;
+  height: 1.2em;
+  background-color: #00ff00;
+  margin-left: 2px;
+  vertical-align: middle;
+}
+
+.white-curtain {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100vw;
+  height: 100vh;
+  background: #ffffff;
+  z-index: 10000;
+  pointer-events: none;
+}
 
 /* Hero */
 .hero {
@@ -241,10 +315,6 @@ ul{ margin: 0; padding-left: 18px; }
   padding-top: 0px;
 }
 
-/* 1. 애니메이션 정의: 튕기는 폭을 더 크게 조절했습니다 */
-@keyframes bounceAtBottom {
-  to { transform: scaleY(1); }
-}
 
 /* 2. 애니메이션 적용: 선택자 안에 모든 속성을 넣으세요 */
 .hero::after {
@@ -261,40 +331,10 @@ ul{ margin: 0; padding-left: 18px; }
   
   /* 2.0s에 막 하강 완료 -> 3.0s에 전등이 부드럽게 켜짐 */
   animation:
-    bounceAtBottom 0.7s cubic-bezier(0.175, 0.885, 0.32, 1.275) 2.0s forwards,
+    bounceAtBottom 0.7s cubic-bezier(0.175, 0.885, 0.32, 1.275) 6.0s forwards,
     spotlightOn 1.0s ease-in-out 3.0s forwards;
 }
 
-/* 로고 기본 스타일 */
-.spotlight-logo {
-  /* ... 기존 위치 및 크기 속성 유지 ... */
-  position: absolute;
-  top: 80%;
-  left: 50%;
-  transform: translate(-50%, -50%);
-  z-index: 15;
-  width: 400px;
-  opacity: 0;
-  
-
-
-
-  /* [수정] 전등 애니메이션과 동일한 시간(1.5s) 및 지연 시간(2.0s) 설정 */
-  animation: logoFlicker 1.0s ease-in-out 3.0s forwards;
-}
-
-@keyframes logoFlicker {
-  0% { opacity: 0; }
-  /* 전등 첫 번째 깜빡임 (20%) */
-  20% { opacity: 0.5; } 
-  /* 다시 암전 (30%) */
-  30% { opacity: 0; }
-  /* 최종 탁! 켜짐 (40% ~ 100%) */
-  40%, 100% { 
-    opacity: 1;
-    transform: translate(-50%, -50%) scale(1); 
-  }
-}
 .heroBg{
   display: none;
 }

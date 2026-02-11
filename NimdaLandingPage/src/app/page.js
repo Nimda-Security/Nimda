@@ -7,16 +7,34 @@ const CLUB = {
   shortIntro: [
     "NIMDA",
   ],
-  stats: [
-    { label: "활동 기수", value: "10+" },
-    { label: "누적 프로젝트", value: "30+" },
-    { label: "대회/해커톤 수상", value: "15+" },
-  ],
   links: {
-    homepage: "https://www.nimda.kr/", // 서브도메인으로 교체
-    apply: "https://apply.example.com",   // 지원 링크로 교체
+    homepage: "https://nimda.space/", // 서브도메인으로 교체
+    apply: "https://moaform.com/q/8e13lE",   // 지원 링크로 교체
   },
 };
+
+const C_CODE = `
+#include <stdio.h>
+#include <unistd.h> // for sleep()
+
+int main() {
+    char nimda_message[] = "Welcome to NIMDA Security Club!";
+    int i = 0;
+
+    printf("Booting up system...\n");
+    sleep(1);
+
+    while (nimda_message[i] != '\\0') {
+        printf("%c", nimda_message[i]);
+        fflush(stdout);
+        usleep(50000);
+        i++;
+    }
+    printf("\\n");
+    printf("Access Granted.\\n");
+    return 0;
+}
+`.trim();
 
 const ACTIVITIES = [
   {
@@ -114,63 +132,132 @@ function Card({ title, desc, children }) {
 }
 
 export default function Page() {
+  let cumulativeIndex = 0;
+  const typingSpeed = 0.03; // 숫자가 작을수록 빨라집니다
+
   return (
     <div className="page">
-      {/* Navbar */}
-      <header className="navWrap">
-        <Container>
-          <nav className="nav">
-            <a className="brand" href="#top" aria-label="Go to top">
-              <img
-                src="/nimdalogo1.png"
-                alt="NIMDA 로고"
-                className="brandIcon"
-              />
-              <span className="brandText">NIMDA</span>
-            </a>
+      {/* 1단계: 검은색 배경 오프닝 섹션 */}
+      <motion.div 
+        className="opening-sequence"
+        initial={{ y: 0 }}
+        animate={{ y: "-100%" }}
+        transition={{ duration: 1.2, delay: 6.5, ease: [0.43, 0.13, 0.23, 0.96] }}
+      >
+        {/* 처음부터 보이는 중앙 로고 */}
+        <motion.img 
+          src="/nimdalogo1.png" 
+          className="opening-logo"
+          initial={{ opacity: 0.25 }} // 처음부터 25% 투명도로 보임
+          animate={{ opacity: [0.25, 0.25, 0.25] }}
+          transition={{ duration: 3, repeat: Infinity, ease: "easeInOut" }}
+        />
 
-
-            <div className="navLinks">
-              <a className="navLink" href="#about">동아리 소개</a>
-              <a className="navLink" href="#activities">동아리 활동</a>
-              <a className="navLink" href="#awards">수상 실적</a>
-              <a
-                className="navLink"
-                href={CLUB.links.homepage}
-                target="_blank"
-                rel="noreferrer"
-              >
-                동아리 홈페이지 바로가기
-              </a>
-              <a
-                className="navCta"
-                href={CLUB.links.apply}
-                target="_blank"
-                rel="noreferrer"
-              >
-                지원하러 가기
-              </a>
+        {/* 한 글자씩 타이핑되는 코드 영역 */}
+        <div className="opening-code">
+          {C_CODE.split("\n").map((line, lineIdx) => (
+            <div key={`line-${lineIdx}`} className="code-line">
+              {line.split("").map((char, charIdx) => {
+                const delay = 1 + (cumulativeIndex * typingSpeed);
+                cumulativeIndex++; // 전체 글자 순서 카운트
+                return (
+                  <motion.span
+                    key={`char-${charIdx}`}
+                    initial={{ opacity: 0 }}
+                    animate={{ opacity: 1 }}
+                    transition={{ delay: delay, duration: 0 }} // 즉각적으로 나타나게 함
+                  >
+                    {char}
+                  </motion.span>
+                );
+              })}
             </div>
-          </nav>
-        </Container>
-      </header>
+          ))}
+          {/* 깜빡이는 커서 */}
+          <motion.span 
+            className="typing-cursor"
+            animate={{ opacity: [0, 1, 0] }}
+            transition={{ repeat: Infinity, duration: 0.8 }}
+          >
+            _
+          </motion.span>
+        </div>
+      </motion.div>
 
-      {/* Hero */}
-      <main id="top" className="hero">
-        <Container>
-          <div className="heroGrid">
-            <div className="heroLeftCentered">
-              {/* '개발 동아리' 타이틀 */}
-              <h1 className="h1">{CLUB.tagline}</h1>
-              
-              {/* 'NIMDA' 메인 글자 */}
-              <div className="heroP">
-                {CLUB.name}
+      {/* 2단계: 화면 전환용 흰색 막 (Curtain) */}
+      <motion.div 
+        className="white-curtain"
+        initial={{ y: "-100%" }}
+        animate={{ y: ["-100%", "0%", "100%"] }}
+        transition={{ 
+          duration: 1.8, 
+          delay: 6.0, // 코드가 거의 다 써질 즈음 시작
+          times: [0, 0.5, 1],
+          ease: "easeInOut"
+        }}
+      />
+
+      {/* 3단계: 메인 콘텐츠 (이후 코드는 동일) */}
+      <motion.div
+        initial={{ opacity: 0 }}
+        animate={{ opacity: 1 }}
+        transition={{ delay: 7.0 }}
+      >
+        <header className="navWrap">
+          <Container>
+            <nav className="nav">
+              <a className="brand" href="#top" aria-label="Go to top">
+                <img
+                  src="/nimdalogo1.png"
+                  alt="NIMDA 로고"
+                  className="brandIcon"
+                />
+                <span className="brandText">NIMDA</span>
+              </a>
+
+
+              <div className="navLinks">
+                <a className="navLink" href="#about">동아리 소개</a>
+                <a className="navLink" href="#activities">동아리 활동</a>
+                <a className="navLink" href="#awards">수상 실적</a>
+                <a
+                  className="navLink"
+                  href={CLUB.links.homepage}
+                  target="_blank"
+                  rel="noreferrer"
+                >
+                  동아리 홈페이지 바로가기
+                </a>
+                <a
+                  className="navCta"
+                  href={CLUB.links.apply}
+                  target="_blank"
+                  rel="noreferrer"
+                >
+                  지원하러 가기
+                </a>
+              </div>
+            </nav>
+          </Container>
+        </header>
+        
+        {/* Hero */}
+        <main id="top" className="hero">
+          <Container>
+            <div className="heroGrid">
+              <div className="heroLeftCentered">
+                {/* '개발 동아리' 타이틀 */}
+                <h1 className="h1">{CLUB.tagline}</h1>
+                
+                {/* 'NIMDA' 메인 글자 */}
+                <div className="heroP">
+                  {CLUB.name}
+                </div>
               </div>
             </div>
-          </div>
-        </Container>
-      </main>
+          </Container>
+        </main>
+      </motion.div>
 
       {/* About */}
       <section id="about" className="section">
