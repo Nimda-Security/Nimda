@@ -30,9 +30,6 @@ body{
   color: var(--text);
   padding: 0;
   margin: 0;
-  /*스크롤 딱딱 끊기게*/
-  scroll-behavior: smooth;
-  scroll-snap-type: y mandatory;
 }
 
 a{ color: inherit; text-decoration: none; }
@@ -66,6 +63,7 @@ ul{ margin: 0; padding-left: 18px; }
   font-weight: normal;
   font-style: normal;
 }
+
 .page{
   height: 100vh; /* 화면 높이에 맞춤 */
   overflow-y: auto; /* 내부에서 스크롤 발생 */
@@ -143,7 +141,7 @@ ul{ margin: 0; padding-left: 18px; }
   background: rgba(255,255,255,0.8);
   border-bottom: 1px solid var(--line);
 
-  animation: navSlideDown 0.8s cubic-bezier(0.25, 0.46, 0.45, 0.94) 4.0s forwards;
+  animation: navSlideDown 0.8s cubic-bezier(0.25, 0.46, 0.45, 0.94) 2.0s forwards;
 }
 
 @keyframes navSlideDown {
@@ -220,90 +218,17 @@ ul{ margin: 0; padding-left: 18px; }
 
 }
 
-
 .brandText{
 
   font-size: 18px;
   font-weight: 800;
   letter-spacing: -0.02em;
 }
-/* 오프닝 전체 배경 */
-.opening-sequence {
-  position: fixed;
-  top: 0;
-  left: 0;
-  width: 100vw;
-  height: 100vh;
-  background: #000000;
-  z-index: 9999;
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  overflow: hidden;
-}
-
-/* 로고: 처음부터 나타나 있는 상태 */
-.opening-logo {
-  position: absolute;
-  width: 400px; /* 크기는 적절히 조절 */
-  filter: brightness(0) invert(1);
-  pointer-events: none;
-}
-
-/* 코드 영역: 글자가 겹치지 않게 pre-wrap 설정 */
-.opening-code {
-  color: #f8f8f2; 
-  white-space: pre-wrap;
-  z-index: 10001;
-}
-/* 문법 하이라이트 색상 */
-.code-directive { color: #ff79c6; }   /* #include - 핑크 */
-.code-header { color: #50fa7b; }      /* <stdio.h> - 그린 */
-.code-comment { color: #6272a4; font-style: italic; } /* 주석 - 보라회색 */
-.code-keyword { color: #8be9fd; font-weight: bold; }  /* int, char, return - 하늘색 */
-.code-function { color: #50fa7b; }    /* main - 그린 */
-.code-func-call { color: #f1fa8c; }   /* printf - 노란색 */
-.code-string { color: #f1fa8c; }      /* "문자열" - 노란색 */
-.code-number { color: #bd93f9; }      /* 0 - 보라색 */
-.code-plain { color: #f8f8f2; }       /* 일반 텍스트 */
-
-/* 개별 코드 라인 */
-.code-line {
-  min-height: 1.6em;
-}
-
-/* 커서 스타일 보완 */
-.typing-cursor {
-  display: inline-block;
-  width: 8px;
-  height: 1.1em;
-  background-color: #f1fa8c;
-  margin-left: 2px;
-  vertical-align: middle;
-}
-/* 깜빡이는 커서 */
-.typing-cursor {
-  display: inline-block;
-  width: 10px;
-  height: 1.2em;
-  background-color: #00ff00;
-  margin-left: 2px;
-  vertical-align: middle;
-}
-
-.white-curtain {
-  position: fixed;
-  top: 0;
-  left: 0;
-  width: 100vw;
-  height: 100vh;
-  background: #ffffff;
-  z-index: 10000;
-  pointer-events: none;
-}
 
 /* Hero */
 .hero {
+  scroll-snap-align: start;
+  scroll-snap-stop: always;
   position: relative;
   overflow: hidden;
   height: 100vh;
@@ -403,13 +328,10 @@ ul{ margin: 0; padding-left: 18px; }
   
   position: relative;
   z-index: 5;
-  opacity: 0;
+  opacity: 1;
   margin: 5px;
 
-  /* 등장(0.8s) -> 1.8s 대기 후 퇴장 */
-  animation: 
-    revealUp 1.2s ease-out forwards, 
-    fadeOut 0.1s ease-in-out 2.0s forwards;
+  animation: revealUp 1.2s ease-out forwards;
 }
 
 @keyframes revealUp {
