@@ -1,6 +1,8 @@
 package com.nimda.cup.user.service;
 
+import com.nimda.cup.user.entity.Authority;
 import com.nimda.cup.user.entity.User;
+import com.nimda.cup.user.repository.AuthorityRepository;
 import com.nimda.cup.user.repository.UserRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.crypto.password.PasswordEncoder;
@@ -17,6 +19,9 @@ public class UserService {
     private UserRepository userRepository;
 
     @Autowired
+    private AuthorityRepository authorityRepository;
+
+    @Autowired
     private PasswordEncoder passwordEncoder; // Spring Security 비밀번호 암호화 도구
 
     /*
@@ -29,6 +34,17 @@ public class UserService {
         String encodedPassword = passwordEncoder.encode(password);
         User user = new User(userId, nickname, encodedPassword, email,
                 universityName, department, grade);
+
+        // ROLE_USER 권한 찾기 또는 생성
+        Authority userRole = authorityRepository.findByAuthorityName("ROLE_USER")
+                .orElseGet(() -> {
+                    Authority newRole = new Authority("ROLE_USER");
+                    return authorityRepository.save(newRole);
+                });
+
+        // 사용자에 권한 연결
+        user.getAuthorities().add(userRole);
+
         return userRepository.save(user);
     }
 
