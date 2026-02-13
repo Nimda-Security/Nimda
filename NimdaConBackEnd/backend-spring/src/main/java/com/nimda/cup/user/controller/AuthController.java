@@ -54,8 +54,8 @@ public class AuthController {
 
     /**
      * 회원가입
-     * Request Data : Register DTO (userId, nickname, password, email,
-     * universityName, department, grade)
+     * Request Data : Register DTO (userId, name, nickname, password, studentNum,
+     * phoneNum, email, major, universityName, grade)
      */
     @PostMapping("/register")
     public ResponseEntity<?> register(@Valid @RequestBody RegisterDTO registerRequest) {
@@ -64,11 +64,14 @@ public class AuthController {
 
             User user = authService.register(
                     registerRequest.getUserId(),
+                    registerRequest.getName(),
                     registerRequest.getNickname(),
                     registerRequest.getPassword(),
+                    registerRequest.getStudentNum(),
+                    registerRequest.getPhoneNum(),
                     registerRequest.getEmail(),
+                    registerRequest.getMajor(),
                     registerRequest.getUniversityName(),
-                    registerRequest.getDepartment(),
                     registerRequest.getGrade());
 
             return ResponseEntity.status(HttpStatus.CREATED).body(user);

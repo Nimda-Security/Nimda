@@ -70,7 +70,7 @@ public class User {
 
     @NotBlank
     @Email
-    @Column(unique = true, length = 40)
+    @Column(unique = true, nullable = false, length = 40)
     private String email;
 
     @Column(name = "university_name", length = 100)

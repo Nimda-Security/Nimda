@@ -28,24 +28,24 @@ public class UserService {
      * CreateUser : 회원 가입
      */
     @Transactional
-    public User createUser(String userId, String nickname, String password, String email,
-            String universityName, String department, String grade) {
+    public User createUser(String userId, String name, String nickname, String password,
+            String studentNum, String phoneNum, String email, String major,
+            String universityName, String grade) {
         validateUserUniqueness(userId, nickname, email);
         String encodedPassword = passwordEncoder.encode(password);
 
-        // 기본 생성자 + setter 방식으로 변경
+        // ERD 기반 필수 필드로 사용자 생성
         User user = new User();
         user.setUserId(userId);
-        user.setName(nickname); // 임시로 nickname 사용 (나중에 실제 name 필드로 변경 필요)
+        user.setName(name);
         user.setNickname(nickname);
         user.setPassword(encodedPassword);
+        user.setStudentNum(studentNum);
+        user.setPhoneNum(phoneNum);
         user.setEmail(email);
+        user.setMajor(major);
         user.setUniversityName(universityName);
-        user.setMajor(department);
         user.setGrade(grade);
-        // 필수 필드 임시값 설정 (ERD 기반 필수 필드)
-        user.setStudentNum("000000000"); // 임시 기본값 (나중에 실제 값으로 변경 필요)
-        user.setPhoneNum("01000000000"); // 임시 기본값 (나중에 실제 값으로 변경 필요)
 
         // ROLE_USER 권한 찾기 또는 생성
         Authority userRole = authorityRepository.findByAuthorityName("ROLE_USER")
