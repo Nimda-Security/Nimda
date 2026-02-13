@@ -35,12 +35,10 @@ export const getCurrentUsername = (): string | null => {
 
 // 관리자 권한 체크 (JWT 토큰의 권한 정보에서 ROLE_ADMIN 확인)
 export const isAdmin = (): boolean => {
+
   const token = localStorage.getItem('authToken');
-  if (!token) {
-    console.log('[isAdmin] No token found');
-    return false;
-  }
-  
+  if (!token) { return false; }
+
   try {
     const base64Url = token.split('.')[1];
     const base64 = base64Url.replace(/-/g, '+').replace(/_/g, '/');
@@ -52,22 +50,11 @@ export const isAdmin = (): boolean => {
         })
         .join('')
     );
-
     const payload = JSON.parse(jsonPayload);
-    console.log('[isAdmin] Full JWT payload:', payload);
-    
     const authorities = payload.authorities || [];
-    console.log('[isAdmin] Authorities from token:', authorities);
-    console.log('[isAdmin] Is array?', Array.isArray(authorities));
-    console.log('[isAdmin] Includes ROLE_ADMIN?', Array.isArray(authorities) && authorities.includes('ROLE_ADMIN'));
-    
-    // 권한 목록에 ROLE_ADMIN이 있는지 확인
-    const isAdminResult = Array.isArray(authorities) && authorities.includes('ROLE_ADMIN');
-    console.log('[isAdmin] Final result:', isAdminResult);
-    
-    return isAdminResult;
+    return Array.isArray(authorities) && authorities.includes('ROLE_ADMIN');
   } catch (error) {
-    console.error('[isAdmin] Failed to parse JWT token:', error);
     return false;
   }
+
 }; 
