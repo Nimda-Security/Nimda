@@ -3,6 +3,7 @@ package com.nimda.cup.user.repository;
 import com.nimda.cup.user.entity.User;
 import org.springframework.data.jpa.repository.EntityGraph;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.lang.NonNull;
 import org.springframework.stereotype.Repository;
 
 import java.util.Collection;
@@ -32,7 +33,7 @@ public interface UserRepository extends JpaRepository<User, Long> {
      */
     @EntityGraph(attributePaths = { "authorities" })
     @Override
-    Optional<User> findById(Long id);
+    Optional<User> findById(@NonNull Long id);
 
     /**
      * 닉네임이 존재하는지 확인

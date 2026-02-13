@@ -15,7 +15,9 @@ import lombok.Setter;
 public class Authority {
 
     @Id
-    @Column(name = "authority_name", length = 50)
-    private String authorityName;
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    private Long id;
 
+    @Column(name = "authority_name", length = 20, unique = true, nullable = false)
+    private String authorityName;
 }
