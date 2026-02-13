@@ -24,11 +24,14 @@ export interface LoginResponse {
 
 export interface RegisterRequest {
   userId: string;
+  name: string;
   nickname: string;
   password: string;
+  studentNum: string;
+  phoneNum: string;
   email: string;
+  major: string;
   universityName?: string;
-  department?: string;
   grade?: string;
 }
 
@@ -79,9 +82,9 @@ export const loginAPI = async (
       };
     } else {
       // 로그인 실패 (401 Unauthorized 등)
-      const errorMessage = result.message || 
-        (response.status === 401 ? "아이디 또는 비밀번호가 올바르지 않습니다." : 
-         `로그인에 실패했습니다. (${response.status})`);
+      const errorMessage = result.message ||
+        (response.status === 401 ? "아이디 또는 비밀번호가 올바르지 않습니다." :
+          `로그인에 실패했습니다. (${response.status})`);
       return {
         success: false,
         message: errorMessage,
@@ -103,24 +106,25 @@ export const registerAPI = async (
   registerData: RegisterRequest
 ): Promise<LoginResponse> => {
   try {
-    // 빈 문자열을 undefined로 변환하여 전송하지 않도록 처리
+    // 필수 필드는 항상 전송, 선택 필드는 빈 문자열일 경우 undefined로 변환
     const cleanedData: any = {
       userId: registerData.userId,
+      name: registerData.name,
       nickname: registerData.nickname,
       password: registerData.password,
+      studentNum: registerData.studentNum,
+      phoneNum: registerData.phoneNum,
       email: registerData.email,
+      major: registerData.major,
     };
-    
+
     if (registerData.universityName?.trim()) {
       cleanedData.universityName = registerData.universityName.trim();
-    }
-    if (registerData.department?.trim()) {
-      cleanedData.department = registerData.department.trim();
     }
     if (registerData.grade?.trim()) {
       cleanedData.grade = registerData.grade.trim();
     }
-    
+
     const response = await fetch(`${API_BASE_URL}/auth/register`, {
       method: "POST",
       headers: {
@@ -148,9 +152,9 @@ export const registerAPI = async (
       };
     } else {
       // 회원가입 실패 (400 Bad Request 등)
-      const errorMessage = result.message || 
-        (response.status === 400 ? "입력한 정보를 확인해주세요." : 
-         `회원가입에 실패했습니다. (${response.status})`);
+      const errorMessage = result.message ||
+        (response.status === 400 ? "입력한 정보를 확인해주세요." :
+          `회원가입에 실패했습니다. (${response.status})`);
       return {
         success: false,
         message: errorMessage,
