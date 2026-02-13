@@ -84,15 +84,15 @@ public class SecurityConfig {
                         // 사용자 관리
                         .requestMatchers(HttpMethod.GET, "/api/users").hasRole("ADMIN") // 모든 사용자 조회
                         .requestMatchers(HttpMethod.DELETE, "/api/users/**").hasRole("ADMIN") // 사용자 삭제
-                        .requestMatchers(HttpMethod.PUT, "/api/users/**/role").hasRole("ADMIN") // 사용자 권한 변경
+                        .requestMatchers(HttpMethod.PUT, "/api/users/*/role").hasRole("ADMIN") // 사용자 권한 변경
 
                         // 그룹 관리
                         .requestMatchers(HttpMethod.GET, "/api/groups").hasRole("ADMIN") // 모든 그룹 조회
                         .requestMatchers(HttpMethod.POST, "/api/groups").hasRole("ADMIN") // 그룹 생성
 
                         // 문제 관리
-                        .requestMatchers(HttpMethod.GET, "/api/problems/**/admin").hasRole("ADMIN") // 관리자용 문제 조회 (공개
-                                                                                                    // 조회보다 먼저)
+                        .requestMatchers(HttpMethod.GET, "/api/problems/*/admin").hasRole("ADMIN") // 관리자용 문제 조회 (공개
+                                                                                                   // 조회보다 먼저)
                         .requestMatchers(HttpMethod.POST, "/api/problems").hasRole("ADMIN") // 문제 생성
                         .requestMatchers(HttpMethod.PUT, "/api/problems/**").hasRole("ADMIN") // 문제 수정
                         .requestMatchers(HttpMethod.DELETE, "/api/problems/**").hasRole("ADMIN") // 문제 삭제
@@ -101,7 +101,7 @@ public class SecurityConfig {
                         .requestMatchers(HttpMethod.POST, "/api/contest").hasRole("ADMIN") // 대회 생성
                         .requestMatchers(HttpMethod.PUT, "/api/contest/**").hasRole("ADMIN") // 대회 수정
                         .requestMatchers(HttpMethod.DELETE, "/api/contest/**").hasRole("ADMIN") // 대회 삭제
-                        .requestMatchers("/api/contest/{contestId}/problems/**").hasRole("ADMIN") // 대회 문제 관리
+                        // /api/contest/*/problems/**는 /api/contest/**에 포함되므로 별도 설정 불필요
 
                         // 공개 조회 API (인증 불필요)
                         .requestMatchers(HttpMethod.GET, "/api/contest/**").permitAll() // 대회 목록/상세 조회
