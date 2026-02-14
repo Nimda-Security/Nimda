@@ -50,7 +50,7 @@ import java.util.HashMap;
 import java.util.Map;
 
 @RestController
-@RequestMapping("/api/cite/board")  // [수정] /api/board → /api/cite/board
+@RequestMapping("/api/cite/board") // [수정] /api/board → /api/cite/board
 @CrossOrigin(origins = "*")
 public class BoardController {
 
@@ -60,10 +60,10 @@ public class BoardController {
     private BoardService boardService;
 
     @Autowired
-    private JwtUtil jwtUtil;  // [신규] JWT 토큰 처리용
+    private JwtUtil jwtUtil; // [신규] JWT 토큰 처리용
 
     @Autowired
-    private UserRepository userRepository;  // [신규] User 조회용
+    private UserRepository userRepository; // [신규] User 조회용
 
     // ========== [통합 포인트 #1] ==========
     /**
@@ -77,16 +77,19 @@ public class BoardController {
      * 
      * [수정 사항]
      * - 엔드포인트: GET /api/cite/board
-     * - 파라미터: BoardType boardType (필수), String searchKeyword (optional), Pageable pageable
+     * - 파라미터: BoardType boardType (필수), String searchKeyword (optional), Pageable
+     * pageable
      * - 반환 타입: ResponseEntity<Map<String, Object>>
      * - 기능: 게시판 타입별 조회 또는 타입별 검색
      * - 이유: 게시판 타입별 필터링 기능 추가, 현재 프로젝트 응답 형식 적용
      */
     @GetMapping
     public ResponseEntity<Map<String, Object>> getPostsByBoardType(
-            @RequestParam BoardType boardType,  // [신규] 게시판 타입 필터링 (필수)
-            @RequestParam(value = "searchKeyword", required = false) String searchKeyword,  // [기존 유지] 검색어 (선택)
-            @PageableDefault(size = 10, sort = "createdAt", direction = Sort.Direction.DESC) Pageable pageable  // [기존 유지] 페이지네이션
+            @RequestParam BoardType boardType, // [신규] 게시판 타입 필터링 (필수)
+            @RequestParam(value = "searchKeyword", required = false) String searchKeyword, // [기존 유지] 검색어 (선택)
+            @PageableDefault(size = 10, sort = "createdAt", direction = Sort.Direction.DESC) Pageable pageable // [기존
+                                                                                                               // 유지]
+                                                                                                               // 페이지네이션
     ) {
         try {
             Page<Board> boards;
@@ -103,7 +106,7 @@ public class BoardController {
             }
 
             // ========== [통합 포인트 #2] ==========
-            // [기존] return boards;  // Page<Board> 직접 반환
+            // [기존] return boards; // Page<Board> 직접 반환
             // [수정] Map<String, Object> 응답 형식으로 변경 (현재 프로젝트 스타일)
             Map<String, Object> response = new HashMap<>();
             response.put("success", true);
@@ -140,31 +143,32 @@ public class BoardController {
      * 
      * [수정 사항]
      * - 엔드포인트: POST /api/cite/board
-     * - 파라미터: BoardType boardType (신규), String title, String content, MultipartFile file (optional), Authorization header (JWT)
+     * - 파라미터: BoardType boardType (신규), String title, String content, MultipartFile
+     * file (optional), Authorization header (JWT)
      * - 반환 타입: ResponseEntity<Map<String, Object>>
      * - 기능: 게시글 작성 (작성자 정보 추가, BoardType 설정)
      * - 이유: 작성자 정보 관리, 게시판 타입 설정, 현재 프로젝트 응답 형식 적용
      */
     @PostMapping
     public ResponseEntity<Map<String, Object>> write(
-            @RequestHeader(value = "Authorization", required = false) String authHeader,  // [신규] JWT 토큰
-            @RequestParam("boardType") BoardType boardType,  // [신규] 게시판 타입
-            @RequestParam("title") String title,  // [기존 유지]
-            @RequestParam("content") String content,  // [기존 유지]
-            @RequestPart(value = "file", required = false) MultipartFile file  // [기존 유지] 파일 업로드
+            @RequestHeader(value = "Authorization", required = false) String authHeader, // [신규] JWT 토큰
+            @RequestParam("boardType") BoardType boardType, // [신규] 게시판 타입
+            @RequestParam("title") String title, // [기존 유지]
+            @RequestParam("content") String content, // [기존 유지]
+            @RequestPart(value = "file", required = false) MultipartFile file // [기존 유지] 파일 업로드
     ) {
         try {
             // ========== [통합 포인트 #4] ==========
             // [기존] 작성자 정보 없음
             // [수정] JWT 토큰에서 작성자 정보 추출 (현재 프로젝트 스타일)
             User author = null;
-            
+
             logger.debug("게시글 작성 요청 - Authorization 헤더: {}", authHeader != null ? "존재함" : "없음");
-            
+
             if (authHeader != null && authHeader.startsWith("Bearer ")) {
                 String token = authHeader.substring(7); // "Bearer " 제거
                 logger.debug("토큰 추출 완료, 토큰 길이: {}", token.length());
-                
+
                 try {
                     // 토큰 만료 확인
                     if (jwtUtil.isTokenExpired(token)) {
@@ -177,7 +181,7 @@ public class BoardController {
 
                     Long userId = jwtUtil.extractUserId(token);
                     logger.debug("토큰에서 추출한 userId: {}", userId);
-                    
+
                     if (userId != null) {
                         author = userRepository.findById(userId)
                                 .orElseThrow(() -> new RuntimeException("사용자를 찾을 수 없습니다: " + userId));
@@ -210,14 +214,14 @@ public class BoardController {
             Board board = new Board();
             board.setTitle(title);
             board.setContent(content);
-            board.setBoardType(boardType);  // [신규] 게시판 타입 설정
+            board.setBoardType(boardType); // [신규] 게시판 타입 설정
 
             // ========== [기존 로직 유지] ==========
             // [기존] 게시글 작성 처리 (파일 업로드 포함)
-            boardService.write(board, author, file);  // [수정] author 파라미터 추가
+            boardService.write(board, author, file); // [수정] author 파라미터 추가
 
             // ========== [통합 포인트 #5] ==========
-            // [기존] return "success";  // String 직접 반환
+            // [기존] return "success"; // String 직접 반환
             // [수정] Map<String, Object> 응답 형식으로 변경 (현재 프로젝트 스타일)
             Map<String, Object> response = new HashMap<>();
             response.put("success", true);
@@ -256,14 +260,14 @@ public class BoardController {
      * - 이유: 현재 프로젝트 응답 형식 적용
      */
     @GetMapping("/{id}")
-    public ResponseEntity<Map<String, Object>> view(@PathVariable("id") Long id) {  // [수정] Integer → Long
+    public ResponseEntity<Map<String, Object>> view(@PathVariable("id") Long id) { // [수정] Integer → Long
         try {
             // ========== [기존 로직 유지] ==========
             // [기존] 게시글 조회
             Board board = boardService.boardView(id);
 
             // ========== [통합 포인트 #7] ==========
-            // [기존] return board;  // Board 직접 반환
+            // [기존] return board; // Board 직접 반환
             // [수정] Map<String, Object> 응답 형식으로 변경 (현재 프로젝트 스타일)
             Map<String, Object> response = new HashMap<>();
             response.put("success", true);
@@ -297,25 +301,27 @@ public class BoardController {
      * 
      * [기존 코드]
      * - 엔드포인트: PUT /api/board/{id}
-     * - 파라미터: Integer id, String title, String content, MultipartFile file (optional)
+     * - 파라미터: Integer id, String title, String content, MultipartFile file
+     * (optional)
      * - 반환 타입: String "success"
      * - 기능: 게시글 수정
      * 
      * [수정 사항]
      * - 엔드포인트: PUT /api/cite/board/{id}
-     * - 파라미터: Long id, BoardType boardType (신규), String title, String content, MultipartFile file (optional), Authorization header (JWT)
+     * - 파라미터: Long id, BoardType boardType (신규), String title, String content,
+     * MultipartFile file (optional), Authorization header (JWT)
      * - 반환 타입: ResponseEntity<Map<String, Object>>
      * - 기능: 게시글 수정 (작성자 권한 확인, BoardType 수정 가능)
      * - 이유: 작성자 권한 확인, 게시판 타입 수정, 현재 프로젝트 응답 형식 적용
      */
     @PutMapping("/{id}")
     public ResponseEntity<Map<String, Object>> update(
-            @RequestHeader(value = "Authorization", required = false) String authHeader,  // [신규] JWT 토큰
-            @PathVariable("id") Long id,  // [수정] Integer → Long
-            @RequestParam("boardType") BoardType boardType,  // [신규] 게시판 타입
-            @RequestParam("title") String title,  // [기존 유지]
-            @RequestParam("content") String content,  // [기존 유지]
-            @RequestPart(value = "file", required = false) MultipartFile file  // [기존 유지] 파일 업로드
+            @RequestHeader(value = "Authorization", required = false) String authHeader, // [신규] JWT 토큰
+            @PathVariable("id") Long id, // [수정] Integer → Long
+            @RequestParam("boardType") BoardType boardType, // [신규] 게시판 타입
+            @RequestParam("title") String title, // [기존 유지]
+            @RequestParam("content") String content, // [기존 유지]
+            @RequestPart(value = "file", required = false) MultipartFile file // [기존 유지] 파일 업로드
     ) {
         try {
             // ========== [기존 로직 유지] ==========
@@ -339,8 +345,20 @@ public class BoardController {
                 }
             }
 
-            // 작성자 권한 확인 (선택사항: 관리자는 수정 가능하도록 확장 가능)
-            if (currentUser == null || !boardTemp.getAuthor().getId().equals(currentUser.getId())) {
+            // 작성자 권한 확인 (관리자는 모든 게시글 수정 가능)
+            if (currentUser == null) {
+                Map<String, Object> errorResponse = new HashMap<>();
+                errorResponse.put("success", false);
+                errorResponse.put("message", "로그인이 필요합니다.");
+                return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(errorResponse);
+            }
+
+            // 관리자 권한 확인
+            boolean isAdmin = currentUser.getAuthorities().stream()
+                    .anyMatch(authority -> authority.getAuthorityName().equals("ROLE_ADMIN"));
+
+            // 작성자이거나 관리자인 경우에만 수정 가능
+            if (!isAdmin && !boardTemp.getAuthor().getId().equals(currentUser.getId())) {
                 Map<String, Object> errorResponse = new HashMap<>();
                 errorResponse.put("success", false);
                 errorResponse.put("message", "게시글을 수정할 권한이 없습니다.");
@@ -351,14 +369,14 @@ public class BoardController {
             // [기존] 게시글 정보 수정
             boardTemp.setTitle(title);
             boardTemp.setContent(content);
-            boardTemp.setBoardType(boardType);  // [신규] 게시판 타입 수정
+            boardTemp.setBoardType(boardType); // [신규] 게시판 타입 수정
 
             // ========== [기존 로직 유지] ==========
             // [기존] 게시글 수정 처리 (파일 업로드 포함)
-            boardService.write(boardTemp, currentUser, file);  // [수정] author 파라미터 추가
+            boardService.write(boardTemp, currentUser, file); // [수정] author 파라미터 추가
 
             // ========== [통합 포인트 #10] ==========
-            // [기존] return "success";  // String 직접 반환
+            // [기존] return "success"; // String 직접 반환
             // [수정] Map<String, Object> 응답 형식으로 변경 (현재 프로젝트 스타일)
             Map<String, Object> response = new HashMap<>();
             response.put("success", true);
@@ -402,8 +420,8 @@ public class BoardController {
      */
     @DeleteMapping("/{id}")
     public ResponseEntity<Map<String, Object>> delete(
-            @RequestHeader(value = "Authorization", required = false) String authHeader,  // [신규] JWT 토큰
-            @PathVariable("id") Long id  // [수정] Integer → Long
+            @RequestHeader(value = "Authorization", required = false) String authHeader, // [신규] JWT 토큰
+            @PathVariable("id") Long id // [수정] Integer → Long
     ) {
         try {
             // ========== [기존 로직 유지] ==========
@@ -427,8 +445,20 @@ public class BoardController {
                 }
             }
 
-            // 작성자 권한 확인 (선택사항: 관리자는 삭제 가능하도록 확장 가능)
-            if (currentUser == null || !board.getAuthor().getId().equals(currentUser.getId())) {
+            // 작성자 권한 확인 (관리자는 모든 게시글 삭제 가능)
+            if (currentUser == null) {
+                Map<String, Object> errorResponse = new HashMap<>();
+                errorResponse.put("success", false);
+                errorResponse.put("message", "로그인이 필요합니다.");
+                return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(errorResponse);
+            }
+
+            // 관리자 권한 확인
+            boolean isAdmin = currentUser.getAuthorities().stream()
+                    .anyMatch(authority -> authority.getAuthorityName().equals("ROLE_ADMIN"));
+
+            // 작성자이거나 관리자인 경우에만 삭제 가능
+            if (!isAdmin && !board.getAuthor().getId().equals(currentUser.getId())) {
                 Map<String, Object> errorResponse = new HashMap<>();
                 errorResponse.put("success", false);
                 errorResponse.put("message", "게시글을 삭제할 권한이 없습니다.");
@@ -464,4 +494,3 @@ public class BoardController {
         }
     }
 }
-

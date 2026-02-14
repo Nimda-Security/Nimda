@@ -4,6 +4,7 @@ import BlackLineButton from '@/components/Button/BlackLine';
 import { useNavigate } from 'react-router-dom';
 import { getAllUsersAPI, getAllGroupsAPI, createGroupAPI } from '@/api/admin/admin';
 import { getAllProblemsAPI } from '@/api/problem';
+import { getBoardListAPI, deleteBoardAPI } from '@/api/board';
 
 function AdminDashboard() {
   const navigate = useNavigate();
@@ -19,6 +20,13 @@ function AdminDashboard() {
   const [newTeamPublic, setNewTeamPublic] = useState(true);
   const [newTeamCode, setNewTeamCode] = useState('');
   const [creatingTeam, setCreatingTeam] = useState(false);
+  const [selectedUser, setSelectedUser] = useState(null);
+  const [pendingUsers] = useState([
+    { id: 1, nickname: 'user1', userId: 'user1', email: 'user1@example.com', createdAt: '2026-02-14' },
+    { id: 2, nickname: 'user2', userId: 'user2', email: 'user2@example.com', createdAt: '2026-02-13' },
+  ]);
+  const [posts, setPosts] = useState([]);
+  const [postsLoading, setPostsLoading] = useState(false);
 
   const goToProblemCreate = () => {
     navigate('/problem-create');
@@ -166,15 +174,30 @@ function AdminDashboard() {
     navigate('/');
   };
 
+  const loadPosts = async () => {
+    setPostsLoading(true);
+    try {
+      const result = await getBoardListAPI({ boardType: 'NEWS', page: 0, size: 20 });
+      if (result.success) {
+        setPosts(result.posts || []);
+      } else {
+        alert('게시글 목록을 불러오는데 실패했습니다: ' + result.message);
+      }
+    } catch (error) {
+      console.error('게시글 목록 로드 오류:', error);
+      alert('게시글 목록을 불러오는 중 오류가 발생했습니다.');
+    } finally {
+      setPostsLoading(false);
+    }
+  };
+
   const menuItems = [
     { id: 'dashboard', label: '대시보드' },
-    { id: 'problems', label: '문제 관리' },
-    { id: 'users', label: '사용자 관리' },
-    { id: 'teams', label: '팀 관리' }
+    { id: 'users', label: '사용자 관리' }
   ];
 
   const renderContent = () => {
-    switch(activeSection) {
+    switch (activeSection) {
       case 'dashboard':
         return (
           <div>
@@ -190,107 +213,19 @@ function AdminDashboard() {
             </div>
           </div>
         );
-      case 'problems':
-        return (
-          <div>
-            <div className="flex items-center justify-between mb-6">
-              <h2 className="text-xl font-medium">문제 관리</h2>
-              <div className="flex gap-2">
-                <button
-                  onClick={loadProblems}
-                  disabled={problemsLoading}
-                  className="px-3 py-1.5 text-sm border border-gray-300 text-gray-700 hover:bg-gray-50 disabled:opacity-50"
-                >
-                  {problemsLoading ? '로딩 중' : '새로고침'}
-                </button>
-                <button
-                  onClick={goToProblemCreate}
-                  className="px-3 py-1.5 text-sm bg-black text-white hover:bg-gray-900"
-                >
-                  새 문제
-                </button>
-              </div>
-            </div>
-            
-            {problems.length > 0 ? (
-              <div className="border border-gray-200">
-                <table className="min-w-full divide-y divide-gray-200">
-                  <thead className="bg-white border-b border-gray-200">
-                    <tr>
-                      <th className="px-4 py-3 text-left text-xs font-medium text-gray-700">
-                        ID
-                      </th>
-                      <th className="px-4 py-3 text-left text-xs font-medium text-gray-700">
-                        제목
-                      </th>
-                      <th className="px-4 py-3 text-left text-xs font-medium text-gray-700">
-                        난이도
-                      </th>
-                      <th className="px-4 py-3 text-left text-xs font-medium text-gray-700">
-                        언어
-                      </th>
-                      <th className="px-4 py-3 text-left text-xs font-medium text-gray-700">
-                        테스트 케이스
-                      </th>
-                      <th className="px-4 py-3 text-left text-xs font-medium text-gray-700">
-                        생성일
-                      </th>
-                    </tr>
-                  </thead>
-                  <tbody className="bg-white divide-y divide-gray-200">
-                    {problems.map((problem) => (
-                      <tr 
-                        key={problem.id} 
-                        className="hover:bg-gray-50 cursor-pointer"
-                        onClick={() => goToProblemDetail(problem.id)}
-                      >
-                        <td className="px-4 py-3 text-sm text-gray-900">
-                          {problem.id}
-                        </td>
-                        <td className="px-4 py-3 text-sm text-gray-900">
-                          <div className="max-w-xs truncate" title={problem.title}>
-                            {problem.title}
-                          </div>
-                        </td>
-                        <td className="px-4 py-3 text-sm text-gray-600">
-                          {problem.difficulty}
-                        </td>
-                        <td className="px-4 py-3 text-sm text-gray-600">
-                          {problem.language}
-                        </td>
-                        <td className="px-4 py-3 text-sm text-gray-600">
-                          {problem.testCases ? problem.testCases.length : 0}
-                        </td>
-                        <td className="px-4 py-3 text-sm text-gray-600">
-                          {problem.createdAt ? new Date(problem.createdAt).toLocaleDateString() : '-'}
-                        </td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
-              </div>
-            ) : (
-              <div className="border border-gray-200 p-8 text-center">
-                <p className="text-sm text-gray-500 mb-4">등록된 문제가 없습니다.</p>
-                <div className="flex gap-2 justify-center">
-                  <button
-                    onClick={loadProblems}
-                    className="px-3 py-1.5 text-sm border border-gray-300 text-gray-700 hover:bg-gray-50"
-                  >
-                    불러오기
-                  </button>
-                  <button
-                    onClick={goToProblemCreate}
-                    className="px-3 py-1.5 text-sm bg-black text-white hover:bg-gray-900"
-                  >
-                    새 문제
-                  </button>
-                </div>
-              </div>
-            )}
-          </div>
-        );
       case 'users':
+        const getUserRoles = (user) => {
+          if (!user.authorities || user.authorities.length === 0) {
+            return [];
+          }
+          return user.authorities.map(auth => auth.authorityName || auth);
+        };
+
+        const hasRole = (user, role) => {
+          const roles = getUserRoles(user);
+          return roles.some(r => r.includes(role));
+        };
+
         return (
           <div>
             <div className="flex items-center justify-between mb-6">
@@ -303,44 +238,55 @@ function AdminDashboard() {
                 {loading ? '로딩 중' : '새로고침'}
               </button>
             </div>
-            
+
             {users.length > 0 ? (
               <div className="border border-gray-200">
                 <table className="min-w-full divide-y divide-gray-200">
                   <thead className="bg-white border-b border-gray-200">
                     <tr>
-                      <th className="px-4 py-3 text-left text-xs font-medium text-gray-700">
+                      <th className="px-4 py-3 text-center text-xs font-medium text-gray-700">
                         ID
                       </th>
-                      <th className="px-4 py-3 text-left text-xs font-medium text-gray-700">
+                      <th className="px-4 py-3 text-center text-xs font-medium text-gray-700">
                         사용자명
                       </th>
-                      <th className="px-4 py-3 text-left text-xs font-medium text-gray-700">
+                      <th className="px-4 py-3 text-center text-xs font-medium text-gray-700">
                         이메일
                       </th>
-                      <th className="px-4 py-3 text-left text-xs font-medium text-gray-700">
+                      <th className="px-4 py-3 text-center text-xs font-medium text-gray-700">
                         가입일
                       </th>
                     </tr>
                   </thead>
                   <tbody className="bg-white divide-y divide-gray-200">
                     {users.map((user) => (
-                      <tr key={user.id} className="hover:bg-gray-50">
-                        <td className="px-4 py-3 text-sm text-gray-900">
+                      <tr
+                        key={user.id}
+                        className="hover:bg-gray-50 cursor-pointer"
+                        onClick={() => setSelectedUser(user)}
+                      >
+                        <td className="px-4 py-3 text-sm text-gray-900 text-center">
                           {user.id}
                         </td>
                         <td className="px-4 py-3 text-sm text-gray-900">
-                          {user.nickname || user.userId}
-                          {(user.nickname === 'admin' || user.userId === 'admin') && (
-                            <span className="ml-2 text-xs text-gray-500">
-                              ADMIN
-                            </span>
-                          )}
+                          <div className="flex items-center gap-2">
+                            <span>{user.nickname || user.userId}</span>
+                            {hasRole(user, 'ADMIN') && (
+                              <span className="px-2 py-0.5 text-xs font-medium bg-red-100 text-red-800 rounded-full">
+                                ADMIN
+                              </span>
+                            )}
+                            {hasRole(user, 'USER') && (
+                              <span className="px-2 py-0.5 text-xs font-medium bg-blue-100 text-blue-800 rounded-full">
+                                USER
+                              </span>
+                            )}
+                          </div>
                         </td>
-                        <td className="px-4 py-3 text-sm text-gray-600">
+                        <td className="px-4 py-3 text-sm text-gray-600 text-center">
                           {user.email}
                         </td>
-                        <td className="px-4 py-3 text-sm text-gray-600">
+                        <td className="px-4 py-3 text-sm text-gray-600 text-center">
                           {user.createdAt ? new Date(user.createdAt).toLocaleDateString() : '-'}
                         </td>
                       </tr>
@@ -359,141 +305,253 @@ function AdminDashboard() {
                 </button>
               </div>
             )}
+
+            {/* 사용자 정보 모달 */}
+            {selectedUser && (
+              <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50" onClick={() => setSelectedUser(null)}>
+                <div className="bg-white rounded-lg p-6 max-w-2xl w-full mx-4 max-h-[90vh] overflow-y-auto" onClick={(e) => e.stopPropagation()}>
+                  <div className="flex items-center justify-between mb-4">
+                    <h3 className="text-lg font-semibold">사용자 정보</h3>
+                    <button
+                      onClick={() => setSelectedUser(null)}
+                      className="text-gray-400 hover:text-gray-600"
+                    >
+                      ✕
+                    </button>
+                  </div>
+                  <div className="space-y-4">
+                    <div className="grid grid-cols-2 gap-4">
+                      <div>
+                        <label className="text-xs text-gray-600">ID</label>
+                        <p className="text-sm font-medium">{selectedUser.id}</p>
+                      </div>
+                      <div>
+                        <label className="text-xs text-gray-600">사용자 ID</label>
+                        <p className="text-sm font-medium">{selectedUser.userId}</p>
+                      </div>
+                      <div>
+                        <label className="text-xs text-gray-600">실명</label>
+                        <p className="text-sm font-medium">{selectedUser.name || '-'}</p>
+                      </div>
+                      <div>
+                        <label className="text-xs text-gray-600">닉네임</label>
+                        <p className="text-sm font-medium">{selectedUser.nickname || '-'}</p>
+                      </div>
+                      <div>
+                        <label className="text-xs text-gray-600">이메일</label>
+                        <p className="text-sm font-medium">{selectedUser.email || '-'}</p>
+                      </div>
+                      <div>
+                        <label className="text-xs text-gray-600">학번</label>
+                        <p className="text-sm font-medium">{selectedUser.studentNum || '-'}</p>
+                      </div>
+                      <div>
+                        <label className="text-xs text-gray-600">휴대폰 번호</label>
+                        <p className="text-sm font-medium">{selectedUser.phoneNum || '-'}</p>
+                      </div>
+                      <div>
+                        <label className="text-xs text-gray-600">학과</label>
+                        <p className="text-sm font-medium">{selectedUser.major || '-'}</p>
+                      </div>
+                      <div>
+                        <label className="text-xs text-gray-600">대학교</label>
+                        <p className="text-sm font-medium">{selectedUser.universityName || '-'}</p>
+                      </div>
+                      <div>
+                        <label className="text-xs text-gray-600">학년</label>
+                        <p className="text-sm font-medium">{selectedUser.grade || '-'}</p>
+                      </div>
+                      <div>
+                        <label className="text-xs text-gray-600">생년월일</label>
+                        <p className="text-sm font-medium">{selectedUser.birth || '-'}</p>
+                      </div>
+                      <div>
+                        <label className="text-xs text-gray-600">상태</label>
+                        <p className="text-sm font-medium">{selectedUser.status || '-'}</p>
+                      </div>
+                      <div>
+                        <label className="text-xs text-gray-600">가입일</label>
+                        <p className="text-sm font-medium">
+                          {selectedUser.createdAt ? new Date(selectedUser.createdAt).toLocaleString() : '-'}
+                        </p>
+                      </div>
+                      <div>
+                        <label className="text-xs text-gray-600">수정일</label>
+                        <p className="text-sm font-medium">
+                          {selectedUser.updatedAt ? new Date(selectedUser.updatedAt).toLocaleString() : '-'}
+                        </p>
+                      </div>
+                      <div>
+                        <label className="text-xs text-gray-600">권한</label>
+                        <div className="flex gap-2 mt-1">
+                          {getUserRoles(selectedUser).map((role, idx) => (
+                            <span
+                              key={idx}
+                              className={`px-2 py-0.5 text-xs font-medium rounded-full ${role.includes('ADMIN')
+                                ? 'bg-red-100 text-red-800'
+                                : 'bg-blue-100 text-blue-800'
+                                }`}
+                            >
+                              {role}
+                            </span>
+                          ))}
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            )}
           </div>
         );
-      case 'teams':
+      case 'pending':
         return (
-          <div className="space-y-8">
+          <div>
             <div className="flex items-center justify-between mb-6">
-              <h2 className="text-xl font-medium">팀 관리</h2>
+              <h2 className="text-xl font-medium">승인 대기 목록</h2>
+            </div>
+
+            {pendingUsers.length > 0 ? (
+              <div className="border border-gray-200">
+                <table className="min-w-full divide-y divide-gray-200">
+                  <thead className="bg-white border-b border-gray-200">
+                    <tr>
+                      <th className="px-4 py-3 text-center text-xs font-medium text-gray-700">ID</th>
+                      <th className="px-4 py-3 text-center text-xs font-medium text-gray-700">닉네임</th>
+                      <th className="px-4 py-3 text-center text-xs font-medium text-gray-700">사용자 ID</th>
+                      <th className="px-4 py-3 text-center text-xs font-medium text-gray-700">이메일</th>
+                      <th className="px-4 py-3 text-center text-xs font-medium text-gray-700">신청일</th>
+                      <th className="px-4 py-3 text-center text-xs font-medium text-gray-700">작업</th>
+                    </tr>
+                  </thead>
+                  <tbody className="bg-white divide-y divide-gray-200">
+                    {pendingUsers.map((user) => (
+                      <tr key={user.id} className="hover:bg-gray-50">
+                        <td className="px-4 py-3 text-sm text-gray-900 text-center">{user.id}</td>
+                        <td className="px-4 py-3 text-sm text-gray-900 text-center">{user.nickname}</td>
+                        <td className="px-4 py-3 text-sm text-gray-600 text-center">{user.userId}</td>
+                        <td className="px-4 py-3 text-sm text-gray-600 text-center">{user.email}</td>
+                        <td className="px-4 py-3 text-sm text-gray-600 text-center">{user.createdAt}</td>
+                        <td className="px-4 py-3 text-sm text-center">
+                          <div className="flex gap-2 justify-center">
+                            <button className="px-3 py-1 text-xs bg-green-100 text-green-800 hover:bg-green-200 rounded">
+                              승인
+                            </button>
+                            <button className="px-3 py-1 text-xs bg-red-100 text-red-800 hover:bg-red-200 rounded">
+                              거부
+                            </button>
+                          </div>
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            ) : (
+              <div className="border border-gray-200 p-8 text-center">
+                <p className="text-sm text-gray-500">승인 대기 중인 사용자가 없습니다.</p>
+              </div>
+            )}
+          </div>
+        );
+      case 'posts':
+        const handleDeletePost = async (postId) => {
+          if (!confirm('정말 이 게시글을 삭제하시겠습니까?')) {
+            return;
+          }
+
+          try {
+            const result = await deleteBoardAPI(postId);
+            if (result.success) {
+              alert('게시글이 삭제되었습니다.');
+              loadPosts(); // 목록 새로고침
+            } else {
+              alert(result.message || '게시글 삭제에 실패했습니다.');
+            }
+          } catch (error) {
+            console.error('게시글 삭제 오류:', error);
+            alert('게시글 삭제 중 오류가 발생했습니다.');
+          }
+        };
+
+        const handleEditPost = (post) => {
+          navigate(`/board/${post.boardType}/edit/${post.id}`);
+        };
+
+        return (
+          <div>
+            <div className="flex items-center justify-between mb-6">
+              <h2 className="text-xl font-medium">글 관리</h2>
               <button
-                onClick={loadTeams}
-                disabled={teamsLoading}
+                onClick={loadPosts}
+                disabled={postsLoading}
                 className="px-3 py-1.5 text-sm border border-gray-300 text-gray-700 hover:bg-gray-50 disabled:opacity-50"
               >
-                {teamsLoading ? '로딩 중' : '새로고침'}
+                {postsLoading ? '로딩 중' : '새로고침'}
               </button>
             </div>
 
-            <div className="border border-gray-200 p-6 mb-8">
-              <h3 className="text-sm font-medium text-gray-900 mb-4">새 팀 생성</h3>
-              <form className="space-y-4" onSubmit={handleCreateTeam}>
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  <div>
-                    <label className="block text-xs text-gray-600 mb-1">팀 이름</label>
-                    <input
-                      type="text"
-                      value={newTeamName}
-                      onChange={(e) => setNewTeamName(e.target.value)}
-                      className="w-full border border-gray-300 px-3 py-2 text-sm focus:outline-none focus:border-gray-900"
-                      placeholder="팀 이름"
-                      required
-                    />
-                  </div>
-                  <div>
-                    <label className="block text-xs text-gray-600 mb-1">최대 인원</label>
-                    <input
-                      type="number"
-                      min={1}
-                      max={20}
-                      value={newTeamMaxMembers}
-                      onChange={(e) => setNewTeamMaxMembers(Number(e.target.value))}
-                      className="w-full border border-gray-300 px-3 py-2 text-sm focus:outline-none focus:border-gray-900"
-                    />
-                  </div>
-                </div>
-
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  <div>
-                    <label className="block text-xs text-gray-600 mb-1">초대 코드</label>
-                    <input
-                      type="text"
-                      value={newTeamCode}
-                      onChange={(e) => setNewTeamCode(e.target.value)}
-                      className="w-full border border-gray-300 px-3 py-2 text-sm focus:outline-none focus:border-gray-900"
-                      placeholder="ABCD-1234"
-                    />
-                  </div>
-                  <div className="flex items-end space-x-2">
-                    <span className="text-xs text-gray-600 mb-1">공개 여부</span>
-                    <button
-                      type="button"
-                      onClick={() => setNewTeamPublic(true)}
-                      className={`px-3 py-2 text-sm border ${
-                        newTeamPublic ? 'bg-black text-white border-black' : 'border-gray-300 text-gray-700 hover:bg-gray-50'
-                      }`}
-                    >
-                      공개
-                    </button>
-                    <button
-                      type="button"
-                      onClick={() => setNewTeamPublic(false)}
-                      className={`px-3 py-2 text-sm border ${
-                        !newTeamPublic ? 'bg-black text-white border-black' : 'border-gray-300 text-gray-700 hover:bg-gray-50'
-                      }`}
-                    >
-                      비공개
-                    </button>
-                  </div>
-                </div>
-
-                <div className="flex justify-end">
-                  <button
-                    type="submit"
-                    disabled={creatingTeam}
-                    className="px-3 py-1.5 text-sm bg-black text-white hover:bg-gray-900 disabled:opacity-50"
-                  >
-                    {creatingTeam ? '생성 중' : '생성'}
-                  </button>
-                </div>
-              </form>
-            </div>
-
-            <div>
-              {teams.length > 0 ? (
-                <div className="border border-gray-200">
-                  <table className="min-w-full divide-y divide-gray-200">
-                    <thead className="bg-white border-b border-gray-200">
-                      <tr>
-                        <th className="px-4 py-3 text-left text-xs font-medium text-gray-700">ID</th>
-                        <th className="px-4 py-3 text-left text-xs font-medium text-gray-700">팀 이름</th>
-                        <th className="px-4 py-3 text-left text-xs font-medium text-gray-700">팀장</th>
-                        <th className="px-4 py-3 text-left text-xs font-medium text-gray-700">멤버</th>
-                        <th className="px-4 py-3 text-left text-xs font-medium text-gray-700">공개 여부</th>
-                        <th className="px-4 py-3 text-left text-xs font-medium text-gray-700">생성일</th>
+            {posts.length > 0 ? (
+              <div className="border border-gray-200">
+                <table className="min-w-full divide-y divide-gray-200">
+                  <thead className="bg-white border-b border-gray-200">
+                    <tr>
+                      <th className="px-4 py-3 text-center text-xs font-medium text-gray-700">ID</th>
+                      <th className="px-4 py-3 text-center text-xs font-medium text-gray-700">제목</th>
+                      <th className="px-4 py-3 text-center text-xs font-medium text-gray-700">작성자</th>
+                      <th className="px-4 py-3 text-center text-xs font-medium text-gray-700">게시판 타입</th>
+                      <th className="px-4 py-3 text-center text-xs font-medium text-gray-700">작성일</th>
+                      <th className="px-4 py-3 text-center text-xs font-medium text-gray-700">작업</th>
+                    </tr>
+                  </thead>
+                  <tbody className="bg-white divide-y divide-gray-200">
+                    {posts.map((post) => (
+                      <tr key={post.id} className="hover:bg-gray-50">
+                        <td className="px-4 py-3 text-sm text-gray-900 text-center">{post.id}</td>
+                        <td className="px-4 py-3 text-sm text-gray-900">{post.title}</td>
+                        <td className="px-4 py-3 text-sm text-gray-600 text-center">{post.author?.nickname || '-'}</td>
+                        <td className="px-4 py-3 text-sm text-gray-600 text-center">{post.boardType || '-'}</td>
+                        <td className="px-4 py-3 text-sm text-gray-600 text-center">
+                          {post.createdAt ? new Date(post.createdAt).toLocaleDateString() : '-'}
+                        </td>
+                        <td className="px-4 py-3 text-sm text-center">
+                          <div className="flex gap-2 justify-center">
+                            <button
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                handleEditPost(post);
+                              }}
+                              className="px-3 py-1 text-xs bg-blue-100 text-blue-800 hover:bg-blue-200 rounded"
+                            >
+                              수정
+                            </button>
+                            <button
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                handleDeletePost(post.id);
+                              }}
+                              className="px-3 py-1 text-xs bg-red-100 text-red-800 hover:bg-red-200 rounded"
+                            >
+                              삭제
+                            </button>
+                          </div>
+                        </td>
                       </tr>
-                    </thead>
-                    <tbody className="bg-white divide-y divide-gray-200">
-                      {teams.map((team) => (
-                        <tr key={team.id} className="hover:bg-gray-50">
-                          <td className="px-4 py-3 text-sm text-gray-900">{team.id}</td>
-                          <td className="px-4 py-3 text-sm text-gray-900">{team.name}</td>
-                          <td className="px-4 py-3 text-sm text-gray-600">{team.leader}</td>
-                          <td className="px-4 py-3 text-sm text-gray-600">
-                            {team.members} / {team.maxMembers}
-                          </td>
-                          <td className="px-4 py-3 text-sm text-gray-600">
-                            {team.isPublic ? '공개' : '비공개'}
-                          </td>
-                          <td className="px-4 py-3 text-sm text-gray-600">{team.createdAt}</td>
-                        </tr>
-                      ))}
-                    </tbody>
-                  </table>
-                </div>
-              ) : (
-                <div className="border border-gray-200 p-8 text-center">
-                  <p className="text-sm text-gray-500 mb-4">팀 데이터를 불러오려면 버튼을 클릭하세요.</p>
-                  <button
-                    onClick={loadTeams}
-                    disabled={teamsLoading}
-                    className="px-3 py-1.5 text-sm border border-gray-300 text-gray-700 hover:bg-gray-50 disabled:opacity-50"
-                  >
-                    {teamsLoading ? '로딩 중' : '불러오기'}
-                  </button>
-                </div>
-              )}
-            </div>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            ) : (
+              <div className="border border-gray-200 p-8 text-center">
+                <p className="text-sm text-gray-500 mb-4">게시글이 없습니다.</p>
+                <button
+                  onClick={loadPosts}
+                  className="px-3 py-1.5 text-sm border border-gray-300 text-gray-700 hover:bg-gray-50"
+                >
+                  불러오기
+                </button>
+              </div>
+            )}
           </div>
         );
       default:
@@ -504,7 +562,7 @@ function AdminDashboard() {
   return (
     <Layout>
       <div className="flex min-h-screen">
-        
+
         {/* Aside 영역 */}
         <aside className="w-56 border-r border-gray-200 p-6">
 
@@ -517,21 +575,46 @@ function AdminDashboard() {
               메인으로
             </button>
           </div>
-          
+
           <nav className="space-y-1">
             {menuItems.map((item) => (
               <button
                 key={item.id}
                 onClick={() => setActiveSection(item.id)}
-                className={`w-full text-left px-3 py-2 text-sm transition-colors ${
-                  activeSection === item.id
-                    ? 'text-gray-900 font-medium'
-                    : 'text-gray-600 hover:text-gray-900'
-                }`}
+                className={`w-full text-left px-3 py-2 text-sm transition-colors ${activeSection === item.id
+                  ? 'text-gray-900 font-medium'
+                  : 'text-gray-600 hover:text-gray-900'
+                  }`}
               >
                 {item.label}
               </button>
             ))}
+            <button
+              onClick={() => {
+                setActiveSection('pending');
+              }}
+              className={`w-full text-left px-3 py-2 text-sm transition-colors ${activeSection === 'pending'
+                ? 'text-gray-900 font-medium'
+                : 'text-gray-600 hover:text-gray-900'
+                }`}
+            >
+              승인 대기 목록
+              <span className="ml-2 px-1.5 py-0.5 text-xs bg-yellow-100 text-yellow-800 rounded">
+                {pendingUsers.length}
+              </span>
+            </button>
+            <button
+              onClick={() => {
+                setActiveSection('posts');
+                loadPosts();
+              }}
+              className={`w-full text-left px-3 py-2 text-sm transition-colors ${activeSection === 'posts'
+                ? 'text-gray-900 font-medium'
+                : 'text-gray-600 hover:text-gray-900'
+                }`}
+            >
+              글 관리
+            </button>
           </nav>
         </aside>
 
