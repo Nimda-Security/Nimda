@@ -64,6 +64,8 @@ ul{ margin: 0; padding-left: 18px; }
   font-style: normal;
 }
 
+@import url('https://cdn.jsdelivr.net/gh/Microsoft/CascadiaCode/dist/cascadia-code.css');
+
 .page{
   height: 100vh; /* 화면 높이에 맞춤 */
   overflow-y: auto; /* 내부에서 스크롤 발생 */
@@ -225,6 +227,85 @@ ul{ margin: 0; padding-left: 18px; }
   letter-spacing: -0.02em;
 }
 
+/* 터미널 배경 및 레이아웃 */
+.terminal-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100vw;
+  height: 100vh;
+  background-color: #1e1e1e;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  overflow: hidden;
+}
+
+.terminal-container {
+  /* 조절 가능한 터미널 크기 (전체 화면의 3/5) */
+  width: 60%; 
+  height: 60%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+/* 중앙 로고 이미지 */
+.terminal-bg-logo {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%); /* 정확한 중앙 정렬 */
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  opacity: 0.15; /* 배경으로 깔리게 투명도 조절 */
+  z-index: 1;
+  pointer-events: none;
+}
+.terminal-bg-logo img {
+  width: 500px !important; /* 여기서 크기 조절 (기존보다 2배 이상 키움) */
+  height: auto !important;
+  max-width: none !important;
+  filter: none !important; /* 검은색으로 뭉개지는 효과 제거 */
+  margin-bottom: 20px;
+}
+/* 터미널 텍스트 스타일 */
+.terminal-content {
+  /*텍스트 왼쪽부터 써내려가도록*/
+  align-items: flex-start;
+  width: 100%;
+  padding-left: 15%; /* 터미널 내부 왼쪽 여백 */
+  padding-top: 60px; /* 터미널 내부 상단 여백 */
+  /* 조절 가능한 폰트 크기 및 Hack 폰트 적용 */
+  font-family: 'Ubuntu Mono', 'Cascadia Code', monospace !important;
+  font-size: 1.2rem; 
+  text-align: left;
+  line-height: 1.8;
+  text-shadow: 0 0 2px rgba(255, 255, 255, 0.2);
+}
+
+.typing-line{
+  display: flex;
+  align-items: flex-start;
+  flex-wrap: nowrap;
+}
+/* 커서 깜빡임 애니메이션 */
+.cursor {
+  width: 12px;
+  height: 1.2rem;
+  background-color: #BBBBBB; /* 리눅스 기본 커서 색상 */
+  display: inline-block;
+  vertical-align: middle;
+  animation: blink 1s step-end infinite;
+}
+
+@keyframes blink {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0; }
+}
+
 /* Hero */
 .hero {
   scroll-snap-align: start;
@@ -243,6 +324,7 @@ ul{ margin: 0; padding-left: 18px; }
 
 /* 2. 애니메이션 적용: 선택자 안에 모든 속성을 넣으세요 */
 .hero::after {
+  display: none;
   content: '';
   position: absolute;
   top: 0;
@@ -253,11 +335,6 @@ ul{ margin: 0; padding-left: 18px; }
   z-index: 10;
   transform-origin: top;
   transform: scaleY(0);
-  
-  /* 2.0s에 막 하강 완료 -> 3.0s에 전등이 부드럽게 켜짐 */
-  animation:
-    bounceAtBottom 0.7s cubic-bezier(0.175, 0.885, 0.32, 1.275) 6.0s forwards,
-    spotlightOn 1.0s ease-in-out 3.0s forwards;
 }
 
 .heroBg{
