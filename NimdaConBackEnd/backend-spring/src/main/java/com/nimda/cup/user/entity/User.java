@@ -11,6 +11,7 @@ import lombok.Setter;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.nimda.cup.common.entity.BaseTimeEntity;
 import com.nimda.cup.group.entity.GroupMembership;
+import com.nimda.cup.user.enums.ApprovalStatus;
 
 import java.util.HashSet;
 import java.util.Set;
@@ -81,9 +82,10 @@ public class User extends BaseTimeEntity {
     @Column(name = "grade", length = 20)
     private String grade;
 
-    @Column(name = "status", length = 20)
-    private String status;
-    // 사용자 상태 (ACTIVE, INACTIVE, PENDING 등)
+    @Enumerated(EnumType.STRING)
+    @Column(name = "status", nullable = false, length = 20)
+    private ApprovalStatus status = ApprovalStatus.PENDING;
+    // 사용자 승인 상태 (PENDING: 승인 대기, APPROVED: 승인 완료, REJECTED: 승인 거부)
 
     @Column(name = "birth", length = 20)
     private String birth;
