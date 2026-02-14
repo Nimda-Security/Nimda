@@ -32,29 +32,25 @@ package com.nimda.cite.board.entity;
 
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.nimda.cite.board.enums.BoardType;
+import com.nimda.cup.common.entity.BaseTimeEntity;
 import com.nimda.cup.user.entity.User;
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
-import org.springframework.data.annotation.CreatedDate;
-import org.springframework.data.annotation.LastModifiedDate;
-import org.springframework.data.jpa.domain.support.AuditingEntityListener;
-
-import java.time.LocalDateTime;
 
 @Entity
 @Table(name = "board")
-@EntityListeners(AuditingEntityListener.class)  // [신규] JPA Auditing 활성화
 @Getter
 @Setter
 @NoArgsConstructor
 @AllArgsConstructor
-public class Board {
+public class Board extends BaseTimeEntity {
 
     // ========== [통합 포인트 #1] ==========
-    // [기존] @Id @GeneratedValue(strategy = GenerationType.IDENTITY) private Integer id;
+    // [기존] @Id @GeneratedValue(strategy = GenerationType.IDENTITY) private Integer
+    // id;
     // [수정] 현재 프로젝트는 Long 타입 사용 (User 엔티티와 일관성 유지)
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -74,10 +70,10 @@ public class Board {
     // [기존] 없음
     // [신규] User 작성자 관계 추가 (현재 프로젝트 User 엔티티 사용)
     // [이유] 게시글 작성자 정보 관리, JWT 토큰에서 사용자 정보 추출하여 설정
-    @ManyToOne(fetch = FetchType.LAZY)  // LAZY 로딩 (현재 프로젝트 스타일)
+    @ManyToOne(fetch = FetchType.LAZY) // LAZY 로딩 (현재 프로젝트 스타일)
     @JoinColumn(name = "user_id", nullable = false)
-    @JsonIgnoreProperties({"hibernateLazyInitializer", "handler"})  // LAZY 로딩 프록시 객체 직렬화 문제 해결
-    private User author;  // 작성자
+    @JsonIgnoreProperties({ "hibernateLazyInitializer", "handler" }) // LAZY 로딩 프록시 객체 직렬화 문제 해결
+    private User author; // 작성자
 
     // ========== [통합 포인트 #3] ==========
     // [기존] 없음
@@ -96,20 +92,4 @@ public class Board {
     // [기존] 파일 경로 - 변경 없음 (파일 업로드 기능 유지)
     @Column(length = 500)
     private String filepath;
-
-    // ========== [통합 포인트 #4] ==========
-    // [기존] 없음
-    // [신규] JPA Auditing으로 생성일시 자동 관리
-    // [이유] 현재 프로젝트 스타일 (User 엔티티와 동일한 방식)
-    @CreatedDate
-    @Column(name = "created_at", nullable = false, updatable = false)
-    private LocalDateTime createdAt;
-
-    // ========== [통합 포인트 #5] ==========
-    // [기존] 없음
-    // [신규] JPA Auditing으로 수정일시 자동 관리
-    // [이유] 현재 프로젝트 스타일 (User 엔티티와 동일한 방식)
-    @LastModifiedDate
-    @Column(name = "updated_at", nullable = false)
-    private LocalDateTime updatedAt;
 }

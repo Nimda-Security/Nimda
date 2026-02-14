@@ -7,6 +7,7 @@ package com.nimda.cup.contest.entity;
  * - ContestParticipant (1:N): Contest → ContestParticipant (하나의 Contest에 여러 팀 참가)
  */
 
+import com.nimda.cup.common.entity.BaseTimeEntity;
 import com.nimda.cup.contest.enums.ContestRole;
 import com.nimda.cup.user.entity.User;
 import jakarta.persistence.*;
@@ -16,20 +17,16 @@ import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
-import org.springframework.data.annotation.CreatedDate;
-import org.springframework.data.annotation.LastModifiedDate;
-import org.springframework.data.jpa.domain.support.AuditingEntityListener;
 
 import java.time.LocalDateTime;
 
 @Entity
 @Table(name = "contest")
-@EntityListeners(AuditingEntityListener.class)
 @Getter
 @Setter
 @NoArgsConstructor
 @AllArgsConstructor
-public class Contest {
+public class Contest extends BaseTimeEntity {
 
     // [기본 필드]
     /**
@@ -107,25 +104,6 @@ public class Contest {
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "created_by", nullable = false)
     private User createdBy;
-
-    // [시간 추적 필드]
-    /**
-     * 생성일시 (JPA Auditing 자동 관리)
-     * - 데이터베이스 컬럼명: created_at
-     * - 업데이트 불가 (updatable = false)
-     */
-    @CreatedDate
-    @Column(name = "created_at", nullable = false, updatable = false)
-    private LocalDateTime createdAt;
-
-    /**
-     * 수정일시 (JPA Auditing 자동 관리)
-     * - 데이터베이스 컬럼명: updated_at
-     * - 엔티티 수정 시 자동 업데이트
-     */
-    @LastModifiedDate
-    @Column(name = "updated_at", nullable = false)
-    private LocalDateTime updatedAt;
 
     // [생성자] 
     /**
