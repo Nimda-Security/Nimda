@@ -2,6 +2,7 @@ package com.nimda.cup.config;
 
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.security.config.annotation.method.configuration.EnableMethodSecurity;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
 import org.springframework.security.config.http.SessionCreationPolicy;
@@ -19,6 +20,7 @@ import java.util.Arrays;
 
 @Configuration
 @EnableWebSecurity
+@EnableMethodSecurity(prePostEnabled = true) // @PreAuthorize 활성화
 public class SecurityConfig {
 
     @Autowired
@@ -81,8 +83,10 @@ public class SecurityConfig {
                         .requestMatchers("/api/auth/**").permitAll() // 로그인, 회원가입
 
                         // 관리자 전용 API
-                        // 사용자 관리
-                        .requestMatchers(HttpMethod.GET, "/api/users").hasRole("ADMIN") // 모든 사용자 조회
+                        // AdminUserController: /api/admin/** 패턴으로 관리자 권한 설정
+                        .requestMatchers("/api/admin/**").hasRole("ADMIN") // 관리자 전용 API
+
+                        // 기존 사용자 관리 API (하위 호환성 유지)
                         .requestMatchers(HttpMethod.DELETE, "/api/users/**").hasRole("ADMIN") // 사용자 삭제
                         .requestMatchers(HttpMethod.PUT, "/api/users/*/role").hasRole("ADMIN") // 사용자 권한 변경
 

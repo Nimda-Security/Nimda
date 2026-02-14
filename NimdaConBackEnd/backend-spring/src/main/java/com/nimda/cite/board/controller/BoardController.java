@@ -51,7 +51,6 @@ import java.util.Map;
 
 @RestController
 @RequestMapping("/api/cite/board") // [수정] /api/board → /api/cite/board
-@CrossOrigin(origins = "*")
 public class BoardController {
 
     private static final Logger logger = LoggerFactory.getLogger(BoardController.class);

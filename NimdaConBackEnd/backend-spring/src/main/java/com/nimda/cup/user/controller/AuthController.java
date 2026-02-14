@@ -4,6 +4,7 @@ import com.nimda.cup.user.dto.LoginDTO;
 import com.nimda.cup.user.dto.LoginResponseDTO;
 import com.nimda.cup.user.dto.RegisterDTO;
 import com.nimda.cup.user.entity.User;
+import com.nimda.cup.user.exception.UserNotApprovedException;
 import com.nimda.cup.user.service.AuthService;
 import jakarta.validation.Valid;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -17,7 +18,6 @@ import java.util.Optional;
 
 @RestController
 @RequestMapping("/api/auth")
-@CrossOrigin(origins = "*")
 public class AuthController {
 
     @Autowired
@@ -41,12 +41,22 @@ public class AuthController {
                 // 로그인 성공
                 LoginResponseDTO response = authService.login(userOpt.get());
                 return ResponseEntity.ok(response);
-            } else {
-                // 인증 실패
+            }
+
+            else {
+                // 인증 실패 (비밀번호 오류 또는 사용자 없음)
                 return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
                         .body(Map.of("message", "Invalid user ID or password"));
             }
-        } catch (Exception e) {
+        }
+
+        catch (UserNotApprovedException e) {
+            // 승인되지 않은 계정
+            return ResponseEntity.status(HttpStatus.FORBIDDEN)
+                    .body(Map.of("message", e.getMessage()));
+        }
+
+        catch (Exception e) {
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
                     .body(Map.of("message", "Login failed: " + e.getMessage()));
         }

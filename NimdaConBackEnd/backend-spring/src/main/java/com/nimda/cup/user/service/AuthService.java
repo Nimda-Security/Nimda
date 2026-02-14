@@ -2,6 +2,8 @@ package com.nimda.cup.user.service;
 
 import com.nimda.cup.user.dto.LoginResponseDTO;
 import com.nimda.cup.user.entity.User;
+import com.nimda.cup.user.enums.ApprovalStatus;
+import com.nimda.cup.user.exception.UserNotApprovedException;
 import com.nimda.cup.common.util.JwtUtil;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.crypto.password.PasswordEncoder;
@@ -22,6 +24,11 @@ public class AuthService {
 
     /**
      * 사용자 인증
+     * 
+     * @param userId   사용자 ID
+     * @param password 비밀번호
+     * @return 인증된 사용자 정보 (Optional)
+     * @throws UserNotApprovedException 승인되지 않은 사용자인 경우
      */
     @Transactional(readOnly = true)
     public Optional<User> validateUser(String userId, String password) {
@@ -29,18 +36,34 @@ public class AuthService {
 
         if (userOpt.isPresent()) {
             User user = userOpt.get();
-            if (passwordEncoder.matches(password, user.getPassword())) {
-                // 비밀번호를 제외한 사용자 정보 반환
-                User userWithoutPassword = new User();
-                userWithoutPassword.setId(user.getId());
-                userWithoutPassword.setUserId(user.getUserId());
-                userWithoutPassword.setNickname(user.getNickname());
-                userWithoutPassword.setEmail(user.getEmail());
-                return Optional.of(userWithoutPassword);
+
+            // 1. 비밀번호 확인
+            if (!passwordEncoder.matches(password, user.getPassword())) {
+                return Optional.empty(); // 비밀번호 오류
             }
+
+            // 2. 승인 상태 확인
+            // Note. 유저의 현재 상태에 따른 커스텀 예회를 반환한다.
+            if (user.getStatus() == null || user.getStatus() != ApprovalStatus.APPROVED) {
+                if (user.getStatus() == ApprovalStatus.PENDING) {
+                    throw new UserNotApprovedException("승인 대기 중인 계정입니다. 관리자 승인 후 로그인할 수 있습니다.");
+                } else if (user.getStatus() == ApprovalStatus.REJECTED) {
+                    throw new UserNotApprovedException("승인이 거부된 계정입니다.");
+                } else {
+                    throw new UserNotApprovedException("승인되지 않은 계정입니다.");
+                }
+            }
+
+            // 3. 인증 성공 - 비밀번호를 제외한 사용자 정보 반환
+            User userWithoutPassword = new User();
+            userWithoutPassword.setId(user.getId());
+            userWithoutPassword.setUserId(user.getUserId());
+            userWithoutPassword.setNickname(user.getNickname());
+            userWithoutPassword.setEmail(user.getEmail());
+            return Optional.of(userWithoutPassword);
         }
 
-        return Optional.empty();
+        return Optional.empty(); // 사용자를 찾을 수 없음
     }
 
     /* 로그인 처리 */

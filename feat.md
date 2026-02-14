@@ -5,14 +5,14 @@ ApprovalStatus로 상태를 관리한다. { PENDING[Default], APPROVED, REJECTED
 … [After] 승인 전까지 권한을 NULL 상태로 두고, 승인 시 ROLE_USER를 부여하고, status를 APPROVED로 변경하도록 구상한다. 
 → 활성화/비활성화 상태도 따로 추가하는게 좋을듯. 
 
-2) User Entity 필드 수정 
+2) User Entity 필드 수정 (ok)
 현재는 status가 String varchar 형태라서 Enum Type으로 수정 
 
-3) UserService.createUser() 로직 수정 
+3) UserService.createUser() 로직 수정 (ok)
 [Before] 현재는 회원가입시 자동으로 ROLE_USER를 부여하는 형태. 
 [After] 권한 없이 생성 후 승인 시 부여하는 방안 채택 
 
-4) AuthService.validateUser() 로직 수정 
+4) AuthService.validateUser() 로직 수정 (ok)
 현재는 비밀번호만 확인하는 형태. 
 승인 상태 확인 로직을 추가. 
 단, 승인 상태 확인 로직에서 적절한 예외나 응답을 반환해야함

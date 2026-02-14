@@ -1,25 +1,31 @@
 package com.nimda.cup.user.service;
 
-import com.nimda.cup.user.entity.Authority;
 import com.nimda.cup.user.entity.User;
-import com.nimda.cup.user.repository.AuthorityRepository;
 import com.nimda.cup.user.repository.UserRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.util.List;
 import java.util.Optional;
 
+/**
+ * 일반 사용자용 서비스
+ * 
+ * [역할]
+ * - 회원가입
+ * - 사용자 정보 조회/수정
+ * - 중복 확인
+ * 
+ * [책임 분리]
+ * - 일반 사용자 기능: UserService
+ * - 관리자 기능: AdminUserService
+ */
 @Service
 public class UserService {
 
     @Autowired
     private UserRepository userRepository;
-
-    @Autowired
-    private AuthorityRepository authorityRepository;
 
     @Autowired
     private PasswordEncoder passwordEncoder; // Spring Security 비밀번호 암호화 도구
@@ -47,16 +53,8 @@ public class UserService {
         user.setUniversityName(universityName);
         user.setGrade(grade);
 
-        // ROLE_USER 권한 찾기 또는 생성
-        Authority userRole = authorityRepository.findByAuthorityName("ROLE_USER")
-                .orElseGet(() -> {
-                    Authority newRole = new Authority();
-                    newRole.setAuthorityName("ROLE_USER");
-                    return authorityRepository.save(newRole);
-                });
-
-        // 사용자에 권한 연결
-        user.getAuthorities().add(userRole);
+        // 승인 전까지 권한 없이 생성 (기본값: status = PENDING)
+        // 승인 시 AdminUserController에서 ROLE_USER 권한 부여
 
         return userRepository.save(user);
     }
@@ -118,11 +116,5 @@ public class UserService {
     @Transactional
     public User updateUser(User user) {
         return userRepository.save(user);
-    }
-
-    // 모든 사용자 조회
-    @Transactional(readOnly = true)
-    public List<User> findAll() {
-        return userRepository.findAll();
     }
 }

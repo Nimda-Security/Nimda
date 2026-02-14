@@ -17,7 +17,6 @@ import java.util.Map;
  */
 @RestController
 @RequestMapping("/api/scoreboard")
-@CrossOrigin(origins = "*")
 public class ScoreboardController {
     
     private static final Logger logger = LoggerFactory.getLogger(ScoreboardController.class);
