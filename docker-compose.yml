@@ -34,8 +34,10 @@ services:
     expose:
       - "8080" # 내부 네트워크에서만 접근 가능
     environment:
+      # 시간대 설정 (한국 시간)
+      - TZ=Asia/Seoul
       # MySQL 연결 정보 (docker-compose 내부 네트워크에서 서비스 이름으로 접근)
-      - SPRING_DATASOURCE_URL=jdbc:mysql://mysql:3306/${MYSQL_DATABASE}?useSSL=false&serverTimezone=UTC&allowPublicKeyRetrieval=true
+      - SPRING_DATASOURCE_URL=jdbc:mysql://mysql:3306/${MYSQL_DATABASE}?useSSL=false&serverTimezone=Asia/Seoul&allowPublicKeyRetrieval=true
       - SPRING_DATASOURCE_USERNAME=${MYSQL_USER}
       - SPRING_DATASOURCE_PASSWORD=${MYSQL_PASSWORD}
       # Spring Boot 포트 설정

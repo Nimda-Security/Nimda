@@ -5,7 +5,7 @@ spring:
   datasource:
     # 환경변수로 오버라이드 가능 (docker-compose.yml에서 설정)
     # 기본값: docker-compose의 MySQL 서비스 이름으로 연결
-    url: ${SPRING_DATASOURCE_URL:jdbc:mysql://mysql:3306/nimda_con?useSSL=false&serverTimezone=UTC&allowPublicKeyRetrieval=true}
+    url: ${SPRING_DATASOURCE_URL:jdbc:mysql://mysql:3306/nimda_con?useSSL=false&serverTimezone=Asia/Seoul&allowPublicKeyRetrieval=true}
     username: ${SPRING_DATASOURCE_USERNAME:nimda}
     password: ${SPRING_DATASOURCE_PASSWORD:nimda123}
     driver-class-name: com.mysql.cj.jdbc.Driver
