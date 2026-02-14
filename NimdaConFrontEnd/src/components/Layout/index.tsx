@@ -1,23 +1,31 @@
 import React from "react";
 import NavBar from "./Header/NavBar";
+import Sidebar from "./Sidebar";
+import Footer from "./Footer";
+
 interface LayoutProps {
   children: React.ReactNode;
 }
 
 const Layout: React.FC<LayoutProps> = ({ children }) => {
-  const menuItems = [
-    { name: "동아리 소개", href: "/" },
-    { name: "새 소식", href: "/board/news" },
-    { name: "학술 게시판", href: "/board/academic" },
-    { name: "커뮤니티", href: "/board/community" },
-    { name: "대회", href: "/contest" },
-    { name: "바로가기", href: "/" },
-    { name: "Login", href: "/login" },
-  ];
   return (
-    <div className="w-full">
-      <NavBar menuItems={menuItems} />
-      <main className="w-full pt-16 pb-8">{children}</main>
+    <div className="layout">
+      {/* Header: 전체 너비, 내부 1200px */}
+      <NavBar />
+
+      {/* Body: Header 고정 높이 + 간격만큼 padding-top */}
+      <div className="layout__body">
+        <div className="layout__container">
+          {/* 사이드바: 282px */}
+          <Sidebar />
+
+          {/* 본문 콘텐츠: 894px */}
+          <main className="layout__content">{children}</main>
+        </div>
+      </div>
+
+      {/* Footer: 전체 너비, 내부 1200px, 높이 180px */}
+      <Footer />
     </div>
   );
 };
