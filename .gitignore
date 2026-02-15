@@ -77,6 +77,7 @@ certbot-www/
 # Database backups (민감 정보)
 *.sql
 !schema.sql
+!**/db/migration/*.sql
 
 # Test results
 load-tests/results/
