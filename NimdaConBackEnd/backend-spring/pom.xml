@@ -53,6 +53,11 @@
             <groupId>org.flywaydb</groupId>
             <artifactId>flyway-core</artifactId>
         </dependency>
+        <!-- Flyway MySQL 지원 (Flyway 9.x는 DB별 모듈 필요) -->
+        <dependency>
+            <groupId>org.flywaydb</groupId>
+            <artifactId>flyway-mysql</artifactId>
+        </dependency>
         
         <!-- JWT -->
         <!-- jjwt-api -->
