@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import Layout from '@/components/Layout';
 import BlackLineButton from '@/components/Button/BlackLine';
 import { useNavigate } from 'react-router-dom';
-import { getAllUsersAPI, getAllGroupsAPI, createGroupAPI } from '@/api/admin/admin';
+import { getAllUsersAPI, getAllGroupsAPI, createGroupAPI, getPendingUsersAPI, approveUserAPI, rejectUserAPI } from '@/api/admin/admin';
 import { getAllProblemsAPI } from '@/api/problem';
 import { getBoardListAPI, deleteBoardAPI } from '@/api/board';
 
@@ -21,10 +21,8 @@ function AdminDashboard() {
   const [newTeamCode, setNewTeamCode] = useState('');
   const [creatingTeam, setCreatingTeam] = useState(false);
   const [selectedUser, setSelectedUser] = useState(null);
-  const [pendingUsers] = useState([
-    { id: 1, nickname: 'user1', userId: 'user1', email: 'user1@example.com', createdAt: '2026-02-14' },
-    { id: 2, nickname: 'user2', userId: 'user2', email: 'user2@example.com', createdAt: '2026-02-13' },
-  ]);
+  const [pendingUsers, setPendingUsers] = useState([]);
+  const [pendingUsersLoading, setPendingUsersLoading] = useState(false);
   const [posts, setPosts] = useState([]);
   const [postsLoading, setPostsLoading] = useState(false);
 
@@ -190,6 +188,79 @@ function AdminDashboard() {
       setPostsLoading(false);
     }
   };
+
+  /**
+   * 승인 대기 사용자 목록 로드
+   */
+  const loadPendingUsers = async () => {
+    setPendingUsersLoading(true);
+    try {
+      const result = await getPendingUsersAPI();
+      if (result.success) {
+        setPendingUsers(result.users || []);
+      } else {
+        alert('승인 대기 사용자 목록을 불러오는데 실패했습니다: ' + result.message);
+      }
+    } catch (error) {
+      console.error('승인 대기 사용자 목록 로드 오류:', error);
+      alert('승인 대기 사용자 목록을 불러오는 중 오류가 발생했습니다.');
+    } finally {
+      setPendingUsersLoading(false);
+    }
+  };
+
+  /**
+   * 사용자 승인 처리
+   */
+  const handleApproveUser = async (userId) => {
+    if (!confirm('이 사용자를 승인하시겠습니까?')) {
+      return;
+    }
+
+    try {
+      const result = await approveUserAPI(userId);
+      if (result.success) {
+        alert('사용자가 승인되었습니다.');
+        loadPendingUsers(); // 목록 새로고침
+        loadUsers(); // 전체 사용자 목록도 새로고침
+      } else {
+        alert(result.message || '사용자 승인에 실패했습니다.');
+      }
+    } catch (error) {
+      console.error('사용자 승인 오류:', error);
+      alert('사용자 승인 중 오류가 발생했습니다.');
+    }
+  };
+
+  /**
+   * 사용자 거부 처리
+   */
+  const handleRejectUser = async (userId) => {
+    if (!confirm('이 사용자의 승인을 거부하시겠습니까?')) {
+      return;
+    }
+
+    try {
+      const result = await rejectUserAPI(userId);
+      if (result.success) {
+        alert('사용자 승인이 거부되었습니다.');
+        loadPendingUsers(); // 목록 새로고침
+        loadUsers(); // 전체 사용자 목록도 새로고침
+      } else {
+        alert(result.message || '사용자 거부에 실패했습니다.');
+      }
+    } catch (error) {
+      console.error('사용자 거부 오류:', error);
+      alert('사용자 거부 중 오류가 발생했습니다.');
+    }
+  };
+
+  // 승인 대기 목록 섹션 진입 시 자동 로드
+  useEffect(() => {
+    if (activeSection === 'pending') {
+      loadPendingUsers();
+    }
+  }, [activeSection]);
 
   const menuItems = [
     { id: 'dashboard', label: '대시보드' },
@@ -409,9 +480,20 @@ function AdminDashboard() {
           <div>
             <div className="flex items-center justify-between mb-6">
               <h2 className="text-xl font-medium">승인 대기 목록</h2>
+              <button
+                onClick={loadPendingUsers}
+                disabled={pendingUsersLoading}
+                className="px-3 py-1.5 text-sm border border-gray-300 text-gray-700 hover:bg-gray-50 disabled:opacity-50"
+              >
+                {pendingUsersLoading ? '로딩 중' : '새로고침'}
+              </button>
             </div>
 
-            {pendingUsers.length > 0 ? (
+            {pendingUsersLoading ? (
+              <div className="border border-gray-200 p-8 text-center">
+                <p className="text-sm text-gray-500">로딩 중...</p>
+              </div>
+            ) : pendingUsers.length > 0 ? (
               <div className="border border-gray-200">
                 <table className="min-w-full divide-y divide-gray-200">
                   <thead className="bg-white border-b border-gray-200">
@@ -428,16 +510,24 @@ function AdminDashboard() {
                     {pendingUsers.map((user) => (
                       <tr key={user.id} className="hover:bg-gray-50">
                         <td className="px-4 py-3 text-sm text-gray-900 text-center">{user.id}</td>
-                        <td className="px-4 py-3 text-sm text-gray-900 text-center">{user.nickname}</td>
+                        <td className="px-4 py-3 text-sm text-gray-900 text-center">{user.nickname || user.userId}</td>
                         <td className="px-4 py-3 text-sm text-gray-600 text-center">{user.userId}</td>
                         <td className="px-4 py-3 text-sm text-gray-600 text-center">{user.email}</td>
-                        <td className="px-4 py-3 text-sm text-gray-600 text-center">{user.createdAt}</td>
+                        <td className="px-4 py-3 text-sm text-gray-600 text-center">
+                          {user.createdAt ? new Date(user.createdAt).toLocaleDateString() : '-'}
+                        </td>
                         <td className="px-4 py-3 text-sm text-center">
                           <div className="flex gap-2 justify-center">
-                            <button className="px-3 py-1 text-xs bg-green-100 text-green-800 hover:bg-green-200 rounded">
+                            <button
+                              onClick={() => handleApproveUser(user.id)}
+                              className="px-3 py-1 text-xs bg-green-100 text-green-800 hover:bg-green-200 rounded"
+                            >
                               승인
                             </button>
-                            <button className="px-3 py-1 text-xs bg-red-100 text-red-800 hover:bg-red-200 rounded">
+                            <button
+                              onClick={() => handleRejectUser(user.id)}
+                              className="px-3 py-1 text-xs bg-red-100 text-red-800 hover:bg-red-200 rounded"
+                            >
                               거부
                             </button>
                           </div>

@@ -51,7 +51,7 @@ function RegisterPage() {
     });
 
     if (result.success) {
-      alert("회원가입이 완료되었습니다!");
+      alert("회원가입이 완료되었습니다!\n관리자 승인 대기 중입니다. 승인 후 로그인할 수 있습니다.");
       navigate("/login"); // 로그인 페이지로 이동
     } else {
       alert(result.message || "회원가입에 실패했습니다.");

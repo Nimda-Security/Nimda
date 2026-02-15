@@ -20,7 +20,7 @@ spring:
   
   jpa:
     hibernate:
-      ddl-auto: update 
+      ddl-auto: none 
     show-sql: true
     properties:
       hibernate:
@@ -42,6 +42,14 @@ server:
   # 환경변수로 오버라이드 가능 (docker-compose.yml에서 설정)
   # 기본값: 8080 (nginx가 프록시하므로 내부 포트 사용)
   port: ${SERVER_PORT:8080}
+
+# Flyway 설정
+flyway:
+  enabled: true
+  locations: classpath:db/migration
+  baseline-on-migrate: true  # 기존 DB가 있을 경우 baseline 설정
+  validate-on-migrate: true
+  clean-disabled: true
 
 # JWT 설정
 jwt:

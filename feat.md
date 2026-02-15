@@ -20,12 +20,12 @@ ApprovalStatus로 상태를 관리한다. { PENDING[Default], APPROVED, REJECTED
 ex) 현재 승인 대기중인 계정입니다. 
 or 비활성화된 계정입니다. 
 
-5) AdminUserController 설계 
+5) AdminUserController 설계  (ok)
 클래스 레벨 권한 체크 보안 설정 
 기존 UsersController는 일반 사용자용 API로 역할을 분리 (자신 정보 조회) 
 AdminUserController는 관리자용 API 
 
-6) SecurityConfig 보안 업데이트
+6) SecurityConfig 보안 업데이트 (ok)
 AdminUserController의 모든 엔드포인트는 /api/admin/** 패턴으로 설정 
 
 Frontend 

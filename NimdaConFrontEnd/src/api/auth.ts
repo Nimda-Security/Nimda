@@ -81,10 +81,16 @@ export const loginAPI = async (
         user: userInfo,
       };
     } else {
-      // 로그인 실패 (401 Unauthorized 등)
-      const errorMessage = result.message ||
-        (response.status === 401 ? "아이디 또는 비밀번호가 올바르지 않습니다." :
-          `로그인에 실패했습니다. (${response.status})`);
+      // 로그인 실패 (401 Unauthorized, 403 Forbidden 등)
+      let errorMessage;
+      if (response.status === 403) {
+        // 승인 대기 상태인 계정의 경우 별도 메시지
+        errorMessage = result.message || "승인 대기 중인 계정입니다. 관리자 승인 후 로그인할 수 있습니다.";
+      } else if (response.status === 401) {
+        errorMessage = result.message || "아이디 또는 비밀번호가 올바르지 않습니다.";
+      } else {
+        errorMessage = result.message || `로그인에 실패했습니다. (${response.status})`;
+      }
       return {
         success: false,
         message: errorMessage,
