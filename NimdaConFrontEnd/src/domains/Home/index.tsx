@@ -1,16 +1,25 @@
 import "@/App.css";
 import Layout from "@/components/Layout";
 import Banner from "./components/banner";
-import { useNavigate } from "react-router-dom";
-
-import { getCurrentNickname, isAdmin } from "@/utils/jwt"; // 현재 로그인한 유저 출력
-import { useState, useEffect } from "react";
+import NoticeSection from "./components/NoticeSection";
+import PopularPostsSection from "./components/PopularPostsSection";
+import PhotoGallerySection from "./components/PhotoGallerySection";
 
 function Home() {
   return (
     <Layout>
-      <div className="flex flex-col items-center gap-4 -mt-16">
+      <div className="home">
+        {/* 배너 영역 */}
         <Banner />
+
+        {/* 공지사항 영역 */}
+        <NoticeSection />
+
+        {/* 하단: 전체 인기글 + 사진첩 */}
+        <div className="home__bottom">
+          <PopularPostsSection />
+          <PhotoGallerySection />
+        </div>
       </div>
     </Layout>
   );
