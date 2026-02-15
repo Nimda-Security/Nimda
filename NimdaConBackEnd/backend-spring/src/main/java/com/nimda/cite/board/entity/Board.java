@@ -88,7 +88,7 @@ public class Board extends BaseTimeEntity {
     // [이유] 메인 페이지 인기글 섹션, 게시글 조회수 기능
     // [참고] 좋아요는 별도 테이블로 관리하므로 Board 엔터티에 포함하지 않음
     @Column(name = "post_view", nullable = false)
-    private Integer views = 0;
+    private Integer postView = 0;
 
     // ========== [메인 페이지 API 필요] ==========
     // [신규] 고정글 여부 필드 추가

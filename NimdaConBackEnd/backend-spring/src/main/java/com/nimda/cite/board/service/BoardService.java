@@ -3,7 +3,6 @@ package com.nimda.cite.board.service;
 import com.nimda.cite.board.entity.Board;
 import com.nimda.cite.board.entity.Category;
 import com.nimda.cite.board.repository.BoardRepository;
-import com.nimda.cite.board.repository.CategoryRepository;
 import com.nimda.cup.user.entity.User;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
@@ -20,9 +19,6 @@ public class BoardService {
 
     @Autowired
     private BoardRepository boardRepository;
-
-    @Autowired
-    private CategoryRepository categoryRepository;
 
     // Note. write Service
     // Param : board : 게시글 정보, author : 작성자, file : 첨부파일
@@ -49,8 +45,8 @@ public class BoardService {
         // logic2. 작성자/조회수/고정여부 등 기본값 설정
         board.setAuthor(author);
 
-        if (board.getViews() == null) {
-            board.setViews(0);
+        if (board.getPostView() == null) {
+            board.setPostView(0);
         }
         if (board.getPinned() == null) {
             board.setPinned(false);
@@ -108,7 +104,7 @@ public class BoardService {
         Board board = boardRepository.findById(id)
                 .orElseThrow(() -> new RuntimeException("게시글을 찾을 수 없습니다: " + id));
 
-        board.setViews(board.getViews() + 1);
+        board.setPostView(board.getPostView() + 1);
         boardRepository.save(board);
 
         return board;

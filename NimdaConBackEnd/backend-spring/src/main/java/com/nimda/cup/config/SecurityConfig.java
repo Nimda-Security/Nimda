@@ -112,6 +112,7 @@ public class SecurityConfig {
                         .requestMatchers(HttpMethod.GET, "/api/problems/**").permitAll() // 문제 목록/상세 조회
                         .requestMatchers(HttpMethod.GET, "/api/scoreboard/**").permitAll() // 스코어보드 조회
                         .requestMatchers("/api/cite/board/**").permitAll() // 게시판 전체 (조회/작성/수정/삭제 모두 공개)
+                        .requestMatchers("/api/cite/category/**").permitAll() // 카테고리 조회 (공개)
 
                         // 나머지는 인증 필요
                         .anyRequest().authenticated());

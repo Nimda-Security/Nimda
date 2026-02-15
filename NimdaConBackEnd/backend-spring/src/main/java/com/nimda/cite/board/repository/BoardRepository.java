@@ -65,13 +65,13 @@ public interface BoardRepository extends JpaRepository<Board, Long> { // [수정
     // [신규] 인기글 조회 (조회수 기준, 최신순)
     // [사용] GET /api/cite/board/popular
     @EntityGraph(attributePaths = { "author", "category" })
-    @Query("SELECT b FROM Board b ORDER BY b.views DESC, b.createdAt DESC")
+    @Query("SELECT b FROM Board b ORDER BY b.postView DESC, b.createdAt DESC")
     Page<Board> findAllOrderByViewsDescCreatedAtDesc(Pageable pageable);
 
     // ========== [메인 페이지 API] ==========
     // [신규] 카테고리별 인기글 조회
     // [사용] GET /api/cite/board/popular?categoryId=1
     @EntityGraph(attributePaths = { "author", "category" })
-    @Query("SELECT b FROM Board b WHERE b.category = :category ORDER BY b.views DESC, b.createdAt DESC")
+    @Query("SELECT b FROM Board b WHERE b.category = :category ORDER BY b.postView DESC, b.createdAt DESC")
     Page<Board> findByCategoryOrderByViewsDescCreatedAtDesc(@Param("category") Category category, Pageable pageable);
 }
