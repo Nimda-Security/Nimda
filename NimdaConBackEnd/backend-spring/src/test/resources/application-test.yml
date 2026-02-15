@@ -15,6 +15,9 @@ spring:
         dialect: org.hibernate.dialect.H2Dialect
     defer-datasource-initialization: false
   
+  flyway:
+    enabled: false  # 테스트에서는 Flyway 비활성화 (V2, V3에 MySQL 전용 문법 사용, JPA ddl-auto로 스키마 생성)
+  
   sql:
     init:
       mode: never
