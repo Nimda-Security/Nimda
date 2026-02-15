@@ -1,9 +1,19 @@
 // Board 도메인 타입 정의
 
 /**
- * 게시판 타입
+ * 카테고리 정보
  */
-export type BoardType = 'NEWS' | 'ACADEMIC' | 'COMMUNITY' | 'QNA' | 'FREE';
+export interface Category {
+  id: number;
+  parentId: number | null;
+  name: string;
+  isActive: boolean;
+  slug: string;
+  sortOrder: number;
+  postCount: number;
+  createdAt: string;
+  updatedAt: string;
+}
 
 /**
  * 작성자 정보
@@ -22,8 +32,10 @@ export interface Board {
   id: number;
   title: string;
   content: string;
-  boardType: BoardType;
+  category: Category;
   author: BoardAuthor;
+  views: number;
+  pinned: boolean;
   filename?: string | null;
   filepath?: string | null;
   createdAt: string;
@@ -34,7 +46,8 @@ export interface Board {
  * 게시글 목록 조회 요청 파라미터
  */
 export interface BoardListParams {
-  boardType: BoardType;
+  categoryId?: number;
+  slug?: string;
   searchKeyword?: string;
   page?: number;
   size?: number;
@@ -51,7 +64,7 @@ export interface BoardListResponse {
   totalElements: number;
   totalPages: number;
   currentPage: number;
-  boardType: BoardType;
+  category: Category;
 }
 
 /**
@@ -67,7 +80,7 @@ export interface BoardDetailResponse {
  * 게시글 작성/수정 요청 데이터
  */
 export interface BoardWriteRequest {
-  boardType: BoardType;
+  categoryId: number;
   title: string;
   content: string;
   file?: File;

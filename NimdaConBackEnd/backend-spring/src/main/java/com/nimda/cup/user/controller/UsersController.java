@@ -1,6 +1,7 @@
 package com.nimda.cup.user.controller;
 
 import com.nimda.cup.user.entity.User;
+import com.nimda.cup.user.service.AdminUserService;
 import com.nimda.cup.user.service.UserService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
@@ -13,11 +14,13 @@ import java.util.Optional;
 
 @RestController
 @RequestMapping("/api/users")
-@CrossOrigin(origins = "*")
 public class UsersController {
 
     @Autowired
     private UserService userService;
+
+    @Autowired
+    private AdminUserService adminUserService;
 
     /**
      * 모든 사용자 조회
@@ -29,7 +32,7 @@ public class UsersController {
         System.out.println("=== getAllUsers() 메서드 호출됨 ===");
         try {
             System.out.println("=== UserService.findAll() 호출 중 ===");
-            List<User> users = userService.findAll();
+            List<User> users = adminUserService.findAll();
             System.out.println("=== 사용자 수: " + users.size() + " ===");
 
             Map<String, Object> response = new HashMap<>();

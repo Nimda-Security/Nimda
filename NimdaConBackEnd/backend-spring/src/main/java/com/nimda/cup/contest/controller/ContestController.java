@@ -36,7 +36,6 @@ import java.util.Map;
 
 @RestController
 @RequestMapping("/api/contest")
-@CrossOrigin(origins = "*")
 public class ContestController {
 
     @Autowired

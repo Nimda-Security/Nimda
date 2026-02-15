@@ -1,8 +1,10 @@
 package com.nimda.cup.user.repository;
 
 import com.nimda.cup.user.entity.User;
+import com.nimda.cup.user.enums.ApprovalStatus;
 import org.springframework.data.jpa.repository.EntityGraph;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.lang.NonNull;
 import org.springframework.stereotype.Repository;
 
 import java.util.Collection;
@@ -32,7 +34,7 @@ public interface UserRepository extends JpaRepository<User, Long> {
      */
     @EntityGraph(attributePaths = { "authorities" })
     @Override
-    Optional<User> findById(Long id);
+    Optional<User> findById(@NonNull Long id);
 
     /**
      * 닉네임이 존재하는지 확인
@@ -53,5 +55,14 @@ public interface UserRepository extends JpaRepository<User, Long> {
      * 여러 user_id 목록으로 사용자 조회
      */
     List<User> findByUserIdIn(Collection<String> userIds);
+
+    /**
+     * 승인 상태에 따른 사용자 목록 조회
+     * ex) findByStatus(ApprovalStatus.PENDING) - SELECT * FROM users WHERE status =
+     * 'PENDING'
+     * ex) findByStatus(ApprovalStatus.APPROVED) - SELECT * FROM users WHERE status
+     * = 'APPROVED'
+     */
+    List<User> findByStatus(ApprovalStatus status);
 
 }

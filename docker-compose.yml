@@ -7,18 +7,18 @@ services:
     container_name: nimda-mysql
     restart: always
     environment:
-      MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD:-rootpassword}
-      MYSQL_DATABASE: ${MYSQL_DATABASE:-nimda_con}
-      MYSQL_USER: ${MYSQL_USER:-nimda}
-      MYSQL_PASSWORD: ${MYSQL_PASSWORD:-nimda123}
+      MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD}
+      MYSQL_DATABASE: ${MYSQL_DATABASE}
+      MYSQL_USER: ${MYSQL_USER}
+      MYSQL_PASSWORD: ${MYSQL_PASSWORD}
       # 메모리 제한 설정 (1GB RAM 환경)
       MYSQL_INNODB_BUFFER_POOL_SIZE: 256M
     ports:
       - "3306:3306" # 외부 접근이 필요하면 포트 열기 (보안상 필요없으면 제거 가능)
     volumes:
-      - mysql_data:/var/lib/mysql # 데이터 영속성을 위한 볼륨
+      - mysql_data:/var/lib/mysql
     healthcheck:
-      test: [ "CMD", "mysqladmin", "ping", "-h", "localhost", "-u", "root", "-p${MYSQL_ROOT_PASSWORD:-rootpassword}" ]
+      test: [ "CMD", "mysqladmin", "ping", "-h", "localhost", "-u", "root", "-p${MYSQL_ROOT_PASSWORD}" ]
       interval: 10s
       timeout: 5s
       retries: 5
@@ -34,10 +34,12 @@ services:
     expose:
       - "8080" # 내부 네트워크에서만 접근 가능
     environment:
+      # 시간대 설정 (한국 시간)
+      - TZ=Asia/Seoul
       # MySQL 연결 정보 (docker-compose 내부 네트워크에서 서비스 이름으로 접근)
-      - SPRING_DATASOURCE_URL=jdbc:mysql://mysql:3306/${MYSQL_DATABASE:-nimda_con}?useSSL=false&serverTimezone=UTC&allowPublicKeyRetrieval=true
-      - SPRING_DATASOURCE_USERNAME=${MYSQL_USER:-nimda}
-      - SPRING_DATASOURCE_PASSWORD=${MYSQL_PASSWORD:-nimda123}
+      - SPRING_DATASOURCE_URL=jdbc:mysql://mysql:3306/${MYSQL_DATABASE}?useSSL=false&serverTimezone=Asia/Seoul&allowPublicKeyRetrieval=true
+      - SPRING_DATASOURCE_USERNAME=${MYSQL_USER}
+      - SPRING_DATASOURCE_PASSWORD=${MYSQL_PASSWORD}
       # Spring Boot 포트 설정
       - SERVER_PORT=8080
     restart: always

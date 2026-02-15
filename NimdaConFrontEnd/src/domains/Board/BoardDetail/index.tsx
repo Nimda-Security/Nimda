@@ -39,7 +39,9 @@ function BoardDetailPage() {
   };
 
   const handleGoBack = () => {
-    if (boardType) {
+    if (board?.category?.slug) {
+      navigate(`/board/${board.category.slug}`);
+    } else if (boardType) {
       navigate(`/board/${boardType}`);
     } else {
       navigate('/');
@@ -47,8 +49,9 @@ function BoardDetailPage() {
   };
 
   const handleEdit = () => {
-    if (board && boardType) {
-      navigate(`/board/${boardType}/edit/${board.id}`);
+    if (board) {
+      const slug = board.category?.slug || boardType;
+      navigate(`/board/${slug}/edit/${board.id}`);
     }
   };
 
@@ -140,6 +143,7 @@ function BoardDetailPage() {
             <div className="flex items-center gap-4 text-sm text-gray-600">
               <span>{board.author.nickname}</span>
               <span>{new Date(board.createdAt).toLocaleString()}</span>
+              <span>조회 {board.views}</span>
               {board.filename && (
                 <button
                   onClick={handleFileDownload}

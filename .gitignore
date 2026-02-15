@@ -41,6 +41,14 @@ logs/
 .env.test.local
 !.env.example
 
+# Spring Boot configuration files
+application.yml
+application.properties
+application-*.yml
+application-*.properties
+!application-test.yml
+!application-test.properties
+
 # Database
 *.db
 *.sqlite
@@ -69,6 +77,11 @@ certbot-www/
 # Database backups (민감 정보)
 *.sql
 !schema.sql
+!**/db/migration/*.sql
+
+# Bruno 환경변수 (민감 정보)
+bruno/**/vars.json
+!bruno/**/vars.example.json
 
 # Test results
 load-tests/results/

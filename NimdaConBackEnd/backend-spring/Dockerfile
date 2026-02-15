@@ -11,7 +11,11 @@ FROM eclipse-temurin:17-jre
 
 # Install C++ compiler and build tools
 USER root
-RUN apt-get update && apt-get install -y g++ build-essential
+RUN apt-get update && apt-get install -y g++ build-essential tzdata
+
+# 시간대 설정 (한국 시간)
+ENV TZ=Asia/Seoul
+RUN ln -snf /usr/share/zoneinfo/$TZ /etc/localtime && echo $TZ > /etc/timezone
 
 WORKDIR /app 
 

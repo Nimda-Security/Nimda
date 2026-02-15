@@ -36,20 +36,12 @@ jobs:
           # Maven 라이브러리를 캐시해서 다음 빌드가 더 빠릅니다
           
       # 4단계: Maven으로 빌드 및 테스트
-      - name: Build with Maven
+      - name: Build and Test with Maven
         working-directory: NimdaConBackEnd/backend-spring
-        run: mvn clean package -DskipTests
+        run: mvn clean package
         # clean: 이전 빌드 파일 삭제
-        # package: JAR 파일 생성
-        # -DskipTests: 테스트는 건너뛰고 빌드만 (테스트가 없으면 실패할 수 있어서)
-        
-      # 5단계: 테스트 실행 (선택사항 - 테스트가 있다면)
-      - name: Run tests
-        working-directory: NimdaConBackEnd/backend-spring
-        run: mvn test
-        continue-on-error: true
-        # continue-on-error: 테스트가 없어도 실패하지 않음
-        # 테스트가 추가되면 이 단계가 자동으로 실행됩니다
+        # package: 테스트 실행 후 JAR 파일 생성
+        # 테스트가 없으면 자동으로 건너뜀
         
       # 6단계: 빌드 결과물(JAR) 저장
       - name: Upload JAR artifact
@@ -73,6 +65,11 @@ jobs:
           # Dockerfile을 사용하여 Docker 이미지를 빌드합니다
           # Dockerfile이 backend-spring 디렉토리에 있으므로 해당 디렉토리에서 빌드
           
+      # 8-1단계: Docker 이미지 정리 (GitHub Actions에서 사용하지 않는 이미지 삭제)
+      - name: Clean up Docker images
+        run: docker image prune -f
+        # 빌드 과정에서 생성된 중간 이미지나 사용하지 않는 이미지 정리
+          
       # 9단계: Docker Hub에 로그인
       - name: Login to Docker Hub
         uses: docker/login-action@v3
@@ -95,7 +92,18 @@ jobs:
           echo "${{ secrets.SERVER_SSH_KEY }}" > ~/.ssh/deploy_key
           chmod 600 ~/.ssh/deploy_key
           ssh-keyscan -H ${{ secrets.SERVER_HOST }} >> ~/.ssh/known_hosts 2>/dev/null || true
-          ssh -i ~/.ssh/deploy_key -o StrictHostKeyChecking=no ${{ secrets.SERVER_USER }}@${{ secrets.SERVER_HOST }} "cd ${{ secrets.SERVER_DEPLOY_PATH }} && pwd && docker-compose pull && docker-compose up -d && docker system prune -f || true"
+          ssh -i ~/.ssh/deploy_key -o StrictHostKeyChecking=no ${{ secrets.SERVER_USER }}@${{ secrets.SERVER_HOST }} "
+            cd ${{ secrets.SERVER_DEPLOY_PATH }} && 
+            echo '=== 기존 컨테이너 정리 ===' &&
+            docker-compose down || true &&
+            echo '=== 새로운 이미지 Pull ===' &&
+            docker-compose pull && 
+            echo '=== 컨테이너 시작 (최신 이미지 적용) ===' &&
+            docker-compose up -d --remove-orphans && 
+            echo '=== 사용하지 않는 이미지 정리 ===' &&
+            docker image prune -a -f &&
+            echo '=== 배포 완료 ==='
+          "
         # Secrets 설정 필요:
         # - SERVER_HOST: 서버 IP 주소 또는 도메인 (예: 123.456.789.0 또는 server.example.com)
         # - SERVER_USER: SSH 사용자명 (예: ubuntu, root, ec2-user)
@@ -105,11 +113,12 @@ jobs:
 # 자동 실행 작업 정리
 # 1. 코드 가져오기
 # 2. Java 17 설치
-# 3. Maven 빌드 -> JAR 파일 생성 
-# 4. 테스트 실행
+# 3. Maven 의존성 캐싱
+# 4. Maven 빌드 및 테스트 -> JAR 파일 생성
 # 5. JAR 파일 저장
 # 6. Docker 이미지 빌드
-# 7. Docker Hub 로그인
-# 8. Docker Hub에 이미지 푸시
-# 9. 서버에 SSH 접속
-# 10. docker-compose pull & up (자동 배포) 
+# 7. Docker 이미지 정리 (GitHub Actions)
+# 8. Docker Hub 로그인
+# 9. Docker Hub에 이미지 푸시
+# 10. 서버에 SSH 접속
+# 11. docker-compose pull & up (자동 배포) + 이미지 정리 (서버) 

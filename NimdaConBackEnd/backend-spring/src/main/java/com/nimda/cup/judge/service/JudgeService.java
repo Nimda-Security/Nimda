@@ -61,7 +61,16 @@ public class JudgeService {
                 // 익명 사용자 조회 또는 생성
                 user = userRepository.findByNickname("익명").orElseGet(() -> {
                     // 익명 사용자가 없으면 생성
-                    User anonymousUser = new User("anonymous", "익명", "anonymous", "anonymous@nimda.com");
+                    User anonymousUser = new User();
+                    anonymousUser.setUserId("anonymous");
+                    anonymousUser.setName("익명");
+                    anonymousUser.setNickname("익명");
+                    anonymousUser.setPassword("anonymous");
+                    anonymousUser.setEmail("anonymous@nimda.com");
+                    // 필수 필드 임시값 설정 (ERD 기반 필수 필드)
+                    anonymousUser.setStudentNum("000000000");
+                    anonymousUser.setPhoneNum("01000000000");
+                    anonymousUser.setMajor("미지정");
                     return userRepository.save(anonymousUser);
                 });
                 nickname = "익명";

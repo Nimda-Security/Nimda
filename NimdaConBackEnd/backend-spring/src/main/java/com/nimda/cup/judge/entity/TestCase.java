@@ -1,16 +1,17 @@
 package com.nimda.cup.judge.entity;
 
+import com.nimda.cup.common.entity.BaseTimeEntity;
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
 import lombok.Data;
-
-import java.time.LocalDateTime;
+import lombok.EqualsAndHashCode;
 
 @Entity
 @Table(name = "test_cases")
 @Data
+@EqualsAndHashCode(callSuper = false)
 @AllArgsConstructor
-public class TestCase {
+public class TestCase extends BaseTimeEntity {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -30,17 +31,8 @@ public class TestCase {
     @Column(name = "is_public", nullable = false)
     private Boolean isPublic; // 프론트엔드에 공개 여부 (true: 공개, false: 백엔드 전용)
 
-    @Column(name = "created_at")
-    private LocalDateTime createdAt;
-
-    @Column(name = "updated_at")
-    private LocalDateTime updatedAt;
-
     // 기본 생성자
     public TestCase() {
-        LocalDateTime now = LocalDateTime.now();
-        this.createdAt = now;
-        this.updatedAt = now;
         this.isPublic = false; // 기본값: 백엔드 전용 (기존 데이터 호환성)
     }
 
@@ -61,31 +53,6 @@ public class TestCase {
         this.input = input;
         this.output = output;
         this.isPublic = isPublic != null ? isPublic : false;
-    }
-
-    // 시간 정보 헬퍼 메서드
-    public LocalDateTime getCreatedAt() {
-        return this.createdAt;
-    }
-
-    public LocalDateTime getUpdatedAt() {
-        return this.updatedAt;
-    }
-
-    @PrePersist
-    public void prePersist() {
-        LocalDateTime now = LocalDateTime.now();
-        if (this.createdAt == null) {
-            this.createdAt = now;
-        }
-        if (this.updatedAt == null) {
-            this.updatedAt = now;
-        }
-    }
-
-    @PreUpdate
-    public void preUpdate() {
-        this.updatedAt = LocalDateTime.now();
     }
 
     /**

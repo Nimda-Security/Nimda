@@ -11,6 +11,8 @@ import AdminDashboard from "@/domains/admin/AdminDashboard.jsx";
 import ProblemDetail from "@/domains/Contest/Problem/ProblemDetail/index.jsx";
 import Home from "@/domains/Home";
 import Scoreboard from "@/domains/Contest/Scoreboard";
+import ProtectedRoute from "@/components/ProtectedRoute";
+import ForbiddenPage from "@/domains/Error/403";
 
 import ContestHome from "@/domains/Contest/Home";
 import BoardListPage from "@/domains/Board/BoardList";
@@ -25,11 +27,19 @@ const Router = () => {
         <Route path="/" element={<Home />} />
         <Route path="/login" element={<LoginPage />} />
         <Route path="/signup" element={<SignUp />} />
+        <Route path="/403" element={<ForbiddenPage />} />
         <Route path="/problems" element={<ProblemsPage />} />
         <Route path="/problem-submit" element={<ProblemSubmitPage />} />
         <Route path="/problem-create" element={<ProblemCreatePage />} />
         <Route path="/problem-edit/:id" element={<ProblemEditPage />} />
-        <Route path="/admin" element={<AdminDashboard />} />
+        <Route
+          path="/admin"
+          element={
+            <ProtectedRoute requireAdmin={true}>
+              <AdminDashboard />
+            </ProtectedRoute>
+          }
+        />
         <Route path="/problems/:id" element={<ProblemDetail />} />
         <Route path="/judging-status" element={<JudgingStatusPage />} />
         <Route path="/scoreboard" element={<Scoreboard />} />

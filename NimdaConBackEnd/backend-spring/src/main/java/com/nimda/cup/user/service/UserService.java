@@ -7,9 +7,20 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.util.List;
 import java.util.Optional;
 
+/**
+ * 일반 사용자용 서비스
+ * 
+ * [역할]
+ * - 회원가입
+ * - 사용자 정보 조회/수정
+ * - 중복 확인
+ * 
+ * [책임 분리]
+ * - 일반 사용자 기능: UserService
+ * - 관리자 기능: AdminUserService
+ */
 @Service
 public class UserService {
 
@@ -23,12 +34,28 @@ public class UserService {
      * CreateUser : 회원 가입
      */
     @Transactional
-    public User createUser(String userId, String nickname, String password, String email,
-            String universityName, String department, String grade) {
+    public User createUser(String userId, String name, String nickname, String password,
+            String studentNum, String phoneNum, String email, String major,
+            String universityName, String grade) {
         validateUserUniqueness(userId, nickname, email);
         String encodedPassword = passwordEncoder.encode(password);
-        User user = new User(userId, nickname, encodedPassword, email,
-                universityName, department, grade);
+
+        // ERD 기반 필수 필드로 사용자 생성
+        User user = new User();
+        user.setUserId(userId);
+        user.setName(name);
+        user.setNickname(nickname);
+        user.setPassword(encodedPassword);
+        user.setStudentNum(studentNum);
+        user.setPhoneNum(phoneNum);
+        user.setEmail(email);
+        user.setMajor(major);
+        user.setUniversityName(universityName);
+        user.setGrade(grade);
+
+        // 승인 전까지 권한 없이 생성 (기본값: status = PENDING)
+        // 승인 시 AdminUserController에서 ROLE_USER 권한 부여
+
         return userRepository.save(user);
     }
 
@@ -89,11 +116,5 @@ public class UserService {
     @Transactional
     public User updateUser(User user) {
         return userRepository.save(user);
-    }
-
-    // 모든 사용자 조회
-    @Transactional(readOnly = true)
-    public List<User> findAll() {
-        return userRepository.findAll();
     }
 }

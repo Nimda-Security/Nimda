@@ -1,9 +1,11 @@
 import React, { useState, useEffect } from 'react';
-import Layout from '@/components/Layout';
-import BlackLineButton from '@/components/Button/BlackLine';
+import NavBar from '@/components/Layout/Header/NavBar';
+import Footer from '@/components/Layout/Footer';
 import { useNavigate } from 'react-router-dom';
-import { getAllUsersAPI, getAllGroupsAPI, createGroupAPI } from '@/api/admin/admin';
+import { getAllUsersAPI, getAllGroupsAPI, createGroupAPI, getPendingUsersAPI, approveUserAPI, rejectUserAPI } from '@/api/admin/admin';
 import { getAllProblemsAPI } from '@/api/problem';
+import { getBoardListAPI, deleteBoardAPI } from '@/api/board';
+import './AdminDashboard.css';
 
 function AdminDashboard() {
   const navigate = useNavigate();
@@ -19,6 +21,11 @@ function AdminDashboard() {
   const [newTeamPublic, setNewTeamPublic] = useState(true);
   const [newTeamCode, setNewTeamCode] = useState('');
   const [creatingTeam, setCreatingTeam] = useState(false);
+  const [selectedUser, setSelectedUser] = useState(null);
+  const [pendingUsers, setPendingUsers] = useState([]);
+  const [pendingUsersLoading, setPendingUsersLoading] = useState(false);
+  const [posts, setPosts] = useState([]);
+  const [postsLoading, setPostsLoading] = useState(false);
 
   const goToProblemCreate = () => {
     navigate('/problem-create');
@@ -64,10 +71,6 @@ function AdminDashboard() {
     }
   };
 
-  /**
-   * 팀 목록 UI용 임시 로더
-   * TODO: 실제 팀 목록 API 연동 시 교체
-   */
   const loadTeams = async () => {
     setTeamsLoading(true);
     try {
@@ -99,10 +102,6 @@ function AdminDashboard() {
     }
   };
 
-  /**
-   * 팀 생성 UI (임시)
-   * TODO: 실제 팀 생성 API 연동
-   */
   const handleCreateTeam = async (e) => {
     e.preventDefault();
     if (!newTeamName.trim()) {
@@ -166,208 +165,238 @@ function AdminDashboard() {
     navigate('/');
   };
 
+  const loadPosts = async () => {
+    setPostsLoading(true);
+    try {
+      const result = await getBoardListAPI({ slug: 'news', page: 0, size: 20 });
+      if (result.success) {
+        setPosts(result.posts || []);
+      } else {
+        alert('게시글 목록을 불러오는데 실패했습니다: ' + result.message);
+      }
+    } catch (error) {
+      console.error('게시글 목록 로드 오류:', error);
+      alert('게시글 목록을 불러오는 중 오류가 발생했습니다.');
+    } finally {
+      setPostsLoading(false);
+    }
+  };
+
+  const loadPendingUsers = async () => {
+    setPendingUsersLoading(true);
+    try {
+      const result = await getPendingUsersAPI();
+      if (result.success) {
+        setPendingUsers(result.users || []);
+      } else {
+        alert('승인 대기 사용자 목록을 불러오는데 실패했습니다: ' + result.message);
+      }
+    } catch (error) {
+      console.error('승인 대기 사용자 목록 로드 오류:', error);
+      alert('승인 대기 사용자 목록을 불러오는 중 오류가 발생했습니다.');
+    } finally {
+      setPendingUsersLoading(false);
+    }
+  };
+
+  const handleApproveUser = async (userId) => {
+    if (!confirm('이 사용자를 승인하시겠습니까?')) return;
+    try {
+      const result = await approveUserAPI(userId);
+      if (result.success) {
+        alert('사용자가 승인되었습니다.');
+        loadPendingUsers();
+        loadUsers();
+      } else {
+        alert(result.message || '사용자 승인에 실패했습니다.');
+      }
+    } catch (error) {
+      console.error('사용자 승인 오류:', error);
+      alert('사용자 승인 중 오류가 발생했습니다.');
+    }
+  };
+
+  const handleRejectUser = async (userId) => {
+    if (!confirm('이 사용자의 승인을 거부하시겠습니까?')) return;
+    try {
+      const result = await rejectUserAPI(userId);
+      if (result.success) {
+        alert('사용자 승인이 거부되었습니다.');
+        loadPendingUsers();
+        loadUsers();
+      } else {
+        alert(result.message || '사용자 거부에 실패했습니다.');
+      }
+    } catch (error) {
+      console.error('사용자 거부 오류:', error);
+      alert('사용자 거부 중 오류가 발생했습니다.');
+    }
+  };
+
+  useEffect(() => {
+    if (activeSection === 'pending') {
+      loadPendingUsers();
+    }
+  }, [activeSection]);
+
   const menuItems = [
-    { id: 'dashboard', label: '대시보드', icon: '📊' },
-    { id: 'problems', label: '문제 관리', icon: '📝' },
-    { id: 'users', label: '사용자 관리', icon: '👥' },
-    { id: 'teams', label: '팀 관리', icon: '🧩' }
+    { id: 'dashboard', label: '대시보드' },
+    { id: 'users', label: '사용자 관리' }
   ];
 
+  const getUserRoles = (user) => {
+    if (!user.authorities || user.authorities.length === 0) return [];
+    return user.authorities.map(auth => auth.authorityName || auth);
+  };
+
+  const hasRole = (user, role) => {
+    return getUserRoles(user).some(r => r.includes(role));
+  };
+
   const renderContent = () => {
-    switch(activeSection) {
+    switch (activeSection) {
       case 'dashboard':
         return (
           <div>
-            <h2 className="text-2xl font-bold mb-6">관리자 대시보드</h2>
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            
-            </div>
-
-            <div className="mt-8 bg-gray-100 p-6 rounded-lg">
-              <h3 className="text-lg font-semibold text-gray-900 mb-2">관리자 전용 기능</h3>
-              <ul className="text-gray-700 space-y-1">
-                <li>• 문제 출제 및 관리</li>
-                <li>• 사용자 권한 관리</li>
-                <li>• 시스템 설정 변경</li>
-                <li>• 로그 및 통계 확인</li>
+            <h2 className="admin__section-title">대시보드</h2>
+            <div className="admin__info-box">
+              <h3>관리 기능</h3>
+              <ul>
+                <li>문제 출제 및 관리</li>
+                <li>사용자 권한 관리</li>
+                <li>시스템 설정 변경</li>
+                <li>로그 및 통계 확인</li>
               </ul>
             </div>
           </div>
         );
-      case 'problems':
-        return (
-          <div>
-            <div className="flex items-center justify-between mb-6">
-              <h2 className="text-2xl font-bold">문제 관리</h2>
-              <div className="flex gap-2">
-                <button
-                  onClick={loadProblems}
-                  disabled={problemsLoading}
-                  className="px-4 py-2 bg-black text-white rounded-md hover:bg-gray-900 disabled:opacity-50"
-                >
-                  {problemsLoading ? '로딩 중...' : '문제 목록 새로고침'}
-                </button>
-                <button
-                  onClick={goToProblemCreate}
-                  className="px-4 py-2 border border-black text-black rounded-md hover:bg-black hover:text-white"
-                >
-                  새 문제 출제
-                </button>
-              </div>
-            </div>
-            
-            {problems.length > 0 ? (
-              <div className="bg-white rounded-lg shadow-md overflow-hidden">
-                <table className="min-w-full divide-y divide-gray-200">
-                  <thead className="bg-gray-50">
-                    <tr>
-                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                        ID
-                      </th>
-                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                        제목
-                      </th>
-                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                        난이도
-                      </th>
-                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                        언어
-                      </th>
-                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                        테스트 케이스
-                      </th>
-                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                        생성일
-                      </th>
-                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                        상태
-                      </th>
-                    </tr>
-                  </thead>
-                  <tbody className="bg-white divide-y divide-gray-200">
-                    {problems.map((problem) => (
-                      <tr 
-                        key={problem.id} 
-                        className="hover:bg-gray-50 cursor-pointer transition-colors"
-                        onClick={() => goToProblemDetail(problem.id)}
-                      >
-                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                          {problem.id}
-                        </td>
-                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                          <div className="max-w-xs truncate" title={problem.title}>
-                            {problem.title}
-                          </div>
-                        </td>
-                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                          <span className="px-2 py-1 text-xs rounded-full bg-gray-200 text-gray-800">
-                            {problem.difficulty}
-                          </span>
-                        </td>
-                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                          <span className="px-2 py-1 text-xs rounded-full bg-gray-200 text-gray-800">
-                            {problem.language}
-                          </span>
-                        </td>
-                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                          {problem.testCases ? problem.testCases.length : 0}개
-                        </td>
-                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                          {problem.createdAt ? new Date(problem.createdAt).toLocaleDateString() : '-'}
-                        </td>
-                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                          <span className="px-2 py-1 text-xs rounded-full bg-gray-200 text-gray-800">
-                            활성
-                          </span>
-                        </td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
-              </div>
-            ) : (
-              <div className="bg-white p-8 rounded-lg shadow-md text-center">
-                <p className="text-gray-500 mb-4">등록된 문제가 없습니다.</p>
-                <div className="flex gap-2 justify-center">
-                  <button
-                    onClick={loadProblems}
-                    className="px-4 py-2 bg-black text-white rounded-md hover:bg-gray-900"
-                  >
-                    문제 목록 불러오기
-                  </button>
-                  <button
-                    onClick={goToProblemCreate}
-                    className="px-4 py-2 border border-black text-black rounded-md hover:bg-black hover:text-white"
-                  >
-                    첫 문제 출제하기
-                  </button>
-                </div>
-              </div>
-            )}
-          </div>
-        );
+
       case 'users':
         return (
           <div>
-            <div className="flex items-center justify-between mb-6">
-              <h2 className="text-2xl font-bold">사용자 관리</h2>
-              <button
-                onClick={loadUsers}
-                disabled={loading}
-                className="px-4 py-2 bg-black text-white rounded-md hover:bg-gray-900 disabled:opacity-50"
-              >
-                {loading ? '로딩 중...' : '사용자 목록 새로고침'}
+            <div className="admin__header-row">
+              <h2 className="admin__section-title" style={{ marginBottom: 0 }}>사용자 관리</h2>
+              <button onClick={loadUsers} disabled={loading} className="admin__btn">
+                {loading ? '로딩 중' : '새로고침'}
               </button>
             </div>
-            
+
             {users.length > 0 ? (
-              <div className="bg-white rounded-lg shadow-md overflow-hidden">
-                <table className="min-w-full divide-y divide-gray-200">
-                  <thead className="bg-gray-50">
+              <div className="admin__table-wrap">
+                <table className="admin__table">
+                  <thead>
                     <tr>
-                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                        ID
-                      </th>
-                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                        사용자명
-                      </th>
-                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                        이메일
-                      </th>
-                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                        가입일
-                      </th>
-                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                        상태
-                      </th>
+                      <th>ID</th>
+                      <th>사용자명</th>
+                      <th>이메일</th>
+                      <th>가입일</th>
                     </tr>
                   </thead>
-                  <tbody className="bg-white divide-y divide-gray-200">
+                  <tbody>
                     {users.map((user) => (
-                      <tr key={user.id} className="hover:bg-gray-50">
-                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                          {user.id}
+                      <tr key={user.id} style={{ cursor: 'pointer' }} onClick={() => setSelectedUser(user)}>
+                        <td>{user.id}</td>
+                        <td style={{ textAlign: 'left' }}>
+                          <span>{user.nickname || user.userId}</span>
+                          {hasRole(user, 'ADMIN') && (
+                            <span className="admin__role admin__role--admin" style={{ marginLeft: 8 }}>ADMIN</span>
+                          )}
+                          {hasRole(user, 'USER') && (
+                            <span className="admin__role admin__role--user" style={{ marginLeft: 8 }}>USER</span>
+                          )}
                         </td>
-                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                          <span className="px-2 py-1 text-xs rounded-full bg-gray-200 text-gray-900">
-                            {user.nickname || user.userId}
-                            {(user.nickname === 'admin' || user.userId === 'admin') && (
-                              <span className="ml-1 text-[11px] uppercase tracking-wide text-gray-500">
-                                ADMIN
-                              </span>
-                            )}
+                        <td>{user.email}</td>
+                        <td>{user.createdAt ? new Date(user.createdAt).toLocaleDateString() : '-'}</td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            ) : (
+              <div className="admin__empty">
+                <p style={{ marginBottom: 16 }}>사용자 목록이 비어있습니다.</p>
+                <button onClick={loadUsers} className="admin__btn">불러오기</button>
+              </div>
+            )}
+
+            {/* 사용자 정보 모달 */}
+            {selectedUser && (
+              <div className="admin__modal-overlay" onClick={() => setSelectedUser(null)}>
+                <div className="admin__modal" onClick={(e) => e.stopPropagation()}>
+                  <div className="admin__modal-header">
+                    <h3>사용자 정보</h3>
+                    <button className="admin__modal-close" onClick={() => setSelectedUser(null)}>✕</button>
+                  </div>
+                  <div className="admin__modal-grid">
+                    <div><p className="admin__modal-label">ID</p><p className="admin__modal-value">{selectedUser.id}</p></div>
+                    <div><p className="admin__modal-label">사용자 ID</p><p className="admin__modal-value">{selectedUser.userId}</p></div>
+                    <div><p className="admin__modal-label">실명</p><p className="admin__modal-value">{selectedUser.name || '-'}</p></div>
+                    <div><p className="admin__modal-label">닉네임</p><p className="admin__modal-value">{selectedUser.nickname || '-'}</p></div>
+                    <div><p className="admin__modal-label">이메일</p><p className="admin__modal-value">{selectedUser.email || '-'}</p></div>
+                    <div><p className="admin__modal-label">학번</p><p className="admin__modal-value">{selectedUser.studentNum || '-'}</p></div>
+                    <div><p className="admin__modal-label">휴대폰 번호</p><p className="admin__modal-value">{selectedUser.phoneNum || '-'}</p></div>
+                    <div><p className="admin__modal-label">학과</p><p className="admin__modal-value">{selectedUser.major || '-'}</p></div>
+                    <div><p className="admin__modal-label">대학교</p><p className="admin__modal-value">{selectedUser.universityName || '-'}</p></div>
+                    <div><p className="admin__modal-label">학년</p><p className="admin__modal-value">{selectedUser.grade || '-'}</p></div>
+                    <div><p className="admin__modal-label">생년월일</p><p className="admin__modal-value">{selectedUser.birth || '-'}</p></div>
+                    <div><p className="admin__modal-label">상태</p><p className="admin__modal-value">{selectedUser.status || '-'}</p></div>
+                    <div><p className="admin__modal-label">가입일</p><p className="admin__modal-value">{selectedUser.createdAt ? new Date(selectedUser.createdAt).toLocaleString() : '-'}</p></div>
+                    <div><p className="admin__modal-label">수정일</p><p className="admin__modal-value">{selectedUser.updatedAt ? new Date(selectedUser.updatedAt).toLocaleString() : '-'}</p></div>
+                    <div>
+                      <p className="admin__modal-label">권한</p>
+                      <div style={{ display: 'flex', gap: 8, marginTop: 4 }}>
+                        {getUserRoles(selectedUser).map((role, idx) => (
+                          <span key={idx} className={`admin__role ${role.includes('ADMIN') ? 'admin__role--admin' : 'admin__role--user'}`}>
+                            {role}
                           </span>
-                        </td>
-                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                          {user.email}
-                        </td>
-                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                          {user.createdAt ? new Date(user.createdAt).toLocaleDateString() : '-'}
-                        </td>
-                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                          <span className="px-2 py-1 text-xs rounded-full bg-gray-200 text-gray-900">
-                            활성
-                          </span>
+                        ))}
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            )}
+          </div>
+        );
+
+      case 'pending':
+        return (
+          <div>
+            <div className="admin__header-row">
+              <h2 className="admin__section-title" style={{ marginBottom: 0 }}>승인 대기 목록</h2>
+              <button onClick={loadPendingUsers} disabled={pendingUsersLoading} className="admin__btn">
+                {pendingUsersLoading ? '로딩 중' : '새로고침'}
+              </button>
+            </div>
+
+            {pendingUsersLoading ? (
+              <div className="admin__empty">로딩 중...</div>
+            ) : pendingUsers.length > 0 ? (
+              <div className="admin__table-wrap">
+                <table className="admin__table">
+                  <thead>
+                    <tr>
+                      <th>ID</th>
+                      <th>닉네임</th>
+                      <th>사용자 ID</th>
+                      <th>이메일</th>
+                      <th>신청일</th>
+                      <th>작업</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {pendingUsers.map((user) => (
+                      <tr key={user.id}>
+                        <td>{user.id}</td>
+                        <td>{user.nickname || user.userId}</td>
+                        <td>{user.userId}</td>
+                        <td>{user.email}</td>
+                        <td>{user.createdAt ? new Date(user.createdAt).toLocaleDateString() : '-'}</td>
+                        <td>
+                          <div className="admin__actions">
+                            <button onClick={() => handleApproveUser(user.id)} className="admin__btn--approve">승인</button>
+                            <button onClick={() => handleRejectUser(user.id)} className="admin__btn--reject">거부</button>
+                          </div>
                         </td>
                       </tr>
                     ))}
@@ -375,213 +404,134 @@ function AdminDashboard() {
                 </table>
               </div>
             ) : (
-              <div className="bg-white p-8 rounded-lg shadow-md text-center">
-                <p className="text-gray-500 mb-4">사용자 목록이 비어있습니다.</p>
-                <button
-                  onClick={loadUsers}
-                  className="px-4 py-2 bg-black text-white rounded-md hover:bg-gray-900"
-                >
-                  사용자 목록 불러오기
-                </button>
+              <div className="admin__empty">승인 대기 중인 사용자가 없습니다.</div>
+            )}
+          </div>
+        );
+
+      case 'posts':
+        const handleDeletePost = async (postId) => {
+          if (!confirm('정말 이 게시글을 삭제하시겠습니까?')) return;
+          try {
+            const result = await deleteBoardAPI(postId);
+            if (result.success) {
+              alert('게시글이 삭제되었습니다.');
+              loadPosts();
+            } else {
+              alert(result.message || '게시글 삭제에 실패했습니다.');
+            }
+          } catch (error) {
+            console.error('게시글 삭제 오류:', error);
+            alert('게시글 삭제 중 오류가 발생했습니다.');
+          }
+        };
+
+        const handleEditPost = (post) => {
+          const slug = post.category?.slug || 'news';
+          navigate(`/board/${slug}/edit/${post.id}`);
+        };
+
+        return (
+          <div>
+            <div className="admin__header-row">
+              <h2 className="admin__section-title" style={{ marginBottom: 0 }}>글 관리</h2>
+              <button onClick={loadPosts} disabled={postsLoading} className="admin__btn">
+                {postsLoading ? '로딩 중' : '새로고침'}
+              </button>
+            </div>
+
+            {posts.length > 0 ? (
+              <div className="admin__table-wrap">
+                <table className="admin__table">
+                  <thead>
+                    <tr>
+                      <th>ID</th>
+                      <th>제목</th>
+                      <th>작성자</th>
+                      <th>게시판 타입</th>
+                      <th>작성일</th>
+                      <th>작업</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {posts.map((post) => (
+                      <tr key={post.id}>
+                        <td>{post.id}</td>
+                        <td style={{ textAlign: 'left' }}>{post.title}</td>
+                        <td>{post.author?.nickname || '-'}</td>
+                        <td>{post.category?.name || '-'}</td>
+                        <td>{post.createdAt ? new Date(post.createdAt).toLocaleDateString() : '-'}</td>
+                        <td>
+                          <div className="admin__actions">
+                            <button onClick={(e) => { e.stopPropagation(); handleEditPost(post); }} className="admin__btn--edit">수정</button>
+                            <button onClick={(e) => { e.stopPropagation(); handleDeletePost(post.id); }} className="admin__btn--reject">삭제</button>
+                          </div>
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            ) : (
+              <div className="admin__empty">
+                <p style={{ marginBottom: 16 }}>게시글이 없습니다.</p>
+                <button onClick={loadPosts} className="admin__btn">불러오기</button>
               </div>
             )}
           </div>
         );
-      case 'teams':
-        return (
-          <div className="space-y-8">
-            <div className="flex items-center justify-between">
-              <h2 className="text-2xl font-bold">팀 관리</h2>
-              <button
-                onClick={loadTeams}
-                disabled={teamsLoading}
-                className="px-4 py-2 bg-black text-white rounded-md hover:bg-gray-900 disabled:opacity-50"
-              >
-                {teamsLoading ? '로딩 중...' : '팀 목록 새로고침'}
-              </button>
-            </div>
 
-            <div className="bg-white rounded-lg shadow-md p-6">
-              <h3 className="text-xl font-semibold mb-4">새 팀 생성</h3>
-              <form className="space-y-4" onSubmit={handleCreateTeam}>
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  <div>
-                    <label className="block text-sm text-gray-600 mb-1">팀 이름</label>
-                    <input
-                      type="text"
-                      value={newTeamName}
-                      onChange={(e) => setNewTeamName(e.target.value)}
-                      className="w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-1 focus:ring-gray-400"
-                      placeholder="팀 이름을 입력하세요"
-                      required
-                    />
-                  </div>
-                  <div>
-                    <label className="block text-sm text-gray-600 mb-1">최대 인원</label>
-                    <input
-                      type="number"
-                      min={1}
-                      max={20}
-                      value={newTeamMaxMembers}
-                      onChange={(e) => setNewTeamMaxMembers(Number(e.target.value))}
-                      className="w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-1 focus:ring-gray-400"
-                    />
-                  </div>
-                </div>
-
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  <div>
-                    <label className="block text-sm text-gray-600 mb-1">초대 코드</label>
-                    <input
-                      type="text"
-                      value={newTeamCode}
-                      onChange={(e) => setNewTeamCode(e.target.value)}
-                      className="w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-1 focus:ring-gray-400"
-                      placeholder="예: ABCD-1234"
-                    />
-                  </div>
-                  <div className="flex items-center space-x-3">
-                    <span className="text-sm text-gray-600">공개 여부</span>
-                    <button
-                      type="button"
-                      onClick={() => setNewTeamPublic(true)}
-                      className={`px-3 py-2 rounded-md border ${
-                        newTeamPublic ? 'bg-black text-white border-black' : 'border-gray-300 text-gray-700'
-                      }`}
-                    >
-                      공개
-                    </button>
-                    <button
-                      type="button"
-                      onClick={() => setNewTeamPublic(false)}
-                      className={`px-3 py-2 rounded-md border ${
-                        !newTeamPublic ? 'bg-black text-white border-black' : 'border-gray-300 text-gray-700'
-                      }`}
-                    >
-                      비공개
-                    </button>
-                  </div>
-                </div>
-
-                <div className="flex justify-end">
-                  <button
-                    type="submit"
-                    disabled={creatingTeam}
-                    className="px-6 py-2 bg-black text-white rounded-md hover:bg-gray-900 disabled:opacity-50"
-                  >
-                    {creatingTeam ? '생성 중...' : '팀 생성'}
-                  </button>
-                </div>
-              </form>
-            </div>
-
-            <div>
-              <div className="flex items-center justify-between mb-4">
-                <h3 className="text-xl font-semibold">팀 목록</h3>
-                <button
-                  onClick={loadTeams}
-                  disabled={teamsLoading}
-                  className="px-4 py-2 border border-black text-black rounded-md hover:bg-black hover:text-white disabled:opacity-50"
-                >
-                  {teamsLoading ? '로딩 중...' : '팀 목록 불러오기'}
-                </button>
-              </div>
-
-              {teams.length > 0 ? (
-                <div className="bg-white rounded-lg shadow-md overflow-hidden">
-                  <table className="min-w-full divide-y divide-gray-200">
-                    <thead className="bg-gray-50">
-                      <tr>
-                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">ID</th>
-                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">팀 이름</th>
-                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">팀장</th>
-                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">멤버</th>
-                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">공개 여부</th>
-                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">생성일</th>
-                      </tr>
-                    </thead>
-                    <tbody className="bg-white divide-y divide-gray-200">
-                      {teams.map((team) => (
-                        <tr key={team.id} className="hover:bg-gray-50">
-                          <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{team.id}</td>
-                          <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{team.name}</td>
-                          <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{team.leader}</td>
-                          <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                            {team.members} / {team.maxMembers}
-                          </td>
-                          <td className="px-6 py-4 whitespace-nowrap text-sm">
-                            <span className="px-2 py-1 text-xs rounded-full bg-gray-200 text-gray-800">
-                              {team.isPublic ? '공개' : '비공개'}
-                            </span>
-                          </td>
-                          <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{team.createdAt}</td>
-                        </tr>
-                      ))}
-                    </tbody>
-                  </table>
-                </div>
-              ) : (
-                <div className="bg-white p-8 rounded-lg shadow-md text-center">
-                  <p className="text-gray-500 mb-4">팀 데이터를 불러오려면 버튼을 클릭하세요.</p>
-                  <button
-                    onClick={loadTeams}
-                    disabled={teamsLoading}
-                    className="px-4 py-2 bg-black text-white rounded-md hover:bg-gray-900 disabled:opacity-50"
-                  >
-                    {teamsLoading ? '로딩 중...' : '팀 목록 불러오기'}
-                  </button>
-                </div>
-              )}
-            </div>
-          </div>
-        );
       default:
         return null;
     }
   };
 
   return (
-    <Layout>
-      <div className="flex min-h-screen">
-        
-        {/* Aside 영역 */}
-        <aside className="w-64 bg-gray-800 text-white p-6">
+    <div className="layout">
+      <NavBar />
+      <div className="layout__body">
+        <div className="admin">
 
-          <div className="mb-8">
-            <h1 className="text-xl font-bold">관리자 패널</h1>
-            <button
-              onClick={goBack}
-              className="text-sm text-gray-300 hover:text-white mt-2"
-            >
-              ← 메인으로 돌아가기
-            </button>
-          </div>
-          
-          <nav className="space-y-2">
-            {menuItems.map((item) => (
+          {/* Sidebar */}
+          <aside className="admin__sidebar">
+            <h1 className="admin__sidebar-title">관리자</h1>
+            <button onClick={goBack} className="admin__sidebar-back">메인으로</button>
+
+            <nav className="admin__nav">
+              {menuItems.map((item) => (
+                <button
+                  key={item.id}
+                  onClick={() => setActiveSection(item.id)}
+                  className={`admin__nav-item ${activeSection === item.id ? 'admin__nav-item--active' : ''}`}
+                >
+                  {item.label}
+                </button>
+              ))}
               <button
-                key={item.id}
-                onClick={() => setActiveSection(item.id)}
-                className={`w-full text-left px-4 py-3 rounded-lg transition-colors ${
-                  activeSection === item.id
-                    ? 'bg-white text-black'
-                    : 'text-gray-300 hover:bg-gray-700 hover:text-white'
-                }`}
+                onClick={() => setActiveSection('pending')}
+                className={`admin__nav-item ${activeSection === 'pending' ? 'admin__nav-item--active' : ''}`}
               >
-                <span className="mr-3">{item.icon}</span>
-                {item.label}
+                승인 대기 목록
+                <span className="admin__badge">{pendingUsers.length}</span>
               </button>
-            ))}
-          </nav>
-        </aside>
+              <button
+                onClick={() => { setActiveSection('posts'); loadPosts(); }}
+                className={`admin__nav-item ${activeSection === 'posts' ? 'admin__nav-item--active' : ''}`}
+              >
+                글 관리
+              </button>
+            </nav>
+          </aside>
 
-        {/* 메인 콘텐츠 영역 */}
-        <main className="flex-1 p-8 bg-gray-50">
-          {renderContent()}
-        </main>
+          {/* Content */}
+          <main className="admin__content">
+            {renderContent()}
+          </main>
 
+        </div>
       </div>
-    </Layout>
+      <Footer />
+    </div>
   );
 }
 

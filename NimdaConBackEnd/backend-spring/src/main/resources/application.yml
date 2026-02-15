@@ -5,7 +5,7 @@ spring:
   datasource:
     # 환경변수로 오버라이드 가능 (docker-compose.yml에서 설정)
     # 기본값: docker-compose의 MySQL 서비스 이름으로 연결
-    url: ${SPRING_DATASOURCE_URL:jdbc:mysql://mysql:3306/nimda_con?useSSL=false&serverTimezone=UTC&allowPublicKeyRetrieval=true}
+    url: ${SPRING_DATASOURCE_URL:jdbc:mysql://mysql:3306/nimda_con?useSSL=false&serverTimezone=Asia/Seoul&allowPublicKeyRetrieval=true}
     username: ${SPRING_DATASOURCE_USERNAME:nimda}
     password: ${SPRING_DATASOURCE_PASSWORD:nimda123}
     driver-class-name: com.mysql.cj.jdbc.Driver
@@ -20,18 +20,26 @@ spring:
   
   jpa:
     hibernate:
-      ddl-auto: update 
+      ddl-auto: none 
     show-sql: true
     properties:
       hibernate:
         dialect: org.hibernate.dialect.MySQL8Dialect
         format_sql: true # sql Formatting
         show_sql: true
-    defer-datasource-initialization: true
+    defer-datasource-initialization: false
   
   sql:
     init:
       mode: never  # 초기 데이터는 수동으로 import 또는 data.sql 사용 
+  
+  # Flyway 설정 (spring.flyway 하위에 위치해야 Spring Boot가 인식)
+  flyway:
+    enabled: true
+    locations: classpath:db/migration
+    baseline-on-migrate: true  # 기존 DB가 있을 경우 baseline 설정
+    validate-on-migrate: true
+    clean-disabled: true
   
   security:
     user:

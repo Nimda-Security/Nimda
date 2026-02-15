@@ -41,7 +41,6 @@ import java.util.Map;
 
 @RestController
 @RequestMapping("/api/download")
-@CrossOrigin(origins = "*")
 public class FileDownloadController {
 
     private static final Logger logger = LoggerFactory.getLogger(FileDownloadController.class);

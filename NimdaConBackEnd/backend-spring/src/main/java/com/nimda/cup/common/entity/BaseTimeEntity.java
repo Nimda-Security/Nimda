@@ -2,50 +2,27 @@ package com.nimda.cup.common.entity;
 
 import jakarta.persistence.*;
 import lombok.Getter;
+import org.springframework.data.annotation.CreatedDate;
+import org.springframework.data.annotation.LastModifiedDate;
+import org.springframework.data.jpa.domain.support.AuditingEntityListener;
 
 import java.time.LocalDateTime;
 
-@Embeddable
+/**
+ * 모든 엔티티의 공통 시간 필드를 관리하는 Base 클래스
+ * - @MappedSuperclass: 엔티티가 아닌 상속용 클래스
+ * - JPA Auditing을 사용하여 자동으로 시간 관리
+ */
+@MappedSuperclass
+@EntityListeners(AuditingEntityListener.class)
 @Getter
-public class BaseTimeEntity {
-    
-    @Column(name = "created_at")
+public abstract class BaseTimeEntity {
+
+    @CreatedDate
+    @Column(name = "created_at", nullable = false, updatable = false)
     private LocalDateTime createdAt;
-    
-    @Column(name = "updated_at")
+
+    @LastModifiedDate
+    @Column(name = "updated_at", nullable = false)
     private LocalDateTime updatedAt;
-    
-    // 기본 생성자 (JPA 필수)
-    protected BaseTimeEntity() {}
-    
-    // 생성용 생성자
-    public BaseTimeEntity(LocalDateTime createdAt, LocalDateTime updatedAt) {
-        this.createdAt = createdAt;
-        this.updatedAt = updatedAt;
-    }
-    
-    // 현재 시간으로 초기화하는 팩토리 메서드
-    public static BaseTimeEntity now() {
-        LocalDateTime now = LocalDateTime.now();
-        return new BaseTimeEntity(now, now);
-    }
-    
-    // 수정 시간만 갱신한 새 객체 반환
-    public BaseTimeEntity updateTime() {
-        return new BaseTimeEntity(this.createdAt, LocalDateTime.now());
-    }
-    
-    @PrePersist
-    public void prePersist() {
-        if (this.createdAt == null || this.updatedAt == null) {
-            LocalDateTime now = LocalDateTime.now();
-            this.createdAt = now;
-            this.updatedAt = now;
-        }
-    }
-    
-    @PreUpdate
-    public void preUpdate() {
-        this.updatedAt = LocalDateTime.now();
-    }
 }

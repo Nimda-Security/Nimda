@@ -1,0 +1,16 @@
+{
+  "dev": {
+    "baseUrl": "http://localhost:8080",
+    "adminUserId": "YOUR_ADMIN_USER_ID",
+    "adminPassword": "YOUR_ADMIN_PASSWORD",
+    "testUserId": "YOUR_TEST_USER_ID",
+    "testPassword": "YOUR_TEST_PASSWORD"
+  },
+  "prod": {
+    "baseUrl": "https://nimda.kr",
+    "adminUserId": "YOUR_ADMIN_USER_ID",
+    "adminPassword": "YOUR_ADMIN_PASSWORD",
+    "testUserId": "YOUR_TEST_USER_ID",
+    "testPassword": "YOUR_TEST_PASSWORD"
+  }
+}
