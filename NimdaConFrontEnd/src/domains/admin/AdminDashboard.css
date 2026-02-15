@@ -1,0 +1,326 @@
+/* ===========================
+   Admin Dashboard
+   =========================== */
+
+.admin {
+    display: flex;
+    min-height: 100vh;
+}
+
+/* Sidebar */
+.admin__sidebar {
+    width: 220px;
+    min-width: 220px;
+    padding: 24px;
+    border-right: 1px solid var(--color-gray-100);
+}
+
+.admin__sidebar-title {
+    font-size: 16px;
+    font-weight: 700;
+    color: var(--color-black);
+    line-height: 1.5;
+}
+
+.admin__sidebar-back {
+    font-size: 12px;
+    font-weight: 500;
+    color: var(--color-gray-400);
+    background: none;
+    border: none;
+    padding: 0;
+    cursor: pointer;
+    margin-bottom: 24px;
+    display: block;
+}
+
+.admin__sidebar-back:hover {
+    color: var(--color-black);
+}
+
+/* Navigation */
+.admin__nav {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+}
+
+.admin__nav-item {
+    width: 100%;
+    text-align: left;
+    padding: 8px 12px;
+    font-size: 14px;
+    font-weight: 500;
+    color: var(--color-gray-400);
+    background: none;
+    border: none;
+    cursor: pointer;
+    line-height: 1.5;
+    font-family: "Pretendard", sans-serif;
+}
+
+.admin__nav-item:hover {
+    color: var(--color-black);
+}
+
+.admin__nav-item--active {
+    color: var(--color-black);
+    font-weight: 700;
+}
+
+/* Badge */
+.admin__badge {
+    margin-left: 8px;
+    padding: 2px 6px;
+    font-size: 11px;
+    font-weight: 700;
+    background-color: var(--color-gray-100);
+    color: var(--color-black);
+    border-radius: 4px;
+}
+
+/* Content */
+.admin__content {
+    flex: 1;
+    padding: 32px;
+}
+
+/* Section Title */
+.admin__section-title {
+    font-size: 20px;
+    font-weight: 700;
+    color: var(--color-black);
+    margin-bottom: 24px;
+    line-height: 1.5;
+}
+
+/* Header Row */
+.admin__header-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 24px;
+}
+
+/* Button */
+.admin__btn {
+    padding: 8px 16px;
+    font-size: 14px;
+    font-weight: 500;
+    border: 1px solid var(--color-gray-200);
+    color: var(--color-black);
+    background: none;
+    cursor: pointer;
+    font-family: "Pretendard", sans-serif;
+}
+
+.admin__btn:hover {
+    background-color: var(--color-gray-100);
+}
+
+.admin__btn:disabled {
+    opacity: 0.4;
+    cursor: not-allowed;
+}
+
+.admin__btn--approve {
+    border: none;
+    padding: 4px 12px;
+    font-size: 12px;
+    font-weight: 500;
+    background-color: var(--color-black);
+    color: #ffffff;
+    border-radius: 4px;
+    cursor: pointer;
+}
+
+.admin__btn--approve:hover {
+    opacity: 0.8;
+}
+
+.admin__btn--reject {
+    border: 1px solid var(--color-gray-200);
+    padding: 4px 12px;
+    font-size: 12px;
+    font-weight: 500;
+    background: none;
+    color: var(--color-black);
+    border-radius: 4px;
+    cursor: pointer;
+}
+
+.admin__btn--reject:hover {
+    background-color: var(--color-gray-100);
+}
+
+.admin__btn--edit {
+    border: 1px solid var(--color-gray-200);
+    padding: 4px 12px;
+    font-size: 12px;
+    font-weight: 500;
+    background: none;
+    color: var(--color-black);
+    border-radius: 4px;
+    cursor: pointer;
+}
+
+.admin__btn--edit:hover {
+    background-color: var(--color-gray-100);
+}
+
+/* Table */
+.admin__table-wrap {
+    border: 1px solid var(--color-gray-100);
+}
+
+.admin__table {
+    width: 100%;
+    border-collapse: collapse;
+}
+
+.admin__table th {
+    padding: 12px 16px;
+    font-size: 12px;
+    font-weight: 700;
+    color: var(--color-gray-400);
+    text-align: center;
+    border-bottom: 1px solid var(--color-gray-100);
+}
+
+.admin__table td {
+    padding: 12px 16px;
+    font-size: 14px;
+    font-weight: 500;
+    color: var(--color-black);
+    text-align: center;
+    border-bottom: 1px solid var(--color-gray-100);
+}
+
+.admin__table tr:last-child td {
+    border-bottom: none;
+}
+
+.admin__table tbody tr:hover {
+    background-color: var(--color-gray-100);
+}
+
+/* Role Badge */
+.admin__role {
+    display: inline-block;
+    padding: 2px 8px;
+    font-size: 11px;
+    font-weight: 700;
+    border-radius: 4px;
+    background-color: var(--color-gray-100);
+    color: var(--color-black);
+}
+
+/* Empty State */
+.admin__empty {
+    border: 1px solid var(--color-gray-100);
+    padding: 32px;
+    text-align: center;
+    font-size: 14px;
+    font-weight: 500;
+    color: var(--color-gray-400);
+}
+
+/* Info Box */
+.admin__info-box {
+    border: 1px solid var(--color-gray-100);
+    padding: 24px;
+}
+
+.admin__info-box h3 {
+    font-size: 14px;
+    font-weight: 700;
+    color: var(--color-black);
+    margin-bottom: 16px;
+    line-height: 1.5;
+}
+
+.admin__info-box ul {
+    list-style: none;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    font-size: 14px;
+    font-weight: 500;
+    color: var(--color-gray-400);
+    line-height: 1.5;
+}
+
+/* Modal */
+.admin__modal-overlay {
+    position: fixed;
+    inset: 0;
+    background-color: rgba(0, 0, 0, 0.4);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 50;
+}
+
+.admin__modal {
+    background: #ffffff;
+    border-radius: 8px;
+    padding: 24px;
+    max-width: 640px;
+    width: 100%;
+    margin: 0 16px;
+    max-height: 90vh;
+    overflow-y: auto;
+}
+
+.admin__modal-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 20px;
+}
+
+.admin__modal-header h3 {
+    font-size: 16px;
+    font-weight: 700;
+    color: var(--color-black);
+}
+
+.admin__modal-close {
+    background: none;
+    border: none;
+    font-size: 16px;
+    color: var(--color-gray-400);
+    cursor: pointer;
+}
+
+.admin__modal-close:hover {
+    color: var(--color-black);
+}
+
+.admin__modal-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 16px;
+}
+
+.admin__modal-label {
+    font-size: 12px;
+    font-weight: 500;
+    color: var(--color-gray-400);
+    line-height: 1.5;
+}
+
+.admin__modal-value {
+    font-size: 14px;
+    font-weight: 500;
+    color: var(--color-black);
+    margin-top: 2px;
+    line-height: 1.5;
+}
+
+/* Action Group */
+.admin__actions {
+    display: flex;
+    gap: 8px;
+    justify-content: center;
+}
