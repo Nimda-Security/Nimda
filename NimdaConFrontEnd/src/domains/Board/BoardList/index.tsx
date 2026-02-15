@@ -2,21 +2,21 @@ import { useEffect, useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import Layout from '@/components/Layout';
 import { getBoardListAPI } from '@/api/board';
-import type { Board, BoardType } from '../types';
-import { BOARD_TYPE_LABELS } from '../constants';
+import type { Board, Category } from '../types';
+import { CATEGORY_LABELS } from '../constants';
 
 interface BoardListPageProps {
-  boardType?: BoardType;
+  slug?: string;
 }
 
-function BoardListPage({ boardType: propBoardType }: BoardListPageProps) {
+function BoardListPage({ slug: propSlug }: BoardListPageProps) {
   const navigate = useNavigate();
   const { boardType: paramBoardType } = useParams<{ boardType: string }>();
-  
-  // props나 URL 파라미터에서 boardType 가져오기
-  const boardType = (propBoardType || paramBoardType?.toUpperCase() || 'NEWS') as BoardType;
-  
+
+  const slug = propSlug || paramBoardType?.toLowerCase() || 'news';
+
   const [boards, setBoards] = useState<Board[]>([]);
+  const [category, setCategory] = useState<Category | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [currentPage, setCurrentPage] = useState(0);
@@ -25,15 +25,15 @@ function BoardListPage({ boardType: propBoardType }: BoardListPageProps) {
 
   useEffect(() => {
     fetchBoards();
-  }, [boardType, currentPage, searchKeyword]);
+  }, [slug, currentPage, searchKeyword]);
 
   const fetchBoards = async () => {
     try {
       setLoading(true);
       setError(null);
-      
+
       const response = await getBoardListAPI({
-        boardType,
+        slug,
         searchKeyword: searchKeyword || undefined,
         page: currentPage,
         size: 10,
@@ -43,6 +43,9 @@ function BoardListPage({ boardType: propBoardType }: BoardListPageProps) {
       if (response.success) {
         setBoards(response.posts);
         setTotalPages(response.totalPages);
+        if (response.category) {
+          setCategory(response.category);
+        }
       } else {
         setError(response.message);
         setBoards([]);
@@ -67,22 +70,21 @@ function BoardListPage({ boardType: propBoardType }: BoardListPageProps) {
   };
 
   const handleBoardClick = (id: number) => {
-    navigate(`/board/${boardType.toLowerCase()}/${id}`);
+    navigate(`/board/${slug}/${id}`);
   };
 
   const handleWriteClick = () => {
-    navigate(`/board/${boardType.toLowerCase()}/write`);
+    navigate(`/board/${slug}/write`);
   };
 
   return (
     <Layout>
       <div className="min-h-screen bg-white pt-8">
         <div className="container mx-auto px-4 py-6 max-w-6xl">
-          {/* 헤더 */}
           <header className="flex items-center justify-between mb-6">
             <div>
               <h1 className="text-2xl font-bold text-black">
-                {BOARD_TYPE_LABELS[boardType]}
+                {category ? category.name : CATEGORY_LABELS[slug] || '게시판'}
               </h1>
               <p className="text-sm text-gray-600 mt-1">
                 총 {boards.length}개의 게시글
@@ -96,7 +98,6 @@ function BoardListPage({ boardType: propBoardType }: BoardListPageProps) {
             </button>
           </header>
 
-          {/* 검색 */}
           <form onSubmit={handleSearch} className="mb-6">
             <div className="flex gap-2">
               <input
@@ -115,7 +116,6 @@ function BoardListPage({ boardType: propBoardType }: BoardListPageProps) {
             </div>
           </form>
 
-          {/* 게시글 목록 */}
           <main className="min-h-[200px]">
             {loading && (
               <div className="text-center py-12 text-gray-600">로딩 중...</div>
@@ -139,11 +139,13 @@ function BoardListPage({ boardType: propBoardType }: BoardListPageProps) {
                       className="p-4 border border-gray-200 rounded hover:border-black hover:shadow-md transition cursor-pointer"
                     >
                       <h3 className="text-lg font-semibold text-black mb-2">
+                        {board.pinned && <span className="text-red-600 mr-2">[공지]</span>}
                         {board.title}
                       </h3>
                       <div className="flex items-center gap-4 text-sm text-gray-600">
                         <span>{board.author.nickname}</span>
                         <span>{new Date(board.createdAt).toLocaleDateString()}</span>
+                        <span>조회 {board.views}</span>
                         {board.filename && (
                           <span className="text-blue-600">📎 첨부파일</span>
                         )}
@@ -155,18 +157,16 @@ function BoardListPage({ boardType: propBoardType }: BoardListPageProps) {
             )}
           </main>
 
-          {/* 페이지네이션 */}
           {!loading && !error && totalPages > 1 && (
             <div className="flex justify-center gap-2 mt-8">
               {Array.from({ length: totalPages }, (_, i) => i).map((page) => (
                 <button
                   key={page}
                   onClick={() => handlePageChange(page)}
-                  className={`px-4 py-2 rounded ${
-                    page === currentPage
+                  className={`px-4 py-2 rounded ${page === currentPage
                       ? 'bg-black text-white'
                       : 'bg-gray-200 text-gray-700 hover:bg-gray-300'
-                  }`}
+                    }`}
                 >
                   {page + 1}
                 </button>
@@ -180,4 +180,3 @@ function BoardListPage({ boardType: propBoardType }: BoardListPageProps) {
 }
 
 export default BoardListPage;
-

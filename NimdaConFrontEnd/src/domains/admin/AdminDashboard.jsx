@@ -168,7 +168,7 @@ function AdminDashboard() {
   const loadPosts = async () => {
     setPostsLoading(true);
     try {
-      const result = await getBoardListAPI({ boardType: 'NEWS', page: 0, size: 20 });
+      const result = await getBoardListAPI({ slug: 'news', page: 0, size: 20 });
       if (result.success) {
         setPosts(result.posts || []);
       } else {
@@ -427,7 +427,8 @@ function AdminDashboard() {
         };
 
         const handleEditPost = (post) => {
-          navigate(`/board/${post.boardType}/edit/${post.id}`);
+          const slug = post.category?.slug || 'news';
+          navigate(`/board/${slug}/edit/${post.id}`);
         };
 
         return (
@@ -458,7 +459,7 @@ function AdminDashboard() {
                         <td>{post.id}</td>
                         <td style={{ textAlign: 'left' }}>{post.title}</td>
                         <td>{post.author?.nickname || '-'}</td>
-                        <td>{post.boardType || '-'}</td>
+                        <td>{post.category?.name || '-'}</td>
                         <td>{post.createdAt ? new Date(post.createdAt).toLocaleDateString() : '-'}</td>
                         <td>
                           <div className="admin__actions">

@@ -2,13 +2,13 @@ import { useEffect, useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import Layout from '@/components/Layout';
 import { getBoardDetailAPI, updateBoardAPI } from '@/api/board';
-import type { Board, BoardType } from '../types';
+import type { Board } from '../types';
 
 function BoardEditPage() {
   const navigate = useNavigate();
   const { boardType: paramBoardType, id } = useParams<{ boardType: string; id: string }>();
 
-  const boardType = (paramBoardType?.toUpperCase() || 'NEWS') as BoardType;
+  const slug = paramBoardType?.toLowerCase() || 'news';
 
   const [board, setBoard] = useState<Board | null>(null);
   const [title, setTitle] = useState('');
@@ -58,8 +58,13 @@ function BoardEditPage() {
       setIsSubmitting(true);
       setError(null);
 
+      if (!board.category) {
+        setError('카테고리 정보가 없습니다.');
+        return;
+      }
+
       const response = await updateBoardAPI(board.id, {
-        boardType,
+        categoryId: board.category.id,
         title: title.trim(),
         content: content.trim(),
         file: file || undefined,
@@ -67,7 +72,8 @@ function BoardEditPage() {
 
       if (response.success && 'board' in response) {
         alert('게시글이 수정되었습니다.');
-        navigate(`/board/${boardType.toLowerCase()}/${board.id}`);
+        const boardSlug = response.board.category?.slug || slug;
+        navigate(`/board/${boardSlug}/${board.id}`);
       } else {
         setError(response.message || '게시글 수정에 실패했습니다.');
       }
@@ -80,9 +86,10 @@ function BoardEditPage() {
 
   const handleCancel = () => {
     if (board) {
-      navigate(`/board/${boardType.toLowerCase()}/${board.id}`);
+      const boardSlug = board.category?.slug || slug;
+      navigate(`/board/${boardSlug}/${board.id}`);
     } else {
-      navigate(`/board/${boardType.toLowerCase()}`);
+      navigate(`/board/${slug}`);
     }
   };
 

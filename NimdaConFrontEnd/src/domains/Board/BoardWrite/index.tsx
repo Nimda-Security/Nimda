@@ -1,20 +1,32 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import Layout from '@/components/Layout';
 import { createBoardAPI } from '@/api/board';
-import type { BoardType } from '../types';
+import { getCategoryBySlugAPI } from '@/api/category';
+import type { Category } from '../types';
 
 function BoardWritePage() {
   const navigate = useNavigate();
   const { boardType: paramBoardType } = useParams<{ boardType: string }>();
 
-  const boardType = (paramBoardType?.toUpperCase() || 'NEWS') as BoardType;
+  const slug = paramBoardType?.toLowerCase() || 'news';
+  const [category, setCategory] = useState<Category | null>(null);
 
   const [title, setTitle] = useState('');
   const [content, setContent] = useState('');
   const [file, setFile] = useState<File | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
+
+  useEffect(() => {
+    const fetchCategory = async () => {
+      const categoryData = await getCategoryBySlugAPI(slug);
+      if (categoryData) {
+        setCategory(categoryData);
+      }
+    };
+    fetchCategory();
+  }, [slug]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -24,12 +36,17 @@ function BoardWritePage() {
       return;
     }
 
+    if (!category) {
+      setError('카테고리 정보를 불러올 수 없습니다.');
+      return;
+    }
+
     try {
       setIsSubmitting(true);
       setError(null);
 
       const response = await createBoardAPI({
-        boardType,
+        categoryId: category.id,
         title: title.trim(),
         content: content.trim(),
         file: file || undefined,
@@ -37,7 +54,7 @@ function BoardWritePage() {
 
       if (response.success && 'board' in response) {
         alert('게시글이 작성되었습니다.');
-        navigate(`/board/${boardType.toLowerCase()}/${response.board.id}`);
+        navigate(`/board/${slug}/${response.board.id}`);
       } else {
         setError(response.message || '게시글 작성에 실패했습니다.');
       }
@@ -50,7 +67,7 @@ function BoardWritePage() {
 
   const handleCancel = () => {
     if (window.confirm('작성 중인 내용이 사라집니다. 정말 나가시겠습니까?')) {
-      navigate(`/board/${boardType.toLowerCase()}`);
+      navigate(`/board/${slug}`);
     }
   };
 

@@ -1,8 +1,7 @@
 // 게시판 관련 API 함수들
 
 import type {
-  Board,
-  BoardType,
+  Category,
   BoardListParams,
   BoardListResponse,
   BoardDetailResponse,
@@ -37,16 +36,32 @@ export const getBoardListAPI = async (
   params: BoardListParams
 ): Promise<BoardListResponse> => {
   try {
-    const { boardType, searchKeyword, page = 0, size = 10, sort = 'createdAt,desc' } = params;
+    const { categoryId, slug, searchKeyword, page = 0, size = 10, sort = 'createdAt,desc' } = params;
 
-    // 쿼리 파라미터 구성
+    if (!categoryId && !slug) {
+      return {
+        success: false,
+        message: 'categoryId 또는 slug 파라미터가 필요합니다.',
+        posts: [],
+        totalElements: 0,
+        totalPages: 0,
+        currentPage: 0,
+        category: {} as Category,
+      };
+    }
+
     const queryParams = new URLSearchParams({
-      boardType,
       page: page.toString(),
       size: size.toString(),
       sort,
     });
 
+    if (categoryId) {
+      queryParams.append('categoryId', categoryId.toString());
+    }
+    if (slug) {
+      queryParams.append('slug', slug);
+    }
     if (searchKeyword && searchKeyword.trim()) {
       queryParams.append('searchKeyword', searchKeyword.trim());
     }
@@ -68,7 +83,7 @@ export const getBoardListAPI = async (
         totalElements: result.totalElements || 0,
         totalPages: result.totalPages || 0,
         currentPage: result.currentPage || 0,
-        boardType: result.boardType || boardType,
+        category: result.category || ({} as Category),
       };
     }
 
@@ -79,7 +94,7 @@ export const getBoardListAPI = async (
       totalElements: 0,
       totalPages: 0,
       currentPage: 0,
-      boardType,
+      category: {} as Category,
     };
   } catch (error) {
     console.error('게시글 목록 조회 API 오류:', error);
@@ -90,7 +105,7 @@ export const getBoardListAPI = async (
       totalElements: 0,
       totalPages: 0,
       currentPage: 0,
-      boardType: params.boardType,
+      category: {} as Category,
     };
   }
 };
@@ -147,7 +162,7 @@ export const createBoardAPI = async (
   try {
     const token = localStorage.getItem('authToken');
     console.log('[createBoardAPI] 토큰 확인:', token ? `존재함 (길이: ${token.length})` : '없음');
-    
+
     if (!token) {
       return {
         success: false,
@@ -156,7 +171,7 @@ export const createBoardAPI = async (
     }
 
     const formData = new FormData();
-    formData.append('boardType', data.boardType);
+    formData.append('categoryId', data.categoryId.toString());
     formData.append('title', data.title);
     formData.append('content', data.content);
     if (data.file) {
@@ -167,7 +182,7 @@ export const createBoardAPI = async (
       url: API_BASE_URL,
       method: 'POST',
       hasToken: !!token,
-      boardType: data.boardType,
+      categoryId: data.categoryId,
       title: data.title,
     });
 
@@ -226,7 +241,7 @@ export const updateBoardAPI = async (
     }
 
     const formData = new FormData();
-    formData.append('boardType', data.boardType);
+    formData.append('categoryId', data.categoryId.toString());
     formData.append('title', data.title);
     formData.append('content', data.content);
     if (data.file) {
@@ -313,6 +328,148 @@ export const deleteBoardAPI = async (
 };
 
 /**
+ * 고정글 목록 조회 API (메인 페이지 공지사항 섹션용)
+ */
+export const getPinnedPostsAPI = async (
+  categoryId?: number,
+  slug?: string,
+  size: number = 4
+): Promise<BoardListResponse> => {
+  try {
+    if (!categoryId && !slug) {
+      return {
+        success: false,
+        message: 'categoryId 또는 slug 파라미터가 필요합니다.',
+        posts: [],
+        totalElements: 0,
+        totalPages: 0,
+        currentPage: 0,
+        category: {} as Category,
+      };
+    }
+
+    const queryParams = new URLSearchParams({
+      page: '0',
+      size: size.toString(),
+    });
+
+    if (categoryId) {
+      queryParams.append('categoryId', categoryId.toString());
+    }
+    if (slug) {
+      queryParams.append('slug', slug);
+    }
+
+    const response = await fetch(`${API_BASE_URL}/pinned?${queryParams.toString()}`, {
+      method: 'GET',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+    });
+
+    const result = await parseJsonSafe(response);
+
+    if (response.ok && result) {
+      return {
+        success: true,
+        message: result.message || '고정글 목록을 성공적으로 조회했습니다.',
+        posts: result.posts || [],
+        totalElements: result.totalElements || 0,
+        totalPages: result.totalPages || 0,
+        currentPage: 0,
+        category: result.category || ({} as Category),
+      };
+    }
+
+    return {
+      success: false,
+      message: (result?.message as string) || '고정글 목록을 불러올 수 없습니다.',
+      posts: [],
+      totalElements: 0,
+      totalPages: 0,
+      currentPage: 0,
+      category: {} as Category,
+    };
+  } catch (error) {
+    console.error('고정글 목록 조회 API 오류:', error);
+    return {
+      success: false,
+      message: '고정글 목록을 불러올 수 없습니다.',
+      posts: [],
+      totalElements: 0,
+      totalPages: 0,
+      currentPage: 0,
+      category: {} as Category,
+    };
+  }
+};
+
+/**
+ * 인기글 목록 조회 API (메인 페이지 인기글 섹션용)
+ */
+export const getPopularPostsAPI = async (
+  categoryId?: number,
+  slug?: string,
+  size: number = 10
+): Promise<BoardListResponse> => {
+  try {
+    const queryParams = new URLSearchParams({
+      page: '0',
+      size: size.toString(),
+    });
+
+    if (categoryId) {
+      queryParams.append('categoryId', categoryId.toString());
+    }
+    if (slug) {
+      queryParams.append('slug', slug);
+    }
+
+    const response = await fetch(`${API_BASE_URL}/popular?${queryParams.toString()}`, {
+      method: 'GET',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+    });
+
+    const result = await parseJsonSafe(response);
+
+    if (response.ok && result) {
+      return {
+        success: true,
+        message: result.message || '인기글 목록을 성공적으로 조회했습니다.',
+        posts: result.posts || [],
+        totalElements: result.totalElements || 0,
+        totalPages: result.totalPages || 0,
+        currentPage: 0,
+        category: result.category || ({} as Category),
+      };
+    }
+
+    return {
+      success: false,
+      message: (result?.message as string) || '인기글 목록을 불러올 수 없습니다.',
+      posts: [],
+      totalElements: 0,
+      totalPages: 0,
+      currentPage: 0,
+      category: {} as Category,
+    };
+  } catch (error) {
+    console.error('인기글 목록 조회 API 오류:', error);
+    return {
+      success: false,
+      message: '인기글 목록을 불러올 수 없습니다.',
+      posts: [],
+      totalElements: 0,
+      totalPages: 0,
+      currentPage: 0,
+      category: {} as Category,
+    };
+  }
+};
+
+/**
  * 파일 다운로드 URL 생성
  * 
  * @param filepath 파일 경로 (예: /api/download/filename.pdf)
@@ -320,12 +477,12 @@ export const deleteBoardAPI = async (
  */
 export const getFileDownloadURL = (filepath: string | null | undefined): string | null => {
   if (!filepath) return null;
-  
+
   // 이미 전체 URL이면 그대로 반환
   if (filepath.startsWith('http://') || filepath.startsWith('https://')) {
     return filepath;
   }
-  
+
   // filepath가 /api/download/ 형식이면 그대로 사용
   // 파일명에 특수문자가 있을 수 있으므로 인코딩은 브라우저가 자동 처리
   return filepath;
