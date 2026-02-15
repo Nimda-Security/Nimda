@@ -79,6 +79,10 @@ certbot-www/
 !schema.sql
 !**/db/migration/*.sql
 
+# Bruno 환경변수 (민감 정보)
+bruno/**/vars.json
+!bruno/**/vars.example.json
+
 # Test results
 load-tests/results/
 *.zip
