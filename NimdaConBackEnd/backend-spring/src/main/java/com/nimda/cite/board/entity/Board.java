@@ -31,7 +31,7 @@ package com.nimda.cite.board.entity;
  */
 
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
-import com.nimda.cite.board.enums.BoardType;
+import com.nimda.cite.board.entity.Category;
 import com.nimda.cup.common.entity.BaseTimeEntity;
 import com.nimda.cup.user.entity.User;
 import jakarta.persistence.*;
@@ -75,13 +75,26 @@ public class Board extends BaseTimeEntity {
     @JsonIgnoreProperties({ "hibernateLazyInitializer", "handler" }) // LAZY 로딩 프록시 객체 직렬화 문제 해결
     private User author; // 작성자
 
-    // ========== [통합 포인트 #3] ==========
-    // [기존] 없음
-    // [신규] BoardType enum 추가 (게시판 타입 필터링용)
-    // [이유] 게시판 타입별 필터링 (NEWS, ACADEMIC, COMMUNITY, QNA, FREE)
-    @Enumerated(EnumType.STRING)
-    @Column(name = "board_type", nullable = false)
-    private BoardType boardType;
+    // ========== [ERD 구조 반영] ==========
+    // [변경] BoardType enum → Category 관계로 변경
+    // [이유] ERD 구조에 따른 계층형 카테고리 시스템
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "category_id", nullable = false)
+    @JsonIgnoreProperties({ "hibernateLazyInitializer", "handler" })
+    private Category category;
+
+    // ========== [ERD 구조 반영] ==========
+    // [신규] 조회수 필드 추가 (ERD의 post_view)
+    // [이유] 메인 페이지 인기글 섹션, 게시글 조회수 기능
+    // [참고] 좋아요는 별도 테이블로 관리하므로 Board 엔터티에 포함하지 않음
+    @Column(name = "post_view", nullable = false)
+    private Integer views = 0;
+
+    // ========== [메인 페이지 API 필요] ==========
+    // [신규] 고정글 여부 필드 추가
+    // [이유] 메인 페이지 공지사항 섹션 (고정글 우선 표시)
+    @Column(name = "pinned", nullable = false)
+    private Boolean pinned = false;
 
     // ========== [기존 코드 유지] ==========
     // [기존] 파일명 - 변경 없음 (파일 업로드 기능 유지)

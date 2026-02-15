@@ -1,41 +1,12 @@
 package com.nimda.cite.board.controller;
 
-/**
- * ========================================
- * BoardController.java
- * ========================================
- * 
- * [기존 게시판 코드 기준]
- * - 엔드포인트: /api/board → /api/cite/board로 변경
- * - 응답 형식: Page<Board>, Board, String → Map<String, Object>로 변경
- * - 반환 타입: String "success" → ResponseEntity<Map<String, Object>>로 변경
- * - 패키지: com.Board.Board.controller → com.nimda.cite.board.controller
- * 
- * [현재 프로젝트 통합 사항]
- * 1. 응답 형식: Map<String, Object> (success, message, data 포함) - 현재 프로젝트 스타일
- * 2. BoardType 필터링 파라미터 추가 (게시판 타입별 조회)
- * 3. User 작성자 정보 처리 (JWT 토큰에서 추출)
- * 4. 예외 처리: 현재 프로젝트 스타일 적용 (try-catch, Map 응답)
- * 5. ID 타입: Long으로 변경
- * 
- * [주요 변경점]
- * - 기존: @GetMapping → return Page<Board>
- * - 현재: @GetMapping → return ResponseEntity<Map<String, Object>>
- * - 기존: @PostMapping → return "success"
- * - 현재: @PostMapping → return ResponseEntity<Map<String, Object>>
- * - 기존: 작성자 정보 없음
- * - 현재: JWT 토큰에서 작성자 정보 추출
- * ========================================
- */
-
 import com.nimda.cite.board.entity.Board;
-import com.nimda.cite.board.enums.BoardType;
+import com.nimda.cite.board.entity.Category;
+import com.nimda.cite.board.repository.CategoryRepository;
 import com.nimda.cite.board.service.BoardService;
 import com.nimda.cup.common.util.JwtUtil;
 import com.nimda.cup.user.entity.User;
 import com.nimda.cup.user.repository.UserRepository;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -50,63 +21,49 @@ import java.util.HashMap;
 import java.util.Map;
 
 @RestController
-@RequestMapping("/api/cite/board") // [수정] /api/board → /api/cite/board
+@RequestMapping("/api/cite/board")
 public class BoardController {
-
-    private static final Logger logger = LoggerFactory.getLogger(BoardController.class);
 
     @Autowired
     private BoardService boardService;
 
     @Autowired
-    private JwtUtil jwtUtil; // [신규] JWT 토큰 처리용
+    private CategoryRepository categoryRepository;
 
     @Autowired
-    private UserRepository userRepository; // [신규] User 조회용
+    private JwtUtil jwtUtil;
 
-    // ========== [통합 포인트 #1] ==========
-    /**
-     * 게시판 타입별 게시글 리스트 조회 API
-     * 
-     * [기존 코드]
-     * - 엔드포인트: GET /api/board
-     * - 파라미터: Pageable pageable, String searchKeyword (optional)
-     * - 반환 타입: Page<Board>
-     * - 기능: 모든 게시글 조회 또는 검색
-     * 
-     * [수정 사항]
-     * - 엔드포인트: GET /api/cite/board
-     * - 파라미터: BoardType boardType (필수), String searchKeyword (optional), Pageable
-     * pageable
-     * - 반환 타입: ResponseEntity<Map<String, Object>>
-     * - 기능: 게시판 타입별 조회 또는 타입별 검색
-     * - 이유: 게시판 타입별 필터링 기능 추가, 현재 프로젝트 응답 형식 적용
-     */
+    @Autowired
+    private UserRepository userRepository;
+
     @GetMapping
-    public ResponseEntity<Map<String, Object>> getPostsByBoardType(
-            @RequestParam BoardType boardType, // [신규] 게시판 타입 필터링 (필수)
-            @RequestParam(value = "searchKeyword", required = false) String searchKeyword, // [기존 유지] 검색어 (선택)
-            @PageableDefault(size = 10, sort = "createdAt", direction = Sort.Direction.DESC) Pageable pageable // [기존
-                                                                                                               // 유지]
-                                                                                                               // 페이지네이션
-    ) {
+    public ResponseEntity<Map<String, Object>> getPostsByCategory(
+            @RequestParam(value = "categoryId", required = false) Long categoryId,
+            @RequestParam(value = "slug", required = false) String slug,
+            @RequestParam(value = "searchKeyword", required = false) String searchKeyword,
+            @PageableDefault(size = 10, sort = "createdAt", direction = Sort.Direction.DESC) Pageable pageable) {
         try {
-            Page<Board> boards;
-
-            // ========== [기존 로직 유지 + 확장] ==========
-            // [기존] 검색어가 없으면 전체 조회, 있으면 검색
-            // [수정] 검색어가 없으면 타입별 조회, 있으면 타입별 검색
-            if (searchKeyword == null || searchKeyword.isEmpty()) {
-                // [신규] 게시판 타입별 조회
-                boards = boardService.boardListByBoardType(boardType, pageable);
+            Category category = null;
+            if (categoryId != null) {
+                category = categoryRepository.findById(categoryId)
+                        .orElseThrow(() -> new RuntimeException("카테고리를 찾을 수 없습니다: " + categoryId));
+            } else if (slug != null) {
+                category = categoryRepository.findBySlugAndIsActiveTrue(slug)
+                        .orElseThrow(() -> new RuntimeException("카테고리를 찾을 수 없습니다: " + slug));
             } else {
-                // [신규] 게시판 타입별 + 검색 조합
-                boards = boardService.boardSearchListByBoardType(boardType, searchKeyword, pageable);
+                Map<String, Object> errorResponse = new HashMap<>();
+                errorResponse.put("success", false);
+                errorResponse.put("message", "categoryId 또는 slug 파라미터가 필요합니다.");
+                return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(errorResponse);
             }
 
-            // ========== [통합 포인트 #2] ==========
-            // [기존] return boards; // Page<Board> 직접 반환
-            // [수정] Map<String, Object> 응답 형식으로 변경 (현재 프로젝트 스타일)
+            Page<Board> boards;
+            if (searchKeyword == null || searchKeyword.isEmpty()) {
+                boards = boardService.boardListByCategory(category, pageable);
+            } else {
+                boards = boardService.boardSearchListByCategory(category, searchKeyword, pageable);
+            }
+
             Map<String, Object> response = new HashMap<>();
             response.put("success", true);
             response.put("message", "게시글 목록을 성공적으로 조회했습니다.");
@@ -114,114 +71,137 @@ public class BoardController {
             response.put("totalElements", boards.getTotalElements());
             response.put("totalPages", boards.getTotalPages());
             response.put("currentPage", boards.getNumber());
-            response.put("boardType", boardType);
+            response.put("category", category);
 
             return ResponseEntity.ok(response);
 
         } catch (Exception e) {
-            // ========== [통합 포인트 #3] ==========
-            // [기존] 예외 처리 없음
-            // [수정] 현재 프로젝트 스타일의 예외 처리 (Map 응답)
             Map<String, Object> errorResponse = new HashMap<>();
             errorResponse.put("success", false);
             errorResponse.put("message", "게시글 목록 조회 중 오류가 발생했습니다: " + e.getMessage());
-
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(errorResponse);
         }
     }
 
-    // ========== [기존 코드 유지 + 수정] ==========
-    /**
-     * 게시글 등록 API
-     * 
-     * [기존 코드]
-     * - 엔드포인트: POST /api/board
-     * - 파라미터: String title, String content, MultipartFile file (optional)
-     * - 반환 타입: String "success"
-     * - 기능: 게시글 작성
-     * 
-     * [수정 사항]
-     * - 엔드포인트: POST /api/cite/board
-     * - 파라미터: BoardType boardType (신규), String title, String content, MultipartFile
-     * file (optional), Authorization header (JWT)
-     * - 반환 타입: ResponseEntity<Map<String, Object>>
-     * - 기능: 게시글 작성 (작성자 정보 추가, BoardType 설정)
-     * - 이유: 작성자 정보 관리, 게시판 타입 설정, 현재 프로젝트 응답 형식 적용
-     */
-    @PostMapping
-    public ResponseEntity<Map<String, Object>> write(
-            @RequestHeader(value = "Authorization", required = false) String authHeader, // [신규] JWT 토큰
-            @RequestParam("boardType") BoardType boardType, // [신규] 게시판 타입
-            @RequestParam("title") String title, // [기존 유지]
-            @RequestParam("content") String content, // [기존 유지]
-            @RequestPart(value = "file", required = false) MultipartFile file // [기존 유지] 파일 업로드
-    ) {
+    @GetMapping("/pinned")
+    public ResponseEntity<Map<String, Object>> getPinnedPosts(
+            @RequestParam(value = "categoryId", required = false) Long categoryId,
+            @RequestParam(value = "slug", required = false) String slug,
+            @PageableDefault(size = 4, sort = "createdAt", direction = Sort.Direction.DESC) Pageable pageable) {
         try {
-            // ========== [통합 포인트 #4] ==========
-            // [기존] 작성자 정보 없음
-            // [수정] JWT 토큰에서 작성자 정보 추출 (현재 프로젝트 스타일)
-            User author = null;
-
-            logger.debug("게시글 작성 요청 - Authorization 헤더: {}", authHeader != null ? "존재함" : "없음");
-
-            if (authHeader != null && authHeader.startsWith("Bearer ")) {
-                String token = authHeader.substring(7); // "Bearer " 제거
-                logger.debug("토큰 추출 완료, 토큰 길이: {}", token.length());
-
-                try {
-                    // 토큰 만료 확인
-                    if (jwtUtil.isTokenExpired(token)) {
-                        logger.warn("만료된 토큰으로 게시글 작성 시도");
-                        Map<String, Object> errorResponse = new HashMap<>();
-                        errorResponse.put("success", false);
-                        errorResponse.put("message", "토큰이 만료되었습니다. 다시 로그인해주세요.");
-                        return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(errorResponse);
-                    }
-
-                    Long userId = jwtUtil.extractUserId(token);
-                    logger.debug("토큰에서 추출한 userId: {}", userId);
-
-                    if (userId != null) {
-                        author = userRepository.findById(userId)
-                                .orElseThrow(() -> new RuntimeException("사용자를 찾을 수 없습니다: " + userId));
-                        logger.info("게시글 작성자 인증 성공 - userId: {}, nickname: {}", userId, author.getNickname());
-                    } else {
-                        logger.warn("토큰에서 userId 추출 실패 - userId가 null");
-                    }
-                } catch (Exception e) {
-                    logger.error("JWT 토큰 파싱 오류: {}", e.getMessage(), e);
-                    Map<String, Object> errorResponse = new HashMap<>();
-                    errorResponse.put("success", false);
-                    errorResponse.put("message", "유효하지 않은 토큰입니다. 다시 로그인해주세요. (오류: " + e.getMessage() + ")");
-                    return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(errorResponse);
-                }
+            Category category = null;
+            if (categoryId != null) {
+                category = categoryRepository.findById(categoryId)
+                        .orElseThrow(() -> new RuntimeException("카테고리를 찾을 수 없습니다: " + categoryId));
+            } else if (slug != null) {
+                category = categoryRepository.findBySlugAndIsActiveTrue(slug)
+                        .orElseThrow(() -> new RuntimeException("카테고리를 찾을 수 없습니다: " + slug));
             } else {
-                logger.warn("Authorization 헤더가 없거나 Bearer 형식이 아님 - 헤더: {}", authHeader);
+                Map<String, Object> errorResponse = new HashMap<>();
+                errorResponse.put("success", false);
+                errorResponse.put("message", "categoryId 또는 slug 파라미터가 필요합니다.");
+                return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(errorResponse);
             }
 
-            // 작성자가 없으면 에러 반환 (선택사항: 익명 사용자 허용 가능)
+            Page<Board> boards = boardService.boardListByCategoryWithPinned(category, pageable);
+
+            Map<String, Object> response = new HashMap<>();
+            response.put("success", true);
+            response.put("message", "고정글 목록을 성공적으로 조회했습니다.");
+            response.put("posts", boards.getContent());
+            response.put("totalElements", boards.getTotalElements());
+
+            return ResponseEntity.ok(response);
+
+        } catch (Exception e) {
+            Map<String, Object> errorResponse = new HashMap<>();
+            errorResponse.put("success", false);
+            errorResponse.put("message", "고정글 목록 조회 중 오류가 발생했습니다: " + e.getMessage());
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(errorResponse);
+        }
+    }
+
+    @GetMapping("/popular")
+    public ResponseEntity<Map<String, Object>> getPopularPosts(
+            @RequestParam(value = "categoryId", required = false) Long categoryId,
+            @RequestParam(value = "slug", required = false) String slug,
+            @PageableDefault(size = 10, sort = "createdAt", direction = Sort.Direction.DESC) Pageable pageable) {
+        try {
+            Page<Board> boards;
+            if (categoryId != null || slug != null) {
+                Category category = null;
+                if (categoryId != null) {
+                    category = categoryRepository.findById(categoryId)
+                            .orElseThrow(() -> new RuntimeException("카테고리를 찾을 수 없습니다: " + categoryId));
+                } else {
+                    category = categoryRepository.findBySlugAndIsActiveTrue(slug)
+                            .orElseThrow(() -> new RuntimeException("카테고리를 찾을 수 없습니다: " + slug));
+                }
+                boards = boardService.boardListPopularByCategory(category, pageable);
+            } else {
+                boards = boardService.boardListPopular(pageable);
+            }
+
+            Map<String, Object> response = new HashMap<>();
+            response.put("success", true);
+            response.put("message", "인기글 목록을 성공적으로 조회했습니다.");
+            response.put("posts", boards.getContent());
+            response.put("totalElements", boards.getTotalElements());
+            response.put("totalPages", boards.getTotalPages());
+            response.put("currentPage", boards.getNumber());
+
+            return ResponseEntity.ok(response);
+
+        } catch (Exception e) {
+            Map<String, Object> errorResponse = new HashMap<>();
+            errorResponse.put("success", false);
+            errorResponse.put("message", "인기글 목록 조회 중 오류가 발생했습니다: " + e.getMessage());
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(errorResponse);
+        }
+    }
+
+    @PostMapping
+    public ResponseEntity<Map<String, Object>> write(
+            @RequestHeader(value = "Authorization", required = false) String authHeader,
+            @RequestParam("categoryId") Long categoryId,
+            @RequestParam("title") String title,
+            @RequestParam("content") String content,
+            @RequestPart(value = "file", required = false) MultipartFile file) {
+        try {
+            User author = null;
+            if (authHeader != null && authHeader.startsWith("Bearer ")) {
+                String token = authHeader.substring(7);
+                if (jwtUtil.isTokenExpired(token)) {
+                    Map<String, Object> errorResponse = new HashMap<>();
+                    errorResponse.put("success", false);
+                    errorResponse.put("message", "토큰이 만료되었습니다. 다시 로그인해주세요.");
+                    return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(errorResponse);
+                }
+
+                Long userId = jwtUtil.extractUserId(token);
+                if (userId != null) {
+                    author = userRepository.findById(userId)
+                            .orElseThrow(() -> new RuntimeException("사용자를 찾을 수 없습니다: " + userId));
+                }
+            }
+
             if (author == null) {
-                logger.warn("게시글 작성 실패 - 작성자 인증 실패");
                 Map<String, Object> errorResponse = new HashMap<>();
                 errorResponse.put("success", false);
                 errorResponse.put("message", "로그인이 필요합니다.");
                 return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(errorResponse);
             }
 
-            // ========== [기존 로직 유지] ==========
-            // [기존] Board 객체 생성 및 설정
+            Category category = categoryRepository.findById(categoryId)
+                    .orElseThrow(() -> new RuntimeException("카테고리를 찾을 수 없습니다: " + categoryId));
+
             Board board = new Board();
             board.setTitle(title);
             board.setContent(content);
-            board.setBoardType(boardType); // [신규] 게시판 타입 설정
+            board.setCategory(category);
 
-            // ========== [기존 로직 유지] ==========
-            // [기존] 게시글 작성 처리 (파일 업로드 포함)
-            boardService.write(board, author, file); // [수정] author 파라미터 추가
+            boardService.write(board, author, file);
 
-            // ========== [통합 포인트 #5] ==========
-            // [기존] return "success"; // String 직접 반환
-            // [수정] Map<String, Object> 응답 형식으로 변경 (현재 프로젝트 스타일)
             Map<String, Object> response = new HashMap<>();
             response.put("success", true);
             response.put("message", "게시글이 성공적으로 작성되었습니다.");
@@ -230,44 +210,18 @@ public class BoardController {
             return ResponseEntity.status(HttpStatus.CREATED).body(response);
 
         } catch (Exception e) {
-            // ========== [통합 포인트 #6] ==========
-            // [기존] 예외 처리 없음
-            // [수정] 현재 프로젝트 스타일의 예외 처리 (Map 응답)
             Map<String, Object> errorResponse = new HashMap<>();
             errorResponse.put("success", false);
             errorResponse.put("message", "게시글 작성 중 오류가 발생했습니다: " + e.getMessage());
-
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(errorResponse);
         }
     }
 
-    // ========== [기존 코드 유지 + 수정] ==========
-    /**
-     * 게시글 상세 조회 API
-     * 
-     * [기존 코드]
-     * - 엔드포인트: GET /api/board/{id}
-     * - 파라미터: Integer id
-     * - 반환 타입: Board
-     * - 기능: 게시글 상세 조회
-     * 
-     * [수정 사항]
-     * - 엔드포인트: GET /api/cite/board/{id}
-     * - 파라미터: Long id
-     * - 반환 타입: ResponseEntity<Map<String, Object>>
-     * - 기능: 게시글 상세 조회 (응답 형식 변경)
-     * - 이유: 현재 프로젝트 응답 형식 적용
-     */
     @GetMapping("/{id}")
-    public ResponseEntity<Map<String, Object>> view(@PathVariable("id") Long id) { // [수정] Integer → Long
+    public ResponseEntity<Map<String, Object>> view(@PathVariable("id") Long id) {
         try {
-            // ========== [기존 로직 유지] ==========
-            // [기존] 게시글 조회
             Board board = boardService.boardView(id);
 
-            // ========== [통합 포인트 #7] ==========
-            // [기존] return board; // Board 직접 반환
-            // [수정] Map<String, Object> 응답 형식으로 변경 (현재 프로젝트 스타일)
             Map<String, Object> response = new HashMap<>();
             response.put("success", true);
             response.put("message", "게시글을 성공적으로 조회했습니다.");
@@ -276,60 +230,30 @@ public class BoardController {
             return ResponseEntity.ok(response);
 
         } catch (RuntimeException e) {
-            // ========== [통합 포인트 #8] ==========
-            // [기존] 예외 처리 없음
-            // [수정] 현재 프로젝트 스타일의 예외 처리 (Map 응답)
             Map<String, Object> errorResponse = new HashMap<>();
             errorResponse.put("success", false);
             errorResponse.put("message", e.getMessage());
-
             return ResponseEntity.status(HttpStatus.NOT_FOUND).body(errorResponse);
 
         } catch (Exception e) {
             Map<String, Object> errorResponse = new HashMap<>();
             errorResponse.put("success", false);
             errorResponse.put("message", "게시글 조회 중 오류가 발생했습니다: " + e.getMessage());
-
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(errorResponse);
         }
     }
 
-    // ========== [기존 코드 유지 + 수정] ==========
-    /**
-     * 게시글 수정 API
-     * 
-     * [기존 코드]
-     * - 엔드포인트: PUT /api/board/{id}
-     * - 파라미터: Integer id, String title, String content, MultipartFile file
-     * (optional)
-     * - 반환 타입: String "success"
-     * - 기능: 게시글 수정
-     * 
-     * [수정 사항]
-     * - 엔드포인트: PUT /api/cite/board/{id}
-     * - 파라미터: Long id, BoardType boardType (신규), String title, String content,
-     * MultipartFile file (optional), Authorization header (JWT)
-     * - 반환 타입: ResponseEntity<Map<String, Object>>
-     * - 기능: 게시글 수정 (작성자 권한 확인, BoardType 수정 가능)
-     * - 이유: 작성자 권한 확인, 게시판 타입 수정, 현재 프로젝트 응답 형식 적용
-     */
     @PutMapping("/{id}")
     public ResponseEntity<Map<String, Object>> update(
-            @RequestHeader(value = "Authorization", required = false) String authHeader, // [신규] JWT 토큰
-            @PathVariable("id") Long id, // [수정] Integer → Long
-            @RequestParam("boardType") BoardType boardType, // [신규] 게시판 타입
-            @RequestParam("title") String title, // [기존 유지]
-            @RequestParam("content") String content, // [기존 유지]
-            @RequestPart(value = "file", required = false) MultipartFile file // [기존 유지] 파일 업로드
-    ) {
+            @RequestHeader(value = "Authorization", required = false) String authHeader,
+            @PathVariable("id") Long id,
+            @RequestParam("categoryId") Long categoryId,
+            @RequestParam("title") String title,
+            @RequestParam("content") String content,
+            @RequestPart(value = "file", required = false) MultipartFile file) {
         try {
-            // ========== [기존 로직 유지] ==========
-            // [기존] 게시글 조회
             Board boardTemp = boardService.boardView(id);
 
-            // ========== [통합 포인트 #9] ==========
-            // [기존] 작성자 권한 확인 없음
-            // [수정] 작성자 권한 확인 (현재 프로젝트 스타일)
             User currentUser = null;
             if (authHeader != null && authHeader.startsWith("Bearer ")) {
                 String token = authHeader.substring(7);
@@ -344,7 +268,6 @@ public class BoardController {
                 }
             }
 
-            // 작성자 권한 확인 (관리자는 모든 게시글 수정 가능)
             if (currentUser == null) {
                 Map<String, Object> errorResponse = new HashMap<>();
                 errorResponse.put("success", false);
@@ -352,11 +275,9 @@ public class BoardController {
                 return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(errorResponse);
             }
 
-            // 관리자 권한 확인
             boolean isAdmin = currentUser.getAuthorities().stream()
                     .anyMatch(authority -> authority.getAuthorityName().equals("ROLE_ADMIN"));
 
-            // 작성자이거나 관리자인 경우에만 수정 가능
             if (!isAdmin && !boardTemp.getAuthor().getId().equals(currentUser.getId())) {
                 Map<String, Object> errorResponse = new HashMap<>();
                 errorResponse.put("success", false);
@@ -364,19 +285,15 @@ public class BoardController {
                 return ResponseEntity.status(HttpStatus.FORBIDDEN).body(errorResponse);
             }
 
-            // ========== [기존 로직 유지] ==========
-            // [기존] 게시글 정보 수정
+            Category category = categoryRepository.findById(categoryId)
+                    .orElseThrow(() -> new RuntimeException("카테고리를 찾을 수 없습니다: " + categoryId));
+
             boardTemp.setTitle(title);
             boardTemp.setContent(content);
-            boardTemp.setBoardType(boardType); // [신규] 게시판 타입 수정
+            boardTemp.setCategory(category);
 
-            // ========== [기존 로직 유지] ==========
-            // [기존] 게시글 수정 처리 (파일 업로드 포함)
-            boardService.write(boardTemp, currentUser, file); // [수정] author 파라미터 추가
+            boardService.write(boardTemp, currentUser, file);
 
-            // ========== [통합 포인트 #10] ==========
-            // [기존] return "success"; // String 직접 반환
-            // [수정] Map<String, Object> 응답 형식으로 변경 (현재 프로젝트 스타일)
             Map<String, Object> response = new HashMap<>();
             response.put("success", true);
             response.put("message", "게시글이 성공적으로 수정되었습니다.");
@@ -388,48 +305,23 @@ public class BoardController {
             Map<String, Object> errorResponse = new HashMap<>();
             errorResponse.put("success", false);
             errorResponse.put("message", e.getMessage());
-
             return ResponseEntity.status(HttpStatus.NOT_FOUND).body(errorResponse);
 
         } catch (Exception e) {
             Map<String, Object> errorResponse = new HashMap<>();
             errorResponse.put("success", false);
             errorResponse.put("message", "게시글 수정 중 오류가 발생했습니다: " + e.getMessage());
-
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(errorResponse);
         }
     }
 
-    // ========== [기존 코드 유지 + 수정] ==========
-    /**
-     * 게시글 삭제 API
-     * 
-     * [기존 코드]
-     * - 엔드포인트: DELETE /api/board/{id}
-     * - 파라미터: Integer id
-     * - 반환 타입: void (200 OK 응답)
-     * - 기능: 게시글 삭제
-     * 
-     * [수정 사항]
-     * - 엔드포인트: DELETE /api/cite/board/{id}
-     * - 파라미터: Long id, Authorization header (JWT)
-     * - 반환 타입: ResponseEntity<Map<String, Object>>
-     * - 기능: 게시글 삭제 (작성자 권한 확인)
-     * - 이유: 작성자 권한 확인, 현재 프로젝트 응답 형식 적용
-     */
     @DeleteMapping("/{id}")
     public ResponseEntity<Map<String, Object>> delete(
-            @RequestHeader(value = "Authorization", required = false) String authHeader, // [신규] JWT 토큰
-            @PathVariable("id") Long id // [수정] Integer → Long
-    ) {
+            @RequestHeader(value = "Authorization", required = false) String authHeader,
+            @PathVariable("id") Long id) {
         try {
-            // ========== [기존 로직 유지] ==========
-            // [기존] 게시글 조회
             Board board = boardService.boardView(id);
 
-            // ========== [통합 포인트 #11] ==========
-            // [기존] 작성자 권한 확인 없음
-            // [수정] 작성자 권한 확인 (현재 프로젝트 스타일)
             User currentUser = null;
             if (authHeader != null && authHeader.startsWith("Bearer ")) {
                 String token = authHeader.substring(7);
@@ -444,7 +336,6 @@ public class BoardController {
                 }
             }
 
-            // 작성자 권한 확인 (관리자는 모든 게시글 삭제 가능)
             if (currentUser == null) {
                 Map<String, Object> errorResponse = new HashMap<>();
                 errorResponse.put("success", false);
@@ -452,11 +343,9 @@ public class BoardController {
                 return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(errorResponse);
             }
 
-            // 관리자 권한 확인
             boolean isAdmin = currentUser.getAuthorities().stream()
                     .anyMatch(authority -> authority.getAuthorityName().equals("ROLE_ADMIN"));
 
-            // 작성자이거나 관리자인 경우에만 삭제 가능
             if (!isAdmin && !board.getAuthor().getId().equals(currentUser.getId())) {
                 Map<String, Object> errorResponse = new HashMap<>();
                 errorResponse.put("success", false);
@@ -464,13 +353,8 @@ public class BoardController {
                 return ResponseEntity.status(HttpStatus.FORBIDDEN).body(errorResponse);
             }
 
-            // ========== [기존 로직 유지] ==========
-            // [기존] 게시글 삭제
             boardService.boardDelete(id);
 
-            // ========== [통합 포인트 #12] ==========
-            // [기존] 반환 없음 (200 OK 응답)
-            // [수정] Map<String, Object> 응답 형식으로 변경 (현재 프로젝트 스타일)
             Map<String, Object> response = new HashMap<>();
             response.put("success", true);
             response.put("message", "게시글이 성공적으로 삭제되었습니다.");
@@ -481,14 +365,12 @@ public class BoardController {
             Map<String, Object> errorResponse = new HashMap<>();
             errorResponse.put("success", false);
             errorResponse.put("message", e.getMessage());
-
             return ResponseEntity.status(HttpStatus.NOT_FOUND).body(errorResponse);
 
         } catch (Exception e) {
             Map<String, Object> errorResponse = new HashMap<>();
             errorResponse.put("success", false);
             errorResponse.put("message", "게시글 삭제 중 오류가 발생했습니다: " + e.getMessage());
-
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(errorResponse);
         }
     }
