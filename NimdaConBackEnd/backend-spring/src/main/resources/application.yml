@@ -17,6 +17,7 @@ spring:
       idle-timeout: 600000
       max-lifetime: 1800000
       leak-detection-threshold: 60000
+      connection-test-query: SELECT 1
   
   jpa:
     hibernate:
@@ -27,7 +28,7 @@ spring:
         dialect: org.hibernate.dialect.MySQL8Dialect
         format_sql: true # sql Formatting
         show_sql: true
-    defer-datasource-initialization: true
+    defer-datasource-initialization: false
   
   sql:
     init:
