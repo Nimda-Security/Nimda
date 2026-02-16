@@ -5,15 +5,15 @@ meta {
 }
 
 post {
-  url: nimda.kr/api/auth/login
+  url: {{baseUrl}}/api/auth/login
   body: json
   auth: inherit
 }
 
 body:json {
   {
-    "userId": "admin",
-    "password": "1234"
+    "userId": "{{adminUserId}}",
+    "password": "{{adminPassword}}"
   }
 }
 
