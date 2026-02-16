@@ -20,6 +20,7 @@
    - `adminPassword`: 관리자 계정 비밀번호
    - `testUserId`: 테스트 계정 ID
    - `testPassword`: 테스트 계정 비밀번호
+   - `jwtToken`: JWT 인증 토큰 (로그인 후 받은 토큰을 복사해서 입력)
 
 3. 프로덕션 환경도 동일하게 설정:
    ```bash
@@ -33,7 +34,8 @@ Bruno에서 환경변수를 사용하려면:
 - `{{adminUserId}}`: 관리자 사용자 ID
 - `{{adminPassword}}`: 관리자 비밀번호
 - `{{testUserId}}`: 테스트 사용자 ID
-- `{{testPassword}}`: 테스트 비밀번호
+- `{{testPassword}}`: 테스트 계정 비밀번호
+- `{{jwtToken}}`: JWT 인증 토큰 (Headers에 `Authorization: Bearer {{jwtToken}}` 형태로 사용)
 
 ## 환경별 설정
 
@@ -43,5 +45,6 @@ Bruno에서 환경변수를 사용하려면:
 ## 주의사항
 
 - `environments/*.bru` 파일은 `.gitignore`에 포함되어 있어 git에 올라가지 않습니다
-- 실제 비밀번호는 팀원들에게 별도로 공유하세요
+- 실제 비밀번호와 JWT 토큰은 팀원들에게 별도로 공유하세요
 - `environments/*.example.bru`는 템플릿 파일이므로 git에 포함됩니다
+- JWT 토큰은 만료되면 로그인 API를 다시 호출해서 갱신해야 합니다

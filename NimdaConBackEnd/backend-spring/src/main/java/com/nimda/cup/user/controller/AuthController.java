@@ -5,11 +5,14 @@ import com.nimda.cup.user.dto.LoginResponseDTO;
 import com.nimda.cup.user.dto.RegisterDTO;
 import com.nimda.cup.user.entity.User;
 import com.nimda.cup.user.exception.UserNotApprovedException;
+import com.nimda.cup.user.security.UserPrincipal;
 import com.nimda.cup.user.service.AuthService;
 import jakarta.validation.Valid;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.HashMap;
