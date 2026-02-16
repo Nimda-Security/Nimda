@@ -36,6 +36,7 @@ public class BoardController {
     @Autowired
     private UserRepository userRepository;
 
+    // Note. getPostsByCategory - 카테고리 이름으로 포스트 조회
     @GetMapping
     public ResponseEntity<Map<String, Object>> getPostsByCategory(
             @RequestParam(value = "categoryId", required = false) Long categoryId,

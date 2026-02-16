@@ -1,0 +1,20 @@
+meta {
+  name: UserAPI
+  type: http
+  seq: 1
+}
+
+get {
+  url: {{baseUrl}}/api/users
+  body: none
+  auth: inherit
+}
+
+headers {
+  Authorization: Bearer {{jwtToken}}
+}
+
+settings {
+  encodeUrl: true
+  timeout: 0
+}

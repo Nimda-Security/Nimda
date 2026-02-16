@@ -61,10 +61,10 @@ public class BoardService {
         return boardRepository.findByCategory(category, pageable);
     }
 
-    // Note. boardListByCategoryWithPinned - 카테고리별 게시글 고정 목록을 페이지네이션으로 조회한다.
+    // Note. boardListByCategoryWithPinned - 카테고리별 고정글만 조회 (pinned = true)
     @Transactional(readOnly = true)
     public Page<Board> boardListByCategoryWithPinned(Category category, Pageable pageable) {
-        return boardRepository.findByCategoryOrderByPinnedDescCreatedAtDesc(category, pageable);
+        return boardRepository.findByCategoryAndPinnedTrueOrderByCreatedAtDesc(category, pageable);
     }
 
     // Note. boardList - 전체 게시글 목록을 페이지네이션으로 조회한다.

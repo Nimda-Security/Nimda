@@ -25,9 +25,7 @@ public class User extends BaseTimeEntity {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    // @JsonIgnore
     private Long id;
-    // IDNENTITY : AUTO_INCREMENT
 
     @NotBlank
     @Size(min = 3, max = 20)
