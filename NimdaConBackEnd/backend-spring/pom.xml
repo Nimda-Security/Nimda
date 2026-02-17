@@ -143,6 +143,7 @@
                 <artifactId>spring-boot-maven-plugin</artifactId>
                 <version>3.2.0</version>
                 <configuration>
+                    <jvmArguments>--enable-native-access=ALL-UNNAMED</jvmArguments>
                     <excludes>
                         <exclude>
                             <groupId>org.projectlombok</groupId>
