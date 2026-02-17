@@ -18,18 +18,20 @@ public class CategoryController {
     @Autowired
     private CategoryRepository categoryRepository;
 
+    // Note. getAllCategories API
+    // ... 활성화된 카테고리 (isActive)를 조회하여 정렬 순서로 (SortOrder) 반환한다.
     @GetMapping
     public ResponseEntity<Map<String, Object>> getAllCategories() {
         try {
             List<Category> categories = categoryRepository.findByIsActiveTrueOrderBySortOrderAsc();
-
             Map<String, Object> response = new HashMap<>();
             response.put("success", true);
             response.put("message", "카테고리 목록을 성공적으로 조회했습니다.");
             response.put("categories", categories);
-
             return ResponseEntity.ok(response);
-        } catch (Exception e) {
+        }
+
+        catch (Exception e) {
             Map<String, Object> errorResponse = new HashMap<>();
             errorResponse.put("success", false);
             errorResponse.put("message", "카테고리 목록 조회 중 오류가 발생했습니다: " + e.getMessage());

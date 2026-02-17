@@ -22,27 +22,17 @@ public class UsersController {
     @Autowired
     private AdminUserService adminUserService;
 
-    /**
-     * 모든 사용자 조회
-     * 
-     * @return 사용자 목록
-     */
+    // Note. getAllUsers() - 모든 사용자 목록 조회
     @GetMapping
     public ResponseEntity<?> getAllUsers() {
-        System.out.println("=== getAllUsers() 메서드 호출됨 ===");
         try {
-            System.out.println("=== UserService.findAll() 호출 중 ===");
             List<User> users = adminUserService.findAll();
-            System.out.println("=== 사용자 수: " + users.size() + " ===");
-
             Map<String, Object> response = new HashMap<>();
             response.put("success", true);
             response.put("users", users);
-
-            System.out.println("=== 응답 생성 완료 ===");
             return ResponseEntity.ok(response);
+
         } catch (Exception e) {
-            System.out.println("=== 오류 발생: " + e.getMessage() + " ===");
             e.printStackTrace();
             Map<String, Object> error = new HashMap<>();
             error.put("success", false);
@@ -51,12 +41,7 @@ public class UsersController {
         }
     }
 
-    /**
-     * 사용자 정보 조회
-     * 
-     * @param id 사용자 ID
-     * @return 사용자 정보
-     */
+    // Note. getUserById() - id로 사용자 정보를 조회한다.
     @GetMapping("/{id}")
     public ResponseEntity<?> getUserById(@PathVariable Long id) {
         try {
