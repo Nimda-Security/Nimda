@@ -83,32 +83,10 @@ NIMDA는 컴퓨터 언어를 기반으로
     windowTitle: "동아리활동 — Finder",
     type: "folder",
     content: [
-      {
-        category: "🎓 학습",
-        title: "멘토·멘티 활동과 스터디",
-        items: [
-          "기초 프로그래밍 언어 멘토·멘티 활동 (C, C++, JavaScript 등)",
-          "웹 개발 스터디 (HTML/CSS, 프론트엔드·백엔드 기초)",
-          "웹 해킹, 시스템 보안, CTF 기초 스터디",
-        ],
-      },
-      {
-        category: "🏅 도전",
-        title: "대회 & 해커톤 참여",
-        items: [
-          "대회(ICPC·UCPC) 참여",
-          "교내 해커톤 참여",
-          "동아리 자체 대회(님다콘) 개최",
-        ],
-      },
-      {
-        category: "🔧 응용",
-        title: "프로젝트 & 실습 활동",
-        items: [
-          "NIMDA 페이지 기능 추가",
-          "보안 문제 풀이 및 취약점 분석 실습",
-        ],
-      },
+      { title: "스터디 활동" },
+      { title: "님다콘" },
+      { title: "MT" },
+      { title: "회식" },
     ],
   },
   {
@@ -188,6 +166,7 @@ NIMDA는 컴퓨터 언어를 기반으로
         ],
       },
     },
+
   },
   {
     id: "terminal",
@@ -197,6 +176,39 @@ NIMDA는 컴퓨터 언어를 기반으로
     type: "terminal",
     content: null,
   },
+  {
+    id: "contacts",
+    label: "연락처",
+    icon: "/MacIcons/Contacts.svg",
+    windowTitle: "연락처",
+    type: "contacts",
+    content: [
+      {
+        name: "김서윤",
+        role: "회장",
+        phone: "010-2345-6789",
+        email: "seoyoon@nimda.kr",
+        avatar: "김",
+        color: "#FF9F0A"
+      },
+      {
+        name: "이도현",
+        role: "부회장",
+        phone: "010-3456-7890",
+        email: "dohyun@nimda.kr",
+        avatar: "이",
+        color: "#30D158"
+      },
+      {
+        name: "정푸른",
+        role: "총무",
+        phone: "010-4567-8901",
+        email: "pureun@nimda.kr",
+        avatar: "정",
+        color: "#5AC8FA"
+      },
+    ].sort((a, b) => a.name.localeCompare(b.name)),
+  },
 ];
 
 const DOCK_ITEMS = [
@@ -205,9 +217,27 @@ const DOCK_ITEMS = [
   { id: "photos", icon: "/MacIcons/Photos.svg", label: "사진", action: "gallery" },
   { id: "notes", icon: "/MacIcons/Notes.svg", label: "메모", action: "notes" },
   { id: "messages", icon: "/MacIcons/Messages.svg", label: "메시지", action: "messages" },
+  { id: "contacts", icon: "/MacIcons/Contacts.svg", label: "연락처", action: "contacts" },
   { id: "terminal", icon: "/MacIcons/Terminal.svg", label: "터미널", action: "terminal" },
   { id: "safari", icon: "/MacIcons/Safari.svg", label: "Safari", action: "safari" },
 ];
+
+/* ───────────────────────────────────────────
+   유틸리티
+   ─────────────────────────────────────────── */
+
+const getHangulInitial = (str) => {
+  const c = str.charCodeAt(0);
+  if (c >= 0xAC00 && c <= 0xD7A3) {
+    const initialOffset = Math.floor((c - 0xAC00) / 28 / 21);
+    const initials = [
+      "ㄱ", "ㄲ", "ㄴ", "ㄷ", "ㄸ", "ㄹ", "ㅁ", "ㅂ", "ㅃ", "ㅅ", "ㅆ",
+      "ㅇ", "ㅈ", "ㅉ", "ㅊ", "ㅋ", "ㅌ", "ㅍ", "ㅎ"
+    ];
+    return initials[initialOffset] || "#";
+  }
+  return str[0].toUpperCase();
+};
 
 /* ───────────────────────────────────────────
    터미널 파일시스템 & 명령어
@@ -297,7 +327,7 @@ function processCommand(cmd, cwd) {
     }
 
     case "uname":
-      return { output: args.includes("-a") ? "Darwin nimda-macbook.local 23.0.0 NIMDA-OS x86_64" : "Darwin", newCwd: cwd };
+      return { output: args.includes("-a") ? "NIMDA-OS nimda-macbook.local 1.0.0 NIMDA-OS x86_64" : "NIMDA-OS", newCwd: cwd };
 
     case "clear":
       return { output: "__CLEAR__", newCwd: cwd };
@@ -526,6 +556,8 @@ function WindowContent({ icon }) {
   const [lightboxImage, setLightboxImage] = useState(null);
   const [selectedNote, setSelectedNote] = useState(0);
   const [selectedChat, setSelectedChat] = useState("NIMDA 동아리방");
+  const [selectedContactId, setSelectedContactId] = useState(0);
+  const [contactSearchQuery, setContactSearchQuery] = useState("");
 
   if (icon.type === "terminal") {
     return <TerminalContent />;
@@ -827,6 +859,134 @@ function WindowContent({ icon }) {
     );
   }
 
+
+
+  /* ─── Contacts (연락처) ─── */
+  if (icon.type === "contacts") {
+    const contacts = icon.content;
+
+    const filteredContacts = contacts.filter(c =>
+      c.name.includes(contactSearchQuery) || c.role.includes(contactSearchQuery)
+    );
+
+    const selected = filteredContacts[selectedContactId] || filteredContacts[0] || {};
+
+    const grouped = filteredContacts.reduce((acc, contact, idx) => {
+      const init = getHangulInitial(contact.name);
+      if (!acc[init]) acc[init] = [];
+      acc[init].push({ ...contact, originalIndex: idx });
+      return acc;
+    }, {});
+    const sortedKeys = Object.keys(grouped).sort();
+
+    return (
+      <div className="window-contacts-content">
+        <div className="contacts-sidebar">
+          <div className="contacts-search-bar">
+            <svg className="contacts-search-icon" width="12" height="12" viewBox="0 0 12 12" fill="none"><circle cx="5" cy="5" r="3.5" stroke="rgba(255,255,255,0.4)" strokeWidth="1.2"/><path d="M8 8L10.5 10.5" stroke="rgba(255,255,255,0.4)" strokeWidth="1.2" strokeLinecap="round"/></svg>
+            <input
+              type="text"
+              placeholder="검색"
+              className="contacts-search-input"
+              value={contactSearchQuery}
+              onChange={(e) => {
+                setContactSearchQuery(e.target.value);
+                setSelectedContactId(0);
+              }}
+            />
+          </div>
+          <div className="contacts-list-container">
+            {sortedKeys.map(key => (
+              <div key={key}>
+                <div className="contacts-section-header">{key}</div>
+                {grouped[key].map(c => (
+                  <button
+                    key={c.name}
+                    className={`contacts-sidebar-item ${selectedContactId === c.originalIndex ? "active" : ""}`}
+                    onClick={() => setSelectedContactId(c.originalIndex)}
+                  >
+                    <span className="contacts-sidebar-name">{c.name}</span>
+                  </button>
+                ))}
+              </div>
+            ))}
+          </div>
+        </div>
+        <div className="contacts-main">
+          <div className="contacts-profile-top">
+            <div className="contacts-avatar-large" style={{ backgroundColor: selected.color || "#8E8E93" }}>
+              {selected.avatar}
+            </div>
+            <h2 className="contacts-name-large">{selected.name}</h2>
+            <p className="contacts-role">{selected.role}</p>
+          </div>
+
+          <div className="contacts-actions">
+            <button className="contacts-action-btn">
+              <div className="contacts-action-icon">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><path d="M20 2H4C2.9 2 2 2.9 2 4V22L6 18H20C21.1 18 22 17.1 22 16V4C22 2.9 21.1 2 20 2Z"/></svg>
+              </div>
+              <span>메시지</span>
+            </button>
+            <button className="contacts-action-btn">
+              <div className="contacts-action-icon">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><path d="M6.62 10.79C8.06 13.62 10.38 15.94 13.21 17.38L15.41 15.18C15.69 14.9 16.08 14.82 16.43 14.93C17.55 15.3 18.75 15.5 20 15.5C20.55 15.5 21 15.95 21 16.5V20C21 20.55 20.55 21 20 21C10.61 21 3 13.39 3 4C3 3.45 3.45 3 4 3H7.5C8.05 3 8.5 3.45 8.5 4C8.5 5.25 8.7 6.45 9.07 7.57C9.18 7.92 9.1 8.31 8.82 8.59L6.62 10.79Z"/></svg>
+              </div>
+              <span>통화</span>
+            </button>
+            <button className="contacts-action-btn">
+              <div className="contacts-action-icon">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><path d="M17 10.5V7C17 6.45 16.55 6 16 6H4C3.45 6 3 6.45 3 7V17C3 17.55 3.45 18 4 18H16C16.55 18 17 17.55 17 17V13.5L21 17.5V6.5L17 10.5Z"/></svg>
+              </div>
+              <span>비디오</span>
+            </button>
+            <button className="contacts-action-btn">
+              <div className="contacts-action-icon">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><path d="M20 4H4C2.9 4 2 4.9 2 6V18C2 19.1 2.9 20 4 20H20C21.1 20 22 19.1 22 18V6C22 4.9 21.1 4 20 4ZM20 8L12 13L4 8V6L12 11L20 6V8Z"/></svg>
+              </div>
+              <span>메일</span>
+            </button>
+          </div>
+
+          <div className="contacts-card">
+            <div className="contacts-card-row">
+              <span className="contacts-card-label">휴대전화</span>
+              <span className="contacts-card-value link">{selected.phone || ""}</span>
+            </div>
+            <div className="contacts-card-divider" />
+            <div className="contacts-card-row">
+              <span className="contacts-card-label">이메일</span>
+              <span className="contacts-card-value link">{selected.email || ""}</span>
+            </div>
+          </div>
+
+          <div className="contacts-card">
+            <div className="contacts-card-row facetime-row">
+              <div>
+                <span className="contacts-card-label">FaceTime</span>
+                <span className="contacts-card-value">{selected.phone || ""}</span>
+              </div>
+              <div className="contacts-facetime-icons">
+                <div className="contacts-ft-icon">
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><path d="M17 10.5V7C17 6.45 16.55 6 16 6H4C3.45 6 3 6.45 3 7V17C3 17.55 3.45 18 4 18H16C16.55 18 17 17.55 17 17V13.5L21 17.5V6.5L17 10.5Z"/></svg>
+                </div>
+                <div className="contacts-ft-icon">
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><path d="M6.62 10.79C8.06 13.62 10.38 15.94 13.21 17.38L15.41 15.18C15.69 14.9 16.08 14.82 16.43 14.93C17.55 15.3 18.75 15.5 20 15.5C20.55 15.5 21 15.95 21 16.5V20C21 20.55 20.55 21 20 21C10.61 21 3 13.39 3 4C3 3.45 3.45 3 4 3H7.5C8.05 3 8.5 3.45 8.5 4C8.5 5.25 8.7 6.45 9.07 7.57C9.18 7.92 9.1 8.31 8.82 8.59L6.62 10.79Z"/></svg>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div className="contacts-card">
+            <div className="contacts-card-row">
+              <span className="contacts-card-label">메모</span>
+            </div>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
   return null;
 }
 
@@ -867,7 +1027,7 @@ function FinderWindow({ icon, zIndex, onClose, onFocus, position }) {
   }, [isDragging, dragOffset]);
 
   // 윈도우 크기를 타입에 따라 다르게
-  const widthClass = icon.type === "messages" ? "window-wide" : icon.type === "gallery" ? "window-wide" : icon.type === "terminal" ? "window-terminal" : icon.type === "folder" ? "window-wide" : "";
+  const widthClass = icon.type === "messages" ? "window-wide" : icon.type === "gallery" ? "window-wide" : icon.type === "terminal" ? "window-terminal" : icon.type === "folder" ? "window-wide" : icon.type === "contacts" ? "window-wide" : "";
 
   // Finder(폴더)는 타이틀바 숨기고 toolbar에 통합
   const showTitlebar = icon.type !== "folder";
@@ -992,6 +1152,12 @@ export default function Page() {
           <MenuBar />
 
           <div className="desktop">
+            <div className="desktop-background">
+              <div className="bg-layer gradient" />
+              <div className="bg-layer logo" />
+              <div className="bg-layer noise" />
+              <div className="bg-layer pattern" />
+            </div>
             <div className="desktop-icons-grid">
               {DESKTOP_ICONS.filter((icon) => ["about", "activities"].includes(icon.id)).map((icon) => (
                 <DesktopIcon
