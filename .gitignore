@@ -89,3 +89,4 @@ load-tests/results/
 
 # Docker volumes
 mysql_data/
+CLAUDE.md
