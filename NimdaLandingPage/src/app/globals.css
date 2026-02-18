@@ -153,6 +153,129 @@ html, body {
 }
 
 /* ───────────────────────────────────────────
+   Sticker App (Guide)
+   ─────────────────────────────────────────── */
+
+/* ───────────────────────────────────────────
+   Sticker App (Sticky Note)
+   ─────────────────────────────────────────── */
+
+.finder-window.window-sticker {
+  width: 320px !important;
+  min-height: 380px;
+  max-width: 90vw;
+  border: none !important;
+  box-shadow: 0 20px 50px rgba(0,0,0,0.3) !important;
+  border-radius: 4px !important;
+  background: transparent !important;
+}
+
+.sticker-titlebar {
+  background: #f5e982 !important;
+  border-bottom: none !important;
+  height: 18px !important;
+  min-height: 18px !important;
+  padding: 0 8px !important;
+  display: flex;
+  align-items: center;
+  cursor: grab;
+  user-select: none;
+}
+
+.sticker-close-btn {
+  width: 10px;
+  height: 10px;
+  border-radius: 2px;
+  background: #d4b800;
+  border: 1px solid rgba(0, 0, 0, 0.18);
+  cursor: pointer;
+  padding: 0;
+  flex-shrink: 0;
+  transition: background 0.15s;
+}
+
+.sticker-close-btn:hover {
+  background: #b89e00;
+}
+
+.window-body-sticker {
+  background: #fdf8c2 !important;
+  color: #333;
+  font-family: 'Apple SD Gothic Neo', sans-serif;
+}
+
+.window-sticker-content {
+  height: 100%;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+}
+
+.sticker-note-body {
+  padding: 10px 24px 24px;
+  flex: 1;
+  overflow-y: auto;
+}
+
+.sticker-heading {
+  font-size: 17px;
+  font-weight: 800;
+  margin-bottom: 12px;
+  color: #2c2c2c;
+  line-height: 1.3;
+}
+
+.sticker-sub {
+  font-size: 14px;
+  font-weight: 600;
+  margin-bottom: 16px;
+  color: #333;
+  line-height: 1.5;
+}
+
+.sticker-list {
+  list-style-type: disc;
+  padding-left: 18px;
+  margin-bottom: 24px;
+}
+
+.sticker-list li {
+  font-size: 13px;
+  line-height: 1.6;
+  color: #333;
+  margin-bottom: 6px;
+}
+
+.sticker-desc-text {
+  font-size: 13px;
+  line-height: 1.6;
+  color: #333;
+  white-space: pre-wrap;
+}
+
+/* ───────────────────────────────────────────
+   Dock Dot Indicator
+   ─────────────────────────────────────────── */
+
+.dock-item-container {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  position: relative;
+}
+
+.dock-dot {
+  width: 4px;
+  height: 4px;
+  background: rgba(255, 255, 255, 0.85);
+  border-radius: 50%;
+  margin-top: 4px; /* Space between icon and dot */
+  box-shadow: 0 1px 2px rgba(0,0,0,0.3);
+  position: absolute;
+  bottom: -6px; /* Position below */
+}
+
+/* ───────────────────────────────────────────
    상단 메뉴바
    ─────────────────────────────────────────── */
 
@@ -221,7 +344,13 @@ html, body {
   font-size: 13px; /* Slightly smaller */
   font-weight: 400;
   color: rgba(255, 255, 255, 0.9);
-  margin-right: -4px; /* Tighter gap */
+  /* margin-right removed - handled by flex gap */
+}
+
+.menubar-battery-group {
+  display: flex;
+  align-items: center;
+  gap: 6px; /* Reduced gap between text and battery icon */
 }
 
 .menubar-battery {
@@ -329,12 +458,15 @@ html, body {
 /* ─── 타이틀바 (다크 모드 기본) ─── */
 
 .window-titlebar {
-  height: 38px;
+  position: relative; /* Ensure z-index works */
+  z-index: 20;      /* Above window-drag-region (z-10) */
+  height: 28px;
+  background: #3a3a3a;
   display: flex;
   align-items: center;
-  padding: 0 12px;
-  background: var(--titlebar-bg);
-  border-bottom: 1px solid rgba(0, 0, 0, 0.3);
+  padding: 0 10px;
+  border-bottom: 1px solid #1a1a1a;
+  border-radius: 6px 6px 0 0;
   cursor: grab;
   user-select: none;
   flex-shrink: 0;
@@ -348,6 +480,38 @@ html, body {
   display: flex;
   gap: 7px;
   align-items: center;
+}
+
+/* Traffic Lights Container (In-App Sidebar) */
+.sidebar-traffic-lights {
+  position: relative; /* Ensure z-index works */
+  z-index: 20;      /* Above window-drag-region (z-10) */
+  display: flex;
+  gap: 8px;
+  align-items: center;
+  padding: 10px 10px 8px; /* Move further top-left */
+}
+
+/* Adjust traffic lights position for Finder and Photos specifically */
+.window-folder-content .sidebar-traffic-lights,
+.window-gallery-content .sidebar-traffic-lights {
+  padding-top: 0px; /* Move UP to the very top */
+}
+
+/* Push Gallery sidebar content down to match Photo Grid start */
+.window-gallery-content .gallery-sidebar-section:first-of-type {
+  margin-top: 40px;
+}
+.sidebar-traffic-lights {
+  flex-shrink: 0;
+  cursor: grab;
+  user-select: none;
+}
+.sidebar-traffic-lights:active {
+  cursor: grabbing;
+}
+.sidebar-traffic-lights:hover .traffic-btn svg {
+  opacity: 1;
 }
 
 .traffic-btn {
@@ -400,9 +564,10 @@ html, body {
 
 .window-body {
   flex: 1;
-  overflow-y: auto;
-  overflow-x: hidden;
+  overflow: hidden;
   background: var(--window-bg);
+  display: flex;
+  flex-direction: column;
 }
 
 .window-body-terminal {
@@ -413,14 +578,44 @@ html, body {
 /* ─── 텍스트 파일 윈도우 (다크) ─── */
 
 .window-text-content {
-  padding: 20px 24px;
+  display: flex;
+  flex-direction: column;
   min-height: 300px;
   max-height: 500px;
-  overflow-y: auto;
-  background: #262626;
+  background: #1e1e1e; /* Changed to match Contacts main bg */
+}
+
+.text-titlebar {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 8px 14px;
+  background: #2c2c2e;
+  border-bottom: 0.5px solid rgba(255, 255, 255, 0.08);
+  cursor: grab;
+  user-select: none;
+  flex-shrink: 0;
+}
+.text-titlebar:active {
+  cursor: grabbing;
+}
+.text-titlebar .sidebar-traffic-lights {
+  padding: 0;
+  cursor: inherit;
+}
+.text-titlebar-title {
+  flex: 1;
+  text-align: center;
+  font-size: 13px;
+  font-weight: 500;
+  color: rgba(255, 255, 255, 0.75);
+  margin-right: 52px;
 }
 
 .text-file {
+  padding: 20px 24px;
+  overflow-y: auto;
+  flex: 1;
   font-family: 'SF Mono', 'Menlo', 'Monaco', 'Courier New', monospace;
   font-size: 13px;
   line-height: 1.7;
@@ -504,10 +699,11 @@ html, body {
 
 /* Finder toolbar (macOS style) */
 .finder-toolbar {
+  height: 52px; /* Set explicit height */
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: 6px 12px;
+  padding: 0 16px; /* Adjusted padding */
   background: rgba(45, 45, 45, 0.95);
   border-bottom: 1px solid var(--border-color);
   flex-shrink: 0;
@@ -542,18 +738,21 @@ html, body {
   margin-left: 6px;
 }
 
+/* Finder Toolbar (Right Side: View Modes + Search) */
 .finder-toolbar-right {
   display: flex;
   align-items: center;
-  gap: 10px;
+  gap: 12px; /* Increased gap */
+  margin-right: 8px; /* Shift icons slightly left */
 }
 
 .finder-view-modes {
   display: flex;
   align-items: center;
-  background: rgba(255,255,255,0.06);
+  background: rgba(255, 255, 255, 0.1);
   border-radius: 6px;
   padding: 2px;
+  margin-right: 8px; /* Extra spacing before search */
   gap: 1px;
 }
 
@@ -610,7 +809,7 @@ html, body {
   flex: 1;
   padding: 16px 20px;
   overflow-y: auto;
-  background: #232323;
+  background: #1e1e1e; /* Changed to match Contacts main bg */
 }
 
 .finder-folder-grid {
@@ -781,7 +980,7 @@ html, body {
   flex: 1;
   display: flex;
   flex-direction: column;
-  background: #2b2b2b;
+  background: #1e1e1e; /* Changed to match Contacts main bg */
   overflow-y: auto;
 }
 
@@ -972,7 +1171,7 @@ html, body {
   flex: 1;
   padding: 20px 24px;
   overflow-y: auto;
-  background: #2b2b2b;
+  background: #1e1e1e; /* Changed to match Contacts main bg */
 }
 
 .notes-header {
@@ -1142,7 +1341,7 @@ html, body {
   flex: 1;
   display: flex;
   flex-direction: column;
-  background: #2b2b2b;
+  background: #1e1e1e;
 }
 
 .messages-header {
@@ -1226,12 +1425,13 @@ html, body {
   font-size: 13px;
   outline: none;
   caret-color: #007AFF;
+  font-weight: 600;
 }
 .contacts-search-input::placeholder {
   color: rgba(255,255,255,0.4);
 }
 .contacts-search-input:focus {
-  border-color: rgba(0, 122, 255, 0.5);
+  border-color: rgba(255, 255, 255, 0.1);
 }
 .contacts-search-icon {
   position: absolute;
@@ -1284,48 +1484,65 @@ html, body {
   background: #1e1e1e;
   display: flex;
   flex-direction: column;
-  align-items: center;
-  padding: 40px 30px 30px;
-  overflow-y: auto;
+  overflow: hidden;
 }
 
-/* Profile Header */
-.contacts-profile-top {
+.contacts-detail-scroll {
+  flex: 1;
+  overflow-y: auto;
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 6px;
-  margin-bottom: 20px;
+  padding: 36px 30px 16px;
+}
+
+/* Profile Header */
+/* Profile Header */
+.contacts-profile-top {
+  display: flex;
+  flex-direction: row; /* Change to row to put avatar and text side-by-side */
+  align-items: center;
+  justify-content: center; /* Center the whole block horizontally */
+  gap: 16px; /* Space between avatar and text block */
+  margin-bottom: 24px;
 }
 .contacts-avatar-large {
-  width: 72px;
-  height: 72px;
+  width: 64px; /* Reduced from 80px */
+  height: 64px; /* Reduced from 80px */
   border-radius: 50%;
   display: flex;
   align-items: center;
   justify-content: center;
-  font-size: 28px;
-  font-weight: 300;
+  font-size: 26px; /* Adjusted font size */
+  font-weight: 700;
   color: white;
-  margin-bottom: 6px;
+  margin-bottom: 0; /* Remove bottom margin since it's side-by-side */
+  box-shadow: 0 4px 12px rgba(0,0,0,0.3);
+  flex-shrink: 0;
+}
+.contacts-profile-info {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start; /* Left align text within the block */
+  justify-content: center;
 }
 .contacts-name-large {
-  font-size: 20px;
-  font-weight: 400;
+  font-size: 22px;
+  font-weight: 600; /* Slightly bolder */
   color: white;
   margin: 0;
-  line-height: 1.3;
+  line-height: 1.2;
 }
 .contacts-role {
   font-size: 13px;
   color: var(--text-secondary);
-  margin: 0;
+  margin-top: 2px;
 }
 
-/* Action Buttons — macOS rounded rect style */
+/* Action Buttons — macOS circle style */
 .contacts-actions {
   display: flex;
-  gap: 12px;
+  gap: 32px;
   justify-content: center;
   margin-bottom: 24px;
 }
@@ -1333,61 +1550,85 @@ html, body {
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 4px;
-  background: rgba(255, 255, 255, 0.06);
+  gap: 5px;
+  background: none;
   border: none;
-  border-radius: 10px;
-  padding: 8px 14px;
-  min-width: 64px;
   cursor: pointer;
-  transition: background 0.15s;
 }
-.contacts-action-btn:hover {
-  background: rgba(255, 255, 255, 0.1);
+.contacts-action-btn:hover .contacts-action-icon {
+  filter: brightness(1.15);
 }
 .contacts-action-icon {
-  width: 24px;
-  height: 24px;
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  background: #007AFF;
   display: flex;
   align-items: center;
   justify-content: center;
-  color: var(--accent);
+}
+.contacts-action-btn--gray .contacts-action-icon {
+  background: #3a3a3c;
 }
 .contacts-action-btn span {
-  color: var(--accent);
-  font-size: 10px;
-  font-weight: 500;
+  color: #007AFF;
+  font-size: 11px;
+  font-weight: 400;
+}
+.contacts-action-btn--gray span {
+  color: var(--text-secondary);
 }
 
 /* Detail Card — macOS grouped table style */
 .contacts-card {
   width: 100%;
-  max-width: 340px;
-  background: rgba(255, 255, 255, 0.05);
+  max-width: 360px;
+  background: transparent;
   border-radius: 10px;
   margin-bottom: 10px;
   overflow: hidden;
 }
 .contacts-card-row {
-  padding: 10px 14px;
-}
-.contacts-card-row.facetime-row {
+  padding: 8px 14px;
   display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+.contacts-card-row--inline {
+  display: flex;
+  flex-direction: row;
+  justify-content: flex-end; /* changed from space-between */
   align-items: center;
-  justify-content: space-between;
+  min-height: 24px;
+  gap: 16px; /* distance between label and value */
+  position: relative;
 }
 .contacts-card-label {
-  display: block;
-  font-size: 11px;
-  color: var(--text-secondary);
+  font-size: 13px;
+  color: white;
   font-weight: 400;
-  margin-bottom: 2px;
+  flex-shrink: 0;
+  position: absolute;
+  left: 50%;
+  transform: translateX(-50%);
+  text-align: right; /* Request implies right aligned relative to center, but usually labels are left. User said "Right align relative to center" which is tricky. Let's interpret "Standards to center, right align". */
+  /* Re-reading request: "전화, Facetime, 메모 글씨는 하얀색으로 바꾸고 가운데를 기준으로 하여 우측 정렬을 해, 각 요소의 아이콘들은 가운데 기준 왼쪽정렬로 맞춰." */
+  /* Label (Phone, Facetime, Text) -> White, Right align based on Center */
+  /* Value/Icons -> Left aligned based on Center */
+  
+  /* Implementation strategy: Use a grid or flex with width 50% for standard alignment. */
+  width: 50%;
+  padding-right: 12px; /* Space from center */
+  left: 0;
+  transform: none;
 }
 .contacts-card-value {
-  display: block;
-  font-size: 14px;
+  font-size: 13px;
   color: var(--text-primary);
   font-weight: 400;
+  width: 50%;
+  text-align: left;
+  padding-left: 12px; /* Space from center */
 }
 .contacts-card-value.link {
   color: var(--accent);
@@ -1396,27 +1637,85 @@ html, body {
 .contacts-card-divider {
   height: 0.5px;
   background: rgba(255, 255, 255, 0.08);
-  margin: 0 14px;
+  margin: 0;
+  width: 100%;
 }
 .contacts-facetime-icons {
   display: flex;
   gap: 8px;
   align-items: center;
+  width: 50%;
+  padding-left: 12px; /* Space from center */
+  justify-content: flex-start;
 }
 .contacts-ft-icon {
-  width: 28px;
-  height: 28px;
+  width: 24px;
+  height: 24px;
   border-radius: 50%;
-  background: rgba(255, 255, 255, 0.08);
-  color: var(--accent);
+  background: none;
+  color: #007AFF;
   display: flex;
   align-items: center;
   justify-content: center;
   cursor: pointer;
-  transition: background 0.15s;
+  transition: opacity 0.15s;
 }
 .contacts-ft-icon:hover {
-  background: rgba(255, 255, 255, 0.14);
+  opacity: 0.7;
+}
+
+.contacts-row-facetime {
+  padding-top: 4px !important;
+  padding-bottom: 4px !important;
+}
+
+/* Bottom Bar */
+.contacts-bottom-bar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 8px 14px;
+  border-top: 0.5px solid rgba(255, 255, 255, 0.1);
+  background: rgba(30, 30, 30, 0.98);
+  flex-shrink: 0;
+}
+.contacts-bottom-right {
+  display: flex;
+  gap: 6px;
+  align-items: center;
+}
+.contacts-bottom-btn {
+  background: rgba(255, 255, 255, 0.1);
+  border: none;
+  border-radius: 6px;
+  color: var(--text-primary);
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: background 0.15s;
+}
+.contacts-bottom-btn:hover {
+  background: rgba(255, 255, 255, 0.16);
+}
+.contacts-bottom-btn:first-child {
+  width: 28px;
+  height: 28px;
+}
+.contacts-bottom-btn--label {
+  font-size: 13px;
+  color: white;        /* Reset to white as requested */
+  font-weight: 500;
+  padding: 0 24px;     /* Increase horizontal padding significantly */
+  white-space: nowrap; /* Prevent vertical text */
+  width: auto;         /* Allow width to fit text */
+  height: 28px;
+  display: flex;       /* Ensure centering */
+  align-items: center;
+}
+.contacts-bottom-btn--icon {
+  width: 28px;
+  height: 28px;
 }
 
 .message-bubble {
@@ -1451,12 +1750,12 @@ html, body {
 .messages-input-bar {
   padding: 8px 12px;
   border-top: 1px solid var(--border-color);
-  background: rgba(45, 45, 46, 0.95);
+  background: #1e1e1e;
 }
 
 .messages-input {
   width: 100%;
-  padding: 8px 14px;
+  padding: 4px 12px;
   border: 1px solid rgba(255,255,255,0.1);
   border-radius: 18px;
   font-size: 13px;
@@ -1521,6 +1820,14 @@ html, body {
   flex-shrink: 0;
 }
 
+.finder-search-input {
+  background: transparent;
+  border: none;
+  outline: none;
+  color: white;
+  font-size: 13px;
+  width: 240px; /* Increased from 140px */
+}
 .terminal-input {
   flex: 1;
   background: transparent;
@@ -1567,8 +1874,8 @@ html, body {
 .dock {
   display: flex;
   align-items: flex-end;
-  gap: 8px; /* Reduced gap */
-  padding: 5px 12px; /* Decreased vertical padding */
+  gap: 6px;
+  padding: 8px 14px 6px;
   border-radius: 20px;
   background: rgba(50, 50, 50, 0.4);
   backdrop-filter: blur(40px) saturate(180%);
@@ -1581,14 +1888,16 @@ html, body {
 
 .dock-item-container {
   display: flex;
-  align-items: flex-end;
+  flex-direction: column;
+  align-items: center;
+  gap: 3px;
 }
 
 .dock-separator {
   width: 1px;
-  height: 44px; /* Adjusted height corresponding to icon size */
+  height: 48px;
   background: rgba(255,255,255,0.2);
-  margin: 0 6px;
+  margin: 0 4px;
   align-self: center;
 }
 
@@ -1634,6 +1943,19 @@ html, body {
 
 .dock-item:hover .dock-tooltip {
   opacity: 1;
+}
+
+.dock-dot {
+  width: 4px;
+  height: 4px;
+  border-radius: 50%;
+  background: transparent;
+  flex-shrink: 0;
+}
+
+.dock-dot--active {
+  background: rgba(220, 220, 220, 0.9);
+  box-shadow: 0 0 2px rgba(0, 0, 0, 0.4);
 }
 
 /* ───────────────────────────────────────────
