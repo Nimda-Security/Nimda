@@ -11,36 +11,63 @@ export default function Gallery({ icon, trafficLights, onDragHandle }) {
         <div className="gallery-sidebar" onMouseDown={onDragHandle}>
           {trafficLights}
           <div className="gallery-sidebar-section">
-            <div className="gallery-sidebar-title">보관함</div>
+            <div className="gallery-sidebar-title">사진</div>
             <button className="gallery-sidebar-item active">
-              <span className="gallery-sidebar-icon">🖼</span>모든 사진
+              <span className="gallery-sidebar-icon">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect x="2" y="5" width="20" height="14" rx="2" ry="2"/><circle cx="8" cy="10" r="1.5" fill="currentColor" stroke="none"/><path d="M21 19V15l-5-5L5 19h16z" fill="currentColor" stroke="none"/></svg>
+              </span>
+              보관함
             </button>
             <button className="gallery-sidebar-item">
-              <span className="gallery-sidebar-icon">❤️</span>즐겨찾기
+              <span className="gallery-sidebar-icon">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/></svg>
+              </span>
+              즐겨찾기
             </button>
             <button className="gallery-sidebar-item">
-              <span className="gallery-sidebar-icon">🕐</span>최근 항목
+              <span className="gallery-sidebar-icon">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+              </span>
+              최근 저장된 항목
+            </button>
+            <button className="gallery-sidebar-item">
+              <span className="gallery-sidebar-icon">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg>
+              </span>
+              최근 삭제된 항목
             </button>
           </div>
           <div className="gallery-sidebar-section">
             <div className="gallery-sidebar-title">모음</div>
             <button className="gallery-sidebar-item">
-              <span className="gallery-sidebar-icon">📅</span>날짜
+              <span className="gallery-sidebar-icon">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+              </span>
+              날짜
             </button>
             <button className="gallery-sidebar-item">
-              <span className="gallery-sidebar-icon">💭</span>추억
+              <span className="gallery-sidebar-icon">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"/><path d="M3 3v5h5"/><polygon points="10 8 16 12 10 16" fill="currentColor" stroke="none"/></svg>
+              </span>
+              추억
             </button>
             <button className="gallery-sidebar-item">
-              <span className="gallery-sidebar-icon">✈️</span>여행
-            </button>
-          </div>
-          <div className="gallery-sidebar-section">
-            <div className="gallery-sidebar-title">미디어 유형</div>
-            <button className="gallery-sidebar-item">
-              <span className="gallery-sidebar-icon">🎬</span>비디오
+              <span className="gallery-sidebar-icon">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect x="2" y="7" width="20" height="14" rx="2" ry="2"/><path d="M16 21V7"/><path d="M8 21V7"/><path d="M15 7V4a2 2 0 0 0-2-2h-2a2 2 0 0 0-2 2v3"/></svg>
+              </span>
+              여행
             </button>
             <button className="gallery-sidebar-item">
-              <span className="gallery-sidebar-icon">📸</span>셀피
+              <span className="gallery-sidebar-icon">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="1"/><circle cx="19" cy="12" r="1"/><circle cx="5" cy="12" r="1"/></svg>
+              </span>
+              기타
+            </button>
+            <button className="gallery-sidebar-item">
+              <span className="gallery-sidebar-icon">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M4 8l2-6h12l2 6"/><path d="M22 8v12a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V8"/><path d="M4 8h16"/></svg>
+              </span>
+              앨범
             </button>
           </div>
         </div>

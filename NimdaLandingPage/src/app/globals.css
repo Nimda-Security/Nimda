@@ -974,6 +974,14 @@ html, body {
   width: 18px;
   text-align: center;
   flex-shrink: 0;
+  color: #007AFF; /* Blue icons */
+  display: flex; /* Centering SVG */
+  align-items: center;
+  justify-content: center;
+}
+
+.gallery-sidebar-item.active .gallery-sidebar-icon {
+  color: white;
 }
 
 .gallery-main {
