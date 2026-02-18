@@ -1,14 +1,23 @@
 'use client';
 import { motion, AnimatePresence } from "framer-motion";
-import React, { useState } from "react";
+import React, { useState, useRef, useEffect } from "react";
 
 export default function Gallery({ icon, trafficLights, onDragHandle }) {
   const [lightboxImage, setLightboxImage] = useState(null);
+  const galleryRef = useRef(null);
+
+  // Scroll to bottom on mount (Latest photos)
+  useEffect(() => {
+    if (galleryRef.current) {
+      galleryRef.current.scrollTop = galleryRef.current.scrollHeight;
+    }
+  }, []);
 
   return (
     <>
       <div className="window-gallery-content">
         <div className="gallery-sidebar" onMouseDown={onDragHandle}>
+          {/* ... Sidebar content identical to before ... */}
           {trafficLights}
           <div className="gallery-sidebar-section">
             <div className="gallery-sidebar-title">사진</div>
@@ -71,20 +80,44 @@ export default function Gallery({ icon, trafficLights, onDragHandle }) {
             </button>
           </div>
         </div>
-        <div className="gallery-main">
-          <div className="gallery-date-header">2025년 활동 사진</div>
-          <div className="gallery-date-sub">{icon.content.length}장의 사진</div>
-          <div className="gallery-grid">
-            {icon.content.map((img, i) => (
-              <button
-                key={i}
-                className="gallery-grid-item"
-                onClick={() => setLightboxImage(img)}
+        <div className="gallery-right-panel">
+          <div className="gallery-toolbar" onMouseDown={onDragHandle}>
+            <div className="gallery-search-container" onMouseDown={(e) => e.stopPropagation()}>
+              <svg 
+                className="gallery-search-icon-img" 
+                viewBox="0 0 24 24" 
+                fill="none" 
+                stroke="currentColor" 
+                strokeWidth="2" 
+                strokeLinecap="round" 
+                strokeLinejoin="round"
               >
-                <img src={img.src} alt={img.title} />
-                <div className="gallery-grid-caption">{img.title}</div>
-              </button>
-            ))}
+                <circle cx="11" cy="11" r="8"></circle>
+                <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
+              </svg>
+              <input type="text" className="gallery-search-input" placeholder="검색" />
+            </div>
+          </div>
+
+          <div className="gallery-date-header">2025년</div>
+          <div className="gallery-main" ref={galleryRef}>
+            {/* Section 2025 Grid */}
+            <div className="gallery-grid">
+              {icon.content.map((img, i) => (
+                <button
+                  key={`2025-${i}`}
+                  className="gallery-grid-item"
+                  onClick={() => setLightboxImage(img)}
+                >
+                  <img src={img.src} alt={img.title} />
+                </button>
+              ))}
+            </div>
+            
+            <div className="gallery-footer">
+              <div className="gallery-footer-title">{icon.content.length}장의 사진</div>
+              <div className="gallery-footer-subtitle">추후 업데이트 예정</div>
+            </div>
           </div>
         </div>
       </div>

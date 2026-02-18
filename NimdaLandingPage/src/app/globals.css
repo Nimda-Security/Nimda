@@ -435,7 +435,7 @@ html, body {
 
 .finder-window {
   position: absolute;
-  width: 620px;
+  width: 600px;
   max-width: calc(100vw - 40px);
   min-height: 380px;
   max-height: calc(100vh - 120px);
@@ -448,7 +448,7 @@ html, body {
 }
 
 .finder-window.window-wide {
-  width: 720px;
+  width: 680px;
 }
 
 .finder-window.window-terminal {
@@ -805,6 +805,21 @@ html, body {
   background: transparent;
 }
 
+.gallery-sidebar-icon {
+  font-size: 14px;
+  width: 18px;
+  text-align: center;
+  flex-shrink: 0;
+  color: #007AFF; /* Blue icons */
+  display: flex; /* Centering SVG */
+  align-items: center;
+  justify-content: center;
+}
+
+.gallery-sidebar-item.active .gallery-sidebar-icon {
+  color: white;
+}
+
 .finder-main {
   flex: 1;
   padding: 16px 20px;
@@ -916,7 +931,8 @@ html, body {
 
 .window-gallery-content {
   display: flex;
-  min-height: 340px;
+  height: 480px; /* Fixed height for scrolling */
+  overflow: hidden;
 }
 
 .gallery-sidebar {
@@ -943,11 +959,17 @@ html, body {
   padding: 4px 16px 8px;
 }
 
+/* Push Gallery sidebar content down more */
+.window-gallery-content .gallery-sidebar-section:first-of-type {
+  margin-top: 60px;
+}
+
 .gallery-sidebar-item {
   display: flex;
   align-items: center;
   gap: 8px;
-  font-size: 12px;
+  font-size: 13px; /* Slightly larger? */
+  font-weight: 500; /* Bold as requested */
   padding: 5px 16px;
   cursor: pointer;
   border-radius: 4px;
@@ -969,35 +991,149 @@ html, body {
   color: white;
 }
 
-.gallery-sidebar-icon {
-  font-size: 14px;
-  width: 18px;
-  text-align: center;
-  flex-shrink: 0;
-  color: #007AFF; /* Blue icons */
-  display: flex; /* Centering SVG */
-  align-items: center;
-  justify-content: center;
+/* Main Content Area Wrapper */
+.gallery-right-panel {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  background: #1e1e1e;
+  overflow: hidden;
+  position: relative; /* Context for absolute header */
 }
 
-.gallery-sidebar-item.active .gallery-sidebar-icon {
-  color: white;
+/* ... gallery-main ... */
+
+.gallery-date-header {
+  font-size: 24px;
+  font-weight: 700;
+  color: white; 
+  letter-spacing: -0.01em;
+  padding: 12px 14px 40px; /* Text positioning + Gradient height */
+  background: linear-gradient(to bottom, rgba(0, 0, 0, 0.5) 0%, transparent 100%); /* Restored gradient overlay */
+  position: absolute; 
+  top: 52px; 
+  left: 0;
+  right: 0;
+  z-index: 15;
+  pointer-events: none; 
+  text-shadow: 0 1px 4px rgba(0, 0, 0, 0.5);
+  transform: translateZ(0);
 }
 
 .gallery-main {
   flex: 1;
   display: flex;
   flex-direction: column;
-  background: #1e1e1e; /* Changed to match Contacts main bg */
+  background: transparent;
   overflow-y: auto;
+  position: relative;
+  min-height: 0;
+  margin-top: 0;
+  padding-top: 0;
 }
 
-.gallery-date-header {
-  font-size: 18px;
-  font-weight: 700;
-  color: var(--text-primary);
-  padding: 16px 20px 8px;
+/* Custom Scrollbar for Gallery */
+.gallery-main::-webkit-scrollbar {
+  width: 10px;
+  background: transparent;
 }
+.gallery-main::-webkit-scrollbar-thumb {
+  background-color: rgba(255, 255, 255, 0.2);
+  border-radius: 10px;
+  border: 2px solid #1e1e1e;
+}
+.gallery-main::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+/* Gallery Main Toolbar */
+.gallery-toolbar {
+  height: 52px;
+  display: flex;
+  align-items: center;
+  justify-content: flex-end; /* Search on right */
+  padding: 0 20px;
+  background: rgba(30, 30, 30, 0.85); /* Translucent */
+  -webkit-backdrop-filter: blur(20px);
+  backdrop-filter: blur(20px);
+  position: relative; /* Static in layout, but relative for z-index */
+  z-index: 20;
+  flex-shrink: 0;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
+  transform: translateZ(0); 
+}
+
+.gallery-search-container {
+  position: relative;
+  width: 200px;
+  z-index: 25; 
+}
+
+/* ... search input/icon ... */
+
+
+
+.gallery-footer {
+  text-align: center;
+  padding: 30px 0 40px;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.gallery-footer-title {
+  color: white;
+  font-size: 14px; /* Reduced from 18px */
+  font-weight: 700;
+}
+
+.gallery-footer-subtitle {
+  color: rgba(255, 255, 255, 0.6);
+  font-size: 12px;
+  font-weight: 500;
+}
+
+.gallery-search-container {
+  position: relative;
+  width: 200px;
+  z-index: 25; /* Higher than drag region layer */
+}
+
+.gallery-search-input {
+  width: 100%;
+  height: 28px; /* Fixed height */
+  background: #2a2a2a; /* Solid dark grey */
+  border: 1px solid transparent; 
+  border-radius: 6px;
+  padding: 0 10px 0 28px; /* Clean padding */
+  color: #f5f5f5;
+  font-size: 13px;
+  outline: none;
+  transition: all 0.2s;
+  line-height: 26px; /* Center text vertically */
+}
+.gallery-search-input:focus {
+  background: #333;
+  border-color: rgba(255, 255, 255, 0.2);
+}
+.gallery-search-input::placeholder {
+  color: #888;
+}
+
+.gallery-search-icon-img {
+  position: absolute;
+  left: 8px;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 13px;
+  height: 13px;
+  color: #888;
+  pointer-events: none;
+}
+
+
+
 
 .gallery-date-sub {
   font-size: 12px;
@@ -1008,8 +1144,8 @@ html, body {
 .gallery-grid {
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(130px, 1fr));
-  gap: 3px;
-  padding: 0 3px 3px;
+  gap: 10px; /* Wider gap as requested */
+  padding: 0 24px 24px; /* Matches header alignment */
 }
 
 .gallery-grid-item {
