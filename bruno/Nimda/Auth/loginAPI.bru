@@ -17,6 +17,16 @@ body:json {
   }
 }
 
+tests {
+  test("자동으로 JWT 토큰 저장", function() {
+    const res = bru.getRes();
+    if (res.status === 200 && res.body.token) {
+      bru.setVar("jwtToken", res.body.token);
+      console.log("✅ JWT 토큰이 자동으로 저장되었습니다:", res.body.token.substring(0, 20) + "...");
+    }
+  });
+}
+
 settings {
   encodeUrl: true
   timeout: 0

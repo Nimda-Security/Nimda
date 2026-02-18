@@ -114,7 +114,7 @@
         <dependency>
             <groupId>org.projectlombok</groupId>
             <artifactId>lombok</artifactId>
-            <version>1.18.38</version>
+            <version>1.18.30</version>
         </dependency>
     </dependencies>
 
@@ -128,13 +128,6 @@
                     <source>17</source>
                     <target>17</target>
                     <release>17</release>
-                    <annotationProcessorPaths>
-                        <path>
-                            <groupId>org.projectlombok</groupId>
-                            <artifactId>lombok</artifactId>
-                            <version>1.18.38</version>
-                        </path>
-                    </annotationProcessorPaths>
                 </configuration>
             </plugin>
             
@@ -143,7 +136,6 @@
                 <artifactId>spring-boot-maven-plugin</artifactId>
                 <version>3.2.0</version>
                 <configuration>
-                    <jvmArguments>--enable-native-access=ALL-UNNAMED</jvmArguments>
                     <excludes>
                         <exclude>
                             <groupId>org.projectlombok</groupId>
