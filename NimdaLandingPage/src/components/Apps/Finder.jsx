@@ -1,7 +1,8 @@
 'use client';
-import React from "react";
+import React, { useState } from "react";
 
 export default function Finder({ icon, trafficLights, onDragHandle }) {
+  const [isSearchOpen, setIsSearchOpen] = useState(false);
   return (
     <div className="window-folder-content">
       <div className="finder-sidebar" onMouseDown={onDragHandle}>
@@ -92,9 +93,23 @@ export default function Finder({ icon, trafficLights, onDragHandle }) {
                 <svg width="14" height="14" viewBox="0 0 14 14" fill="none"><rect x="1" y="1" width="3.5" height="12" rx="0.5" fill="currentColor"/><rect x="5.5" y="1" width="3.5" height="12" rx="0.5" fill="currentColor"/><rect x="10" y="1" width="3.5" height="12" rx="0.5" fill="currentColor"/></svg>
               </button>
             </div>
-            <div className="finder-toolbar-search">
-              <svg width="12" height="12" viewBox="0 0 12 12" fill="none"><circle cx="5" cy="5" r="3.5" stroke="rgba(255,255,255,0.55)" strokeWidth="1.2"/><path d="M8 8L10.5 10.5" stroke="rgba(255,255,255,0.55)" strokeWidth="1.2" strokeLinecap="round"/></svg>
-              <span>검색</span>
+            <div 
+              className={`finder-toolbar-search ${isSearchOpen ? 'active' : ''}`}
+              onClick={() => setIsSearchOpen(true)}
+            >
+              <svg className="finder-search-icon-svg" width="12" height="12" viewBox="0 0 12 12" fill="none"><circle cx="5" cy="5" r="3.5" stroke="rgba(255,255,255,0.55)" strokeWidth="1.2"/><path d="M8 8L10.5 10.5" stroke="rgba(255,255,255,0.55)" strokeWidth="1.2" strokeLinecap="round"/></svg>
+              {isSearchOpen && (
+                <input
+                  type="text"
+                  placeholder="검색"
+                  className="finder-search-input-field"
+                  autoFocus
+                  onClick={(e) => e.stopPropagation()}
+                  onBlur={(e) => {
+                    if (!e.target.value) setIsSearchOpen(false);
+                  }}
+                />
+              )}
             </div>
           </div>
         </div>
