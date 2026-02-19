@@ -4,22 +4,24 @@ import { motion, AnimatePresence } from 'framer-motion';
 import ScrollReveal from './ScrollReveal';
 
 const AWARDS = [
-  { year: "2020", title: "K-사이버 시큐리티 챌린지", desc: "충청권 지역예선 1위" },
-  { year: "2024", title: "프로보노 ICT멘토링 공모전", desc: "입선" },
+  { year: "2020", title: "K-Cyber Security Challenge", desc: "AI 악성코드 탐지대회 충청권 1등" },
+  { year: "2024", title: "HackTheon Sejong", desc: "대학생 사이버 보안 경진 대회 출전" },
+  { year: "2024", title: "ICPC Korea Regional", desc: "님다시큐리티 공주대 5팀 출전" },
+  { year: "2024", title: "프로보노 ICT 공모전 대회", desc: "입선" },
 ];
 
 export function AwardsSection() {
   return (
-    <section className="py-24 px-6 max-w-6xl mx-auto">
+    <section className="py-24 px-6 max-w-7xl mx-auto">
       <ScrollReveal>
-        <h2 className="text-3xl font-bold text-white mb-12 text-center">Achievements</h2>
+        <h2 className="text-3xl font-bold text-white mb-16 text-center tracking-tight">ACHIEVEMENTS</h2>
       </ScrollReveal>
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
         {AWARDS.map((award, i) => (
-          <ScrollReveal key={i} delay={i * 0.1} className="border-l-2 border-indigo-500 pl-6 py-2">
-            <span className="text-indigo-400 font-mono text-sm">{award.year}</span>
-            <h3 className="text-xl font-bold text-white mt-1">{award.title}</h3>
-            <p className="text-gray-500 text-sm">{award.desc}</p>
+          <ScrollReveal key={i} delay={i * 0.1} className="border-l-2 border-indigo-500/50 pl-6 py-1 group hover:border-indigo-400 transition-colors">
+            <span className="text-indigo-400 font-mono text-sm font-bold tracking-wider">{award.year}</span>
+            <h3 className="text-lg font-bold text-white mt-2 mb-1 group-hover:text-indigo-200 transition-colors leading-tight">{award.title}</h3>
+            <p className="text-gray-400 text-sm leading-relaxed">{award.desc}</p>
           </ScrollReveal>
         ))}
       </div>
