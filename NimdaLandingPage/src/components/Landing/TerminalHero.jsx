@@ -1,7 +1,6 @@
 'use client';
 import { useState, useEffect, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Terminal, ChevronRight } from 'lucide-react';
 
 const INTRO_LINES = [
   "Initializing NIMDA Protocol v2.0...",

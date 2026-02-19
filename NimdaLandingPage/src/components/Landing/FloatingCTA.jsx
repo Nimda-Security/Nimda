@@ -1,6 +1,5 @@
 'use client';
-import { motion, AnimatePresence } from 'framer-motion';
-import { ArrowRight } from 'lucide-react';
+import { motion } from 'framer-motion';
 
 export default function FloatingCTA() {
   return (
