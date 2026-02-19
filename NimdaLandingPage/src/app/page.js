@@ -9,7 +9,7 @@ const CLUB = {
     "NIMDA",
   ],
   links: {
-    homepage: "https://nimda.space/",
+    homepage: "https://app.nimda.kr/",
     apply: "https://moaform.com/q/8e13lE",
   },
 };
