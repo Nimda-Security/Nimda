@@ -16,7 +16,7 @@ export default function FloatingCTA() {
         <span className="text-lg font-bold text-white tracking-tight transition-all duration-300">
           NIMDA 신입 부원 지원하기
         </span>
-        
+
       </motion.a>
     </div>
   );

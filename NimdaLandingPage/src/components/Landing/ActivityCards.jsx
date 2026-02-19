@@ -1,6 +1,4 @@
 'use client';
-import { motion } from 'framer-motion';
-import { Code, Shield, Terminal, Globe, Award, Users } from 'lucide-react';
 import ScrollReveal from './ScrollReveal';
 
 const ActivityItem = ({ num, title, subtitle, desc, delay = 0 }) => (
