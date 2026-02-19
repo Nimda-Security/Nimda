@@ -13,15 +13,21 @@ const AWARDS = [
 export function AwardsSection() {
   return (
     <section className="py-24 px-6 max-w-7xl mx-auto">
-      <ScrollReveal>
-        <h2 className="text-3xl font-bold text-white mb-16 text-center tracking-tight">ACHIEVEMENTS</h2>
+      <ScrollReveal className="mb-20 border-l-4 border-indigo-500 pl-6">
+        <h2 className="text-4xl md:text-6xl font-black text-white tracking-tighter mb-2">Award History</h2>
+        <p className="text-gray-500 text-lg">우리의 도전과 성취의 기록들</p>
       </ScrollReveal>
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
+
+      <div className="flex flex-col gap-8">
         {AWARDS.map((award, i) => (
-          <ScrollReveal key={i} delay={i * 0.1} className="border-l-2 border-indigo-500/50 pl-6 py-1 group hover:border-indigo-400 transition-colors">
-            <span className="text-indigo-400 font-mono text-sm font-bold tracking-wider">{award.year}</span>
-            <h3 className="text-lg font-bold text-white mt-2 mb-1 group-hover:text-indigo-200 transition-colors leading-tight">{award.title}</h3>
-            <p className="text-gray-400 text-sm leading-relaxed">{award.desc}</p>
+          <ScrollReveal key={i} delay={i * 0.1} className="group border-b border-white/10 pb-8 hover:border-white/30 transition-colors">
+            <div className="flex flex-col md:flex-row md:items-start gap-2 md:gap-8">
+              <span className="text-indigo-400 font-mono text-xl font-bold tracking-wider shrink-0 w-24 md:pt-1">{award.year}</span>
+              <div className="flex flex-col">
+                <h3 className="text-2xl md:text-3xl font-bold text-white mb-2 group-hover:pl-2 transition-all duration-300">{award.title}</h3>
+                <p className="text-gray-400 text-base md:text-lg font-light leading-relaxed group-hover:pl-2 transition-all duration-300 delay-75">{award.desc}</p>
+              </div>
+            </div>
           </ScrollReveal>
         ))}
       </div>

@@ -55,7 +55,7 @@ export default function HeroSection() {
       </div>
 
       {/* Main Content Container - Simpler Layout */}
-      <div className="relative z-10 flex flex-col md:flex-row items-center justify-center w-full max-w-[1600px] mx-auto gap-2 md:gap-4">
+      <div className="relative z-10 flex flex-col md:flex-row items-center justify-center w-full px-4 gap-2 md:gap-4">
         
         {/* Left Text: NIMDA */}
         <motion.h1 
