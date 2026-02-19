@@ -164,8 +164,8 @@ function BoardListPage({ slug: propSlug }: BoardListPageProps) {
                   key={page}
                   onClick={() => handlePageChange(page)}
                   className={`px-4 py-2 rounded ${page === currentPage
-                    ? 'bg-black text-white'
-                    : 'bg-gray-200 text-gray-700 hover:bg-gray-300'
+                      ? 'bg-black text-white'
+                      : 'bg-gray-200 text-gray-700 hover:bg-gray-300'
                     }`}
                 >
                   {page + 1}
