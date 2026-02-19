@@ -110,4 +110,5 @@ public class UsersController {
             return ResponseEntity.status(500).body(error);
         }
     }
+
 }

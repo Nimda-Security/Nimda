@@ -80,7 +80,9 @@ public class SecurityConfig {
                 // 5. 요청별 권한 제어
                 .authorizeHttpRequests(authz -> authz
                         // 공개 API (인증 불필요)
-                        .requestMatchers("/api/auth/**").permitAll() // 로그인, 회원가입
+                        .requestMatchers("/api/auth/login").permitAll() // 로그인
+                        .requestMatchers("/api/auth/register").permitAll() // 회원가입
+                        .requestMatchers("/api/auth/me").authenticated() // 현재 사용자 정보 조회 (인증 필요)
 
                         // 관리자 전용 API
                         // AdminUserController: /api/admin/** 패턴으로 관리자 권한 설정

@@ -62,14 +62,6 @@ public interface BoardRepository extends JpaRepository<Board, Long> { // [수정
     Page<Board> findByCategoryOrderByPinnedDescCreatedAtDesc(@Param("category") Category category, Pageable pageable);
 
     // ========== [메인 페이지 API] ==========
-    // [신규] 고정글만 조회 (pinned = true인 게시글만)
-    // [사용] GET /api/cite/board/pinned?categoryId=1
-    @EntityGraph(attributePaths = { "author", "category" })
-    @Query("SELECT b FROM Board b WHERE b.category = :category AND b.pinned = true ORDER BY b.createdAt DESC")
-    Page<Board> findByCategoryAndPinnedTrueOrderByCreatedAtDesc(@Param("category") Category category,
-            Pageable pageable);
-
-    // ========== [메인 페이지 API] ==========
     // [신규] 인기글 조회 (조회수 기준, 최신순)
     // [사용] GET /api/cite/board/popular
     @EntityGraph(attributePaths = { "author", "category" })

@@ -20,7 +20,6 @@ public interface CategoryRepository extends JpaRepository<Category, Long> {
 
     /**
      * 활성화된 모든 카테고리 조회 (정렬 순서대로)
-     * SELECT * FROM catgeory WHERE is_active = true ORDER BY sort_order ASC
      */
     List<Category> findByIsActiveTrueOrderBySortOrderAsc();
 
