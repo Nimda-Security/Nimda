@@ -5,31 +5,36 @@ import com.nimda.cite.comment.enums.STATUS;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Getter;
-import lombok.NoArgsConstructor;
 
 import java.time.LocalDateTime;
-import java.util.ArrayList;
 
 @Getter
 @Builder
 @AllArgsConstructor
-@NoArgsConstructor
-public class CommentResponseDto {
+public class CommentResponse {
 
-    private String userName;
+    private Long id;
     private String context;
     private Integer replyCount;
     private STATUS status;
     private LocalDateTime createdAt;
 
-    public static CommentResponseDto from(Comment comment) {
-        return CommentResponseDto.builder()
-                .userName(comment.getUserName())
-                // 삭제된 상태일 때의 분기 처리를 DTO 레이어에서 할 수도 있습니다.
-                .context(comment.getStatus() == STATUS.DELETED ? "삭제된 댓글입니다." : comment.getContext())
+    private Long authorId;
+    private String authorName;
+
+    private Long parentId;
+
+    public static CommentResponse from(Comment comment) {
+        return CommentResponse.builder()
+                .id(comment.getId())
+                .context(comment.getContext())
                 .replyCount(comment.getReplyCount())
                 .status(comment.getStatus())
                 .createdAt(comment.getCreatedAt())
+                .authorId(comment.getAuthor().getId())
+                .authorName(comment.getAuthor().getNickname())
+                .parentId(comment.getParent() != null ? comment.getParent().getId() : null)
                 .build();
     }
+
 }

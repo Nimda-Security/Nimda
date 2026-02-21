@@ -1,13 +1,17 @@
 package com.nimda.cite.comment.service;
 
-import com.nimda.cite.comment.dto.CommentRequestDto;
-import com.nimda.cite.comment.dto.CommentResponseDto;
-import com.nimda.cite.comment.dto.ReplyResponseDto;
+import com.nimda.cite.board.entity.Board;
+import com.nimda.cite.board.repository.BoardRepository;
+import com.nimda.cite.comment.dto.CommentCreateRequest;
+import com.nimda.cite.comment.dto.CommentResponse;
 import com.nimda.cite.comment.entity.Comment;
 import com.nimda.cite.comment.enums.STATUS;
 import com.nimda.cite.comment.repository.CommentRepository;
+import com.nimda.cup.user.entity.User;
+import com.nimda.cup.user.repository.UserRepository;
 import jakarta.persistence.EntityNotFoundException;
 import lombok.RequiredArgsConstructor;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -15,59 +19,85 @@ import java.util.List;
 import java.util.stream.Collectors;
 
 @Service
-@RequiredArgsConstructor
-@Transactional(readOnly = true)
 public class CommentService {
 
-    private final CommentRepository commentRepository;
+    @Autowired
+    private CommentRepository commentRepository;
 
-    /**
-     * 댓글 및 대댓글 등록
-     */
+    @Autowired
+    private BoardRepository boardRepository;
+
+    @Autowired
+    private UserRepository userRepository;
+
+    // 댓글 등록
     @Transactional
-    public Long createComment(CommentRequestDto dto) {
-        Comment comment = dto.toEntity();
+    public void createComment(CommentCreateRequest request, Long userId) {
 
-        // 대댓글인 경우 부모 댓글 설정
-        if (dto.getParentId() != null) {
-            Comment parent = commentRepository.findById(dto.getParentId())
-                    .orElseThrow(() -> new EntityNotFoundException("부모 댓글이 존재하지 않습니다."));
+        // 연관 엔티티 조회
+        // 게시글
+        Board board = boardRepository.findById(request.getBoardId())
+                .orElseThrow(() -> new EntityNotFoundException("게시글을 찾을 수 없습니다."));
 
-            comment.setParent(parent);
+        // 작성자
+        User author = userRepository.findById(userId)
+                .orElseThrow(() -> new EntityNotFoundException("사용자를 찾을 수 없습니다."));
 
-            // 부모 댓글의 답글 수 증가 (더티 체킹)
+        // 부모 댓글
+        Comment parent = null;
+        if (request.getParentId() != null) {
+            parent = commentRepository.findById(request.getParentId())
+                    .orElseThrow(() -> new EntityNotFoundException("부모 댓글을 찾을 수 없습니다."));
+
             parent.setReplyCount(parent.getReplyCount() + 1);
         }
 
-        return commentRepository.save(comment).getId();
+        // 엔티티 생성
+        Comment comment = Comment.builder()
+                .context(request.getContext())
+                .board(board)
+                .author(author)
+                .parent(parent)
+                .status(STATUS.PUBLIC)
+                .replyCount(0)
+                .build();
+
+        // 저장
+        commentRepository.save(comment);
     }
 
-    /**
-     * 댓글 삭제 (Soft Delete)
-     * 자식 댓글이 있으면 'DELETED' 상태로 변경, 없으면 물리 삭제 고려 가능
-     */
+    // 댓글 목록 조회
+    public List<CommentResponse> getComments(Long boardId) {
+        return commentRepository.findByBoardIdAndParentIsNullOrderByCreatedAtAsc(boardId)
+                .stream()
+                .map(CommentResponse::from)
+                .collect(Collectors.toList());
+    }
+
+    // 대댓글 목록 조회
+    public List<CommentResponse> getReplies(Long boardId, Long parentId) {
+        return commentRepository.findByBoardIdAndParentIdOrderByCreatedAtAsc(boardId, parentId)
+                .stream()
+                .map(CommentResponse::from)
+                .collect(Collectors.toList());
+    }
+
+    // 댓글 삭제
+    // 대댓글 O - Soft Delete
+    //       X - Hard Delete
+    /*
     @Transactional
-    public void deleteComment(Long commentId) {
+    public void deleteComment(Long commentId, Long userId) {
         Comment comment = commentRepository.findById(commentId)
                 .orElseThrow(() -> new EntityNotFoundException("댓글을 찾을 수 없습니다."));
 
-        // 실제 DB에서 지우지 않고 상태만 변경 (대댓글 구조 유지 목적)
-        comment.setStatus(STATUS.DELETED);
-        comment.setContext("삭제된 댓글입니다.");
-    }
+        // 권한 체크 (작성자 본인인지 확인)
+        if (!comment.getAuthor().getId().equals(userId)) {
+            throw new AccessDeniedException("삭제 권한이 없습니다.");
+        }
 
-    /**
-     * 특정 게시글의 댓글 목록 조회 (계층 구조 정렬은 쿼리나 로직에서 처리)
+        // 실제 삭제 대신 상태값 변경 (대댓글 유실 방지)
+        comment.setStatus(STATUS.DELETE);
+    }
      */
-    public List<CommentResponseDto> getCommentsByBoard(Long boardId) {
-        List<Comment> comments = commentRepository.findByBoardIdAndParentIsNullOrderByCreatedAtAsc(boardId);
-        return comments.stream()
-                .map(CommentResponseDto::from)
-                .collect(Collectors.toList());
-    }
-/*
-    public List<ReplyResponseDto> getRepliesByParent() {
-
-    }
- */
 }
