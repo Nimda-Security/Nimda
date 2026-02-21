@@ -11,12 +11,14 @@ import java.time.LocalDateTime;
 public class PushLikeButtonEvent extends ApplicationEvent {
     private LocalDateTime createdAt;
     private Board board;
-    private User user;
+    private User recipient;
+    private User sender;
 
-    public PushLikeButtonEvent(Object source, Board board, User user) {
+    public PushLikeButtonEvent(Object source, Board board, User recipient, User sender) {
         super(source);
         this.board = board;
-        this.user = user;
+        this.recipient = recipient;
+        this.sender = sender;
         this.createdAt = LocalDateTime.now();
     }
 }

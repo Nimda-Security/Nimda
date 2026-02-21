@@ -1,7 +1,14 @@
 package com.nimda.cite.alarm.service;
 
+import com.nimda.cite.alarm.Event.AddCommentEvent;
+import com.nimda.cite.alarm.Event.CommentLikeEvent;
 import com.nimda.cite.alarm.Event.PushLikeButtonEvent;
 import com.nimda.cite.alarm.Repository.SseEmitterRepository;
+import com.nimda.cite.notification.entity.Notification;
+import com.nimda.cite.notification.enums.NotificationType;
+import com.nimda.cite.notification.repositroy.NotificationRepositroy;
+import jakarta.transaction.Transactional;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.event.EventListener;
 import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
@@ -14,11 +21,10 @@ import java.io.IOException;
 
 @Service
 public class AlarmService {
-    private final SseEmitterRepository sseEmitterRepository;
-
-    public AlarmService(SseEmitterRepository sseEmitterRepository) {
-        this.sseEmitterRepository = sseEmitterRepository;
-    }
+    @Autowired
+    private SseEmitterRepository sseEmitterRepository;
+    @Autowired
+    private NotificationRepositroy notificationRepositroy;
 
     // 클라이언트가 SSE 구독을 요청할 때 호출
     public SseEmitter subscribe(Long userId) {
@@ -41,19 +47,73 @@ public class AlarmService {
     // 해당 객체가 생성되면 자동으로 실행
     @EventListener
     @Async
-    public void sendPushLikeButtonEvent(Long userId ,PushLikeButtonEvent event) {
-        String message = event.getBoard().getTitle() + "에 " +
-                event.getUser().getNickname()+"님이 좋아요를 눌렀습니다.";
-        this.sseEmitterRepository.findByUserId(userId).ifPresent(emitter ->
-        {
+    public void handlePushLikeButtonEvent(PushLikeButtonEvent event) {
+        // 알림 엔티티 생성
+        Notification notification = Notification.builder()
+                .recipient(event.getRecipient())
+                .sender(event.getSender())
+                .message(event.getBoard().getTitle() + "에 " + event.getSender().getNickname() + "님이 좋아요를 눌렀습니다.")
+                .notificationType(NotificationType.PushLikeButtonAtBoard)
+                .relatedEntityId(event.getBoard().getId())
+                .relatedUrl("/board/view/" + event.getBoard().getId())
+                .isRead(false)
+                .build();
+
+        this.send(notification);
+    }
+
+    // 게시글에 댓글이 달렸을 때 이벤트
+    @EventListener
+    @Async
+    public void handleAddCommentEvent(AddCommentEvent event) {
+        // 1. 알림 엔티티 생성
+        Notification notification = Notification.builder()
+                .recipient(event.getBoardAuthor()) // 게시글 작성자
+                .sender(event.getCommentAuthor())  // 댓글 작성자
+                .message(event.getBoardTitle() + " 게시글에 새로운 댓글이 달렸습니다.")
+                .notificationType(NotificationType.AddCommentAtBoard)
+                .relatedEntityId(event.getBoardId())
+                .relatedUrl("/board/view/" + event.getBoardId())
+                .isRead(false)
+                .build();
+
+        // 2. 공통 send 메서드 호출 (DB 저장 및 SSE 전송)
+        this.send(notification);
+    }
+
+    @EventListener
+    @Async
+    public void handleCommentLikeEvent(CommentLikeEvent event) {
+        // 1. 알림 엔티티 생성
+        Notification notification = Notification.builder()
+                .recipient(event.getCommentAuthor()) // 댓글 작성자
+                .sender(event.getLikeUser())         // 좋아요 누른 유저
+                .message("작성하신 댓글 '" + event.getCommentContent() + "'에 좋아요가 눌렸습니다.")
+                .notificationType(NotificationType.PushLikeButtonAtComment)
+                .relatedEntityId(event.getCommentId())
+                // url은 수정해야함
+                .relatedUrl("/board/view/" + event.getBoardId() + "#comment-" + event.getCommentId())
+                .isRead(false)
+                .build();
+
+        // 2. 공통 send 메서드 호출
+        this.send(notification);
+    }
+
+    @Transactional
+    public void send(Notification notification) {
+        this.notificationRepositroy.save(notification);
+
+        Long recipientId = notification.getRecipient().getId();
+        sseEmitterRepository.findByUserId(recipientId).ifPresent(emitter -> {
             try {
                 emitter.send(SseEmitter.event()
-                        .name("Push Like Button")
-                        .data(message));
-            }
-            catch (IOException e) {
-                sseEmitterRepository.deleteByUserId(userId);
+                        .name("notification") // 이벤트 이름을 통일하면 프론트에서 관리하기 편합니다
+                        .data(notification.getMessage()));
+            } catch (IOException e) {
+                sseEmitterRepository.deleteByUserId(recipientId);
             }
         });
     }
 }
+
