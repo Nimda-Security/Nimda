@@ -26,7 +26,7 @@ public class CommentResponseDto {
         return CommentResponseDto.builder()
                 .userName(comment.getUserName())
                 // 삭제된 상태일 때의 분기 처리를 DTO 레이어에서 할 수도 있습니다.
-                .context(comment.getStatus() == STATUS.DELETE ? "삭제된 댓글입니다." : comment.getContext())
+                .context(comment.getStatus() == STATUS.DELETED ? "삭제된 댓글입니다." : comment.getContext())
                 .replyCount(comment.getReplyCount())
                 .status(comment.getStatus())
                 .createdAt(comment.getCreatedAt())

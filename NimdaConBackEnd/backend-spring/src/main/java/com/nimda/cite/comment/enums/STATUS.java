@@ -1,7 +1,7 @@
 package com.nimda.cite.comment.enums;
 
 public enum STATUS {
-    PUBLIC,
-    HIDDEN,
-    DELETE
+    PUBLIC,     // 공개
+    HIDDEN,     // 숨김
+    DELETED      // 삭제
 }

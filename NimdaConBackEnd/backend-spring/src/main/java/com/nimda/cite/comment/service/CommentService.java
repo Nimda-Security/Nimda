@@ -52,7 +52,7 @@ public class CommentService {
                 .orElseThrow(() -> new EntityNotFoundException("댓글을 찾을 수 없습니다."));
 
         // 실제 DB에서 지우지 않고 상태만 변경 (대댓글 구조 유지 목적)
-        comment.setStatus(STATUS.DELETE);
+        comment.setStatus(STATUS.DELETED);
         comment.setContext("삭제된 댓글입니다.");
     }
 
