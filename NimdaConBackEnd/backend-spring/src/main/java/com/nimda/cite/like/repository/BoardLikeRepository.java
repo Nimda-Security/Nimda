@@ -4,9 +4,11 @@ import com.nimda.cite.board.entity.Board;
 import com.nimda.cite.like.entity.BoardLike;
 import com.nimda.cup.user.entity.User;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.stereotype.Repository;
 
 import java.util.Optional;
 
+@Repository
 public interface BoardLikeRepository extends JpaRepository<BoardLike, Long> {
         // 특정 게시글의 좋아요 총 개수 조회
         long countByBoardId(Long boardId);

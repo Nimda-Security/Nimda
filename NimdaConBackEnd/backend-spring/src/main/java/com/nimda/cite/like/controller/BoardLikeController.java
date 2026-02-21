@@ -1,6 +1,6 @@
 package com.nimda.cite.like.controller;
 
-import com.nimda.cite.like.dto.LikeResponseDto;
+import com.nimda.cite.like.dto.BoardLikeResponseDto;
 import com.nimda.cite.like.dto.LikeStatusResponseDto;
 import com.nimda.cite.like.service.BoardLikeService;
 import com.nimda.cup.common.util.JwtUtil;
@@ -35,7 +35,7 @@ public class BoardLikeController {
     }
 
     @PostMapping("/{boardId}")
-    public ResponseEntity<LikeResponseDto> toggleLike(
+    public ResponseEntity<BoardLikeResponseDto> toggleLike(
             @RequestHeader("Authorization") String authHeader,
             @PathVariable Long boardId) {
 
@@ -48,6 +48,6 @@ public class BoardLikeController {
         // 이미 눌렀다면 true, 누르지 않았다면 false
         boolean isLiked = !message.contains("취소");
 
-        return ResponseEntity.ok(LikeResponseDto.of(message, likeCount, isLiked));
+        return ResponseEntity.ok(BoardLikeResponseDto.of(message, likeCount, isLiked));
     }
 }
