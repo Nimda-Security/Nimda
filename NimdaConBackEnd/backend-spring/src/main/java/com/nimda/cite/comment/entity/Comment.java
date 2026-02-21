@@ -18,61 +18,45 @@ import lombok.*;
 @AllArgsConstructor
 public class Comment extends BaseTimeEntity {
 
-    /**
-     * id
-     */
+    // id
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    /**
-     * 부모 댓글 id
-     */
+    // 부모 댓글
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "parent_comment_id")
     @JsonIgnoreProperties({ "hibernateLazyInitializer", "handler" })
     private Comment parent;
 
-    /**
-     * 게시글
-     */
+    // 게시글
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "board_id", nullable = false)
     @JsonIgnoreProperties({ "hibernateLazyInitializer", "handler" })
     private Board board;
 
-    /**
-     * 작성자(user)
-     */
+    // 작성자(User)
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "user_id", nullable = false)
     @JsonIgnoreProperties({ "hibernateLazyInitializer", "handler" })
-    private User user;
+    private User author;
 
-    /**
-     * 카테고리
-     */
+    // 카테고리
     /*
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "category_id", nullable = false)
     private Category category;
     */
 
-    /**
-     * 내용
-     */
+    // 내용
     @Column(columnDefinition = "TEXT", nullable = false)
     private String context;
 
-    /**
-     * 대댓글 개수
-     */
+    // 대댓글 개수
     @Column(name = "reply_count", columnDefinition = "integer default 0")
     private Integer replyCount = 0;
 
-    /**
-     * 상태(기본 - 공개)
-     */
+    // 상태(기본 - 공개)
     @Enumerated(EnumType.STRING)
     @Column(length = 20)
     private STATUS status = STATUS.PUBLIC;
