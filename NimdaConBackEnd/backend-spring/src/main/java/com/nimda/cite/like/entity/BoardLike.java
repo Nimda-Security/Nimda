@@ -12,6 +12,7 @@ import java.time.LocalDateTime;
 @Entity
 @AllArgsConstructor
 @Builder
+@Data
 public class BoardLike {
     @Id
     @GeneratedValue
