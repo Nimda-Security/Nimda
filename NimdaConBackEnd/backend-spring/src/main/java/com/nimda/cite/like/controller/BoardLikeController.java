@@ -8,8 +8,10 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
+// 매핑 이름 바꿔야 함
+
 @RestController
-@RequestMapping("/api/board")
+@RequestMapping("/api/boardLike")
 @RequiredArgsConstructor
 public class BoardLikeController {
 

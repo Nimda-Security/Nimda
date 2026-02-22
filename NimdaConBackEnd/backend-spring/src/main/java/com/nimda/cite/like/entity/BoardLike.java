@@ -3,14 +3,13 @@ package com.nimda.cite.like.entity;
 import com.nimda.cite.board.entity.Board;
 import com.nimda.cup.user.entity.User;
 import jakarta.persistence.*;
-        import lombok.AllArgsConstructor;
-import lombok.Builder;
-import lombok.Data;
+import lombok.*;
 
 import java.time.LocalDateTime;
 
 @Entity
 @AllArgsConstructor
+@NoArgsConstructor(access = AccessLevel.PROTECTED)
 @Builder
 @Data
 @Table(
@@ -20,11 +19,11 @@ import java.time.LocalDateTime;
 )
 public class BoardLike {
     @Id
-    @GeneratedValue
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "member_id")
+    @JoinColumn(name = "user_id")
     private User user;
 
     @ManyToOne(fetch = FetchType.LAZY)
