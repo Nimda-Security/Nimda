@@ -9,8 +9,6 @@ import java.util.Optional;
 
 /**
  * 카테고리 Repository
- * 
- * [설계 이유]
  * - 활성화된 카테고리만 조회 (isActive = true)
  * - 부모 카테고리로 자식 조회 (계층 구조)
  * - Slug로 조회 (URL 라우팅용)
