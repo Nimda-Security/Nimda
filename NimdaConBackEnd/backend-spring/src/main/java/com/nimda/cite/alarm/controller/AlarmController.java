@@ -15,7 +15,7 @@ public class AlarmController {
     @Autowired
     private AlarmService alarmService;
 
-    @GetMapping(name = "/subscribe/{userId}",produces = MediaType.TEXT_EVENT_STREAM_VALUE)
+    @GetMapping("/subscribe/{userId}")
     public SseEmitter subscribe(@PathVariable Long userId) {
         return alarmService.subscribe(userId);
     }

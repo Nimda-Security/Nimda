@@ -1,6 +1,8 @@
 spring:
   application:
     name: nimda-cup
+  profiles:
+    active: local
   
   datasource:
     url: ${SPRING_DATASOURCE_URL:jdbc:mysql://mysql:3306/nimda_con?useSSL=false&serverTimezone=Asia/Seoul&allowPublicKeyRetrieval=true}
