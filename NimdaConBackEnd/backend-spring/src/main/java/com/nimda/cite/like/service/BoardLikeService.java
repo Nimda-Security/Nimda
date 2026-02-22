@@ -1,9 +1,12 @@
 package com.nimda.cite.like.service;
 
+import com.nimda.cite.alarm.service.AlarmService;
 import com.nimda.cite.board.entity.Board;
 import com.nimda.cite.like.entity.BoardLike;
 import com.nimda.cite.board.repository.BoardRepository;
 import com.nimda.cite.like.repository.BoardLikeRepository;
+import com.nimda.cite.notification.entity.Notification;
+import com.nimda.cite.notification.enums.NotificationType;
 import com.nimda.cup.user.entity.User;
 import com.nimda.cup.user.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
@@ -19,28 +22,35 @@ public class BoardLikeService {
     private final BoardLikeRepository boardLikeRepository;
     private final BoardRepository boardRepository;
     private final UserRepository userRepository;
+    private final AlarmService alarmService;
 
-    // String 대신 ResponseEntity로 바꿔야 함
     @Transactional
     public String toggleLike(Long userId, Long boardId) {
-        // 게시글 존재 확인
-        Board board = boardRepository.findById(boardId)
-                .orElseThrow(() -> new IllegalArgumentException("해당 게시글이 없습니다."));
+        User user = userRepository.findById(userId).orElseThrow();
+        Board board = boardRepository.findById(boardId).orElseThrow();
 
-        // 유저 존재 확인
-        User user = userRepository.findById(userId)
-                .orElseThrow(() -> new IllegalArgumentException("해당 유저가 없습니다."));
+        Optional<BoardLike> like = boardLikeRepository.findByBoardAndUser(board, user);
 
-        // 좋아요 존재 여부 확인
-        Optional<BoardLike> boardLike = boardLikeRepository.findByBoardAndUser(board, user);
-
-        if (boardLike.isPresent()) {
-            // 이미 있으면 삭제 (좋아요 취소)
-            boardLikeRepository.delete(boardLike.get());
+        if (like.isPresent()) {
+            boardLikeRepository.delete(like.get());
             return "좋아요 취소 완료";
         } else {
-            BoardLike newLike = BoardLike.builder().user(user).board(board).build();
-            boardLikeRepository.save(newLike);
+            boardLikeRepository.save(BoardLike.builder().user(user).board(board).build());
+
+            // 자신이 누른 좋아요는 발송되지 않음
+            if (!board.getAuthor().getId().equals(userId)) {
+                Notification notification = Notification.builder()
+                        .recipient(board.getAuthor()) // 게시글 작성자
+                        .sender(user)                // 좋아요 누른 사람
+                        .notificationType(NotificationType.PushLikeButtonAtBoard)
+                        .message(user.getNickname() + "님이 내 게시글 '" + board.getTitle() + "'을 좋아합니다.")
+                        .relatedEntityId(boardId)
+                        .relatedUrl("/api/cite/board/" + boardId)
+                        .isRead(false)
+                        .build();
+
+                alarmService.send(notification); // AlarmService의 send 메서드 호출
+            }
             return "좋아요 완료";
         }
     }

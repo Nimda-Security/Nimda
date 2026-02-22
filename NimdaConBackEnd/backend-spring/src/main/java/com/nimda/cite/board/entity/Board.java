@@ -87,6 +87,7 @@ public class Board extends BaseTimeEntity {
     // [신규] 조회수 필드 추가 (ERD의 post_view)
     // [이유] 메인 페이지 인기글 섹션, 게시글 조회수 기능
     // [참고] 좋아요는 별도 테이블로 관리하므로 Board 엔터티에 포함하지 않음
+    // 좋아요를 별도 테아블로 관리하면 게시글 리스트에서 좋아요 수를 참조할 때
     @Column(name = "post_view", nullable = false)
     private Integer postView = 0;
 
