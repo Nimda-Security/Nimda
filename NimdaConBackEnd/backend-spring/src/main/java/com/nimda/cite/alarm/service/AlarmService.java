@@ -69,7 +69,7 @@ public class AlarmService {
         // 1. 알림 엔티티 생성
         Notification notification = Notification.builder()
                 .recipient(event.getBoardAuthor()) // 게시글 작성자
-                .sender(event.getCommentAuthor())  // 댓글 작성자
+                .sender(event.getCommentAuthor()) // 댓글 작성자
                 .message(event.getBoardTitle() + " 게시글에 새로운 댓글이 달렸습니다.")
                 .notificationType(NotificationType.AddCommentAtBoard)
                 .relatedEntityId(event.getBoardId())
@@ -87,7 +87,7 @@ public class AlarmService {
         // 1. 알림 엔티티 생성
         Notification notification = Notification.builder()
                 .recipient(event.getCommentAuthor()) // 댓글 작성자
-                .sender(event.getLikeUser())         // 좋아요 누른 유저
+                .sender(event.getLikeUser()) // 좋아요 누른 유저
                 .message("작성하신 댓글 '" + event.getCommentContent() + "'에 좋아요가 눌렸습니다.")
                 .notificationType(NotificationType.PushLikeButtonAtComment)
                 .relatedEntityId(event.getCommentId())
@@ -115,5 +115,21 @@ public class AlarmService {
             }
         });
     }
-}
 
+    /**
+     * NotificationService에서 호출하는 메서드
+     * DB 저장은 이미 NotificationService에서 처리했으므로 SSE 전송만 수행
+     */
+    public void sendToClient(String recipientId, Notification notification) {
+        Long userId = Long.parseLong(recipientId);
+        sseEmitterRepository.findByUserId(userId).ifPresent(emitter -> {
+            try {
+                emitter.send(SseEmitter.event()
+                        .name("notification")
+                        .data(notification.getMessage()));
+            } catch (IOException e) {
+                sseEmitterRepository.deleteByUserId(userId);
+            }
+        });
+    }
+}
