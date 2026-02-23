@@ -14,26 +14,36 @@ import java.time.LocalDateTime;
 public class CommentResponse {
 
     private Long id;
+    private Long parentId;
+    private Long boardId;
+    private String authorName;
     private String context;
     private Integer replyCount;
     private STATUS status;
     private LocalDateTime createdAt;
 
-    private Long authorId;
-    private String authorName;
+    public static CommentResponse from(Comment comment, boolean isAdmin) {
+        String context;
 
-    private Long parentId;
+        if (isAdmin) {
+            context = comment.getContext();
+        } else {
+            context = switch (comment.getStatus()) {
+                case HIDDEN -> "숨긴 댓글입니다.";
+                case DELETED -> "삭제된 댓글입니다.";
+                default -> comment.getContext();
+            };
+        }
 
-    public static CommentResponse from(Comment comment) {
         return CommentResponse.builder()
                 .id(comment.getId())
-                .context(comment.getContext())
+                .parentId(comment.getParent() != null ? comment.getParent().getId() : null)
+                .boardId(comment.getBoard().getId())
+                .authorName(comment.getAuthor().getNickname())
+                .context(context)
                 .replyCount(comment.getReplyCount())
                 .status(comment.getStatus())
                 .createdAt(comment.getCreatedAt())
-                .authorId(comment.getAuthor().getId())
-                .authorName(comment.getAuthor().getNickname())
-                .parentId(comment.getParent() != null ? comment.getParent().getId() : null)
                 .build();
     }
 

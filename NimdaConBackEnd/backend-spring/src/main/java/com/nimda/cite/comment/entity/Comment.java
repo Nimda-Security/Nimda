@@ -11,7 +11,6 @@ import lombok.*;
 
 @Entity
 @Table(name = "comments")
-@Builder
 @Getter
 @Setter
 @NoArgsConstructor
