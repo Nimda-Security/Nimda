@@ -62,11 +62,14 @@ public class CommentService {
         }
 
         // 엔티티 생성
-        Comment comment = new Comment();
-        comment.setBoard(board);
-        comment.setAuthor(author);
-        comment.setParent(parent);
-        comment.setContext(request.getContext());
+        Comment comment = Comment.builder()
+                .context(request.getContext())
+                .board(board)
+                .author(author)
+                .parent(parent)
+                .status(STATUS.PUBLIC)
+                .replyCount(0)
+                .build();
 
         // 저장
         Comment saved = commentRepository.save(comment);
@@ -145,7 +148,7 @@ public class CommentService {
         }
 
         boolean isAdmin = "ROLE_ADMIN".equals(role);
-        boolean isAuthor = comment.getAuthor().getUserId().equals(userId);
+        boolean isAuthor = comment.getAuthor().getId().equals(userId);
 
         if (!isAdmin && !isAuthor) {
             throw new IllegalStateException("댓글을 삭제할 권한이 없습니다.");
