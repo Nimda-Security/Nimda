@@ -43,13 +43,14 @@ public class CategoryService {
         }
 
         // 3. Category 생성
-        Category category = new Category();
-        category.setName(createDTO.getName());
-        category.setSlug(createDTO.getSlug());
-        category.setParentId(createDTO.getParentId());
-        category.setSortOrder(createDTO.getSortOrder() != null ? createDTO.getSortOrder() : 0);
-        category.setIsActive(createDTO.getIsActive() != null ? createDTO.getIsActive() : true);
-        category.setPostCount(0);
+        Category category = Category.builder()
+                .name(createDTO.getName())
+                .slug(createDTO.getSlug())
+                .parentId(createDTO.getParentId())
+                .sortOrder(createDTO.getSortOrder() != null ? createDTO.getSortOrder() : 0)
+                .isActive(createDTO.getIsActive() != null ? createDTO.getIsActive() : true)
+                .postCount(0)
+                .build();
 
         // 4. 저장 및 반환
         return categoryRepository.save(category);

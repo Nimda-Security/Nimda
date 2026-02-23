@@ -3,6 +3,7 @@ package com.nimda.cite.board.entity;
 import com.nimda.cup.common.entity.BaseTimeEntity;
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
+import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
@@ -23,6 +24,7 @@ import lombok.Setter;
 @Setter
 @NoArgsConstructor
 @AllArgsConstructor
+@Builder
 public class Category extends BaseTimeEntity {
 
     @Id
@@ -44,8 +46,10 @@ public class Category extends BaseTimeEntity {
 
     /**
      * 활성화 여부
+     * Default = True
      */
     @Column(name = "is_active", nullable = false)
+    @Builder.Default
     private Boolean isActive = true;
 
     /**
@@ -56,13 +60,17 @@ public class Category extends BaseTimeEntity {
 
     /**
      * 정렬 순서
+     * Default = 0
      */
     @Column(name = "sort_order", nullable = false)
+    @Builder.Default
     private Integer sortOrder = 0;
 
     /**
      * 해당 카테고리 게시글 수 (성능 최적화용)
+     * Default = 0
      */
     @Column(name = "post_count", nullable = false)
+    @Builder.Default
     private Integer postCount = 0;
 }
