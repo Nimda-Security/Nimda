@@ -5,6 +5,7 @@ import com.nimda.cite.board.dto.CategoryUpdateDTO;
 import com.nimda.cite.board.entity.Category;
 import com.nimda.cite.board.repository.BoardRepository;
 import com.nimda.cite.board.repository.CategoryRepository;
+import com.nimda.cup.user.entity.User;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -15,7 +16,8 @@ import java.util.Set;
 
 /**
  * 카테고리 서비스
- * createCategory : 카테고리 생성
+ * - 카테고리 CRUD 작업
+ * - 비즈니스 로직 처리 (검증, 순환 참조 체크 등)
  */
 @Service
 public class CategoryService {
@@ -27,11 +29,60 @@ public class CategoryService {
     private BoardRepository boardRepository;
 
     /**
+     * 활성화된 모든 카테고리 조회
+     * - 정렬 순서대로 반환
+     */
+    @Transactional(readOnly = true)
+    public List<Category> getAllActiveCategories() {
+        return categoryRepository.findByIsActiveTrueOrderBySortOrderAsc();
+    }
+
+    /**
+     * Slug로 활성화된 카테고리 조회
+     * 
+     * @param slug 카테고리 slug
+     * @return Category (활성화된 카테고리)
+     * @throws RuntimeException 카테고리를 찾을 수 없는 경우
+     */
+    @Transactional(readOnly = true)
+    public Category getCategoryBySlug(String slug) {
+        return categoryRepository.findBySlugAndIsActiveTrue(slug)
+                .orElseThrow(() -> new RuntimeException("카테고리를 찾을 수 없습니다: " + slug));
+    }
+
+    /**
+     * 관리자 권한 확인
+     * - User의 authorities에서 ROLE_ADMIN 권한 확인
+     * 
+     * @param user 사용자 객체
+     * @throws RuntimeException 권한이 없는 경우
+     */
+    private void checkAdminAuthority(User user) {
+        if (user == null) {
+            throw new RuntimeException("로그인이 필요합니다.");
+        }
+
+        // User의 authorities에서 ROLE_ADMIN 권한 확인
+        boolean isAdmin = user.getAuthorities().stream()
+                .anyMatch(authority -> authority.getAuthorityName().equals("ROLE_ADMIN"));
+
+        if (!isAdmin) {
+            throw new RuntimeException("관리자 권한이 필요합니다.");
+        }
+    }
+
+    /**
      * Note. createCategory 카테고리 생성
-     * CategoryCreateDTO
+     * - 관리자 권한 확인 후 카테고리 생성
+     * 
+     * @param createDTO 카테고리 생성 DTO
+     * @param user      현재 사용자 (관리자 권한 확인용)
+     * @return 생성된 Category
      */
     @Transactional
-    public Category createCategory(CategoryCreateDTO createDTO) {
+    public Category createCategory(CategoryCreateDTO createDTO, User user) {
+        // 관리자 권한 확인
+        checkAdminAuthority(user);
 
         // 1. Slug 중복 체크
         validateSlugUnique(createDTO.getSlug(), null);
@@ -43,13 +94,14 @@ public class CategoryService {
         }
 
         // 3. Category 생성
-        Category category = new Category();
-        category.setName(createDTO.getName());
-        category.setSlug(createDTO.getSlug());
-        category.setParentId(createDTO.getParentId());
-        category.setSortOrder(createDTO.getSortOrder() != null ? createDTO.getSortOrder() : 0);
-        category.setIsActive(createDTO.getIsActive() != null ? createDTO.getIsActive() : true);
-        category.setPostCount(0);
+        Category category = Category.builder()
+                .name(createDTO.getName())
+                .slug(createDTO.getSlug())
+                .parentId(createDTO.getParentId())
+                .sortOrder(createDTO.getSortOrder() != null ? createDTO.getSortOrder() : 0)
+                .isActive(createDTO.getIsActive() != null ? createDTO.getIsActive() : true)
+                .postCount(0)
+                .build();
 
         // 4. 저장 및 반환
         return categoryRepository.save(category);
@@ -57,10 +109,17 @@ public class CategoryService {
 
     /**
      * Note. updateCategory 카테고리 수정
-     * CategoryUpdateDTO
+     * - 관리자 권한 확인 후 카테고리 수정
+     * 
+     * @param id        카테고리 ID
+     * @param updateDTO 카테고리 수정 DTO
+     * @param user      현재 사용자 (관리자 권한 확인용)
+     * @return 수정된 Category
      */
     @Transactional
-    public Category updateCategory(Long id, CategoryUpdateDTO updateDTO) {
+    public Category updateCategory(Long id, CategoryUpdateDTO updateDTO, User user) {
+        // 관리자 권한 확인
+        checkAdminAuthority(user);
 
         // #1. 업데이트할 카테고리 탐색
         Category category = categoryRepository.findById(id)
@@ -112,9 +171,16 @@ public class CategoryService {
 
     /**
      * 카테고리 삭제 (소프트 삭제)
+     * - 관리자 권한 확인 후 카테고리 삭제
+     * 
+     * @param id   카테고리 ID
+     * @param user 현재 사용자 (관리자 권한 확인용)
      */
     @Transactional
-    public void deleteCategory(Long id) {
+    public void deleteCategory(Long id, User user) {
+        // 관리자 권한 확인
+        checkAdminAuthority(user);
+
         // 1. 카테고리 존재 확인
         Category category = categoryRepository.findById(id)
                 .orElseThrow(() -> new RuntimeException("카테고리를 찾을 수 없습니다: " + id));
