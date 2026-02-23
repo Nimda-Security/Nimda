@@ -1,0 +1,15 @@
+info:
+  name: 좋아요 누른 게시글 조회
+  type: http
+  seq: 5
+
+http:
+  method: GET
+  url: http://localhost:8080/api/like/board/pushedLikes
+  auth: inherit
+
+settings:
+  encodeUrl: true
+  timeout: 0
+  followRedirects: true
+  maxRedirects: 5

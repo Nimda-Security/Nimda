@@ -1,0 +1,15 @@
+info:
+  name: 게시글 좋아요 누르기
+  type: http
+  seq: 3
+
+http:
+  method: POST
+  url: http://localhost:8080/api/like/board/{boardId}
+  auth: inherit
+
+settings:
+  encodeUrl: true
+  timeout: 0
+  followRedirects: true
+  maxRedirects: 5

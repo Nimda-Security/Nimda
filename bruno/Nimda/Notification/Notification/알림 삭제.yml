@@ -1,0 +1,15 @@
+info:
+  name: 알림 삭제
+  type: http
+  seq: 7
+
+http:
+  method: DELETE
+  url: http://localhost:8080/api/notifications/{notificationId}
+  auth: inherit
+
+settings:
+  encodeUrl: true
+  timeout: 0
+  followRedirects: true
+  maxRedirects: 5

@@ -1,0 +1,20 @@
+info:
+  name: 모든 알림 조회
+  type: http
+  seq: 2
+
+http:
+  method: GET
+  url: http://localhost:8080/api/notifications
+  headers:
+    - name: Authorization
+      value: eyJhbGciOiJIUzI1NiJ9.eyJuaWNrbmFtZSI6Iuq4uOuPmeydtCIsInVzZXJJZCI6MSwiYXV0aG9yaXRpZXMiOlsiUk9MRV9VU0VSIiwiUk9MRV9BRE1JTiIsIkFETUlOIl0sInN1YiI6Iuq4uOuPmeydtCIsImlhdCI6MTc3MTgzNDY4NSwiZXhwIjoxNzcxOTIxMDg1fQ.OIEqjuq-8Z-Sl2_0hr2I87EHvDg1kv6mug5lBpU0hSU
+  auth:
+    type: bearer
+    token: eyJhbGciOiJIUzI1NiJ9.eyJuaWNrbmFtZSI6Iuq4uOuPmeydtCIsInVzZXJJZCI6MSwiYXV0aG9yaXRpZXMiOlsiUk9MRV9VU0VSIiwiUk9MRV9BRE1JTiIsIkFETUlOIl0sInN1YiI6Iuq4uOuPmeydtCIsImlhdCI6MTc3MTgzNDY4NSwiZXhwIjoxNzcxOTIxMDg1fQ.OIEqjuq-8Z-Sl2_0hr2I87EHvDg1kv6mug5lBpU0hSU
+
+settings:
+  encodeUrl: true
+  timeout: 0
+  followRedirects: true
+  maxRedirects: 5

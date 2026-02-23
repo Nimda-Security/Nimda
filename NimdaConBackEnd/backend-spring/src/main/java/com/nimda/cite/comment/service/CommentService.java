@@ -1,5 +1,8 @@
 package com.nimda.cite.comment.service;
 
+import com.nimda.cite.alarm.Event.AddChildCommentEvent;
+import com.nimda.cite.alarm.Event.AddCommentEvent;
+import com.nimda.cite.alarm.service.AlarmService;
 import com.nimda.cite.board.entity.Board;
 import com.nimda.cite.board.repository.BoardRepository;
 import com.nimda.cite.comment.dto.CommentCreateRequest;
@@ -8,11 +11,14 @@ import com.nimda.cite.comment.dto.CommentUpdateRequest;
 import com.nimda.cite.comment.entity.Comment;
 import com.nimda.cite.comment.enums.STATUS;
 import com.nimda.cite.comment.repository.CommentRepository;
+import com.nimda.cite.notification.entity.Notification;
+import com.nimda.cite.notification.enums.NotificationType;
 import com.nimda.cup.user.entity.User;
 import com.nimda.cup.user.repository.UserRepository;
 import jakarta.persistence.EntityNotFoundException;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -31,6 +37,10 @@ public class CommentService {
     @Autowired
     private UserRepository userRepository;
 
+    @Autowired
+    private AlarmService alarmService;
+
+    private ApplicationEventPublisher eventPublisher;
 
     // =============== CREATE ===============
 
@@ -71,11 +81,22 @@ public class CommentService {
                 .replyCount(0)
                 .build();
 
+        // 게시글에 댓글이 달린 경우
+        if(comment.getParent().getId() == 0) {
+            eventPublisher.publishEvent(
+                    new AddCommentEvent(this, board.getAuthor(), comment.getAuthor(), board.getTitle(), boardId)
+            );
+        }
+        else {
+            eventPublisher.publishEvent(
+                    new AddChildCommentEvent(this, board, comment.getAuthor(), author)
+            );
+        }
+
         // 저장
         Comment saved = commentRepository.save(comment);
         return CommentResponse.from(saved, false);
     }
-
 
     // =============== READ ===============
 
