@@ -15,7 +15,8 @@ import java.util.Set;
 
 /**
  * 카테고리 서비스
- * createCategory : 카테고리 생성
+ * - 카테고리 CRUD 작업
+ * - 비즈니스 로직 처리 (검증, 순환 참조 체크 등)
  */
 @Service
 public class CategoryService {
@@ -25,6 +26,28 @@ public class CategoryService {
 
     @Autowired
     private BoardRepository boardRepository;
+
+    /**
+     * 활성화된 모든 카테고리 조회
+     * - 정렬 순서대로 반환
+     */
+    @Transactional(readOnly = true)
+    public List<Category> getAllActiveCategories() {
+        return categoryRepository.findByIsActiveTrueOrderBySortOrderAsc();
+    }
+
+    /**
+     * Slug로 활성화된 카테고리 조회
+     * 
+     * @param slug 카테고리 slug
+     * @return Category (활성화된 카테고리)
+     * @throws RuntimeException 카테고리를 찾을 수 없는 경우
+     */
+    @Transactional(readOnly = true)
+    public Category getCategoryBySlug(String slug) {
+        return categoryRepository.findBySlugAndIsActiveTrue(slug)
+                .orElseThrow(() -> new RuntimeException("카테고리를 찾을 수 없습니다: " + slug));
+    }
 
     /**
      * Note. createCategory 카테고리 생성

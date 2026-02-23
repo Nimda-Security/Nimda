@@ -4,7 +4,6 @@ import com.nimda.cite.board.dto.CategoryCreateDTO;
 import com.nimda.cite.board.dto.CategoryResponseDTO;
 import com.nimda.cite.board.dto.CategoryUpdateDTO;
 import com.nimda.cite.board.entity.Category;
-import com.nimda.cite.board.repository.CategoryRepository;
 import com.nimda.cite.board.service.CategoryService;
 
 import jakarta.validation.Valid;
@@ -20,8 +19,6 @@ import java.util.List;
 public class CategoryController {
 
     @Autowired
-    private CategoryRepository categoryRepository;
-    @Autowired
     private CategoryService categoryService;
 
     // API1. getAllCategories
@@ -29,7 +26,7 @@ public class CategoryController {
     @GetMapping
     public ResponseEntity<List<CategoryResponseDTO>> getAllCategories() {
         try {
-            List<Category> categories = categoryRepository.findByIsActiveTrueOrderBySortOrderAsc();
+            List<Category> categories = categoryService.getAllActiveCategories();
 
             // Entity를 DTO로 변환
             List<CategoryResponseDTO> categoryDTOList = categories.stream()
@@ -45,8 +42,7 @@ public class CategoryController {
     @GetMapping("/slug/{slug}")
     public ResponseEntity<CategoryResponseDTO> getCategoryBySlug(@PathVariable String slug) {
         try {
-            Category category = categoryRepository.findBySlugAndIsActiveTrue(slug)
-                    .orElseThrow(() -> new RuntimeException("카테고리를 찾을 수 없습니다: " + slug));
+            Category category = categoryService.getCategoryBySlug(slug);
 
             CategoryResponseDTO categoryDTO = CategoryResponseDTO.from(category);
             return ResponseEntity.ok(categoryDTO);
