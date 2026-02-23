@@ -20,6 +20,12 @@ export default defineConfig(({ mode }) => {
           changeOrigin: true,
           secure: true,
         },
+        '/solvedac-api': {
+          target: 'https://solved.ac',
+          changeOrigin: true,
+          secure: true,
+          rewrite: (path) => path.replace(/^\/solvedac-api/, '/api'),
+        },
       },
     },
     // 절대 경로 설정
