@@ -1,4 +1,5 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
+import { ChevronLeft, ChevronRight } from "lucide-react";
 
 const bannerSlides = [
   {
@@ -21,16 +22,51 @@ const bannerSlides = [
 const Banner: React.FC = () => {
   const [currentSlide, setCurrentSlide] = useState(0);
 
+  const nextSlide = () => {
+    setCurrentSlide((prev) => (prev + 1) % bannerSlides.length);
+  };
+
+  const prevSlide = () => {
+    setCurrentSlide((prev) => (prev === 0 ? bannerSlides.length - 1 : prev - 1));
+  };
+
+  useEffect(() => {
+    const timer = setInterval(() => {
+      setCurrentSlide((prev) => (prev + 1) % bannerSlides.length);
+    }, 5000);
+    return () => clearInterval(timer);
+  }, []);
+
   return (
     <div className="home-banner">
-      <div
-        className="home-banner__slide"
-        style={{ background: bannerSlides[currentSlide].background }}
+      <button
+        className="home-banner__btn home-banner__btn--prev"
+        onClick={prevSlide}
+        aria-label="이전 배너"
       >
-        <h2 className="home-banner__title">
-          {bannerSlides[currentSlide].title}
-        </h2>
-      </div>
+        <ChevronLeft size={32} />
+      </button>
+
+      {bannerSlides.map((slide, index) => (
+        <div
+          key={slide.id}
+          className={`home-banner__slide ${
+            index === currentSlide ? "home-banner__slide--active" : ""
+          }`}
+          style={{ background: slide.background }}
+        >
+          <h2 className="home-banner__title">{slide.title}</h2>
+        </div>
+      ))}
+
+      <button
+        className="home-banner__btn home-banner__btn--next"
+        onClick={nextSlide}
+        aria-label="다음 배너"
+      >
+        <ChevronRight size={32} />
+      </button>
+
       <div className="home-banner__dots">
         {bannerSlides.map((slide, index) => (
           <button
