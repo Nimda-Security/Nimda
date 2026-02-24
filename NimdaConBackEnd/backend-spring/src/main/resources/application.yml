@@ -3,10 +3,16 @@ spring:
     name: nimda-cup
   
   datasource:
-    url: ${SPRING_DATASOURCE_URL:jdbc:mysql://mysql:3306/nimda_con?useSSL=false&serverTimezone=Asia/Seoul&allowPublicKeyRetrieval=true}
-    username: ${SPRING_DATASOURCE_USERNAME}
-    password: ${SPRING_DATASOURCE_PASSWORD}
+    
+    url: jdbc:mysql://localhost:3306/local_re_nimda_con
+    username: root
+    password: '1234'
     driver-class-name: com.mysql.cj.jdbc.Driver
+  #datasource:
+  #  url: ${SPRING_DATASOURCE_URL:jdbc:mysql://mysql:3306/nimda_con?useSSL=false&serverTimezone=Asia/Seoul&allowPublicKeyRetrieval=true}
+  #  username: ${SPRING_DATASOURCE_USERNAME}
+  #  password: ${SPRING_DATASOURCE_PASSWORD}
+  #  driver-class-name: com.mysql.cj.jdbc.Driver
     
     hikari:
       maximum-pool-size: 5
@@ -61,6 +67,17 @@ jwt:
   header: Authorization # JWT Token을 Request Header에서 탐색할 때 사용할 헤더 이름 
   secret: bmltZGEtY29uLXNlY3JldC1rZXktMjAyNC12ZXJ5LWxvbmctc2VjcmV0LWtleS1mb3Itand0LXNlY3VyaXR5 # JWT 토큰 서명 검증키 (Base64 인코딩됨)
   token-validity-in-seconds: 86400 # JWT 토큰 만료 시간 24시간 (초)
+
+# JWT 설정
+jwt:
+  header: Authorization # JWT Token을 Request Header에서 탐색할 때 사용할 헤더 이름 
+  secret: bmltZGEtY29uLXNlY3JldC1rZXktMjAyNC12ZXJ5LWxvbmctc2VjcmV0LWtleS1mb3Itand0LXNlY3VyaXR5 # JWT 토큰 서명 검증키 (Base64 인코딩됨)
+  token-validity-in-seconds: 86400 # JWT 토큰 만료 시간 24시간 (초)
+
+# 첨부파일 로컬 저장 (cite attachment)
+nimda:
+  file:
+    upload-dir: ${FILE_UPLOAD_DIR:${user.home}/nimda-attachments}
 
 # AWS 설정 
 aws:
