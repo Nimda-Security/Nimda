@@ -1,11 +1,21 @@
 import React from "react";
-import Logo from "/public/nimda.png";
+
 
 const BrandSection: React.FC = () => {
   return (
     <div className="flex items-center">
-      <img src="/nimda.png" alt="picture1" width="20" className="mr-2" />
-      <div className="text-[#1A1A1A] font-inter text-xl font-bold leading-[30px] tracking-[-0.2px] mt-4 mb-4">
+      <img src="/nimda.png" alt="picture1" width="20" />
+      <div 
+        className="text-[#1A1A1A] text-xl tracking-[-0.2px]"
+        style={{ 
+          marginLeft: '8px', 
+          fontWeight: 700, 
+          fontFamily: 'Pretendard, sans-serif', 
+          lineHeight: 1,
+          position: 'relative',
+          top: '2px'
+        }}
+      >
         NIMDA
       </div>
     </div>
