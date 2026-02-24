@@ -1,22 +1,21 @@
 package com.nimda.cite.alarm.controller;
 
 import com.nimda.cite.alarm.service.AlarmService;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.http.MediaType;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.PathVariable;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import com.nimda.cup.common.util.JwtUtil;
+import lombok.RequiredArgsConstructor;
+import org.springframework.web.bind.annotation.*;
 import org.springframework.web.servlet.mvc.method.annotation.SseEmitter;
 
 @RestController
+@RequiredArgsConstructor
 @RequestMapping("/api/alarm")
 public class AlarmController {
-    @Autowired
-    private AlarmService alarmService;
+    private final AlarmService alarmService;
+    private final JwtUtil jwtUtil;
 
-    @GetMapping("/subscribe/{userId}")
-    public SseEmitter subscribe(@PathVariable Long userId) {
+    @GetMapping("/subscribe")
+    public SseEmitter subscribe(@RequestHeader("Authorization") String authHeader) {
+        Long userId = jwtUtil.extractUserId(authHeader.substring(7));
         return alarmService.subscribe(userId);
     }
 }

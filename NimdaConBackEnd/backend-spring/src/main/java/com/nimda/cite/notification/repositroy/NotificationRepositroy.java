@@ -15,10 +15,11 @@ public interface NotificationRepositroy extends JpaRepository<Notification, Long
 
     Long countByRecipientAndIsReadFalse(User recipient);
 
-    // 수신자별 알림 목록 (최신순)
-    @Query("SELECT n FROM Notification n JOIN FETCH n.sender WHERE n.recipient = :recipient")
-    List<Notification> findAllByRecipientOrderByCreatedAtDesc(@Param("recipient") User recipient);
-    
+    // 모든 알림 생성순으로 가지고 오기
+    @Query("SELECT n FROM Notification n JOIN FETCH n.sender " +
+            "WHERE n.recipient = :recipient " +
+            "ORDER BY n.createdAt DESC") // 정렬을 JPQL 안으로 이동
+    List<Notification> findAllByRecipient(@Param("recipient") User recipient);
     // 발송된 알림 중 읽지 않은 알림 가지고 오기
     List<Notification> findAllByRecipientAndIsReadFalse(User user);
     // 읽지 않은 알림 존재 여부

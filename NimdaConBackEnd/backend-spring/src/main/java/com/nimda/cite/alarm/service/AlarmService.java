@@ -10,7 +10,7 @@ import com.nimda.cite.notification.entity.Notification;
 import com.nimda.cite.notification.enums.NotificationType;
 import com.nimda.cite.notification.repositroy.NotificationRepositroy;
 import jakarta.transaction.Transactional;
-import org.springframework.beans.factory.annotation.Autowired;
+import lombok.RequiredArgsConstructor;
 import org.springframework.context.event.EventListener;
 import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
@@ -18,15 +18,13 @@ import org.springframework.web.servlet.mvc.method.annotation.SseEmitter;
 
 import java.io.IOException;
 
-// 추가해야 하는 것들
 // 비동기 Configuration 설정 및 메인에 @EnableAsync 붙이기
-
+@RequiredArgsConstructor
 @Service
 public class AlarmService {
-    @Autowired
-    private SseEmitterRepository sseEmitterRepository;
-    @Autowired
-    private NotificationRepositroy notificationRepositroy;
+
+    private final SseEmitterRepository sseEmitterRepository;
+    private final NotificationRepositroy notificationRepositroy;
 
     // 클라이언트가 SSE 구독을 요청할 때 호출
     public SseEmitter subscribe(Long userId) {

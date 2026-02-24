@@ -5,8 +5,10 @@ info:
 
 http:
   method: POST
-  url: http://localhost:8080/api/like/board/{boardId}
-  auth: inherit
+  url: /api/like/board/{boardId}
+  auth:
+    type: bearer
+    token: eyJhbGciOiJIUzI1NiJ9.eyJuaWNrbmFtZSI6IuydtOyYge2drCIsInVzZXJJZCI6NCwiYXV0aG9yaXRpZXMiOltdLCJzdWIiOiLsnbTsmIHtnawiLCJpYXQiOjE3NzE4Mzg0NTQsImV4cCI6MTc3MTkyNDg1NH0.n68SggICJQeRhKSSUWMraXvbV02bko83-kU-JR3v_sA
 
 settings:
   encodeUrl: true

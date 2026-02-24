@@ -5,7 +5,7 @@ info:
 
 http:
   method: GET
-  url: http://localhost:8080/api/notifications/unReadCount
+  url: /api/notifications/hasUnread
   auth:
     type: bearer
     token: eyJhbGciOiJIUzI1NiJ9.eyJuaWNrbmFtZSI6Iuq4uOuPmeydtCIsInVzZXJJZCI6MSwiYXV0aG9yaXRpZXMiOlsiUk9MRV9BRE1JTiIsIkFETUlOIiwiUk9MRV9VU0VSIl0sInN1YiI6Iuq4uOuPmeydtCIsImlhdCI6MTc3MTgzNjM1MiwiZXhwIjoxNzcxOTIyNzUyfQ.q6-NV4PAzyJ3v6NKXsdYFPJabPIDIaRMTQ70rVtjaW8

@@ -5,8 +5,10 @@ info:
 
 http:
   method: GET
-  url: http://localhost:8080/api/alarm//subscribe/{userId}
-  auth: inherit
+  url: /api/alarm/subscribe
+  auth:
+    type: bearer
+    token: eyJhbGciOiJIUzI1NiJ9.eyJuaWNrbmFtZSI6Iuq4uOuPmeydtCIsInVzZXJJZCI6MSwiYXV0aG9yaXRpZXMiOlsiUk9MRV9VU0VSIiwiUk9MRV9BRE1JTiIsIkFETUlOIl0sInN1YiI6Iuq4uOuPmeydtCIsImlhdCI6MTc3MTgzNDY4NSwiZXhwIjoxNzcxOTIxMDg1fQ.OIEqjuq-8Z-Sl2_0hr2I87EHvDg1kv6mug5lBpU0hSU
 
 settings:
   encodeUrl: true

@@ -5,7 +5,7 @@ info:
 
 http:
   method: PATCH
-  url: http://localhost:8080/api/notifications/{notificationId}/read
+  url: /api/notifications/{notificationId}/read
   auth: inherit
 
 settings:

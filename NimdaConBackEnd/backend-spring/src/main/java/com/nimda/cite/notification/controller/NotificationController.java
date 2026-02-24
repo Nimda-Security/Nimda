@@ -8,7 +8,6 @@ import com.nimda.cup.common.util.JwtUtil;
 import com.nimda.cup.user.entity.User;
 import com.nimda.cup.user.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
-import org.apache.coyote.Response;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
@@ -28,7 +27,7 @@ public class NotificationController {
     @GetMapping
     public ResponseEntity<List<NotificationResponse>> getNotifications(@RequestHeader("Authorization") String authHeader) {
         User user = getUserFromToken(authHeader);
-        List<Notification> notifications = notificationRepository.findAllByRecipientOrderByCreatedAtDesc(user);
+        List<Notification> notifications = notificationRepository.findAllByRecipient(user);
         List<NotificationResponse> dto = notifications.stream().map(NotificationResponse::from).toList();
         return ResponseEntity.ok(dto);
     }
