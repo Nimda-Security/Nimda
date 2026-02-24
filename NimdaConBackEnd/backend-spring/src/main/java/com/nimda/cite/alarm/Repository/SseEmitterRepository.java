@@ -7,7 +7,6 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.concurrent.ConcurrentHashMap;
 
-// 1. SseEmitter를 관리하는 Repository (ConcurrentHashMap이 여기에 위치)
 @Repository // 또는 @Component
 public class SseEmitterRepository {
     private final Map<Long, SseEmitter> emitters = new ConcurrentHashMap<>();

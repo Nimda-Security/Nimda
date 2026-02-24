@@ -13,6 +13,7 @@ import lombok.*;
 @Table(name = "comments")
 @Getter
 @Setter
+@Builder
 @NoArgsConstructor
 @AllArgsConstructor
 public class Comment extends BaseTimeEntity {

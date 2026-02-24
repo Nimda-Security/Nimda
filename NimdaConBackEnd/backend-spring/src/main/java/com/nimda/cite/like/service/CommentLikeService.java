@@ -50,8 +50,8 @@ public class CommentLikeService {
                         .notificationType(NotificationType.PushLikeButtonAtComment)
                         .message(user.getNickname() + "님이 내 댓글을 좋아합니다.")
                         .relatedEntityId(commentId)
-                        // 게시글 뷰 페이지 내 해당 댓글 위치로 이동 (#앵커 활용)
-                        .relatedUrl("/board/view/" + comment.getBoard().getId() + "#comment-" + commentId)
+                        // 해당 게시글로 이동
+                        .relatedUrl("api/cite/board/view/" + comment.getBoard().getId())
                         .isRead(false)
                         .build();
 
