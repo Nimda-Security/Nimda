@@ -1,14 +1,16 @@
 package com.nimda.cite.alarm.service;
 
+import com.nimda.cite.alarm.Event.AddChildCommentEvent;
 import com.nimda.cite.alarm.Event.AddCommentEvent;
 import com.nimda.cite.alarm.Event.CommentLikeEvent;
 import com.nimda.cite.alarm.Event.PushLikeButtonEvent;
 import com.nimda.cite.alarm.Repository.SseEmitterRepository;
+import com.nimda.cite.notification.dto.NotificationResponse;
 import com.nimda.cite.notification.entity.Notification;
 import com.nimda.cite.notification.enums.NotificationType;
 import com.nimda.cite.notification.repositroy.NotificationRepositroy;
 import jakarta.transaction.Transactional;
-import org.springframework.beans.factory.annotation.Autowired;
+import lombok.RequiredArgsConstructor;
 import org.springframework.context.event.EventListener;
 import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
@@ -16,19 +18,17 @@ import org.springframework.web.servlet.mvc.method.annotation.SseEmitter;
 
 import java.io.IOException;
 
-// 추가해야 하는 것들
 // 비동기 Configuration 설정 및 메인에 @EnableAsync 붙이기
-
+@RequiredArgsConstructor
 @Service
 public class AlarmService {
-    @Autowired
-    private SseEmitterRepository sseEmitterRepository;
-    @Autowired
-    private NotificationRepositroy notificationRepositroy;
+
+    private final SseEmitterRepository sseEmitterRepository;
+    private final NotificationRepositroy notificationRepositroy;
 
     // 클라이언트가 SSE 구독을 요청할 때 호출
     public SseEmitter subscribe(Long userId) {
-        SseEmitter emitter = new SseEmitter(60 * 1000L); // 타임아웃 1분
+        SseEmitter emitter = new SseEmitter(60 * 1000L * 60 * 24); //
         sseEmitterRepository.save(userId, emitter);
 
         emitter.onCompletion(() -> sseEmitterRepository.deleteByUserId(userId));
@@ -73,6 +73,7 @@ public class AlarmService {
                 .message(event.getBoardTitle() + " 게시글에 새로운 댓글이 달렸습니다.")
                 .notificationType(NotificationType.AddCommentAtBoard)
                 .relatedEntityId(event.getBoardId())
+                // 게시글 url
                 .relatedUrl("/board/view/" + event.getBoardId())
                 .isRead(false)
                 .build();
@@ -100,35 +101,37 @@ public class AlarmService {
         this.send(notification);
     }
 
+    @EventListener
+    @Async
+    public void handleAddChildCommentEvent(AddChildCommentEvent event) {
+        String message = event.getChildCommentAuthor().getNickname() +
+                "님이 회원님의 댓글에 답글을 남겼습니다.";
+
+        Notification notification = Notification.builder()
+                .recipient(event.getParentsCommentAuthor())
+                .sender(event.getChildCommentAuthor())
+                .notificationType(NotificationType.AddChildComment)
+                .isRead(false)
+                .message(message)
+                .build();
+
+        this.send(notification);
+    }
+
     @Transactional
     public void send(Notification notification) {
         this.notificationRepositroy.save(notification);
+        // 메시지랑 url 같이 전달
+        NotificationResponse data = NotificationResponse.from(notification);
 
         Long recipientId = notification.getRecipient().getId();
         sseEmitterRepository.findByUserId(recipientId).ifPresent(emitter -> {
             try {
                 emitter.send(SseEmitter.event()
                         .name("notification") // 이벤트 이름을 통일하면 프론트에서 관리하기 편합니다
-                        .data(notification.getMessage()));
+                        .data(data));
             } catch (IOException e) {
                 sseEmitterRepository.deleteByUserId(recipientId);
-            }
-        });
-    }
-
-    /**
-     * NotificationService에서 호출하는 메서드
-     * DB 저장은 이미 NotificationService에서 처리했으므로 SSE 전송만 수행
-     */
-    public void sendToClient(String recipientId, Notification notification) {
-        Long userId = Long.parseLong(recipientId);
-        sseEmitterRepository.findByUserId(userId).ifPresent(emitter -> {
-            try {
-                emitter.send(SseEmitter.event()
-                        .name("notification")
-                        .data(notification.getMessage()));
-            } catch (IOException e) {
-                sseEmitterRepository.deleteByUserId(userId);
             }
         });
     }

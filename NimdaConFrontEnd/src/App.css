@@ -385,16 +385,59 @@ body {
   position: relative;
   width: 100%;
   max-width: 894px;
+  height: 400px;
+  overflow: hidden;
 }
 
 .home-banner__slide {
+  position: absolute;
+  top: 0;
+  left: 0;
   width: 100%;
-  height: 503px;
+  height: 100%;
   border-radius: 0;
   display: flex;
   align-items: center;
   justify-content: center;
-  overflow: hidden;
+  opacity: 0;
+  transition: opacity 0.6s ease-in-out;
+  pointer-events: none;
+}
+
+.home-banner__slide--active {
+  opacity: 1;
+  pointer-events: auto;
+}
+
+.home-banner__btn {
+  position: absolute;
+  top: 50%;
+  transform: translateY(-50%);
+  background-color: transparent;
+  color: rgba(255, 255, 255, 0.7);
+  border: none;
+  width: 48px;
+  height: 48px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  z-index: 10;
+  transition: color 0.2s, transform 0.2s;
+}
+
+.home-banner__btn:hover {
+  background-color: transparent;
+  color: white;
+  transform: translateY(-50%) scale(1.1);
+}
+
+.home-banner__btn--prev {
+  left: 24px;
+}
+
+.home-banner__btn--next {
+  right: 24px;
 }
 
 .home-banner__title {
@@ -406,10 +449,15 @@ body {
 }
 
 .home-banner__dots {
+  position: absolute;
+  bottom: 16px;
+  left: 50%;
+  transform: translateX(-50%);
   display: flex;
   justify-content: center;
   gap: 8px;
-  margin-top: 16px;
+  margin-top: 0;
+  z-index: 10;
 }
 
 .home-banner__dot {
@@ -417,14 +465,15 @@ body {
   height: 8px;
   border-radius: 50%;
   border: none;
-  background-color: var(--color-gray-400);
+  background-color: rgba(255, 255, 255, 0.4);
   cursor: pointer;
   padding: 0;
-  transition: background-color 0.2s;
+  transition: background-color 0.2s, transform 0.2s;
 }
 
 .home-banner__dot--active {
-  background-color: var(--color-black);
+  background-color: white;
+  transform: scale(1.2);
 }
 
 /* 섹션 공통 제목 */

@@ -1,0 +1,17 @@
+info:
+  name: 좋아요 누른 게시글 조회
+  type: http
+  seq: 5
+
+http:
+  method: GET
+  url: /api/like/board/pushedLikes
+  auth:
+    type: bearer
+    token: eyJhbGciOiJIUzI1NiJ9.eyJuaWNrbmFtZSI6IuydtOyYge2drCIsInVzZXJJZCI6NCwiYXV0aG9yaXRpZXMiOltdLCJzdWIiOiLsnbTsmIHtnawiLCJpYXQiOjE3NzE4Mzg0NTQsImV4cCI6MTc3MTkyNDg1NH0.n68SggICJQeRhKSSUWMraXvbV02bko83-kU-JR3v_sA
+
+settings:
+  encodeUrl: true
+  timeout: 0
+  followRedirects: true
+  maxRedirects: 5

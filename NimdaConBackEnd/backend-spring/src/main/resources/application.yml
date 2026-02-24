@@ -1,6 +1,8 @@
 spring:
   application:
     name: nimda-cup
+  profiles:
+    active: local
   
   datasource:
     
