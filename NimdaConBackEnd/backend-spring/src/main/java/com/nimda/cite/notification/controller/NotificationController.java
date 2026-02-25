@@ -1,5 +1,6 @@
 package com.nimda.cite.notification.controller;
 
+import com.nimda.cite.common.response.ApiResponse;
 import com.nimda.cite.notification.dto.NotificationResponse;
 import com.nimda.cite.notification.entity.Notification;
 import com.nimda.cite.notification.repositroy.NotificationRepositroy;
@@ -12,6 +13,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
+import java.util.Map;
 
 @RestController
 @RequestMapping("/api/notifications")
@@ -25,60 +27,58 @@ public class NotificationController {
 
     // 도착한 알림 최신순으로 조회
     @GetMapping
-    public ResponseEntity<List<NotificationResponse>> getNotifications(@RequestHeader("Authorization") String authHeader) {
+    public ResponseEntity<?> getNotifications(@RequestHeader("Authorization") String authHeader) {
         User user = getUserFromToken(authHeader);
         List<Notification> notifications = notificationRepository.findAllByRecipient(user);
         List<NotificationResponse> dto = notifications.stream().map(NotificationResponse::from).toList();
-        return ResponseEntity.ok(dto);
+        return ApiResponse.ok(Map.of("notifications", dto)).toResponse();
     }
 
     // 읽지 않은 알림만 조회
     @GetMapping("/unRead")
-    public ResponseEntity<List<NotificationResponse>> getUnReadNotifications(
+    public ResponseEntity<?> getUnReadNotifications(
             @RequestHeader("Authorization") String authHeader
     ) {
         User user = getUserFromToken(authHeader);
         List<Notification> notifications = notificationRepository.findAllByRecipientAndIsReadFalse(user);
         List<NotificationResponse> dto = notifications.stream().map(NotificationResponse::from).toList();
-        return ResponseEntity.ok(dto);
+        return ApiResponse.ok(Map.of("notifications", dto)).toResponse();
     }
 
     // 알림 읽기 처리
     @PatchMapping("/{notificationId}/read")
-    public ResponseEntity<Void> markAsRead(@PathVariable Long notificationId) {
+    public ResponseEntity<?> markAsRead(@PathVariable Long notificationId) {
         notificationService.markAsRead(notificationId);
-        return ResponseEntity.ok().build();
+        return ApiResponse.ok().toResponse();
     }
 
     // 읽지 않은 알람 모두 읽기 처리
     @PatchMapping("/readAll")
-    public ResponseEntity<Void> markAllAsRead(@RequestHeader("Authorization") String authHeader) {
+    public ResponseEntity<?> markAllAsRead(@RequestHeader("Authorization") String authHeader) {
         User user = getUserFromToken(authHeader);
         List<Notification> unreadNotifications = notificationRepository.findAllByRecipientAndIsReadFalse(user);
 
         unreadNotifications.forEach(n -> n.setIsRead(true));
         notificationRepository.saveAll(unreadNotifications);
 
-        return ResponseEntity.ok().build();
+        return ApiResponse.ok().toResponse();
     }
 
     // 읽지 않은 알림 개수와 여부 확인
     @GetMapping("/hasUnread")
-    public ResponseEntity<NotificationResponse> hasUnread(@RequestHeader("Authorization") String authHeader)
-    {
+    public ResponseEntity<?> hasUnread(@RequestHeader("Authorization") String authHeader) {
         User user = getUserFromToken(authHeader);
         Boolean hasUnread = notificationService.hasUnRead(user.getId());
         Long unReadCount = notificationService.unReadCount(user.getId());
         NotificationResponse dto = NotificationResponse.builder().hasUnRead(hasUnread).unReadCount(unReadCount).build();
-        return ResponseEntity.ok(dto);
+        return ApiResponse.ok(dto).toResponse();
     }
 
     // 알림 삭제
     @DeleteMapping("/{notificationId}")
-    public ResponseEntity<Void> deleteNotification(@PathVariable Long notificationId) {
-        // 본인 확인 로직 포함 권장
+    public ResponseEntity<?> deleteNotification(@PathVariable Long notificationId) {
         notificationService.deleteNotification(notificationId);
-        return ResponseEntity.noContent().build();
+        return ApiResponse.ok("알림이 삭제되었습니다.").toResponse();
     }
 
     // JWT에서 유저 정보를 가져오는 공통 메서드

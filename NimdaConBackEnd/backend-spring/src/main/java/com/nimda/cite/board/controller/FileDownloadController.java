@@ -10,13 +10,13 @@ import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
+import com.nimda.cite.common.response.ApiResponse;
+
 import java.io.File;
 import java.net.URLEncoder;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Path;
 import java.nio.file.Paths;
-import java.util.HashMap;
-import java.util.Map;
 
 /**
  * ========================================
@@ -65,11 +65,7 @@ public class FileDownloadController {
             // 단, 파일명에는 언더스코어(_)가 포함될 수 있으므로 제외
             if (fileName.contains("..") || fileName.startsWith("/") || fileName.startsWith("\\")) {
                 logger.warn("Path Traversal 시도 감지: {}", fileName);
-                Map<String, Object> errorResponse = new HashMap<>();
-                errorResponse.put("success", false);
-                errorResponse.put("message", "잘못된 파일명입니다.");
-                
-                return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(errorResponse);
+                return ApiResponse.fail("잘못된 파일명입니다.").toResponse(HttpStatus.BAD_REQUEST);
             }
 
             // ========== [파일 경로 구성] ==========
@@ -82,33 +78,19 @@ public class FileDownloadController {
             Path uploadDirPath = Paths.get(UPLOAD_DIR).normalize();
             if (!filePath.startsWith(uploadDirPath)) {
                 logger.warn("업로드 디렉토리 외부 접근 시도: {}", filePath);
-                Map<String, Object> errorResponse = new HashMap<>();
-                errorResponse.put("success", false);
-                errorResponse.put("message", "잘못된 파일 경로입니다.");
-                
-                return ResponseEntity.status(HttpStatus.FORBIDDEN).body(errorResponse);
+                return ApiResponse.fail("잘못된 파일 경로입니다.").toResponse(HttpStatus.FORBIDDEN);
             }
 
             // ========== [파일 존재 확인] ==========
             if (!file.exists() || !file.isFile()) {
                 logger.warn("파일을 찾을 수 없음: {}", filePath);
-                logger.warn("파일 존재 여부: exists={}, isFile={}", file.exists(), file.isFile());
-                Map<String, Object> errorResponse = new HashMap<>();
-                errorResponse.put("success", false);
-                errorResponse.put("message", "파일을 찾을 수 없습니다.");
-                errorResponse.put("filePath", filePath.toString());
-                
-                return ResponseEntity.status(HttpStatus.NOT_FOUND).body(errorResponse);
+                return ApiResponse.fail("파일을 찾을 수 없습니다.").toResponse(HttpStatus.NOT_FOUND);
             }
 
             // ========== [파일 읽기 권한 확인] ==========
             if (!file.canRead()) {
                 logger.warn("파일 읽기 권한 없음: {}", filePath);
-                Map<String, Object> errorResponse = new HashMap<>();
-                errorResponse.put("success", false);
-                errorResponse.put("message", "파일에 접근할 권한이 없습니다.");
-                
-                return ResponseEntity.status(HttpStatus.FORBIDDEN).body(errorResponse);
+                return ApiResponse.fail("파일에 접근할 권한이 없습니다.").toResponse(HttpStatus.FORBIDDEN);
             }
 
             // ========== [파일 리소스 생성] ==========
@@ -142,11 +124,8 @@ public class FileDownloadController {
 
         } catch (Exception e) {
             logger.error("파일 다운로드 중 오류 발생: {}", fileName, e);
-            Map<String, Object> errorResponse = new HashMap<>();
-            errorResponse.put("success", false);
-            errorResponse.put("message", "파일 다운로드 중 오류가 발생했습니다: " + e.getMessage());
-            
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(errorResponse);
+            return ApiResponse.fail("파일 다운로드 중 오류가 발생했습니다: " + e.getMessage())
+                    .toResponse(HttpStatus.INTERNAL_SERVER_ERROR);
         }
     }
 
