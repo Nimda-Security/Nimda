@@ -64,6 +64,11 @@ jwt:
   secret: bmltZGEtY29uLXNlY3JldC1rZXktMjAyNC12ZXJ5LWxvbmctc2VjcmV0LWtleS1mb3Itand0LXNlY3VyaXR5 # JWT 토큰 서명 검증키 (Base64 인코딩됨)
   token-validity-in-seconds: 86400 # JWT 토큰 만료 시간 24시간 (초)
 
+# 첨부파일 로컬 저장 (cite attachment)
+nimda:
+  file:
+    upload-dir: ${FILE_UPLOAD_DIR:${user.home}/nimda-attachments}
+
 # AWS 설정 
 aws:
   s3:

@@ -123,6 +123,9 @@ public class SecurityConfig {
                         .requestMatchers(HttpMethod.PUT, "/api/cite/category/**").hasRole("ADMIN") // 카테고리 수정 (관리자)
                         .requestMatchers(HttpMethod.DELETE, "/api/cite/category/**").hasRole("ADMIN") // 카테고리 삭제 (관리자)
 
+                        // 첨부파일 (cite): 업로드/조회/다운로드/내 목록/삭제 — 인증 필요
+                        .requestMatchers("/api/cite/attachments/**").authenticated()
+
                         // 나머지는 인증 필요
                         .anyRequest().authenticated());
 
