@@ -66,7 +66,7 @@ public class CategoryController {
     }
 
     // API1. getAllCategories
-    // feat. 모든 카테고리 조회 API
+    // feat. 활성화된 카테고리 조회 API (일반 사용자용)
     @GetMapping
     public ResponseEntity<List<CategoryResponseDTO>> getAllCategories() {
         try {
@@ -83,11 +83,48 @@ public class CategoryController {
         }
     }
 
+    /**
+     * API1-1. getAllCategoriesAdmin
+     * feat. 모든 카테고리 조회 API (관리자용, isActive 여부 관계없이)
+     * - 관리자만 접근 가능
+     * - 활성화/비활성화 모든 카테고리 반환
+     */
+    @GetMapping("/all")
+    public ResponseEntity<List<CategoryResponseDTO>> getAllCategoriesAdmin(
+            @RequestHeader(value = "Authorization", required = false) String authHeader) {
+
+        try {
+            // 사용자 정보 추출
+            User user = getUserFromToken(authHeader);
+            if (user == null) {
+                return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
+            }
+
+            // 모든 카테고리 조회 [관리자 권한 확인 로직 포함]
+            List<Category> categories = categoryService.getAllCategories(user);
+            List<CategoryResponseDTO> categoryDTOList = categories.stream()
+                    .map(CategoryResponseDTO::from)
+                    .toList();
+            return ResponseEntity.ok(categoryDTOList);
+
+        } catch (RuntimeException e) {
+
+            if (e.getMessage().contains("권한") || e.getMessage().contains("로그인")) {
+                return ResponseEntity.status(HttpStatus.FORBIDDEN).build();
+            }
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).build();
+
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
+        }
+    }
+
+    // API1-2 getCategoryBySlug
+    // feat. 카테고리명(slug)로 조회 API
     @GetMapping("/slug/{slug}")
     public ResponseEntity<CategoryResponseDTO> getCategoryBySlug(@PathVariable String slug) {
         try {
             Category category = categoryService.getCategoryBySlug(slug);
-
             CategoryResponseDTO categoryDTO = CategoryResponseDTO.from(category);
             return ResponseEntity.ok(categoryDTO);
         } catch (RuntimeException e) {

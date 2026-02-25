@@ -1,0 +1,28 @@
+meta {
+  name: UpdateCategory
+  type: http
+  seq: 4
+}
+
+put {
+  url: {{baseUrl}}/api/cite/category/7
+  body: json
+  auth: inherit
+}
+
+headers {
+  Authorization: Bearer {{jwtToken}}
+  Content-Type: application/json
+}
+
+body:json {
+  {
+    "name": "테스트 카테고리 (수정)",
+    "sortOrder": 2
+  }
+}
+
+settings {
+  encodeUrl: true
+  timeout: 0
+}

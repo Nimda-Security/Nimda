@@ -41,4 +41,10 @@ public interface CategoryRepository extends JpaRepository<Category, Long> {
      * Slug 존재 여부 확인
      */
     boolean existsBySlug(String slug);
+
+    /**
+     * 모든 카테고리 조회 (isActive 여부 관계없이, 정렬 순서대로)
+     * - 관리자용 전체 카테고리 조회
+     */
+    List<Category> findAllByOrderBySortOrderAsc();
 }

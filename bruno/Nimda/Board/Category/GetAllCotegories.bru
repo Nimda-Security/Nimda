@@ -1,0 +1,20 @@
+meta {
+  name: GetAllCotegories
+  type: http
+  seq: 2
+}
+
+get {
+  url: {{baseUrl}}/api/cite/category/all
+  body: none
+  auth: inherit
+}
+
+headers {
+  Authorization: Bearer {{jwtToken}}
+}
+
+settings {
+  encodeUrl: true
+  timeout: 0
+}

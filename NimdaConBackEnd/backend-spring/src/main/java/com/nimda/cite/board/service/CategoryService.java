@@ -38,6 +38,22 @@ public class CategoryService {
     }
 
     /**
+     * 모든 카테고리 조회 (isActive 여부 관계없이)
+     * - 관리자 권한 확인 후 전체 카테고리 반환
+     * - 정렬 순서대로 반환
+     * 
+     * @param user 현재 사용자 (관리자 권한 확인용)
+     * @return 모든 카테고리 목록 (활성화/비활성화 포함)
+     */
+    @Transactional(readOnly = true)
+    public List<Category> getAllCategories(User user) {
+        // 관리자 권한 확인
+        checkAdminAuthority(user);
+
+        return categoryRepository.findAllByOrderBySortOrderAsc();
+    }
+
+    /**
      * Slug로 활성화된 카테고리 조회
      * 
      * @param slug 카테고리 slug
@@ -54,10 +70,9 @@ public class CategoryService {
      * 관리자 권한 확인
      * - User의 authorities에서 ROLE_ADMIN 권한 확인
      * 
-     * @param user 사용자 객체
-     * @throws RuntimeException 권한이 없는 경우
      */
     private void checkAdminAuthority(User user) {
+
         if (user == null) {
             throw new RuntimeException("로그인이 필요합니다.");
         }
