@@ -1,0 +1,16 @@
+meta {
+  name: GetCategoryBySlug
+  type: http
+  seq: 3
+}
+
+get {
+  url: {{baseUrl}}/api/cite/category/slug/test-category
+  body: none
+  auth: inherit
+}
+
+settings {
+  encodeUrl: true
+  timeout: 0
+}

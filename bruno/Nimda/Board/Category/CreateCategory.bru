@@ -1,7 +1,7 @@
 meta {
   name: CreateCategory
   type: http
-  seq: 2
+  seq: 5
 }
 
 post {
@@ -17,9 +17,9 @@ headers {
 
 body:json {
   {
-    "name": "테스트 카테고리2",
-    "slug": "test-category2",
-    "parentId": null,
+    "name": "테스트 카테고리 하위 카테고리",
+    "slug": "test-category-child",
+    "parentId": 6,
     "sortOrder": 0,
     "isActive": true
   }
