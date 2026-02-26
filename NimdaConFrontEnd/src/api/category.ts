@@ -98,6 +98,37 @@ export const getAllCategoriesAPI = async (): Promise<Category[]> => {
 };
 
 /**
+ * 모든 카테고리 조회 (관리자용, isActive 무관)
+ * - 관리자 권한 필요
+ * - JWT 토큰 헤더에 포함
+ * - 백엔드 응답: List<CategoryResponseDTO> 직접 반환 (배열)
+ */
+export const getAllCategoriesAdminAPI = async (): Promise<Category[]> => {
+  try {
+    const token = getAuthToken();
+    if (!token) {
+      console.error('로그인이 필요합니다.');
+      return [];
+    }
+
+    const response = await fetch(`${API_BASE_URL}/all`, {
+      method: 'GET',
+      headers: getAuthHeaders(),
+    });
+
+    if (response.ok) {
+      const categories = await parseJsonSafe(response);
+      return Array.isArray(categories) ? categories : [];
+    }
+
+    return [];
+  } catch (error) {
+    console.error('관리자 카테고리 목록 조회 API 오류:', error);
+    return [];
+  }
+};
+
+/**
  * 카테고리 생성 요청 DTO
  */
 export interface CategoryCreateRequest {

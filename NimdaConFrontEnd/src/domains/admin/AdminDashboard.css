@@ -1,62 +1,95 @@
 /* ===========================
-   Admin Dashboard
+   Admin Dashboard - Figma Design
    =========================== */
 
 .admin {
     display: flex;
-    min-height: 100vh;
+    min-height: calc(100vh - var(--header-height) - var(--footer-height));
+    background-color: var(--color-white);
 }
 
 /* Sidebar */
 .admin__sidebar {
-    width: 220px;
-    min-width: 220px;
-    padding: 24px;
-    border-right: 1px solid var(--color-gray-100);
+    width: 240px;
+    min-width: 240px;
+    padding: 0;
+    background-color: var(--color-white);
+    border-right: 1px solid var(--color-gray-200);
+}
+
+.admin__sidebar-header {
+    padding: 48px 16px 20px 32px;
+    border-bottom: 1px solid var(--color-gray-200);
 }
 
 .admin__sidebar-title {
-    font-size: 16px;
+    font-size: 32px;
     font-weight: 700;
+    font-family: 'Inter', 'Pretendard', sans-serif;
     color: var(--color-black);
     line-height: 1.5;
-}
-
-.admin__sidebar-back {
-    font-size: 12px;
-    font-weight: 500;
-    color: var(--color-gray-400);
-    background: none;
-    border: none;
-    padding: 0;
-    cursor: pointer;
-    margin-bottom: 24px;
-    display: block;
-}
-
-.admin__sidebar-back:hover {
-    color: var(--color-black);
+    margin: 0;
 }
 
 /* Navigation */
 .admin__nav {
     display: flex;
     flex-direction: column;
-    gap: 2px;
+    padding: 0;
+}
+
+.admin__nav-section {
+    display: flex;
+    flex-direction: column;
+    border-bottom: 1px solid var(--color-gray-200);
+    padding-bottom: 10px;
+}
+
+.admin__nav-section-title {
+    width: 100%;
+    text-align: left;
+    padding: 14px 16px 4px 32px;
+    font-size: 16px;
+    font-weight: 700;
+    font-family: 'Inter', 'Noto Sans KR', 'Pretendard', sans-serif;
+    color: var(--color-black);
+    background: none;
+    border: none;
+    cursor: pointer;
+    line-height: 1.5;
+    transition: background-color 0.2s;
+}
+
+.admin__nav-section-title:hover {
+    background-color: var(--color-gray-100);
+}
+
+.admin__nav-section-title--active {
+    color: var(--color-black);
+}
+
+.admin__nav-subsection {
+    display: flex;
+    flex-direction: column;
+    padding-left: 0;
 }
 
 .admin__nav-item {
     width: 100%;
     text-align: left;
-    padding: 8px 12px;
+    padding: 2px 16px 2px 32px;
     font-size: 14px;
-    font-weight: 500;
-    color: var(--color-gray-400);
+    font-weight: 400;
+    font-family: 'Inter', 'Noto Sans KR', 'Pretendard', sans-serif;
+    color: #525252;
     background: none;
     border: none;
     cursor: pointer;
     line-height: 1.5;
-    font-family: "Pretendard", sans-serif;
+    transition: color 0.2s;
+    display: flex;
+    align-items: center;
+    gap: 8px;
 }
 
 .admin__nav-item:hover {
@@ -64,13 +97,13 @@
 }
 
 .admin__nav-item--active {
-    color: var(--color-black);
+    color: #d97399;
     font-weight: 700;
 }
 
 /* Badge */
 .admin__badge {
-    margin-left: 8px;
+    margin-left: auto;
     padding: 2px 6px;
     font-size: 11px;
     font-weight: 700;
@@ -82,16 +115,20 @@
 /* Content */
 .admin__content {
     flex: 1;
-    padding: 32px;
+    padding: 48px 40px 32px 24px;
+    background-color: var(--color-white);
 }
 
 /* Section Title */
 .admin__section-title {
     font-size: 20px;
     font-weight: 700;
+    font-family: 'Inter', 'Noto Sans KR', 'Pretendard', sans-serif;
     color: var(--color-black);
-    margin-bottom: 24px;
+    margin-bottom: 16px;
     line-height: 1.5;
+    padding-bottom: 6px;
+    border-bottom: 2px solid var(--color-black);
 }
 
 /* Header Row */
@@ -99,7 +136,12 @@
     display: flex;
     align-items: center;
     justify-content: space-between;
-    margin-bottom: 24px;
+    margin-bottom: 16px;
+}
+
+.admin__header-row .admin__section-title {
+    margin-bottom: 0;
+    flex: 1;
 }
 
 /* Button */
@@ -107,11 +149,13 @@
     padding: 8px 16px;
     font-size: 14px;
     font-weight: 500;
+    font-family: 'Pretendard', sans-serif;
     border: 1px solid var(--color-gray-200);
     color: var(--color-black);
     background: none;
     cursor: pointer;
-    font-family: "Pretendard", sans-serif;
+    border-radius: 4px;
+    transition: background-color 0.2s;
 }
 
 .admin__btn:hover {
@@ -132,6 +176,7 @@
     color: #ffffff;
     border-radius: 4px;
     cursor: pointer;
+    transition: opacity 0.2s;
 }
 
 .admin__btn--approve:hover {
@@ -147,6 +192,7 @@
     color: var(--color-black);
     border-radius: 4px;
     cursor: pointer;
+    transition: background-color 0.2s;
 }
 
 .admin__btn--reject:hover {
@@ -162,6 +208,7 @@
     color: var(--color-black);
     border-radius: 4px;
     cursor: pointer;
+    transition: background-color 0.2s;
 }
 
 .admin__btn--edit:hover {
@@ -171,26 +218,32 @@
 /* Table */
 .admin__table-wrap {
     border: 1px solid var(--color-gray-100);
+    border-radius: 4px;
+    overflow: hidden;
 }
 
 .admin__table {
     width: 100%;
     border-collapse: collapse;
+    background-color: #ffffff;
 }
 
 .admin__table th {
     padding: 12px 16px;
     font-size: 12px;
     font-weight: 700;
+    font-family: 'Pretendard', sans-serif;
     color: var(--color-gray-400);
     text-align: center;
     border-bottom: 1px solid var(--color-gray-100);
+    background-color: #ffffff;
 }
 
 .admin__table td {
     padding: 12px 16px;
     font-size: 14px;
     font-weight: 500;
+    font-family: 'Pretendard', sans-serif;
     color: var(--color-black);
     text-align: center;
     border-bottom: 1px solid var(--color-gray-100);
@@ -222,32 +275,46 @@
     text-align: center;
     font-size: 14px;
     font-weight: 500;
+    font-family: 'Pretendard', sans-serif;
     color: var(--color-gray-400);
+    border-radius: 4px;
 }
 
-/* Info Box */
-.admin__info-box {
-    border: 1px solid var(--color-gray-100);
-    padding: 24px;
-}
-
-.admin__info-box h3 {
-    font-size: 14px;
-    font-weight: 700;
-    color: var(--color-black);
-    margin-bottom: 16px;
-    line-height: 1.5;
-}
-
-.admin__info-box ul {
-    list-style: none;
+/* Category List */
+.admin__category-list {
     display: flex;
     flex-direction: column;
-    gap: 8px;
+    gap: 0;
+}
+
+.admin__category-item {
+    font-family: 'Inter', 'Noto Sans KR', 'Pretendard', sans-serif;
+    color: var(--color-black);
+    cursor: pointer;
+    transition: opacity 0.2s;
+    background-color: var(--color-gray-100);
+    height: 23px;
+    display: flex;
+    align-items: center;
+    padding: 0 10px;
+    margin-bottom: 7px;
     font-size: 14px;
-    font-weight: 500;
-    color: var(--color-gray-400);
     line-height: 1.5;
+    border-radius: 0;
+}
+
+.admin__category-item:hover {
+    opacity: 0.8;
+}
+
+.admin__category-item--parent {
+    font-weight: 700;
+    padding-left: 5px;
+}
+
+.admin__category-item--child {
+    font-weight: 400;
+    padding-left: 10px;
 }
 
 /* Modal */
@@ -282,6 +349,7 @@
 .admin__modal-header h3 {
     font-size: 16px;
     font-weight: 700;
+    font-family: 'Pretendard', sans-serif;
     color: var(--color-black);
 }
 
@@ -291,6 +359,7 @@
     font-size: 16px;
     color: var(--color-gray-400);
     cursor: pointer;
+    transition: color 0.2s;
 }
 
 .admin__modal-close:hover {
@@ -306,6 +375,7 @@
 .admin__modal-label {
     font-size: 12px;
     font-weight: 500;
+    font-family: 'Pretendard', sans-serif;
     color: var(--color-gray-400);
     line-height: 1.5;
 }
@@ -313,6 +383,7 @@
 .admin__modal-value {
     font-size: 14px;
     font-weight: 500;
+    font-family: 'Pretendard', sans-serif;
     color: var(--color-black);
     margin-top: 2px;
     line-height: 1.5;
