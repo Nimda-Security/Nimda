@@ -252,6 +252,27 @@ body {
   background-color: var(--color-gray-100);
 }
 
+.sidebar-section__link {
+  display: block;
+  width: 100%;
+  text-decoration: none;
+  color: inherit;
+}
+
+.sidebar-section__title--link {
+  text-decoration: none;
+  color: inherit;
+}
+
+.sidebar-section__item--parent {
+  font-weight: 600;
+}
+
+.sidebar-section__item--depth {
+  font-size: 13px;
+  color: var(--color-gray-600);
+}
+
 /* D-DAY 섹션 */
 .sidebar-dday {
   padding: 0 24px;
