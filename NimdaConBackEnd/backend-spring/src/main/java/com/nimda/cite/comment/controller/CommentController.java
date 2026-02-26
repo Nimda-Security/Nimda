@@ -4,6 +4,7 @@ import com.nimda.cite.comment.dto.CommentCreateRequest;
 import com.nimda.cite.comment.dto.CommentResponse;
 import com.nimda.cite.comment.dto.CommentUpdateRequest;
 import com.nimda.cite.comment.service.CommentService;
+import com.nimda.cite.common.response.ApiResponse;
 import com.nimda.cup.user.security.CustomUserDetails;
 import jakarta.validation.Valid;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -12,7 +13,8 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
-import java.util.List;
+
+import java.util.Map;
 
 @RestController
 @RequestMapping("/api/cite")
@@ -26,14 +28,14 @@ public class CommentController {
      * POST /api/cite/board/{boardId}/comments
      */
     @PostMapping
-    public ResponseEntity<CommentResponse> createComment(
+    public ResponseEntity<?> createComment(
             @PathVariable Long boardId,
             @Valid @RequestBody CommentCreateRequest request,
             @AuthenticationPrincipal CustomUserDetails userDetails
     ) {
         Long userId = userDetails.getUser().getId();
         CommentResponse response = commentService.createComment(boardId, request, userId);
-        return ResponseEntity.status(HttpStatus.CREATED).body(response);
+        return ApiResponse.ok(Map.of("comment", response)).toResponse(HttpStatus.CREATED);
     }
 
 
@@ -42,7 +44,7 @@ public class CommentController {
      * GET /api/cite/board/{boardId}/comments
      */
     @GetMapping("/board/{boardId}/comments")
-    public ResponseEntity<List<CommentResponse>> getComments(
+    public ResponseEntity<?> getComments(
             @PathVariable Long boardId,
             @AuthenticationPrincipal CustomUserDetails userDetails
     ) {
@@ -50,8 +52,7 @@ public class CommentController {
                 .findFirst()
                 .map(GrantedAuthority::getAuthority)
                 .orElse("ROLE_USER");
-
-        return ResponseEntity.ok(commentService.getComments(boardId, role));
+        return ApiResponse.ok(Map.of("comments", commentService.getComments(boardId, role))).toResponse();
     }
 
     /**
@@ -59,7 +60,7 @@ public class CommentController {
      * GET /api/cite/board/{boardId}/comments/{parendId}/children
      */
     @GetMapping("/board/{boardId}/comments/{parentId}/children")
-    public ResponseEntity<List<CommentResponse>> getReplies(
+    public ResponseEntity<?> getReplies(
             @PathVariable Long boardId,
             @PathVariable Long parentId,
             @AuthenticationPrincipal CustomUserDetails userDetails
@@ -68,8 +69,7 @@ public class CommentController {
                 .findFirst()
                 .map(GrantedAuthority::getAuthority)
                 .orElse("ROLE_USER");
-
-        return ResponseEntity.ok(commentService.getReplies(boardId, parentId, role));
+        return ApiResponse.ok(Map.of("comments", commentService.getReplies(boardId, parentId, role))).toResponse();
     }
 
     /**
@@ -77,7 +77,7 @@ public class CommentController {
      * PATCH /api/cite/board/{boardId}/comments/{commentId}
      */
     @PatchMapping("/{commentId}")
-    public ResponseEntity<CommentResponse> updateComment(
+    public ResponseEntity<?> updateComment(
             @PathVariable Long boardId,
             @PathVariable Long commentId,
             @Valid @RequestBody CommentUpdateRequest request,
@@ -88,9 +88,8 @@ public class CommentController {
                 .findFirst()
                 .map(GrantedAuthority::getAuthority)
                 .orElse("ROLE_USER");
-
         CommentResponse response = commentService.updateComment(boardId, commentId, request, userId, role);
-        return ResponseEntity.ok(response);
+        return ApiResponse.ok(Map.of("comment", response)).toResponse();
     }
 
     /**
@@ -98,7 +97,7 @@ public class CommentController {
      * DELETE /api/cite/board/{boardId}/comments/{commentId}
      */
     @DeleteMapping("/{commentId}")
-    public ResponseEntity<Void> deleteComment(
+    public ResponseEntity<?> deleteComment(
             @PathVariable Long boardId,
             @PathVariable Long commentId,
             @AuthenticationPrincipal CustomUserDetails userDetails
@@ -108,9 +107,8 @@ public class CommentController {
                 .findFirst()
                 .map(GrantedAuthority::getAuthority)
                 .orElse("ROLE_USER");
-
         commentService.deleteComment(boardId, commentId, userId, role);
-        return ResponseEntity.noContent().build();
+        return ApiResponse.ok("댓글이 삭제되었습니다.").toResponse();
     }
 
 }

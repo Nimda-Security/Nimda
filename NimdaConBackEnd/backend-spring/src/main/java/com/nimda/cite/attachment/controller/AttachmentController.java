@@ -5,6 +5,7 @@ import com.nimda.cite.attachment.entity.Attachment;
 import com.nimda.cite.attachment.service.AttachmentService;
 import com.nimda.cite.attachment.store.FileStore;
 import com.nimda.cite.board.constants.CategoryConstants;
+import com.nimda.cite.common.response.ApiResponse;
 import com.nimda.cup.common.util.JwtUtil;
 import org.springframework.core.io.Resource;
 import org.springframework.http.HttpHeaders;
@@ -16,7 +17,6 @@ import org.springframework.web.multipart.MultipartFile;
 
 import java.net.URLEncoder;
 import java.nio.charset.StandardCharsets;
-import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -50,24 +50,21 @@ public class AttachmentController {
      * - multipart file + boardId, categoryId (userId는 JWT에서)
      */
     @PostMapping("/upload")
-    public ResponseEntity<Map<String, Object>> upload(
+    public ResponseEntity<?> upload(
             @RequestHeader(value = "Authorization", required = false) String authHeader,
             @RequestParam("file") MultipartFile file,
             @RequestParam("boardId") Long boardId,
             @RequestParam("categoryId") Long categoryId) {
         Long userId = resolveUserId(authHeader);
         if (userId == null) {
-            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(errorBody("로그인이 필요합니다."));
+            return ApiResponse.fail("로그인이 필요합니다.").toResponse(HttpStatus.UNAUTHORIZED);
         }
         try {
             Long attachmentId = attachmentService.uploadFile(file, boardId, categoryId, userId);
-            Map<String, Object> body = new HashMap<>();
-            body.put("success", true);
-            body.put("message", "파일이 업로드되었습니다.");
-            body.put("attachmentId", attachmentId);
-            return ResponseEntity.status(HttpStatus.CREATED).body(body);
+            return ApiResponse.ok("파일이 업로드되었습니다.", Map.of("attachmentId", attachmentId))
+                    .toResponse(HttpStatus.CREATED);
         } catch (RuntimeException e) {
-            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(errorBody(e.getMessage()));
+            return ApiResponse.fail(e.getMessage()).toResponse(HttpStatus.BAD_REQUEST);
         }
     }
 
@@ -75,15 +72,12 @@ public class AttachmentController {
      * 첨부파일 메타정보 조회 (filepath, disposition 등)
      */
     @GetMapping("/{id}")
-    public ResponseEntity<Map<String, Object>> getFile(@PathVariable Long id) {
+    public ResponseEntity<?> getFile(@PathVariable Long id) {
         try {
             AttachmentResponseDto dto = attachmentService.getFile(id);
-            Map<String, Object> body = new HashMap<>();
-            body.put("success", true);
-            body.put("attachment", dto);
-            return ResponseEntity.ok(body);
+            return ApiResponse.ok(Map.of("attachment", dto)).toResponse();
         } catch (RuntimeException e) {
-            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(errorBody(e.getMessage()));
+            return ApiResponse.fail(e.getMessage()).toResponse(HttpStatus.NOT_FOUND);
         }
     }
 
@@ -101,7 +95,7 @@ public class AttachmentController {
 
             Optional<Resource> resourceOpt = fileStore.getResource(attachment.getStoredFilename());
             if (resourceOpt.isEmpty()) {
-                return ResponseEntity.status(HttpStatus.NOT_FOUND).body(errorBody("파일을 찾을 수 없습니다."));
+                return ApiResponse.fail("파일을 찾을 수 없습니다.").toResponse(HttpStatus.NOT_FOUND);
             }
             Resource resource = resourceOpt.get();
             String contentType = getContentType(attachment.getExtension());
@@ -113,7 +107,7 @@ public class AttachmentController {
             headers.add(HttpHeaders.CONTENT_DISPOSITION, disposition + "; filename*=UTF-8''" + encoded);
             return ResponseEntity.ok().headers(headers).body(resource);
         } catch (RuntimeException e) {
-            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(errorBody(e.getMessage()));
+            return ApiResponse.fail(e.getMessage()).toResponse(HttpStatus.NOT_FOUND);
         }
     }
 
@@ -121,42 +115,36 @@ public class AttachmentController {
      * 내 파일 목록 (JWT 필수)
      */
     @GetMapping("/my")
-    public ResponseEntity<Map<String, Object>> myFiles(
+    public ResponseEntity<?> myFiles(
             @RequestHeader(value = "Authorization", required = false) String authHeader) {
         Long userId = resolveUserId(authHeader);
         if (userId == null) {
-            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(errorBody("로그인이 필요합니다."));
+            return ApiResponse.fail("로그인이 필요합니다.").toResponse(HttpStatus.UNAUTHORIZED);
         }
         List<AttachmentResponseDto> list = attachmentService.getMyFileList(userId);
-        Map<String, Object> body = new HashMap<>();
-        body.put("success", true);
-        body.put("attachments", list);
-        return ResponseEntity.ok(body);
+        return ApiResponse.ok(Map.of("attachments", list)).toResponse();
     }
 
     /**
      * 선택 삭제 (JWT 필수, 본인 파일만)
      */
     @DeleteMapping
-    public ResponseEntity<Map<String, Object>> delete(
+    public ResponseEntity<?> delete(
             @RequestHeader(value = "Authorization", required = false) String authHeader,
             @RequestBody Map<String, List<Long>> payload) {
         Long userId = resolveUserId(authHeader);
         if (userId == null) {
-            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(errorBody("로그인이 필요합니다."));
+            return ApiResponse.fail("로그인이 필요합니다.").toResponse(HttpStatus.UNAUTHORIZED);
         }
         List<Long> fileIds = payload != null ? payload.get("fileIds") : null;
         if (fileIds == null || fileIds.isEmpty()) {
-            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(errorBody("fileIds가 필요합니다."));
+            return ApiResponse.fail("fileIds가 필요합니다.").toResponse(HttpStatus.BAD_REQUEST);
         }
         try {
             attachmentService.deleteUserFiles(userId, fileIds);
-            Map<String, Object> body = new HashMap<>();
-            body.put("success", true);
-            body.put("message", "선택한 파일이 삭제되었습니다.");
-            return ResponseEntity.ok(body);
+            return ApiResponse.ok("선택한 파일이 삭제되었습니다.").toResponse();
         } catch (RuntimeException e) {
-            return ResponseEntity.status(HttpStatus.FORBIDDEN).body(errorBody(e.getMessage()));
+            return ApiResponse.fail(e.getMessage()).toResponse(HttpStatus.FORBIDDEN);
         }
     }
 
@@ -169,13 +157,6 @@ public class AttachmentController {
             return null;
         }
         return jwtUtil.extractUserId(token);
-    }
-
-    private Map<String, Object> errorBody(String message) {
-        Map<String, Object> m = new HashMap<>();
-        m.put("success", false);
-        m.put("message", message);
-        return m;
     }
 
     private String getContentType(String ext) {

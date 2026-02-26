@@ -5,6 +5,7 @@ import com.nimda.cite.board.dto.CategoryResponseDTO;
 import com.nimda.cite.board.dto.CategoryUpdateDTO;
 import com.nimda.cite.board.entity.Category;
 import com.nimda.cite.board.service.CategoryService;
+import com.nimda.cite.common.response.ApiResponse;
 import com.nimda.cup.common.util.JwtUtil;
 import com.nimda.cup.user.entity.User;
 import com.nimda.cup.user.repository.UserRepository;
@@ -68,18 +69,16 @@ public class CategoryController {
     // API1. getAllCategories
     // feat. 활성화된 카테고리 조회 API (일반 사용자용)
     @GetMapping
-    public ResponseEntity<List<CategoryResponseDTO>> getAllCategories() {
+    public ResponseEntity<?> getAllCategories() {
         try {
             List<Category> categories = categoryService.getAllActiveCategories();
-
-            // Entity를 DTO로 변환
             List<CategoryResponseDTO> categoryDTOList = categories.stream()
                     .map(CategoryResponseDTO::from)
                     .toList();
-
-            return ResponseEntity.ok(categoryDTOList);
+            return ApiResponse.ok(categoryDTOList).toResponse();
         } catch (Exception e) {
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
+            return ApiResponse.fail(e.getMessage() != null ? e.getMessage() : "카테고리 조회 중 오류가 발생했습니다.")
+                    .toResponse(HttpStatus.INTERNAL_SERVER_ERROR);
         }
     }
 
@@ -90,47 +89,47 @@ public class CategoryController {
      * - 활성화/비활성화 모든 카테고리 반환
      */
     @GetMapping("/all")
-    public ResponseEntity<List<CategoryResponseDTO>> getAllCategoriesAdmin(
+    public ResponseEntity<?> getAllCategoriesAdmin(
             @RequestHeader(value = "Authorization", required = false) String authHeader) {
 
         try {
-            // 사용자 정보 추출
             User user = getUserFromToken(authHeader);
             if (user == null) {
-                return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
+                return ApiResponse.fail("로그인이 필요합니다.").toResponse(HttpStatus.UNAUTHORIZED);
             }
 
-            // 모든 카테고리 조회 [관리자 권한 확인 로직 포함]
             List<Category> categories = categoryService.getAllCategories(user);
             List<CategoryResponseDTO> categoryDTOList = categories.stream()
                     .map(CategoryResponseDTO::from)
                     .toList();
-            return ResponseEntity.ok(categoryDTOList);
+            return ApiResponse.ok(categoryDTOList).toResponse();
 
         } catch (RuntimeException e) {
-
-            if (e.getMessage().contains("권한") || e.getMessage().contains("로그인")) {
-                return ResponseEntity.status(HttpStatus.FORBIDDEN).build();
+            if (e.getMessage() != null && (e.getMessage().contains("권한") || e.getMessage().contains("로그인"))) {
+                return ApiResponse.fail(e.getMessage()).toResponse(HttpStatus.FORBIDDEN);
             }
-            return ResponseEntity.status(HttpStatus.BAD_REQUEST).build();
+            return ApiResponse.fail(e.getMessage()).toResponse(HttpStatus.BAD_REQUEST);
 
         } catch (Exception e) {
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
+            return ApiResponse.fail(e.getMessage() != null ? e.getMessage() : "서버 오류가 발생했습니다.")
+                    .toResponse(HttpStatus.INTERNAL_SERVER_ERROR);
         }
     }
 
     // API1-2 getCategoryBySlug
     // feat. 카테고리명(slug)로 조회 API
     @GetMapping("/slug/{slug}")
-    public ResponseEntity<CategoryResponseDTO> getCategoryBySlug(@PathVariable String slug) {
+    public ResponseEntity<?> getCategoryBySlug(@PathVariable String slug) {
         try {
             Category category = categoryService.getCategoryBySlug(slug);
             CategoryResponseDTO categoryDTO = CategoryResponseDTO.from(category);
-            return ResponseEntity.ok(categoryDTO);
+            return ApiResponse.ok(categoryDTO).toResponse();
         } catch (RuntimeException e) {
-            return ResponseEntity.status(HttpStatus.NOT_FOUND).build();
+            return ApiResponse.fail(e.getMessage() != null ? e.getMessage() : "카테고리를 찾을 수 없습니다.")
+                    .toResponse(HttpStatus.NOT_FOUND);
         } catch (Exception e) {
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
+            return ApiResponse.fail(e.getMessage() != null ? e.getMessage() : "서버 오류가 발생했습니다.")
+                    .toResponse(HttpStatus.INTERNAL_SERVER_ERROR);
         }
     }
 
@@ -141,30 +140,28 @@ public class CategoryController {
      * - JWT 토큰에서 사용자 정보 추출 후 권한 확인
      */
     @PostMapping
-    public ResponseEntity<CategoryResponseDTO> createCategory(
+    public ResponseEntity<?> createCategory(
             @RequestHeader(value = "Authorization", required = false) String authHeader,
             @Valid @RequestBody CategoryCreateDTO createDTO) {
         try {
-            // 사용자 정보 추출
             User user = getUserFromToken(authHeader);
             if (user == null) {
-                return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
+                return ApiResponse.fail("로그인이 필요합니다.").toResponse(HttpStatus.UNAUTHORIZED);
             }
 
-            // 카테고리 생성 (관리자 권한 확인 포함)
             Category category = categoryService.createCategory(createDTO, user);
             CategoryResponseDTO categoryDTO = CategoryResponseDTO.from(category);
-            return ResponseEntity.status(HttpStatus.CREATED).body(categoryDTO);
+            return ApiResponse.ok(categoryDTO).toResponse(HttpStatus.CREATED);
 
         } catch (RuntimeException e) {
-            // 관리자 권한이 없거나 기타 비즈니스 로직 오류
-            if (e.getMessage().contains("권한") || e.getMessage().contains("로그인")) {
-                return ResponseEntity.status(HttpStatus.FORBIDDEN).build();
+            if (e.getMessage() != null && (e.getMessage().contains("권한") || e.getMessage().contains("로그인"))) {
+                return ApiResponse.fail(e.getMessage()).toResponse(HttpStatus.FORBIDDEN);
             }
-            return ResponseEntity.status(HttpStatus.BAD_REQUEST).build();
+            return ApiResponse.fail(e.getMessage()).toResponse(HttpStatus.BAD_REQUEST);
 
         } catch (Exception e) {
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
+            return ApiResponse.fail(e.getMessage() != null ? e.getMessage() : "서버 오류가 발생했습니다.")
+                    .toResponse(HttpStatus.INTERNAL_SERVER_ERROR);
         }
     }
 
@@ -175,31 +172,29 @@ public class CategoryController {
      * - JWT 토큰에서 사용자 정보 추출 후 권한 확인
      */
     @PutMapping("/{id}")
-    public ResponseEntity<CategoryResponseDTO> updateCategory(
+    public ResponseEntity<?> updateCategory(
             @RequestHeader(value = "Authorization", required = false) String authHeader,
             @PathVariable Long id,
             @Valid @RequestBody CategoryUpdateDTO updateDTO) {
         try {
-            // 사용자 정보 추출
             User user = getUserFromToken(authHeader);
             if (user == null) {
-                return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
+                return ApiResponse.fail("로그인이 필요합니다.").toResponse(HttpStatus.UNAUTHORIZED);
             }
 
-            // 카테고리 수정 (관리자 권한 확인 포함)
             Category category = categoryService.updateCategory(id, updateDTO, user);
             CategoryResponseDTO categoryDTO = CategoryResponseDTO.from(category);
-            return ResponseEntity.ok(categoryDTO);
+            return ApiResponse.ok(categoryDTO).toResponse();
 
         } catch (RuntimeException e) {
-            // 관리자 권한이 없거나 기타 비즈니스 로직 오류
-            if (e.getMessage().contains("권한") || e.getMessage().contains("로그인")) {
-                return ResponseEntity.status(HttpStatus.FORBIDDEN).build();
+            if (e.getMessage() != null && (e.getMessage().contains("권한") || e.getMessage().contains("로그인"))) {
+                return ApiResponse.fail(e.getMessage()).toResponse(HttpStatus.FORBIDDEN);
             }
-            return ResponseEntity.status(HttpStatus.BAD_REQUEST).build();
+            return ApiResponse.fail(e.getMessage()).toResponse(HttpStatus.BAD_REQUEST);
 
         } catch (Exception e) {
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
+            return ApiResponse.fail(e.getMessage() != null ? e.getMessage() : "서버 오류가 발생했습니다.")
+                    .toResponse(HttpStatus.INTERNAL_SERVER_ERROR);
         }
     }
 
@@ -211,30 +206,27 @@ public class CategoryController {
      * - 소프트 삭제 (isActive = false)
      */
     @DeleteMapping("/{id}")
-    public ResponseEntity<Void> deleteCategory(
+    public ResponseEntity<?> deleteCategory(
             @RequestHeader(value = "Authorization", required = false) String authHeader,
             @PathVariable Long id) {
         try {
-            // 사용자 정보 추출
             User user = getUserFromToken(authHeader);
             if (user == null) {
-                return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
+                return ApiResponse.fail("로그인이 필요합니다.").toResponse(HttpStatus.UNAUTHORIZED);
             }
 
-            // 카테고리 삭제 (소프트 삭제, 관리자 권한 확인 포함)
             categoryService.deleteCategory(id, user);
-
-            return ResponseEntity.ok().build();
+            return ApiResponse.ok("카테고리가 삭제되었습니다.").toResponse();
 
         } catch (RuntimeException e) {
-            // 관리자 권한이 없거나 기타 비즈니스 로직 오류
-            if (e.getMessage().contains("권한") || e.getMessage().contains("로그인")) {
-                return ResponseEntity.status(HttpStatus.FORBIDDEN).build();
+            if (e.getMessage() != null && (e.getMessage().contains("권한") || e.getMessage().contains("로그인"))) {
+                return ApiResponse.fail(e.getMessage()).toResponse(HttpStatus.FORBIDDEN);
             }
-            return ResponseEntity.status(HttpStatus.BAD_REQUEST).build();
+            return ApiResponse.fail(e.getMessage()).toResponse(HttpStatus.BAD_REQUEST);
 
         } catch (Exception e) {
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
+            return ApiResponse.fail(e.getMessage() != null ? e.getMessage() : "서버 오류가 발생했습니다.")
+                    .toResponse(HttpStatus.INTERNAL_SERVER_ERROR);
         }
     }
 }
