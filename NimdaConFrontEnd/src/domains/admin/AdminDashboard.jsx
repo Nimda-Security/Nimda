@@ -4,7 +4,7 @@ import Footer from '@/components/Layout/Footer';
 import { useNavigate } from 'react-router-dom';
 import { getAllUsersAPI, getPendingUsersAPI, approveUserAPI, rejectUserAPI } from '@/api/admin/admin';
 import { getBoardListAPI, deleteBoardAPI } from '@/api/board';
-import { getAllCategoriesAdminAPI, updateCategoryAPI } from '@/api/category';
+import { getAllCategoriesAdminAPI, updateCategoryAPI, createCategoryAPI, deleteCategoryAPI } from '@/api/category';
 import './AdminDashboard.css';
 
 function AdminDashboard() {
@@ -21,6 +21,12 @@ function AdminDashboard() {
   const [uploadingImage, setUploadingImage] = useState(false);
   const [categories, setCategories] = useState([]);
   const [categoriesLoading, setCategoriesLoading] = useState(false);
+  const [selectedCategoryId, setSelectedCategoryId] = useState(null);
+  const [showAddCategoryModal, setShowAddCategoryModal] = useState(false);
+  const [newCategoryName, setNewCategoryName] = useState('');
+  const [newCategorySlug, setNewCategorySlug] = useState('');
+  const [newCategoryParentId, setNewCategoryParentId] = useState(null);
+  const [addingCategory, setAddingCategory] = useState(false);
 
   const goBack = () => {
     navigate('/');
@@ -82,11 +88,97 @@ function AdminDashboard() {
     try {
       const allCategories = await getAllCategoriesAdminAPI();
       setCategories(allCategories);
+      console.log('카테고리 목록 로드 성공:', allCategories.length, '개');
     } catch (error) {
       console.error('카테고리 목록 로드 오류:', error);
-      alert('카테고리 목록을 불러오는 중 오류가 발생했습니다.');
+      const errorMessage = error instanceof Error ? error.message : '카테고리 목록을 불러오는 중 오류가 발생했습니다.';
+      alert(errorMessage);
+      setCategories([]); // 에러 발생 시 빈 배열로 설정
     } finally {
       setCategoriesLoading(false);
+    }
+  };
+
+  const handleAddCategory = async () => {
+    if (!newCategoryName.trim()) {
+      alert('카테고리명을 입력해주세요.');
+      return;
+    }
+    if (!newCategorySlug.trim()) {
+      alert('슬러그를 입력해주세요.');
+      return;
+    }
+
+    // 슬러그 유효성 검사 (영문자, 숫자, 하이픈만 허용)
+    const slugPattern = /^[a-z0-9-]+$/;
+    if (!slugPattern.test(newCategorySlug)) {
+      alert('슬러그는 영문 소문자, 숫자, 하이픈(-)만 사용할 수 있습니다.');
+      return;
+    }
+
+    setAddingCategory(true);
+    try {
+      const result = await createCategoryAPI({
+        name: newCategoryName.trim(),
+        slug: newCategorySlug.trim(),
+        parentId: newCategoryParentId || null,
+        sortOrder: 0,
+        isActive: true,
+      });
+
+      if (result.success) {
+        alert('카테고리가 성공적으로 추가되었습니다.');
+        setShowAddCategoryModal(false);
+        setNewCategoryName('');
+        setNewCategorySlug('');
+        setNewCategoryParentId(null);
+        // 약간의 지연 후 목록 새로고침 (백엔드 처리 시간 고려)
+        setTimeout(() => {
+          loadCategories();
+        }, 300);
+      } else {
+        alert(result.message || '카테고리 추가에 실패했습니다.');
+      }
+    } catch (error) {
+      console.error('카테고리 추가 오류:', error);
+      alert('카테고리 추가 중 오류가 발생했습니다.');
+    } finally {
+      setAddingCategory(false);
+    }
+  };
+
+  const handleDeleteCategory = async () => {
+    if (!selectedCategoryId) {
+      alert('삭제할 카테고리를 선택해주세요.');
+      return;
+    }
+
+    if (!selectedCategoryData) {
+      alert('선택된 카테고리 정보를 찾을 수 없습니다.');
+      return;
+    }
+
+    const categoryName = selectedCategoryData.name;
+    if (!confirm(`정말 "${categoryName}" 카테고리를 삭제하시겠습니까?\n\n하위 카테고리나 게시글이 있으면 삭제할 수 없습니다.`)) {
+      return;
+    }
+
+    try {
+      const result = await deleteCategoryAPI(selectedCategoryId);
+
+      if (result.success) {
+        alert('카테고리가 성공적으로 삭제되었습니다.');
+        setSelectedCategoryId(null); // 선택 해제
+        // 약간의 지연 후 목록 새로고침
+        setTimeout(() => {
+          loadCategories();
+        }, 300);
+      } else {
+        alert(result.message || '카테고리 삭제에 실패했습니다.');
+      }
+    } catch (error) {
+      console.error('카테고리 삭제 오류:', error);
+      alert('카테고리 삭제 중 오류가 발생했습니다.');
     }
   };
 
@@ -255,9 +347,78 @@ function AdminDashboard() {
 
   const categoryTree = buildCategoryTree(categories);
 
-  // 카테고리 렌더링 (재귀)
+  // 전체 카테고리 수 계산
+  const getTotalCategoryCount = (tree) => {
+    let count = 0;
+    const countRecursive = (items) => {
+      items.forEach(item => {
+        count++;
+        if (item.children && item.children.length > 0) {
+          countRecursive(item.children);
+        }
+      });
+    };
+    countRecursive(tree);
+    return count;
+  };
+
+  // 선택된 카테고리 찾기
+  const findCategoryById = (tree, id) => {
+    for (const cat of tree) {
+      if (cat.id === id) return cat;
+      if (cat.children && cat.children.length > 0) {
+        const found = findCategoryById(cat.children, id);
+        if (found) return found;
+      }
+    }
+    return null;
+  };
+
+  const selectedCategoryData = selectedCategoryId ? findCategoryById(categoryTree, selectedCategoryId) : null;
+
+  // 모든 카테고리를 평탄화 (부모 선택용)
+  const flattenCategories = (tree, level = 0) => {
+    const result = [];
+    tree.forEach(category => {
+      result.push({ ...category, level });
+      if (category.children && category.children.length > 0) {
+        result.push(...flattenCategories(category.children, level + 1));
+      }
+    });
+    return result;
+  };
+
+  const allCategoriesFlat = flattenCategories(categoryTree);
+
+  // 카테고리 렌더링 (재귀) - 순서 설정용
+  const renderCategoryOrderItem = (category, level = 0) => {
+    const isParent = category.children && category.children.length > 0;
+    const isSelected = selectedCategoryId === category.id;
+    const childCount = category.children ? category.children.length : 0;
+    const isInactive = category.isActive === false;
+
+    return (
+      <div key={category.id}>
+        <div
+          className={`admin__catorder-item ${isSelected ? 'admin__catorder-item--selected' : ''} ${level > 0 ? 'admin__catorder-item--child' : ''} ${isInactive ? 'admin__catorder-item--inactive' : ''}`}
+          style={{ paddingLeft: `${12 + level * 20}px` }}
+          onClick={() => setSelectedCategoryId(category.id)}
+        >
+          <span className="admin__catorder-drag">⠿</span>
+          {level > 0 && <span className="admin__catorder-prefix">ㄴ</span>}
+          <span className={`admin__catorder-name ${isInactive ? 'admin__catorder-name--inactive' : ''}`}>
+            {category.name}
+            {isParent && <span className="admin__catorder-count">({childCount})</span>}
+          </span>
+        </div>
+        {isParent && category.children?.map(child => renderCategoryOrderItem(child, level + 1))}
+      </div>
+    );
+  };
+
+  // 카테고리 렌더링 (재귀) - 기본용
   const renderCategoryItem = (category, level = 0) => {
-    const indent = level * 39; // Figma 디자인에 맞는 들여쓰기
+    const indent = level * 39;
     const isParent = category.children && category.children.length > 0;
     const itemClass = level === 0
       ? 'admin__category-item admin__category-item--parent'
@@ -279,7 +440,7 @@ function AdminDashboard() {
   useEffect(() => {
     if (activeSection === 'pending') {
       loadPendingUsers();
-    } else if (activeSection === 'category-order' || activeSection === 'category-deactivate') {
+    } else if (activeSection === 'category-order' || activeSection === 'category-edit' || activeSection === 'category-deactivate') {
       loadCategories();
     } else if (activeSection === 'posts') {
       loadPosts();
@@ -544,20 +705,219 @@ function AdminDashboard() {
         return (
           <div>
             <h2 className="admin__section-title">순서 설정</h2>
-            <div className="admin__category-list">
-              {categoriesLoading ? (
-                <div className="admin__empty">로딩 중...</div>
-              ) : categoryTree.length > 0 ? (
-                <div>
-                  {categoryTree.map(category => renderCategoryItem(category, 0))}
-                </div>
-              ) : (
-                <div className="admin__empty">
-                  <p style={{ marginBottom: 16 }}>카테고리가 없습니다.</p>
-                  <button onClick={loadCategories} className="admin__btn">불러오기</button>
-                </div>
-              )}
+
+            {/* 상단 액션 버튼 */}
+            <div className="admin__catorder-toolbar">
+              <button
+                className="admin__catorder-toolbar-btn"
+                onClick={() => setShowAddCategoryModal(true)}
+              >
+                + 카테고리 추가
+              </button>
+              <button className="admin__catorder-toolbar-btn">+ 구분선 추가</button>
+              <button
+                className="admin__catorder-toolbar-btn admin__catorder-toolbar-btn--danger"
+                onClick={handleDeleteCategory}
+                disabled={!selectedCategoryId}
+              >
+                × 삭제
+              </button>
             </div>
+
+            {/* 2패널 레이아웃 */}
+            <div className="admin__catorder-wrap">
+              {/* 왼쪽: 카테고리 트리 */}
+              <div className="admin__catorder-left">
+                <div className="admin__catorder-left-header">
+                  <span>카테고리 전체보기 ({getTotalCategoryCount(categoryTree)})</span>
+                </div>
+                <div className="admin__catorder-tree">
+                  {categoriesLoading ? (
+                    <div className="admin__empty" style={{ border: 'none' }}>로딩 중...</div>
+                  ) : categoryTree.length > 0 ? (
+                    categoryTree.map(category => renderCategoryOrderItem(category, 0))
+                  ) : (
+                    <div className="admin__empty" style={{ border: 'none' }}>
+                      <p style={{ marginBottom: 16 }}>카테고리가 없습니다.</p>
+                      <button onClick={loadCategories} className="admin__btn">불러오기</button>
+                    </div>
+                  )}
+                </div>
+              </div>
+
+              {/* 오른쪽: 카테고리 설정 폼 */}
+              <div className="admin__catorder-right">
+                {selectedCategoryData ? (
+                  <div className="admin__catorder-form">
+                    {/* 카테고리명 */}
+                    <div className="admin__catorder-form-row">
+                      <label className="admin__catorder-form-label">카테고리명</label>
+                      <div className="admin__catorder-form-field">
+                        <input
+                          type="text"
+                          className="admin__catorder-input"
+                          defaultValue={selectedCategoryData.name}
+                          readOnly
+                        />
+                      </div>
+                    </div>
+
+                    {/* 카테고리 옆에 글 개수 표시 */}
+                    <div className="admin__catorder-form-row">
+                      <label className="admin__catorder-form-label"></label>
+                      <div className="admin__catorder-form-field">
+                        <label className="admin__catorder-checkbox-label">
+                          <input type="checkbox" disabled />
+                          <span>카테고리 옆에 글 개수 표시</span>
+                        </label>
+                      </div>
+                    </div>
+
+                    {/* 공개설정 */}
+                    <div className="admin__catorder-form-row">
+                      <label className="admin__catorder-form-label">공개설정</label>
+                      <div className="admin__catorder-form-field">
+                        <label className="admin__catorder-radio-label">
+                          <input type="radio" name="visibility" defaultChecked disabled />
+                          <span>공개</span>
+                        </label>
+                        <label className="admin__catorder-radio-label">
+                          <input type="radio" name="visibility" disabled />
+                          <span>비공개</span>
+                        </label>
+                      </div>
+                    </div>
+
+                    {/* 주제분류 */}
+                    <div className="admin__catorder-form-row">
+                      <label className="admin__catorder-form-label">주제분류</label>
+                      <div className="admin__catorder-form-field">
+                        <select className="admin__catorder-select" disabled>
+                          <option>주제분류 선택하지 않음</option>
+                        </select>
+                      </div>
+                    </div>
+
+                    {/* 글보기 */}
+                    <div className="admin__catorder-form-row">
+                      <label className="admin__catorder-form-label">글보기</label>
+                      <div className="admin__catorder-form-field">
+                        <label className="admin__catorder-radio-label">
+                          <input type="radio" name="viewType" defaultChecked disabled />
+                          <span>블로그형</span>
+                        </label>
+                        <label className="admin__catorder-radio-label">
+                          <input type="radio" name="viewType" disabled />
+                          <span>앨범형</span>
+                        </label>
+                        <p className="admin__catorder-form-desc">
+                          앨범형의 경우, 첨부된 이미지, 동영상 섬네일이 보입니다.
+                        </p>
+                      </div>
+                    </div>
+
+                    {/* 섬네일 비율 */}
+                    <div className="admin__catorder-form-row">
+                      <label className="admin__catorder-form-label">섬네일 비율</label>
+                      <div className="admin__catorder-form-field">
+                        <label className="admin__catorder-radio-label">
+                          <input type="radio" name="thumbRatio" defaultChecked disabled />
+                          <span>정방형</span>
+                        </label>
+                        <label className="admin__catorder-radio-label">
+                          <input type="radio" name="thumbRatio" disabled />
+                          <span>원본비율</span>
+                        </label>
+                        <p className="admin__catorder-form-desc">
+                          정방형 섬네일은 1:1 비율로 노출됩니다.<br />
+                          원본비율 섬네일은 최대 1:2 (가로:세로) 비율로 노출됩니다.
+                        </p>
+                      </div>
+                    </div>
+
+                    {/* 목록보기 */}
+                    <div className="admin__catorder-form-row">
+                      <label className="admin__catorder-form-label">목록보기</label>
+                      <div className="admin__catorder-form-field">
+                        <label className="admin__catorder-radio-label">
+                          <input type="radio" name="listView" defaultChecked disabled />
+                          <span>목록닫기</span>
+                        </label>
+                        <label className="admin__catorder-radio-label">
+                          <input type="radio" name="listView" disabled />
+                          <span>목록열기</span>
+                        </label>
+                        <select className="admin__catorder-select admin__catorder-select--sm" disabled>
+                          <option>5줄 보기</option>
+                        </select>
+                      </div>
+                    </div>
+
+                    {/* 카테고리 정렬 */}
+                    <div className="admin__catorder-form-row">
+                      <label className="admin__catorder-form-label">카테고리 정렬</label>
+                      <div className="admin__catorder-form-field">
+                        <div className="admin__catorder-sort-btns">
+                          <button className="admin__catorder-sort-btn" disabled>위</button>
+                          <button className="admin__catorder-sort-btn" disabled>아래</button>
+                          <button className="admin__catorder-sort-btn" disabled>맨 위</button>
+                          <button className="admin__catorder-sort-btn" disabled>맨 아래</button>
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* 카테고리 접기 */}
+                    <div className="admin__catorder-form-row">
+                      <label className="admin__catorder-form-label">카테고리 접기</label>
+                      <div className="admin__catorder-form-field">
+                        <label className="admin__catorder-radio-label">
+                          <input type="radio" name="fold" defaultChecked disabled />
+                          <span>펼치기</span>
+                        </label>
+                        <label className="admin__catorder-radio-label">
+                          <input type="radio" name="fold" disabled />
+                          <span>접기</span>
+                        </label>
+                      </div>
+                    </div>
+
+                    {/* 기본 카테고리 설정 */}
+                    <div className="admin__catorder-form-row" style={{ marginTop: 12 }}>
+                      <label className="admin__catorder-form-label"></label>
+                      <div className="admin__catorder-form-field">
+                        <label className="admin__catorder-checkbox-label">
+                          <input type="checkbox" disabled />
+                          <span>블로그에서 이 카테고리를 기본으로 보여줍니다.</span>
+                        </label>
+                      </div>
+                    </div>
+                  </div>
+                ) : (
+                  <div className="admin__catorder-placeholder">
+                    왼쪽에서 카테고리를 선택하면<br />설정을 확인할 수 있습니다.
+                  </div>
+                )}
+              </div>
+            </div>
+
+            {/* 하단 안내 */}
+            <div className="admin__catorder-footer">
+              <div className="admin__catorder-notes">
+                <p>· 드래그앤드랍으로 2단계 카테고리를 만들거나 카테고리 순서를 변경할 수 있습니다.</p>
+                <p>· 글이 많은 카테고리는 설정이 반영되는데 시간이 소요됩니다. (예. 공개설정 변경, 카테고리 상위/하위 정렬변경)</p>
+              </div>
+              <div className="admin__catorder-footer-actions">
+                <button className="admin__catorder-confirm-btn">확인</button>
+              </div>
+            </div>
+          </div>
+        );
+
+      case 'category-edit':
+        return (
+          <div>
+            <h2 className="admin__section-title">카테고리 수정</h2>
+            <div className="admin__empty">구현 예정</div>
           </div>
         );
 
@@ -669,7 +1029,7 @@ function AdminDashboard() {
                     setActiveSection('category-order');
                     setActiveSubSection(null);
                   }}
-                  className={`admin__nav-section-title ${activeSection === 'category-order' || activeSection === 'category-deactivate' ? 'admin__nav-section-title--active' : ''}`}
+                  className={`admin__nav-section-title ${activeSection === 'category-order' || activeSection === 'category-edit' || activeSection === 'category-deactivate' ? 'admin__nav-section-title--active' : ''}`}
                 >
                   카테고리 관리
                 </button>
@@ -682,6 +1042,15 @@ function AdminDashboard() {
                     className={`admin__nav-item ${activeSection === 'category-order' ? 'admin__nav-item--active' : ''}`}
                   >
                     순서 설정
+                  </button>
+                  <button
+                    onClick={() => {
+                      setActiveSection('category-edit');
+                      setActiveSubSection('category-edit');
+                    }}
+                    className={`admin__nav-item ${activeSection === 'category-edit' ? 'admin__nav-item--active' : ''}`}
+                  >
+                    카테고리 수정
                   </button>
                   <button
                     onClick={() => {
@@ -704,6 +1073,157 @@ function AdminDashboard() {
         </div>
       </div>
       <Footer />
+
+      {/* 카테고리 추가 모달 */}
+      {showAddCategoryModal && (
+        <div className="admin__modal-overlay" onClick={() => setShowAddCategoryModal(false)}>
+          <div className="admin__modal" onClick={(e) => e.stopPropagation()}>
+            <div className="admin__modal-header">
+              <h3>카테고리 추가</h3>
+              <button
+                className="admin__modal-close"
+                onClick={() => {
+                  setShowAddCategoryModal(false);
+                  setNewCategoryName('');
+                  setNewCategorySlug('');
+                  setNewCategoryParentId(null);
+                }}
+              >
+                ✕
+              </button>
+            </div>
+
+            <div style={{ padding: '20px' }}>
+              <div style={{ marginBottom: '16px' }}>
+                <label style={{
+                  display: 'block',
+                  marginBottom: '6px',
+                  fontSize: '13px',
+                  fontWeight: 600,
+                  fontFamily: 'Pretendard, sans-serif',
+                  color: 'var(--color-black)'
+                }}>
+                  카테고리명 *
+                </label>
+                <input
+                  type="text"
+                  value={newCategoryName}
+                  onChange={(e) => setNewCategoryName(e.target.value)}
+                  placeholder="예: 공지사항"
+                  style={{
+                    width: '100%',
+                    padding: '8px 12px',
+                    fontSize: '14px',
+                    fontFamily: 'Pretendard, sans-serif',
+                    border: '1px solid var(--color-gray-200)',
+                    borderRadius: '4px',
+                    outline: 'none'
+                  }}
+                />
+              </div>
+
+              <div style={{ marginBottom: '16px' }}>
+                <label style={{
+                  display: 'block',
+                  marginBottom: '6px',
+                  fontSize: '13px',
+                  fontWeight: 600,
+                  fontFamily: 'Pretendard, sans-serif',
+                  color: 'var(--color-black)'
+                }}>
+                  슬러그 (URL) *
+                </label>
+                <input
+                  type="text"
+                  value={newCategorySlug}
+                  onChange={(e) => setNewCategorySlug(e.target.value)}
+                  placeholder="예: notice"
+                  style={{
+                    width: '100%',
+                    padding: '8px 12px',
+                    fontSize: '14px',
+                    fontFamily: 'Pretendard, sans-serif',
+                    border: '1px solid var(--color-gray-200)',
+                    borderRadius: '4px',
+                    outline: 'none'
+                  }}
+                />
+                <p style={{
+                  marginTop: '4px',
+                  fontSize: '11px',
+                  color: 'var(--color-gray-400)',
+                  fontFamily: 'Pretendard, sans-serif'
+                }}>
+                  영문 소문자, 숫자, 하이픈(-)만 사용 가능합니다.
+                </p>
+              </div>
+
+              <div style={{ marginBottom: '20px' }}>
+                <label style={{
+                  display: 'block',
+                  marginBottom: '6px',
+                  fontSize: '13px',
+                  fontWeight: 600,
+                  fontFamily: 'Pretendard, sans-serif',
+                  color: 'var(--color-black)'
+                }}>
+                  부모 카테고리 (선택사항)
+                </label>
+                <select
+                  value={newCategoryParentId || ''}
+                  onChange={(e) => setNewCategoryParentId(e.target.value ? Number(e.target.value) : null)}
+                  style={{
+                    width: '100%',
+                    padding: '8px 12px',
+                    fontSize: '14px',
+                    fontFamily: 'Pretendard, sans-serif',
+                    border: '1px solid var(--color-gray-200)',
+                    borderRadius: '4px',
+                    outline: 'none',
+                    backgroundColor: '#ffffff'
+                  }}
+                >
+                  <option value="">최상위 카테고리</option>
+                  {allCategoriesFlat.map(category => (
+                    <option key={category.id} value={category.id}>
+                      {'  '.repeat(category.level)}{category.name}
+                    </option>
+                  ))}
+                </select>
+              </div>
+
+              <div style={{
+                display: 'flex',
+                gap: '8px',
+                justifyContent: 'flex-end',
+                paddingTop: '16px',
+                borderTop: '1px solid var(--color-gray-200)'
+              }}>
+                <button
+                  className="admin__btn"
+                  onClick={() => {
+                    setShowAddCategoryModal(false);
+                    setNewCategoryName('');
+                    setNewCategorySlug('');
+                    setNewCategoryParentId(null);
+                  }}
+                  disabled={addingCategory}
+                >
+                  취소
+                </button>
+                <button
+                  className="admin__btn--approve"
+                  onClick={handleAddCategory}
+                  disabled={addingCategory}
+                  style={{ padding: '8px 20px' }}
+                >
+                  {addingCategory ? '추가 중...' : '추가'}
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

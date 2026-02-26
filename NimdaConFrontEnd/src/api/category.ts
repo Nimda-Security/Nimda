@@ -86,8 +86,16 @@ export const getAllCategoriesAPI = async (): Promise<Category[]> => {
     });
 
     if (response.ok) {
-      const categories = await parseJsonSafe(response);
-      return Array.isArray(categories) ? categories : [];
+      const result = await parseJsonSafe(response);
+      // 백엔드 응답이 { success, data } 형식인 경우
+      if (result && Array.isArray(result.data)) {
+        return result.data;
+      }
+      // 직접 배열로 오는 경우
+      if (Array.isArray(result)) {
+        return result;
+      }
+      return [];
     }
 
     return [];
@@ -107,8 +115,7 @@ export const getAllCategoriesAdminAPI = async (): Promise<Category[]> => {
   try {
     const token = getAuthToken();
     if (!token) {
-      console.error('로그인이 필요합니다.');
-      return [];
+      throw new Error('로그인이 필요합니다.');
     }
 
     const response = await fetch(`${API_BASE_URL}/all`, {
@@ -117,14 +124,33 @@ export const getAllCategoriesAdminAPI = async (): Promise<Category[]> => {
     });
 
     if (response.ok) {
-      const categories = await parseJsonSafe(response);
-      return Array.isArray(categories) ? categories : [];
+      const result = await parseJsonSafe(response);
+      // 백엔드 응답이 { success, data } 형식인 경우
+      if (result && Array.isArray(result.data)) {
+        return result.data;
+      }
+      // 직접 배열로 오는 경우
+      if (Array.isArray(result)) {
+        return result;
+      }
+      console.error('카테고리 목록 형식이 올바르지 않습니다:', result);
+      return [];
     }
 
-    return [];
+    // 에러 응답 처리
+    let errorMessage = '카테고리 목록을 불러오는데 실패했습니다.';
+    if (response.status === 401) {
+      errorMessage = '로그인이 필요합니다.';
+    } else if (response.status === 403) {
+      errorMessage = '관리자 권한이 필요합니다.';
+    }
+
+    const errorText = await response.text();
+    console.error('카테고리 목록 조회 실패:', response.status, errorText);
+    throw new Error(errorMessage);
   } catch (error) {
     console.error('관리자 카테고리 목록 조회 API 오류:', error);
-    return [];
+    throw error; // 에러를 다시 throw하여 호출하는 쪽에서 처리할 수 있도록
   }
 };
 
