@@ -1,4 +1,7 @@
 package com.nimda.cite.point.repositroy;
 
-public interface PointDetailRepository {
+import com.nimda.cite.point.entity.PointHistory;
+import org.springframework.data.jpa.repository.JpaRepository;
+
+public interface PointDetailRepository extends JpaRepository<PointHistory, Long> {
 }
