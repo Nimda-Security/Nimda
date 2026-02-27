@@ -20,8 +20,11 @@ public class Attendance {
     @JoinColumn(name = "user_id")
     private User user;
 
-    private int totalCount;        // 누적 출석 횟수
+    @Column(name = "total_count")
+    private int totalCount;     // 누적 출석 횟수
+    @Column(name = "consecutive_count")
     private int consecutiveCount;  // 연속 출석 횟수
+    @Column(name = "last_date")
     private LocalDate lastDate;    // 최근 출석 날짜
 
     // 출석 기록 시 통계 업데이트 로직
