@@ -606,7 +606,6 @@ function AdminDashboard() {
                     <div><p className="admin__modal-label">닉네임</p><p className="admin__modal-value">{selectedUser.nickname || '-'}</p></div>
                     <div><p className="admin__modal-label">이메일</p><p className="admin__modal-value">{selectedUser.email || '-'}</p></div>
                     <div><p className="admin__modal-label">학번</p><p className="admin__modal-value">{selectedUser.studentNum || '-'}</p></div>
-                    <div><p className="admin__modal-label">휴대폰 번호</p><p className="admin__modal-value">{selectedUser.phoneNum || '-'}</p></div>
                     <div><p className="admin__modal-label">학과</p><p className="admin__modal-value">{selectedUser.major || '-'}</p></div>
                     <div><p className="admin__modal-label">대학교</p><p className="admin__modal-value">{selectedUser.universityName || '-'}</p></div>
                     <div><p className="admin__modal-label">학년</p><p className="admin__modal-value">{selectedUser.grade || '-'}</p></div>
