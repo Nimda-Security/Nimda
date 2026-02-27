@@ -18,7 +18,6 @@ import java.util.List;
 
 @Service
 @RequiredArgsConstructor
-@Transactional(readOnly = true)
 public class AttendanceService {
 
     private final AttendanceRepositroy attendanceRepository;
@@ -57,9 +56,6 @@ public class AttendanceService {
 
         logRepository.save(log);
     }
-}
-
-    /*
 
     // 오늘 출석자 전체 조회 (최신순)
     public List<AttendanceLog> getTodayVisitors() {
@@ -71,7 +67,9 @@ public class AttendanceService {
         return attendanceRepository.findTop5ByOrderByConsecutiveCountDesc();
     }
 
-    /** 누적 출석 상위 5명 조회
+    /**
+     * 누적 출석 상위 5명 조회
+     */
     public List<Attendance> getTop5ByTotal() {
         return attendanceRepository.findTop5ByOrderByTotalCountDesc();
     }
@@ -80,8 +78,8 @@ public class AttendanceService {
         return attendanceRepository.findById(userId).orElseThrow();
     }
 
-    /** 사용자별 상세 출석 로그 조회 (최근순)
+    // 사용자별 상세 출석 로그 조회 (최근순)
     public List<AttendanceLog> getUserLogs(Long userId) {
         return logRepository.findByUserIdOrderByAttendanceDateDesc(userId);
     }
-     */
+}
