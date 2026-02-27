@@ -212,48 +212,31 @@ const CategorySection: React.FC<CategorySectionProps> = ({ category }) => {
   const [isOpen, setIsOpen] = useState(true);
   const hasChildren = category.children && category.children.length > 0;
 
-  // 하위 카테고리 아이템 재귀 렌더링 (2단, 3단 모두 지원)
-  const renderCategoryItems = (items: CategoryWithChildren[], depth: number = 0) => {
+  // 하위 카테고리 아이템 렌더링 (3단 카테고리는 부모 페이지의 탭으로 이동)
+  const renderCategoryItems = (items: CategoryWithChildren[]) => {
     return items.map((item) => {
       const itemHasChildren = item.children && item.children.length > 0;
 
-      if (itemHasChildren) {
-        // 하위에 또 자식이 있는 경우 (3단 카테고리 등)
-        return (
-          <React.Fragment key={item.id}>
+      return (
+        <React.Fragment key={item.id}>
+          <li className="sidebar-section__item">
+            <Link to={`/board/${item.slug}`} className="sidebar-section__link">
+              {item.name}
+            </Link>
+          </li>
+          {/* 3단 카테고리: 부모(2단) 페이지로 이동하면서 해당 탭 선택 */}
+          {itemHasChildren && item.children.map((child) => (
             <li
-              className="sidebar-section__item sidebar-section__item--parent"
-              style={{ paddingLeft: `${36 + depth * 12}px` }}
+              key={child.id}
+              className="sidebar-section__item sidebar-section__item--depth"
+              style={{ paddingLeft: '48px' }}
             >
-              <Link to={`/board/${item.slug}`} className="sidebar-section__link">
-                {item.name}
+              <Link to={`/board/${item.slug}?tab=${child.slug}`} className="sidebar-section__link">
+                {child.name}
               </Link>
             </li>
-            {item.children.map((grandChild) => (
-              <li
-                key={grandChild.id}
-                className="sidebar-section__item sidebar-section__item--depth"
-                style={{ paddingLeft: `${48 + depth * 12}px` }}
-              >
-                <Link to={`/board/${grandChild.slug}`} className="sidebar-section__link">
-                  {grandChild.name}
-                </Link>
-              </li>
-            ))}
-          </React.Fragment>
-        );
-      }
-
-      return (
-        <li
-          key={item.id}
-          className="sidebar-section__item"
-          style={depth > 0 ? { paddingLeft: `${36 + depth * 12}px` } : undefined}
-        >
-          <Link to={`/board/${item.slug}`} className="sidebar-section__link">
-            {item.name}
-          </Link>
-        </li>
+          ))}
+        </React.Fragment>
       );
     });
   };

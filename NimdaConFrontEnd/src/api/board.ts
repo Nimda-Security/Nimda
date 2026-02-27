@@ -36,7 +36,7 @@ export const getBoardListAPI = async (
   params: BoardListParams
 ): Promise<BoardListResponse> => {
   try {
-    const { categoryId, slug, searchKeyword, page = 0, size = 10, sort = 'createdAt,desc' } = params;
+    const { categoryId, slug, searchKeyword, page = 0, size = 10, sort = 'createdAt,desc', includeChildren } = params;
 
     if (!categoryId && !slug) {
       return {
@@ -65,6 +65,9 @@ export const getBoardListAPI = async (
     if (searchKeyword && searchKeyword.trim()) {
       queryParams.append('searchKeyword', searchKeyword.trim());
     }
+    if (includeChildren) {
+      queryParams.append('includeChildren', 'true');
+    }
 
     const response = await fetch(`${API_BASE_URL}?${queryParams.toString()}`, {
       method: 'GET',
@@ -76,14 +79,16 @@ export const getBoardListAPI = async (
     const result = await parseJsonSafe(response);
 
     if (response.ok && result) {
+      // 백엔드 응답이 { success, data: { posts, category, ... } } 형식인 경우
+      const data = result.data || result;
       return {
         success: true,
         message: result.message || '게시글 목록을 성공적으로 조회했습니다.',
-        posts: result.posts || [],
-        totalElements: result.totalElements || 0,
-        totalPages: result.totalPages || 0,
-        currentPage: result.currentPage || 0,
-        category: result.category || ({} as Category),
+        posts: data.posts || [],
+        totalElements: data.totalElements || 0,
+        totalPages: data.totalPages || 0,
+        currentPage: data.currentPage || 0,
+        category: data.category || ({} as Category),
       };
     }
 
@@ -130,10 +135,11 @@ export const getBoardDetailAPI = async (
     const result = await parseJsonSafe(response);
 
     if (response.ok && result?.success) {
+      const data = result.data || result;
       return {
         success: true,
         message: result.message || '게시글을 성공적으로 조회했습니다.',
-        board: result.board,
+        board: data.board || result.board,
       };
     }
 
@@ -170,6 +176,15 @@ export const createBoardAPI = async (
       };
     }
 
+    // categoryId 유효성 검사
+    if (!data.categoryId || typeof data.categoryId !== 'number') {
+      console.error('[createBoardAPI] 유효하지 않은 categoryId:', data.categoryId);
+      return {
+        success: false,
+        message: '카테고리 ID가 유효하지 않습니다.',
+      };
+    }
+
     const formData = new FormData();
     formData.append('categoryId', data.categoryId.toString());
     formData.append('title', data.title);
@@ -200,10 +215,11 @@ export const createBoardAPI = async (
     const result = await parseJsonSafe(response);
 
     if (response.ok && result?.success) {
+      const data = result.data || result;
       return {
         success: true,
         message: result.message || '게시글이 성공적으로 작성되었습니다.',
-        board: result.board,
+        board: data.board || result.board,
       };
     }
 
@@ -259,10 +275,11 @@ export const updateBoardAPI = async (
     const result = await parseJsonSafe(response);
 
     if (response.ok && result?.success) {
+      const data = result.data || result;
       return {
         success: true,
         message: result.message || '게시글이 성공적으로 수정되었습니다.',
-        board: result.board,
+        board: data.board || result.board,
       };
     }
 
@@ -370,14 +387,15 @@ export const getPinnedPostsAPI = async (
     const result = await parseJsonSafe(response);
 
     if (response.ok && result) {
+      const data = result.data || result;
       return {
         success: true,
         message: result.message || '고정글 목록을 성공적으로 조회했습니다.',
-        posts: result.posts || [],
-        totalElements: result.totalElements || 0,
-        totalPages: result.totalPages || 0,
+        posts: data.posts || [],
+        totalElements: data.totalElements || 0,
+        totalPages: data.totalPages || 0,
         currentPage: 0,
-        category: result.category || ({} as Category),
+        category: data.category || ({} as Category),
       };
     }
 
@@ -435,14 +453,15 @@ export const getPopularPostsAPI = async (
     const result = await parseJsonSafe(response);
 
     if (response.ok && result) {
+      const data = result.data || result;
       return {
         success: true,
         message: result.message || '인기글 목록을 성공적으로 조회했습니다.',
-        posts: result.posts || [],
-        totalElements: result.totalElements || 0,
-        totalPages: result.totalPages || 0,
+        posts: data.posts || [],
+        totalElements: data.totalElements || 0,
+        totalPages: data.totalPages || 0,
         currentPage: 0,
-        category: result.category || ({} as Category),
+        category: data.category || ({} as Category),
       };
     }
 

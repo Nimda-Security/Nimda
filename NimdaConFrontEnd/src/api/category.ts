@@ -61,10 +61,32 @@ export const getCategoryBySlugAPI = async (slug: string): Promise<Category | nul
     });
 
     if (response.ok) {
-      const category = await parseJsonSafe(response);
-      return category as Category;
+      const result = await parseJsonSafe(response);
+
+      // { success: true, data: { ... } } 형식인 경우
+      if (result && typeof result === 'object' && 'data' in result && result.data) {
+        const category = result.data;
+        if (typeof category === 'object' && 'id' in category && category.id != null) {
+          return category as Category;
+        }
+      }
+
+      // 직접 Category 객체가 오는 경우
+      if (result && typeof result === 'object' && 'id' in result && result.id != null) {
+        return result as Category;
+      }
+
+      console.error('카테고리 응답 형식이 올바르지 않습니다:', result);
+      return null;
     }
 
+    // 에러 응답 로깅
+    if (response.status === 404) {
+      console.warn(`카테고리를 찾을 수 없습니다: ${slug}`);
+    } else {
+      const errorText = await response.text();
+      console.error(`카테고리 조회 실패 (${response.status}):`, errorText);
+    }
     return null;
   } catch (error) {
     console.error('카테고리 조회 API 오류:', error);

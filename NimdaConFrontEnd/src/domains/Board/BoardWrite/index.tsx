@@ -41,6 +41,12 @@ function BoardWritePage() {
       return;
     }
 
+    // category.id가 유효한지 확인
+    if (!category.id || typeof category.id !== 'number') {
+      setError('카테고리 ID가 유효하지 않습니다.');
+      return;
+    }
+
     try {
       setIsSubmitting(true);
       setError(null);
