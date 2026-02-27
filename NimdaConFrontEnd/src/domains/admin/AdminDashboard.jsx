@@ -22,6 +22,7 @@ function AdminDashboard() {
   const [categories, setCategories] = useState([]);
   const [categoriesLoading, setCategoriesLoading] = useState(false);
   const [selectedCategoryId, setSelectedCategoryId] = useState(null);
+  const [selectedPostCategoryId, setSelectedPostCategoryId] = useState(null);
   const [showAddCategoryModal, setShowAddCategoryModal] = useState(false);
   const [newCategoryName, setNewCategoryName] = useState('');
   const [newCategorySlug, setNewCategorySlug] = useState('');
@@ -49,18 +50,21 @@ function AdminDashboard() {
     }
   };
 
-  const loadPosts = async () => {
+  const loadPosts = async (categorySlug = null) => {
     setPostsLoading(true);
     try {
-      const result = await getBoardListAPI({ slug: 'news', page: 0, size: 20 });
+      const slug = categorySlug || 'news';
+      const result = await getBoardListAPI({ slug, page: 0, size: 100 });
       if (result.success) {
         setPosts(result.posts || []);
       } else {
         alert('게시글 목록을 불러오는데 실패했습니다: ' + result.message);
+        setPosts([]);
       }
     } catch (error) {
       console.error('게시글 목록 로드 오류:', error);
       alert('게시글 목록을 불러오는 중 오류가 발생했습니다.');
+      setPosts([]);
     } finally {
       setPostsLoading(false);
     }
@@ -222,7 +226,15 @@ function AdminDashboard() {
       const result = await deleteBoardAPI(postId);
       if (result.success) {
         alert('게시글이 삭제되었습니다.');
-        loadPosts();
+        // 현재 선택된 카테고리의 게시글 목록 다시 로드
+        if (selectedPostCategoryId) {
+          const selectedCategory = findCategoryById(activeCategoryTree, selectedPostCategoryId);
+          if (selectedCategory) {
+            loadPosts(selectedCategory.slug);
+          }
+        } else {
+          loadPosts();
+        }
       } else {
         alert(result.message || '게시글 삭제에 실패했습니다.');
       }
@@ -345,7 +357,23 @@ function AdminDashboard() {
     return rootCategories;
   };
 
+  // active 카테고리만 필터링하는 함수
+  const filterActiveCategories = (tree) => {
+    const filterRecursive = (items) => {
+      return items
+        .filter(item => item.isActive !== false)
+        .map(item => ({
+          ...item,
+          children: item.children && item.children.length > 0
+            ? filterRecursive(item.children)
+            : []
+        }));
+    };
+    return filterRecursive(tree);
+  };
+
   const categoryTree = buildCategoryTree(categories);
+  const activeCategoryTree = filterActiveCategories(categoryTree);
 
   // 전체 카테고리 수 계산
   const getTotalCategoryCount = (tree) => {
@@ -443,7 +471,10 @@ function AdminDashboard() {
     } else if (activeSection === 'category-order' || activeSection === 'category-edit' || activeSection === 'category-deactivate') {
       loadCategories();
     } else if (activeSection === 'posts') {
-      loadPosts();
+      // 포스트 수정/삭제 섹션: 카테고리 목록 로드 (게시글은 카테고리 선택 시 로드)
+      if (categories.length === 0) {
+        loadCategories();
+      }
     } else if (activeSection === 'user-info') {
       loadUsers();
     }
@@ -651,53 +682,126 @@ function AdminDashboard() {
         );
 
       case 'posts':
+        // 포스트 관리용 카테고리 렌더링 함수 (깔끔한 디자인)
+        const renderPostCategoryItem = (category, level = 0) => {
+          const isParent = category.children && category.children.length > 0;
+          const isSelected = selectedPostCategoryId === category.id;
+          const childCount = category.children ? category.children.length : 0;
+
+          return (
+            <div key={category.id}>
+              <div
+                className={`admin__post-category-item ${isSelected ? 'admin__post-category-item--selected' : ''} ${level > 0 ? 'admin__post-category-item--child' : ''}`}
+                style={{ paddingLeft: level > 0 ? `${24 + level * 16}px` : '16px' }}
+                onClick={() => {
+                  setSelectedPostCategoryId(category.id);
+                  loadPosts(category.slug);
+                }}
+              >
+                <span className="admin__post-category-name">
+                  {category.name}
+                  {isParent && <span className="admin__post-category-count"> ({childCount})</span>}
+                </span>
+              </div>
+              {isParent && category.children?.map(child => renderPostCategoryItem(child, level + 1))}
+            </div>
+          );
+        };
+
         return (
           <div>
-            <div className="admin__header-row">
-              <h2 className="admin__section-title">포스트 수정/삭제</h2>
-              <button onClick={loadPosts} disabled={postsLoading} className="admin__btn">
-                {postsLoading ? '로딩 중' : '새로고침'}
-              </button>
-            </div>
+            <h2 className="admin__section-title">포스트 수정/삭제</h2>
 
-            {posts.length > 0 ? (
-              <div className="admin__table-wrap">
-                <table className="admin__table">
-                  <thead>
-                    <tr>
-                      <th>ID</th>
-                      <th>제목</th>
-                      <th>작성자</th>
-                      <th>게시판 타입</th>
-                      <th>작성일</th>
-                      <th>작업</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {posts.map((post) => (
-                      <tr key={post.id}>
-                        <td>{post.id}</td>
-                        <td style={{ textAlign: 'left' }}>{post.title}</td>
-                        <td>{post.author?.nickname || '-'}</td>
-                        <td>{post.category?.name || '-'}</td>
-                        <td>{post.createdAt ? new Date(post.createdAt).toLocaleDateString() : '-'}</td>
-                        <td>
-                          <div className="admin__actions">
-                            <button onClick={(e) => { e.stopPropagation(); handleEditPost(post); }} className="admin__btn--edit">수정</button>
-                            <button onClick={(e) => { e.stopPropagation(); handleDeletePost(post.id); }} className="admin__btn--reject">삭제</button>
-                          </div>
-                        </td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
+            {/* 2패널 레이아웃 */}
+            <div className="admin__catorder-wrap">
+              {/* 왼쪽: 카테고리 트리 */}
+              <div className="admin__catorder-left">
+                <div className="admin__catorder-left-header">
+                  <span>카테고리 ({getTotalCategoryCount(activeCategoryTree)})</span>
+                </div>
+                <div className="admin__post-category-list">
+                  {categoriesLoading ? (
+                    <div className="admin__empty" style={{ border: 'none', padding: '24px' }}>로딩 중...</div>
+                  ) : activeCategoryTree.length > 0 ? (
+                    activeCategoryTree.map(category => renderPostCategoryItem(category, 0))
+                  ) : (
+                    <div className="admin__empty" style={{ border: 'none', padding: '24px' }}>
+                      <p style={{ marginBottom: 16 }}>카테고리가 없습니다.</p>
+                      <button onClick={loadCategories} className="admin__btn">불러오기</button>
+                    </div>
+                  )}
+                </div>
               </div>
-            ) : (
-              <div className="admin__empty">
-                <p style={{ marginBottom: 16 }}>게시글이 없습니다.</p>
-                <button onClick={loadPosts} className="admin__btn">불러오기</button>
+
+              {/* 오른쪽: 게시글 목록 */}
+              <div className="admin__catorder-right">
+                <div className="admin__header-row" style={{ marginBottom: '16px' }}>
+                  <h3 style={{ margin: 0 }}>
+                    {selectedPostCategoryId
+                      ? findCategoryById(activeCategoryTree, selectedPostCategoryId)?.name || '게시글 목록'
+                      : '카테고리를 선택하세요'}
+                  </h3>
+                  {selectedPostCategoryId && (
+                    <button
+                      onClick={() => {
+                        const selectedCategory = findCategoryById(activeCategoryTree, selectedPostCategoryId);
+                        if (selectedCategory) {
+                          loadPosts(selectedCategory.slug);
+                        }
+                      }}
+                      disabled={postsLoading}
+                      className="admin__btn"
+                    >
+                      {postsLoading ? '로딩 중' : '새로고침'}
+                    </button>
+                  )}
+                </div>
+
+                {selectedPostCategoryId ? (
+                  postsLoading ? (
+                    <div className="admin__empty" style={{ border: 'none' }}>로딩 중...</div>
+                  ) : posts.length > 0 ? (
+                    <div className="admin__table-wrap">
+                      <table className="admin__table">
+                        <thead>
+                          <tr>
+                            <th>ID</th>
+                            <th>제목</th>
+                            <th>작성자</th>
+                            <th>작성일</th>
+                            <th>작업</th>
+                          </tr>
+                        </thead>
+                        <tbody>
+                          {posts.map((post) => (
+                            <tr key={post.id}>
+                              <td>{post.id}</td>
+                              <td style={{ textAlign: 'left' }}>{post.title}</td>
+                              <td>{post.author?.nickname || '-'}</td>
+                              <td>{post.createdAt ? new Date(post.createdAt).toLocaleDateString() : '-'}</td>
+                              <td>
+                                <div className="admin__actions">
+                                  <button onClick={(e) => { e.stopPropagation(); handleEditPost(post); }} className="admin__btn--edit">수정</button>
+                                  <button onClick={(e) => { e.stopPropagation(); handleDeletePost(post.id); }} className="admin__btn--reject">삭제</button>
+                                </div>
+                              </td>
+                            </tr>
+                          ))}
+                        </tbody>
+                      </table>
+                    </div>
+                  ) : (
+                    <div className="admin__empty">
+                      <p style={{ marginBottom: 16 }}>게시글이 없습니다.</p>
+                    </div>
+                  )
+                ) : (
+                  <div className="admin__empty">
+                    <p>왼쪽에서 카테고리를 선택하면 해당 카테고리의 게시글 목록이 표시됩니다.</p>
+                  </div>
+                )}
               </div>
-            )}
+            </div>
           </div>
         );
 
