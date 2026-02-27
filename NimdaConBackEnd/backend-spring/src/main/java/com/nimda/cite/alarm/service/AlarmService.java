@@ -9,7 +9,7 @@ import com.nimda.cite.notification.dto.NotificationResponse;
 import com.nimda.cite.notification.entity.Notification;
 import com.nimda.cite.notification.enums.NotificationType;
 import com.nimda.cite.notification.repositroy.NotificationRepositroy;
-import jakarta.transaction.Transactional;
+import org.springframework.transaction.annotation.Transactional;
 import lombok.RequiredArgsConstructor;
 import org.springframework.context.event.EventListener;
 import org.springframework.scheduling.annotation.Async;
@@ -21,12 +21,14 @@ import java.io.IOException;
 // 비동기 Configuration 설정 및 메인에 @EnableAsync 붙이기
 @RequiredArgsConstructor
 @Service
+@Transactional(readOnly = true)
 public class AlarmService {
 
     private final SseEmitterRepository sseEmitterRepository;
     private final NotificationRepositroy notificationRepositroy;
 
     // 클라이언트가 SSE 구독을 요청할 때 호출
+    @Transactional
     public SseEmitter subscribe(Long userId) {
         SseEmitter emitter = new SseEmitter(60 * 1000L * 60 * 24); //
         sseEmitterRepository.save(userId, emitter);
