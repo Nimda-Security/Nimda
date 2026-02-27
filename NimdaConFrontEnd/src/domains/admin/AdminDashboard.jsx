@@ -781,7 +781,6 @@ function AdminDashboard() {
                               <td>{post.createdAt ? new Date(post.createdAt).toLocaleDateString() : '-'}</td>
                               <td>
                                 <div className="admin__actions">
-                                  <button onClick={(e) => { e.stopPropagation(); handleEditPost(post); }} className="admin__btn--edit">수정</button>
                                   <button onClick={(e) => { e.stopPropagation(); handleDeletePost(post.id); }} className="admin__btn--reject">삭제</button>
                                 </div>
                               </td>
