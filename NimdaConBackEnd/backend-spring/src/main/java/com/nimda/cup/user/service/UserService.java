@@ -35,7 +35,7 @@ public class UserService {
      */
     @Transactional
     public User createUser(String userId, String name, String nickname, String password,
-            String studentNum, String phoneNum, String email, String major,
+            String studentNum, String email, String major,
             String universityName, String grade) {
         validateUserUniqueness(userId, nickname, email);
         String encodedPassword = passwordEncoder.encode(password);
@@ -47,7 +47,6 @@ public class UserService {
         user.setNickname(nickname);
         user.setPassword(encodedPassword);
         user.setStudentNum(studentNum);
-        user.setPhoneNum(phoneNum);
         user.setEmail(email);
         user.setMajor(major);
         user.setUniversityName(universityName);

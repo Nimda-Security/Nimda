@@ -32,6 +32,8 @@ import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
+import java.util.List;
+
 @Repository
 public interface BoardRepository extends JpaRepository<Board, Long> { // [수정] Integer → Long
 
@@ -74,4 +76,14 @@ public interface BoardRepository extends JpaRepository<Board, Long> { // [수정
     @EntityGraph(attributePaths = { "author", "category" })
     @Query("SELECT b FROM Board b WHERE b.category = :category ORDER BY b.postView DESC, b.createdAt DESC")
     Page<Board> findByCategoryOrderByViewsDescCreatedAtDesc(@Param("category") Category category, Pageable pageable);
+
+    // ========== [하위 카테고리 포함 조회] ==========
+    // [신규] 여러 카테고리의 게시글을 한번에 조회 (부모+자식 카테고리 포함)
+    // [사용] GET /api/cite/board?slug=xxx&includeChildren=true
+    @EntityGraph(attributePaths = { "author", "category" })
+    Page<Board> findByCategoryIn(List<Category> categories, Pageable pageable);
+
+    // [신규] 여러 카테고리 + 검색어
+    @EntityGraph(attributePaths = { "author", "category" })
+    Page<Board> findByCategoryInAndTitleContaining(List<Category> categories, String searchKeyword, Pageable pageable);
 }

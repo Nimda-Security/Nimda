@@ -1,0 +1,415 @@
+/* ===========================
+   Board List Page Styles
+   - Figma: 기본 게시판(자유게시판_전체) 894:440
+   =========================== */
+
+.board-list {
+    display: flex;
+    flex-direction: column;
+}
+
+/* ===========================
+   Title
+   =========================== */
+.board-list__title {
+    font-size: 24px;
+    font-weight: 700;
+    color: var(--color-black);
+    line-height: 1.2;
+    margin-bottom: 16px;
+}
+
+/* ===========================
+   말머리 탭 (Sub-category Tabs)
+   =========================== */
+.board-list__tabs {
+    display: flex;
+    gap: 32px;
+    position: relative;
+}
+
+.board-list__tab {
+    font-size: 16px;
+    font-weight: 600;
+    color: var(--color-black);
+    line-height: 1.5;
+    padding: 4px 0 8px 0;
+    cursor: pointer;
+    background: none;
+    border: none;
+    position: relative;
+    font-family: "Pretendard", sans-serif;
+    transition: color 0.15s;
+}
+
+.board-list__tab:hover {
+    color: #d97399;
+}
+
+.board-list__tab--active {
+    color: #d97399;
+}
+
+.board-list__tab--active::after {
+    content: '';
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    width: 100%;
+    height: 3px;
+    background-color: #d97399;
+    border-radius: 1.5px;
+}
+
+/* ===========================
+   구분선
+   =========================== */
+.board-list__divider {
+    height: 1px;
+    background-color: var(--color-gray-200);
+    margin-bottom: 8px;
+}
+
+.board-list__divider--thick {
+    background-color: var(--color-black);
+    margin-top: 4px;
+    margin-bottom: 0;
+}
+
+/* ===========================
+   글 행 (Post Row)
+   =========================== */
+.board-list__row {
+    display: flex;
+    align-items: center;
+    min-height: 40px;
+    padding: 0 16px;
+    position: relative;
+    cursor: pointer;
+    transition: background-color 0.1s;
+}
+
+.board-list__row:hover {
+    background-color: #ececec;
+}
+
+/* 고정글 - 필독 (핑크 배경) */
+.board-list__row--pinned {
+    background-color: var(--color-pink-bg);
+    min-height: 48px;
+}
+
+.board-list__row--pinned:hover {
+    background-color: #ffe8e8;
+}
+
+/* 카테고리 내 공지 (회색 배경) */
+.board-list__row--notice {
+    background-color: var(--color-gray-100);
+}
+
+.board-list__row--notice:hover {
+    background-color: #d9d9d9;
+}
+
+/* 짝수 행 배경 */
+.board-list__row--even {
+    background-color: var(--color-white);
+}
+
+/* ===========================
+   태그 / 배지
+   =========================== */
+.board-list__tag {
+    min-width: 40px;
+    height: 24px;
+    padding: 0 8px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 12px;
+    font-weight: 700;
+    color: var(--color-white);
+    flex-shrink: 0;
+    margin-right: 8px;
+    white-space: nowrap;
+}
+
+/* 필독 태그 (빨강 + 둥근 pill) */
+.board-list__tag--red {
+    background-color: var(--color-red);
+    border-radius: 12px;
+}
+
+/* 공지 태그 (빨강 + 둥근 pill) */
+.board-list__tag--notice {
+    background-color: var(--color-red);
+    border-radius: 12px;
+}
+
+/* 카테고리 태그 (회색 + 약간 둥근) */
+.board-list__tag--gray {
+    background-color: var(--color-gray-400);
+    border-radius: 6px;
+}
+
+/* ===========================
+   글 제목
+   =========================== */
+.board-list__post-title {
+    flex: 1;
+    font-size: 14px;
+    font-weight: 500;
+    color: var(--color-black);
+    line-height: 1.5;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    min-width: 0;
+}
+
+.board-list__post-title--bold {
+    font-weight: 600;
+}
+
+/* ===========================
+   프로필 이미지
+   =========================== */
+.board-list__avatar {
+    width: 22px;
+    height: 22px;
+    border-radius: 50%;
+    border: 0.2px solid var(--color-gray-600);
+    object-fit: cover;
+    flex-shrink: 0;
+    margin-left: 8px;
+}
+
+.board-list__author {
+    font-size: 14px;
+    font-weight: 500;
+    color: var(--color-black);
+    flex-shrink: 0;
+    margin-left: 4px;
+    white-space: nowrap;
+}
+
+/* ===========================
+   메타 정보 (댓글, 좋아요, 날짜)
+   =========================== */
+.board-list__meta {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    flex-shrink: 0;
+    margin-left: 16px;
+}
+
+.board-list__comments {
+    font-size: 12px;
+    font-weight: 700;
+    color: var(--color-blue);
+    flex-shrink: 0;
+}
+
+.board-list__likes {
+    display: flex;
+    align-items: center;
+    gap: 2px;
+    font-size: 12px;
+    font-weight: 700;
+    color: var(--color-red);
+    flex-shrink: 0;
+}
+
+.board-list__likes-icon {
+    font-size: 12px;
+}
+
+.board-list__views {
+    font-size: 12px;
+    font-weight: 400;
+    color: var(--color-gray-400);
+    flex-shrink: 0;
+}
+
+.board-list__date {
+    font-size: 12px;
+    font-weight: 400;
+    color: var(--color-gray-400);
+    min-width: 48px;
+    text-align: right;
+    flex-shrink: 0;
+}
+
+/* ===========================
+   행 구분선
+   =========================== */
+.board-list__row-divider {
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    height: 1px;
+    background-color: var(--color-gray-200);
+}
+
+/* ===========================
+   페이지네이션
+   =========================== */
+.board-list__pagination {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 12px;
+    margin-top: 32px;
+    padding: 16px 0;
+}
+
+.board-list__page-btn {
+    background: none;
+    border: none;
+    cursor: pointer;
+    font-size: 14px;
+    color: var(--color-gray-600);
+    padding: 4px 6px;
+    font-family: "Pretendard", sans-serif;
+    line-height: 1;
+    transition: color 0.15s;
+}
+
+.board-list__page-btn:hover {
+    color: var(--color-black);
+}
+
+.board-list__page-btn:disabled {
+    color: var(--color-gray-300);
+    cursor: not-allowed;
+}
+
+.board-list__page-info {
+    font-size: 14px;
+    font-weight: 500;
+    color: var(--color-gray-600);
+    line-height: 1.5;
+}
+
+.board-list__page-num {
+    background: none;
+    border: none;
+    cursor: pointer;
+    font-size: 14px;
+    font-weight: 500;
+    color: var(--color-gray-600);
+    padding: 4px 8px;
+    font-family: "Pretendard", sans-serif;
+    line-height: 1;
+    transition: color 0.15s;
+}
+
+.board-list__page-num:hover {
+    color: var(--color-black);
+}
+
+.board-list__page-num--active {
+    color: #d97399;
+    font-weight: 700;
+}
+
+/* ===========================
+   글쓰기 버튼
+   =========================== */
+.board-list__header {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    margin-bottom: 16px;
+}
+
+.board-list__write-btn {
+    padding: 8px 20px;
+    background-color: var(--color-black);
+    color: #ffffff;
+    font-size: 14px;
+    font-weight: 600;
+    border: none;
+    border-radius: 6px;
+    cursor: pointer;
+    font-family: "Pretendard", sans-serif;
+    transition: background-color 0.15s;
+    flex-shrink: 0;
+}
+
+.board-list__write-btn:hover {
+    background-color: #333333;
+}
+
+/* ===========================
+   상태 (로딩/에러/빈)
+   =========================== */
+.board-list__status {
+    text-align: center;
+    padding: 48px 0;
+    font-size: 14px;
+    font-weight: 500;
+    color: var(--color-gray-600);
+    line-height: 1.5;
+}
+
+.board-list__status--error {
+    color: var(--color-red);
+}
+
+/* ===========================
+   검색
+   =========================== */
+.board-list__search {
+    display: flex;
+    gap: 8px;
+    margin-top: 24px;
+}
+
+.board-list__search-input {
+    flex: 1;
+    max-width: 300px;
+    padding: 6px 12px;
+    border: 1px solid var(--color-gray-200);
+    border-radius: 4px;
+    font-size: 13px;
+    font-family: "Pretendard", sans-serif;
+    outline: none;
+    transition: border-color 0.15s;
+}
+
+.board-list__search-input:focus {
+    border-color: var(--color-black);
+}
+
+.board-list__search-btn {
+    padding: 6px 16px;
+    background-color: var(--color-gray-500);
+    color: #ffffff;
+    font-size: 13px;
+    font-weight: 600;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+    font-family: "Pretendard", sans-serif;
+    transition: background-color 0.15s;
+}
+
+.board-list__search-btn:hover {
+    background-color: var(--color-black);
+}
+
+/* ===========================
+   공지 섹션 라벨
+   =========================== */
+.board-list__section-label {
+    font-size: 12px;
+    font-weight: 600;
+    color: var(--color-gray-600);
+    padding: 8px 16px 0;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}

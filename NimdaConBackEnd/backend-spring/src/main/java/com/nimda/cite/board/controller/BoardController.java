@@ -18,6 +18,9 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 @RestController
@@ -41,6 +44,7 @@ public class BoardController {
             @RequestParam(value = "categoryId", required = false) Long categoryId,
             @RequestParam(value = "slug", required = false) String slug,
             @RequestParam(value = "searchKeyword", required = false) String searchKeyword,
+            @RequestParam(value = "includeChildren", required = false, defaultValue = "false") Boolean includeChildren,
             @PageableDefault(size = 10, sort = "createdAt", direction = Sort.Direction.DESC) Pageable pageable) {
         try {
             Category category = null;
@@ -55,10 +59,33 @@ public class BoardController {
             }
 
             Page<Board> boards;
-            if (searchKeyword == null || searchKeyword.isEmpty()) {
-                boards = boardService.boardListByCategory(category, pageable);
+
+            // includeChildren=true 이면 하위 카테고리 게시글도 함께 조회
+            if (Boolean.TRUE.equals(includeChildren)) {
+                List<Category> categories = new ArrayList<>();
+                categories.add(category);
+                // 직계 자식 카테고리 추가
+                List<Category> children = categoryRepository
+                        .findByParentIdAndIsActiveTrueOrderBySortOrderAsc(category.getId());
+                categories.addAll(children);
+                // 손자 카테고리도 추가 (3단 지원)
+                for (Category child : children) {
+                    List<Category> grandChildren = categoryRepository
+                            .findByParentIdAndIsActiveTrueOrderBySortOrderAsc(child.getId());
+                    categories.addAll(grandChildren);
+                }
+
+                if (searchKeyword == null || searchKeyword.isEmpty()) {
+                    boards = boardService.boardListByCategories(categories, pageable);
+                } else {
+                    boards = boardService.boardSearchListByCategories(categories, searchKeyword, pageable);
+                }
             } else {
-                boards = boardService.boardSearchListByCategory(category, searchKeyword, pageable);
+                if (searchKeyword == null || searchKeyword.isEmpty()) {
+                    boards = boardService.boardListByCategory(category, pageable);
+                } else {
+                    boards = boardService.boardSearchListByCategory(category, searchKeyword, pageable);
+                }
             }
 
             Map<String, Object> data = Map.of(

@@ -61,10 +61,32 @@ export const getCategoryBySlugAPI = async (slug: string): Promise<Category | nul
     });
 
     if (response.ok) {
-      const category = await parseJsonSafe(response);
-      return category as Category;
+      const result = await parseJsonSafe(response);
+
+      // { success: true, data: { ... } } 형식인 경우
+      if (result && typeof result === 'object' && 'data' in result && result.data) {
+        const category = result.data;
+        if (typeof category === 'object' && 'id' in category && category.id != null) {
+          return category as Category;
+        }
+      }
+
+      // 직접 Category 객체가 오는 경우
+      if (result && typeof result === 'object' && 'id' in result && result.id != null) {
+        return result as Category;
+      }
+
+      console.error('카테고리 응답 형식이 올바르지 않습니다:', result);
+      return null;
     }
 
+    // 에러 응답 로깅
+    if (response.status === 404) {
+      console.warn(`카테고리를 찾을 수 없습니다: ${slug}`);
+    } else {
+      const errorText = await response.text();
+      console.error(`카테고리 조회 실패 (${response.status}):`, errorText);
+    }
     return null;
   } catch (error) {
     console.error('카테고리 조회 API 오류:', error);
@@ -86,14 +108,71 @@ export const getAllCategoriesAPI = async (): Promise<Category[]> => {
     });
 
     if (response.ok) {
-      const categories = await parseJsonSafe(response);
-      return Array.isArray(categories) ? categories : [];
+      const result = await parseJsonSafe(response);
+      // 백엔드 응답이 { success, data } 형식인 경우
+      if (result && Array.isArray(result.data)) {
+        return result.data;
+      }
+      // 직접 배열로 오는 경우
+      if (Array.isArray(result)) {
+        return result;
+      }
+      return [];
     }
 
     return [];
   } catch (error) {
     console.error('카테고리 목록 조회 API 오류:', error);
     return [];
+  }
+};
+
+/**
+ * 모든 카테고리 조회 (관리자용, isActive 무관)
+ * - 관리자 권한 필요
+ * - JWT 토큰 헤더에 포함
+ * - 백엔드 응답: List<CategoryResponseDTO> 직접 반환 (배열)
+ */
+export const getAllCategoriesAdminAPI = async (): Promise<Category[]> => {
+  try {
+    const token = getAuthToken();
+    if (!token) {
+      throw new Error('로그인이 필요합니다.');
+    }
+
+    const response = await fetch(`${API_BASE_URL}/all`, {
+      method: 'GET',
+      headers: getAuthHeaders(),
+    });
+
+    if (response.ok) {
+      const result = await parseJsonSafe(response);
+      // 백엔드 응답이 { success, data } 형식인 경우
+      if (result && Array.isArray(result.data)) {
+        return result.data;
+      }
+      // 직접 배열로 오는 경우
+      if (Array.isArray(result)) {
+        return result;
+      }
+      console.error('카테고리 목록 형식이 올바르지 않습니다:', result);
+      return [];
+    }
+
+    // 에러 응답 처리
+    let errorMessage = '카테고리 목록을 불러오는데 실패했습니다.';
+    if (response.status === 401) {
+      errorMessage = '로그인이 필요합니다.';
+    } else if (response.status === 403) {
+      errorMessage = '관리자 권한이 필요합니다.';
+    }
+
+    const errorText = await response.text();
+    console.error('카테고리 목록 조회 실패:', response.status, errorText);
+    throw new Error(errorMessage);
+  } catch (error) {
+    console.error('관리자 카테고리 목록 조회 API 오류:', error);
+    throw error; // 에러를 다시 throw하여 호출하는 쪽에서 처리할 수 있도록
   }
 };
 

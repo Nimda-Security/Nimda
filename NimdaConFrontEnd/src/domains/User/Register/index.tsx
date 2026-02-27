@@ -18,15 +18,14 @@ function RegisterPage() {
     const nickname = formData.get("nickname") as string;
     const password = formData.get("password") as string;
     const studentNum = formData.get("studentNum") as string;
-    const phoneNum = formData.get("phoneNum") as string;
     const email = formData.get("email") as string;
     const major = formData.get("major") as string;
     const universityName = formData.get("universityName") as string;
     const grade = formData.get("grade") as string;
 
     // 필수 필드 검증
-    if (!userId || !name || !nickname || !password || !studentNum || !phoneNum || !email || !major) {
-      alert("아이디, 실명, 닉네임, 비밀번호, 학번, 휴대폰 번호, 이메일, 학과는 필수 입력 항목입니다.");
+    if (!userId || !name || !nickname || !password || !studentNum || !email || !major) {
+      alert("아이디, 실명, 닉네임, 비밀번호, 학번, 이메일, 학과는 필수 입력 항목입니다.");
       return;
     }
 
@@ -43,7 +42,6 @@ function RegisterPage() {
       nickname,
       password,
       studentNum,
-      phoneNum,
       email,
       major,
       universityName: universityName?.trim() || undefined,
@@ -73,7 +71,6 @@ function RegisterPage() {
           <Input name="nickname" placeholder="닉네임" required />
           <Input name="password" placeholder="비밀번호" type="password" required />
           <Input name="studentNum" placeholder="학번 (9자리)" maxLength={9} required />
-          <Input name="phoneNum" placeholder="휴대폰 번호" required />
           <Input name="email" placeholder="이메일" type="email" required />
           <Input name="major" placeholder="학과" required />
           <Input name="universityName" placeholder="대학교명 (선택)" />

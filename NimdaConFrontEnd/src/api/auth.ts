@@ -28,7 +28,6 @@ export interface RegisterRequest {
   nickname: string;
   password: string;
   studentNum: string;
-  phoneNum: string;
   email: string;
   major: string;
   universityName?: string;
@@ -119,7 +118,6 @@ export const registerAPI = async (
       nickname: registerData.nickname,
       password: registerData.password,
       studentNum: registerData.studentNum,
-      phoneNum: registerData.phoneNum,
       email: registerData.email,
       major: registerData.major,
     };

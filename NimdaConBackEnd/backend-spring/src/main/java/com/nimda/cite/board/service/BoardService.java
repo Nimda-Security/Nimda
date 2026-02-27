@@ -12,6 +12,7 @@ import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.io.File;
+import java.util.List;
 import java.util.UUID;
 
 @Service
@@ -83,6 +84,18 @@ public class BoardService {
     @Transactional(readOnly = true)
     public Page<Board> boardSearchListByCategory(Category category, String searchKeyword, Pageable pageable) {
         return boardRepository.findByCategoryAndTitleContaining(category, searchKeyword, pageable);
+    }
+
+    // Note. boardListByCategories - 여러 카테고리(부모+자식)의 게시글을 페이지네이션으로 조회한다.
+    @Transactional(readOnly = true)
+    public Page<Board> boardListByCategories(List<Category> categories, Pageable pageable) {
+        return boardRepository.findByCategoryIn(categories, pageable);
+    }
+
+    // Note. boardSearchListByCategories - 여러 카테고리 내부에서 검색어로 게시글을 조회한다.
+    @Transactional(readOnly = true)
+    public Page<Board> boardSearchListByCategories(List<Category> categories, String searchKeyword, Pageable pageable) {
+        return boardRepository.findByCategoryInAndTitleContaining(categories, searchKeyword, pageable);
     }
 
     // Note. boardListPopular - 전체 게시판 인기글을 조회한다.(조회수 기반)

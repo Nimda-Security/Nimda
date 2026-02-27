@@ -11,7 +11,7 @@ import java.time.LocalDateTime;
 /**
  * 마이페이지 응답 DTO
  * 현재 로그인한 사용자의 정보를 반환할 때 사용
- * 민감 정보(password, studentNum, phoneNum, birth 등)는 제외
+ * 민감 정보(password, studentNum, birth 등)는 제외
  */
 @Getter
 @Setter

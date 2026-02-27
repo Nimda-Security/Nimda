@@ -52,6 +52,7 @@ export interface BoardListParams {
   page?: number;
   size?: number;
   sort?: 'createdAt,desc' | 'createdAt,asc' | 'title,asc' | 'title,desc';
+  includeChildren?: boolean;
 }
 
 /**

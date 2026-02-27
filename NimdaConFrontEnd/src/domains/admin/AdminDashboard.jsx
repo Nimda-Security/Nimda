@@ -2,40 +2,35 @@ import React, { useState, useEffect } from 'react';
 import NavBar from '@/components/Layout/Header/NavBar';
 import Footer from '@/components/Layout/Footer';
 import { useNavigate } from 'react-router-dom';
-import { getAllUsersAPI, getAllGroupsAPI, createGroupAPI, getPendingUsersAPI, approveUserAPI, rejectUserAPI } from '@/api/admin/admin';
-import { getAllProblemsAPI } from '@/api/problem';
+import { getAllUsersAPI, getPendingUsersAPI, approveUserAPI, rejectUserAPI } from '@/api/admin/admin';
 import { getBoardListAPI, deleteBoardAPI } from '@/api/board';
+import { getAllCategoriesAdminAPI, updateCategoryAPI, createCategoryAPI, deleteCategoryAPI } from '@/api/category';
 import './AdminDashboard.css';
 
 function AdminDashboard() {
   const navigate = useNavigate();
-  const [activeSection, setActiveSection] = useState('dashboard');
+  const [activeSection, setActiveSection] = useState('category-order');
+  const [activeSubSection, setActiveSubSection] = useState(null);
   const [users, setUsers] = useState([]);
-  const [problems, setProblems] = useState([]);
   const [loading, setLoading] = useState(false);
-  const [problemsLoading, setProblemsLoading] = useState(false);
-  const [teams, setTeams] = useState([]);
-  const [teamsLoading, setTeamsLoading] = useState(false);
-  const [newTeamName, setNewTeamName] = useState('');
-  const [newTeamMaxMembers, setNewTeamMaxMembers] = useState(5);
-  const [newTeamPublic, setNewTeamPublic] = useState(true);
-  const [newTeamCode, setNewTeamCode] = useState('');
-  const [creatingTeam, setCreatingTeam] = useState(false);
   const [selectedUser, setSelectedUser] = useState(null);
   const [pendingUsers, setPendingUsers] = useState([]);
   const [pendingUsersLoading, setPendingUsersLoading] = useState(false);
   const [posts, setPosts] = useState([]);
   const [postsLoading, setPostsLoading] = useState(false);
   const [uploadingImage, setUploadingImage] = useState(false);
+  const [categories, setCategories] = useState([]);
+  const [categoriesLoading, setCategoriesLoading] = useState(false);
+  const [selectedCategoryId, setSelectedCategoryId] = useState(null);
+  const [selectedPostCategoryId, setSelectedPostCategoryId] = useState(null);
+  const [showAddCategoryModal, setShowAddCategoryModal] = useState(false);
+  const [newCategoryName, setNewCategoryName] = useState('');
+  const [newCategorySlug, setNewCategorySlug] = useState('');
+  const [newCategoryParentId, setNewCategoryParentId] = useState(null);
+  const [addingCategory, setAddingCategory] = useState(false);
 
-  const goToProblemCreate = () => {
-    navigate('/problem-create');
-  };
-
-  const goToProblemDetail = (problemId) => {
-    navigate(`/problems/${problemId}`, {
-      state: { from: 'admin' }
-    });
+  const goBack = () => {
+    navigate('/');
   };
 
   const loadUsers = async () => {
@@ -55,129 +50,21 @@ function AdminDashboard() {
     }
   };
 
-  const loadProblems = async () => {
-    setProblemsLoading(true);
-    try {
-      const result = await getAllProblemsAPI();
-      if (result.success) {
-        setProblems(result.problems || []);
-      } else {
-        alert('문제 목록을 불러오는데 실패했습니다: ' + result.message);
-      }
-    } catch (error) {
-      console.error('문제 목록 로드 오류:', error);
-      alert('문제 목록을 불러오는 중 오류가 발생했습니다.');
-    } finally {
-      setProblemsLoading(false);
-    }
-  };
-
-  const loadTeams = async () => {
-    setTeamsLoading(true);
-    try {
-      const result = await getAllGroupsAPI();
-      if (result.success) {
-        const mapped = (result.groups || []).map((group) => ({
-          id: group.groupId,
-          name: group.groupName,
-          leader: group.creatorUserId
-            ? `사용자 #${group.creatorUserId}`
-            : '알 수 없음',
-          members: group.activeMemberCount ?? 0,
-          maxMembers: group.maxMembers,
-          isPublic: group.isPublic,
-          createdAt: group.createdAt
-            ? new Date(group.createdAt).toISOString().slice(0, 10)
-            : '-',
-          participationCode: group.participationCode,
-        }));
-        setTeams(mapped);
-      } else {
-        alert(result.message || '팀 목록을 불러오지 못했습니다.');
-      }
-    } catch (error) {
-      console.error('팀 목록 로드 오류:', error);
-      alert('팀 목록을 불러오는 중 오류가 발생했습니다.');
-    } finally {
-      setTeamsLoading(false);
-    }
-  };
-
-  const handleCreateTeam = async (e) => {
-    e.preventDefault();
-    if (!newTeamName.trim()) {
-      alert('팀 이름을 입력해주세요.');
-      return;
-    }
-    const currentUserStr = localStorage.getItem('user');
-    const currentUser = currentUserStr ? JSON.parse(currentUserStr) : null;
-    if (!currentUser?.id) {
-      alert('로그인 정보가 없습니다. 다시 로그인해주세요.');
-      return;
-    }
-
-    setCreatingTeam(true);
-    try {
-      const payload = {
-        groupName: newTeamName,
-        maxMembers: newTeamMaxMembers,
-        participationCode: newTeamCode || undefined,
-        isPublic: newTeamPublic,
-        creatorUserId: currentUser.id,
-      };
-      const result = await createGroupAPI(payload);
-      if (result.success && result.group) {
-        alert('팀이 생성되었습니다.');
-        setTeams((prev) => [
-          {
-            id: result.group.groupId,
-            name: result.group.groupName,
-            leader: currentUser.nickname || currentUser.userId || '관리자',
-            members: 1,
-            maxMembers: result.group.maxMembers,
-            isPublic: result.group.isPublic,
-            createdAt: result.group.createdAt
-              ? new Date(result.group.createdAt).toISOString().slice(0, 10)
-              : new Date().toISOString().slice(0, 10),
-            participationCode: result.group.participationCode,
-          },
-          ...prev,
-        ]);
-        setNewTeamName('');
-        setNewTeamMaxMembers(5);
-        setNewTeamPublic(true);
-        setNewTeamCode('');
-      } else {
-        alert(result.message || '팀 생성에 실패했습니다.');
-      }
-    } catch (error) {
-      console.error('팀 생성 오류:', error);
-      alert('팀 생성 중 오류가 발생했습니다.');
-    } finally {
-      setCreatingTeam(false);
-    }
-  };
-
-  const goToSystemSettings = () => {
-    alert('시스템 설정 기능 (구현 예정)');
-  };
-
-  const goBack = () => {
-    navigate('/');
-  };
-
-  const loadPosts = async () => {
+  const loadPosts = async (categorySlug = null) => {
     setPostsLoading(true);
     try {
-      const result = await getBoardListAPI({ slug: 'news', page: 0, size: 20 });
+      const slug = categorySlug || 'news';
+      const result = await getBoardListAPI({ slug, page: 0, size: 100 });
       if (result.success) {
         setPosts(result.posts || []);
       } else {
         alert('게시글 목록을 불러오는데 실패했습니다: ' + result.message);
+        setPosts([]);
       }
     } catch (error) {
       console.error('게시글 목록 로드 오류:', error);
       alert('게시글 목록을 불러오는 중 오류가 발생했습니다.');
+      setPosts([]);
     } finally {
       setPostsLoading(false);
     }
@@ -197,6 +84,105 @@ function AdminDashboard() {
       alert('승인 대기 사용자 목록을 불러오는 중 오류가 발생했습니다.');
     } finally {
       setPendingUsersLoading(false);
+    }
+  };
+
+  const loadCategories = async () => {
+    setCategoriesLoading(true);
+    try {
+      const allCategories = await getAllCategoriesAdminAPI();
+      setCategories(allCategories);
+      console.log('카테고리 목록 로드 성공:', allCategories.length, '개');
+    } catch (error) {
+      console.error('카테고리 목록 로드 오류:', error);
+      const errorMessage = error instanceof Error ? error.message : '카테고리 목록을 불러오는 중 오류가 발생했습니다.';
+      alert(errorMessage);
+      setCategories([]); // 에러 발생 시 빈 배열로 설정
+    } finally {
+      setCategoriesLoading(false);
+    }
+  };
+
+  const handleAddCategory = async () => {
+    if (!newCategoryName.trim()) {
+      alert('카테고리명을 입력해주세요.');
+      return;
+    }
+    if (!newCategorySlug.trim()) {
+      alert('슬러그를 입력해주세요.');
+      return;
+    }
+
+    // 슬러그 유효성 검사 (영문자, 숫자, 하이픈만 허용)
+    const slugPattern = /^[a-z0-9-]+$/;
+    if (!slugPattern.test(newCategorySlug)) {
+      alert('슬러그는 영문 소문자, 숫자, 하이픈(-)만 사용할 수 있습니다.');
+      return;
+    }
+
+    setAddingCategory(true);
+    try {
+      const result = await createCategoryAPI({
+        name: newCategoryName.trim(),
+        slug: newCategorySlug.trim(),
+        parentId: newCategoryParentId || null,
+        sortOrder: 0,
+        isActive: true,
+      });
+
+      if (result.success) {
+        alert('카테고리가 성공적으로 추가되었습니다.');
+        setShowAddCategoryModal(false);
+        setNewCategoryName('');
+        setNewCategorySlug('');
+        setNewCategoryParentId(null);
+        // 약간의 지연 후 목록 새로고침 (백엔드 처리 시간 고려)
+        setTimeout(() => {
+          loadCategories();
+        }, 300);
+      } else {
+        alert(result.message || '카테고리 추가에 실패했습니다.');
+      }
+    } catch (error) {
+      console.error('카테고리 추가 오류:', error);
+      alert('카테고리 추가 중 오류가 발생했습니다.');
+    } finally {
+      setAddingCategory(false);
+    }
+  };
+
+  const handleDeleteCategory = async () => {
+    if (!selectedCategoryId) {
+      alert('삭제할 카테고리를 선택해주세요.');
+      return;
+    }
+
+    if (!selectedCategoryData) {
+      alert('선택된 카테고리 정보를 찾을 수 없습니다.');
+      return;
+    }
+
+    const categoryName = selectedCategoryData.name;
+    if (!confirm(`정말 "${categoryName}" 카테고리를 삭제하시겠습니까?\n\n하위 카테고리나 게시글이 있으면 삭제할 수 없습니다.`)) {
+      return;
+    }
+
+    try {
+      const result = await deleteCategoryAPI(selectedCategoryId);
+
+      if (result.success) {
+        alert('카테고리가 성공적으로 삭제되었습니다.');
+        setSelectedCategoryId(null); // 선택 해제
+        // 약간의 지연 후 목록 새로고침
+        setTimeout(() => {
+          loadCategories();
+        }, 300);
+      } else {
+        alert(result.message || '카테고리 삭제에 실패했습니다.');
+      }
+    } catch (error) {
+      console.error('카테고리 삭제 오류:', error);
+      alert('카테고리 삭제 중 오류가 발생했습니다.');
     }
   };
 
@@ -234,49 +220,53 @@ function AdminDashboard() {
     }
   };
 
-  useEffect(() => {
-    if (activeSection === 'pending') {
-      loadPendingUsers();
+  const handleDeletePost = async (postId) => {
+    if (!confirm('정말 이 게시글을 삭제하시겠습니까?')) return;
+    try {
+      const result = await deleteBoardAPI(postId);
+      if (result.success) {
+        alert('게시글이 삭제되었습니다.');
+        // 현재 선택된 카테고리의 게시글 목록 다시 로드
+        if (selectedPostCategoryId) {
+          const selectedCategory = findCategoryById(activeCategoryTree, selectedPostCategoryId);
+          if (selectedCategory) {
+            loadPosts(selectedCategory.slug);
+          }
+        } else {
+          loadPosts();
+        }
+      } else {
+        alert(result.message || '게시글 삭제에 실패했습니다.');
+      }
+    } catch (error) {
+      console.error('게시글 삭제 오류:', error);
+      alert('게시글 삭제 중 오류가 발생했습니다.');
     }
-  }, [activeSection]);
-
-  const menuItems = [
-    { id: 'dashboard', label: '대시보드' },
-    { id: 'users', label: '사용자 관리' }
-  ];
-
-  const getUserRoles = (user) => {
-    if (!user.authorities || user.authorities.length === 0) return [];
-    return user.authorities.map(auth => auth.authorityName || auth);
   };
 
-  const hasRole = (user, role) => {
-    return getUserRoles(user).some(r => r.includes(role));
+  const handleEditPost = (post) => {
+    const slug = post.category?.slug || 'news';
+    navigate(`/board/${slug}/edit/${post.id}`);
   };
 
   const handleImageUpload = async (event) => {
-    // File input의 change event
     const file = event.target.files[0];
     if (!file) return;
 
-    // 파일 타입 검증
     if (!file.type.startsWith('image/')) {
       alert('이미지 파일만 업로드 가능합니다.');
       return;
     }
 
-    // 파일 크기 검증 (10MB)
     if (file.size > 10 * 1024 * 1024) {
       alert('파일 크기는 10MB 이하여야 합니다.');
       return;
     }
 
-    // 업로드 시작 전에 로딩 상태 설정 
     setUploadingImage(true);
     try {
       const token = localStorage.getItem('token');
 
-      // =========================== 1단계: Presigned URL 요청 =========================== 
       const presignedResponse = await fetch(`/api/users/me/profile-image/presigned-url`, {
         method: 'POST',
         headers: {
@@ -296,7 +286,6 @@ function AdminDashboard() {
         return;
       }
 
-      // =========================== 2단계: S3에 직접 업로드 =========================== 
       const s3UploadResponse = await fetch(presignedResult.presignedUrl, {
         method: 'PUT',
         headers: {
@@ -310,7 +299,6 @@ function AdminDashboard() {
         return;
       }
 
-      // =========================== 3단계: DB 업데이트 요청 =========================== 
       const dbUpdateResponse = await fetch(`/api/users/me/profile-image`, {
         method: 'PUT',
         headers: {
@@ -325,9 +313,7 @@ function AdminDashboard() {
       const dbUpdateResult = await dbUpdateResponse.json();
 
       if (dbUpdateResponse.ok && dbUpdateResult.success) {
-        // 사용자 정보 업데이트
         setSelectedUser({ ...selectedUser, profileImage: dbUpdateResult.profileImage });
-        // 사용자 목록도 업데이트
         setUsers(users.map(u => u.id === selectedUser.id ? { ...u, profileImage: dbUpdateResult.profileImage } : u));
         alert('프로필 이미지가 업데이트되었습니다.');
       } else {
@@ -342,29 +328,174 @@ function AdminDashboard() {
     }
   };
 
+  // 카테고리를 트리 구조로 변환
+  const buildCategoryTree = (categories) => {
+    const categoryMap = new Map();
+    const rootCategories = [];
+
+    // 모든 카테고리를 맵에 추가
+    categories.forEach(cat => {
+      categoryMap.set(cat.id, { ...cat, children: [] });
+    });
+
+    // 부모-자식 관계 구성
+    categories.forEach(cat => {
+      const category = categoryMap.get(cat.id);
+      if (cat.parentId && categoryMap.has(cat.parentId)) {
+        const parent = categoryMap.get(cat.parentId);
+        if (parent && category) {
+          parent.children = parent.children || [];
+          parent.children.push(category);
+        }
+      } else {
+        if (category) {
+          rootCategories.push(category);
+        }
+      }
+    });
+
+    return rootCategories;
+  };
+
+  // active 카테고리만 필터링하는 함수
+  const filterActiveCategories = (tree) => {
+    const filterRecursive = (items) => {
+      return items
+        .filter(item => item.isActive !== false)
+        .map(item => ({
+          ...item,
+          children: item.children && item.children.length > 0
+            ? filterRecursive(item.children)
+            : []
+        }));
+    };
+    return filterRecursive(tree);
+  };
+
+  const categoryTree = buildCategoryTree(categories);
+  const activeCategoryTree = filterActiveCategories(categoryTree);
+
+  // 전체 카테고리 수 계산
+  const getTotalCategoryCount = (tree) => {
+    let count = 0;
+    const countRecursive = (items) => {
+      items.forEach(item => {
+        count++;
+        if (item.children && item.children.length > 0) {
+          countRecursive(item.children);
+        }
+      });
+    };
+    countRecursive(tree);
+    return count;
+  };
+
+  // 선택된 카테고리 찾기
+  const findCategoryById = (tree, id) => {
+    for (const cat of tree) {
+      if (cat.id === id) return cat;
+      if (cat.children && cat.children.length > 0) {
+        const found = findCategoryById(cat.children, id);
+        if (found) return found;
+      }
+    }
+    return null;
+  };
+
+  const selectedCategoryData = selectedCategoryId ? findCategoryById(categoryTree, selectedCategoryId) : null;
+
+  // 모든 카테고리를 평탄화 (부모 선택용)
+  const flattenCategories = (tree, level = 0) => {
+    const result = [];
+    tree.forEach(category => {
+      result.push({ ...category, level });
+      if (category.children && category.children.length > 0) {
+        result.push(...flattenCategories(category.children, level + 1));
+      }
+    });
+    return result;
+  };
+
+  const allCategoriesFlat = flattenCategories(categoryTree);
+
+  // 카테고리 렌더링 (재귀) - 순서 설정용
+  const renderCategoryOrderItem = (category, level = 0) => {
+    const isParent = category.children && category.children.length > 0;
+    const isSelected = selectedCategoryId === category.id;
+    const childCount = category.children ? category.children.length : 0;
+    const isInactive = category.isActive === false;
+
+    return (
+      <div key={category.id}>
+        <div
+          className={`admin__catorder-item ${isSelected ? 'admin__catorder-item--selected' : ''} ${level > 0 ? 'admin__catorder-item--child' : ''} ${isInactive ? 'admin__catorder-item--inactive' : ''}`}
+          style={{ paddingLeft: `${12 + level * 20}px` }}
+          onClick={() => setSelectedCategoryId(category.id)}
+        >
+          <span className="admin__catorder-drag">⠿</span>
+          {level > 0 && <span className="admin__catorder-prefix">ㄴ</span>}
+          <span className={`admin__catorder-name ${isInactive ? 'admin__catorder-name--inactive' : ''}`}>
+            {category.name}
+            {isParent && <span className="admin__catorder-count">({childCount})</span>}
+          </span>
+        </div>
+        {isParent && category.children?.map(child => renderCategoryOrderItem(child, level + 1))}
+      </div>
+    );
+  };
+
+  // 카테고리 렌더링 (재귀) - 기본용
+  const renderCategoryItem = (category, level = 0) => {
+    const indent = level * 39;
+    const isParent = category.children && category.children.length > 0;
+    const itemClass = level === 0
+      ? 'admin__category-item admin__category-item--parent'
+      : 'admin__category-item admin__category-item--child';
+
+    return (
+      <div key={category.id}>
+        <div
+          className={itemClass}
+          style={{ marginLeft: `${indent}px` }}
+        >
+          {category.name}
+        </div>
+        {isParent && category.children?.map(child => renderCategoryItem(child, level + 1))}
+      </div>
+    );
+  };
+
+  useEffect(() => {
+    if (activeSection === 'pending') {
+      loadPendingUsers();
+    } else if (activeSection === 'category-order' || activeSection === 'category-edit' || activeSection === 'category-deactivate') {
+      loadCategories();
+    } else if (activeSection === 'posts') {
+      // 포스트 수정/삭제 섹션: 카테고리 목록 로드 (게시글은 카테고리 선택 시 로드)
+      if (categories.length === 0) {
+        loadCategories();
+      }
+    } else if (activeSection === 'user-info') {
+      loadUsers();
+    }
+  }, [activeSection]);
+
+  const getUserRoles = (user) => {
+    if (!user.authorities || user.authorities.length === 0) return [];
+    return user.authorities.map(auth => auth.authorityName || auth);
+  };
+
+  const hasRole = (user, role) => {
+    return getUserRoles(user).some(r => r.includes(role));
+  };
+
   const renderContent = () => {
     switch (activeSection) {
-      case 'dashboard':
-        return (
-          <div>
-            <h2 className="admin__section-title">대시보드</h2>
-            <div className="admin__info-box">
-              <h3>관리 기능</h3>
-              <ul>
-                <li>문제 출제 및 관리</li>
-                <li>사용자 권한 관리</li>
-                <li>시스템 설정 변경</li>
-                <li>로그 및 통계 확인</li>
-              </ul>
-            </div>
-          </div>
-        );
-
-      case 'users':
+      case 'user-info':
         return (
           <div>
             <div className="admin__header-row">
-              <h2 className="admin__section-title" style={{ marginBottom: 0 }}>사용자 관리</h2>
+              <h2 className="admin__section-title">유저 정보</h2>
               <button onClick={loadUsers} disabled={loading} className="admin__btn">
                 {loading ? '로딩 중' : '새로고침'}
               </button>
@@ -408,7 +539,6 @@ function AdminDashboard() {
               </div>
             )}
 
-            {/* 사용자 정보 모달 */}
             {selectedUser && (
               <div className="admin__modal-overlay" onClick={() => setSelectedUser(null)}>
                 <div className="admin__modal" onClick={(e) => e.stopPropagation()}>
@@ -417,7 +547,6 @@ function AdminDashboard() {
                     <button className="admin__modal-close" onClick={() => setSelectedUser(null)}>✕</button>
                   </div>
 
-                  {/* 프로필 이미지 섹션 */}
                   <div style={{ padding: '20px', borderBottom: '1px solid #e0e0e0', textAlign: 'center' }}>
                     <div style={{ marginBottom: '12px' }}>
                       {selectedUser.profileImage ? (
@@ -477,7 +606,6 @@ function AdminDashboard() {
                     <div><p className="admin__modal-label">닉네임</p><p className="admin__modal-value">{selectedUser.nickname || '-'}</p></div>
                     <div><p className="admin__modal-label">이메일</p><p className="admin__modal-value">{selectedUser.email || '-'}</p></div>
                     <div><p className="admin__modal-label">학번</p><p className="admin__modal-value">{selectedUser.studentNum || '-'}</p></div>
-                    <div><p className="admin__modal-label">휴대폰 번호</p><p className="admin__modal-value">{selectedUser.phoneNum || '-'}</p></div>
                     <div><p className="admin__modal-label">학과</p><p className="admin__modal-value">{selectedUser.major || '-'}</p></div>
                     <div><p className="admin__modal-label">대학교</p><p className="admin__modal-value">{selectedUser.universityName || '-'}</p></div>
                     <div><p className="admin__modal-label">학년</p><p className="admin__modal-value">{selectedUser.grade || '-'}</p></div>
@@ -506,7 +634,7 @@ function AdminDashboard() {
         return (
           <div>
             <div className="admin__header-row">
-              <h2 className="admin__section-title" style={{ marginBottom: 0 }}>승인 대기 목록</h2>
+              <h2 className="admin__section-title">승인 대기 목록</h2>
               <button onClick={loadPendingUsers} disabled={pendingUsersLoading} className="admin__btn">
                 {pendingUsersLoading ? '로딩 중' : '새로고침'}
               </button>
@@ -553,74 +681,353 @@ function AdminDashboard() {
         );
 
       case 'posts':
-        const handleDeletePost = async (postId) => {
-          if (!confirm('정말 이 게시글을 삭제하시겠습니까?')) return;
-          try {
-            const result = await deleteBoardAPI(postId);
-            if (result.success) {
-              alert('게시글이 삭제되었습니다.');
-              loadPosts();
-            } else {
-              alert(result.message || '게시글 삭제에 실패했습니다.');
-            }
-          } catch (error) {
-            console.error('게시글 삭제 오류:', error);
-            alert('게시글 삭제 중 오류가 발생했습니다.');
-          }
-        };
+        // 포스트 관리용 카테고리 렌더링 함수 (깔끔한 디자인)
+        const renderPostCategoryItem = (category, level = 0) => {
+          const isParent = category.children && category.children.length > 0;
+          const isSelected = selectedPostCategoryId === category.id;
+          const childCount = category.children ? category.children.length : 0;
 
-        const handleEditPost = (post) => {
-          const slug = post.category?.slug || 'news';
-          navigate(`/board/${slug}/edit/${post.id}`);
+          return (
+            <div key={category.id}>
+              <div
+                className={`admin__post-category-item ${isSelected ? 'admin__post-category-item--selected' : ''} ${level > 0 ? 'admin__post-category-item--child' : ''}`}
+                style={{ paddingLeft: level > 0 ? `${24 + level * 16}px` : '16px' }}
+                onClick={() => {
+                  setSelectedPostCategoryId(category.id);
+                  loadPosts(category.slug);
+                }}
+              >
+                <span className="admin__post-category-name">
+                  {category.name}
+                  {isParent && <span className="admin__post-category-count"> ({childCount})</span>}
+                </span>
+              </div>
+              {isParent && category.children?.map(child => renderPostCategoryItem(child, level + 1))}
+            </div>
+          );
         };
 
         return (
           <div>
-            <div className="admin__header-row">
-              <h2 className="admin__section-title" style={{ marginBottom: 0 }}>글 관리</h2>
-              <button onClick={loadPosts} disabled={postsLoading} className="admin__btn">
-                {postsLoading ? '로딩 중' : '새로고침'}
+            <h2 className="admin__section-title">포스트 수정/삭제</h2>
+
+            {/* 2패널 레이아웃 */}
+            <div className="admin__catorder-wrap">
+              {/* 왼쪽: 카테고리 트리 */}
+              <div className="admin__catorder-left">
+                <div className="admin__catorder-left-header">
+                  <span>카테고리 ({getTotalCategoryCount(activeCategoryTree)})</span>
+                </div>
+                <div className="admin__post-category-list">
+                  {categoriesLoading ? (
+                    <div className="admin__empty" style={{ border: 'none', padding: '24px' }}>로딩 중...</div>
+                  ) : activeCategoryTree.length > 0 ? (
+                    activeCategoryTree.map(category => renderPostCategoryItem(category, 0))
+                  ) : (
+                    <div className="admin__empty" style={{ border: 'none', padding: '24px' }}>
+                      <p style={{ marginBottom: 16 }}>카테고리가 없습니다.</p>
+                      <button onClick={loadCategories} className="admin__btn">불러오기</button>
+                    </div>
+                  )}
+                </div>
+              </div>
+
+              {/* 오른쪽: 게시글 목록 */}
+              <div className="admin__catorder-right">
+                <div className="admin__header-row" style={{ marginBottom: '16px' }}>
+                  <h3 style={{ margin: 0 }}>
+                    {selectedPostCategoryId
+                      ? findCategoryById(activeCategoryTree, selectedPostCategoryId)?.name || '게시글 목록'
+                      : '카테고리를 선택하세요'}
+                  </h3>
+                  {selectedPostCategoryId && (
+                    <button
+                      onClick={() => {
+                        const selectedCategory = findCategoryById(activeCategoryTree, selectedPostCategoryId);
+                        if (selectedCategory) {
+                          loadPosts(selectedCategory.slug);
+                        }
+                      }}
+                      disabled={postsLoading}
+                      className="admin__btn"
+                    >
+                      {postsLoading ? '로딩 중' : '새로고침'}
+                    </button>
+                  )}
+                </div>
+
+                {selectedPostCategoryId ? (
+                  postsLoading ? (
+                    <div className="admin__empty" style={{ border: 'none' }}>로딩 중...</div>
+                  ) : posts.length > 0 ? (
+                    <div className="admin__table-wrap">
+                      <table className="admin__table">
+                        <thead>
+                          <tr>
+                            <th>ID</th>
+                            <th>제목</th>
+                            <th>작성자</th>
+                            <th>작성일</th>
+                            <th>작업</th>
+                          </tr>
+                        </thead>
+                        <tbody>
+                          {posts.map((post) => (
+                            <tr key={post.id}>
+                              <td>{post.id}</td>
+                              <td style={{ textAlign: 'left' }}>{post.title}</td>
+                              <td>{post.author?.nickname || '-'}</td>
+                              <td>{post.createdAt ? new Date(post.createdAt).toLocaleDateString() : '-'}</td>
+                              <td>
+                                <div className="admin__actions">
+                                  <button onClick={(e) => { e.stopPropagation(); handleDeletePost(post.id); }} className="admin__btn--reject">삭제</button>
+                                </div>
+                              </td>
+                            </tr>
+                          ))}
+                        </tbody>
+                      </table>
+                    </div>
+                  ) : (
+                    <div className="admin__empty">
+                      <p style={{ marginBottom: 16 }}>게시글이 없습니다.</p>
+                    </div>
+                  )
+                ) : (
+                  <div className="admin__empty">
+                    <p>왼쪽에서 카테고리를 선택하면 해당 카테고리의 게시글 목록이 표시됩니다.</p>
+                  </div>
+                )}
+              </div>
+            </div>
+          </div>
+        );
+
+      case 'category-order':
+        return (
+          <div>
+            <h2 className="admin__section-title">순서 설정</h2>
+
+            {/* 상단 액션 버튼 */}
+            <div className="admin__catorder-toolbar">
+              <button
+                className="admin__catorder-toolbar-btn"
+                onClick={() => setShowAddCategoryModal(true)}
+              >
+                + 카테고리 추가
+              </button>
+              <button className="admin__catorder-toolbar-btn">+ 구분선 추가</button>
+              <button
+                className="admin__catorder-toolbar-btn admin__catorder-toolbar-btn--danger"
+                onClick={handleDeleteCategory}
+                disabled={!selectedCategoryId}
+              >
+                × 삭제
               </button>
             </div>
 
-            {posts.length > 0 ? (
-              <div className="admin__table-wrap">
-                <table className="admin__table">
-                  <thead>
-                    <tr>
-                      <th>ID</th>
-                      <th>제목</th>
-                      <th>작성자</th>
-                      <th>게시판 타입</th>
-                      <th>작성일</th>
-                      <th>작업</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {posts.map((post) => (
-                      <tr key={post.id}>
-                        <td>{post.id}</td>
-                        <td style={{ textAlign: 'left' }}>{post.title}</td>
-                        <td>{post.author?.nickname || '-'}</td>
-                        <td>{post.category?.name || '-'}</td>
-                        <td>{post.createdAt ? new Date(post.createdAt).toLocaleDateString() : '-'}</td>
-                        <td>
-                          <div className="admin__actions">
-                            <button onClick={(e) => { e.stopPropagation(); handleEditPost(post); }} className="admin__btn--edit">수정</button>
-                            <button onClick={(e) => { e.stopPropagation(); handleDeletePost(post.id); }} className="admin__btn--reject">삭제</button>
-                          </div>
-                        </td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
+            {/* 2패널 레이아웃 */}
+            <div className="admin__catorder-wrap">
+              {/* 왼쪽: 카테고리 트리 */}
+              <div className="admin__catorder-left">
+                <div className="admin__catorder-left-header">
+                  <span>카테고리 전체보기 ({getTotalCategoryCount(categoryTree)})</span>
+                </div>
+                <div className="admin__catorder-tree">
+                  {categoriesLoading ? (
+                    <div className="admin__empty" style={{ border: 'none' }}>로딩 중...</div>
+                  ) : categoryTree.length > 0 ? (
+                    categoryTree.map(category => renderCategoryOrderItem(category, 0))
+                  ) : (
+                    <div className="admin__empty" style={{ border: 'none' }}>
+                      <p style={{ marginBottom: 16 }}>카테고리가 없습니다.</p>
+                      <button onClick={loadCategories} className="admin__btn">불러오기</button>
+                    </div>
+                  )}
+                </div>
               </div>
-            ) : (
-              <div className="admin__empty">
-                <p style={{ marginBottom: 16 }}>게시글이 없습니다.</p>
-                <button onClick={loadPosts} className="admin__btn">불러오기</button>
+
+              {/* 오른쪽: 카테고리 설정 폼 */}
+              <div className="admin__catorder-right">
+                {selectedCategoryData ? (
+                  <div className="admin__catorder-form">
+                    {/* 카테고리명 */}
+                    <div className="admin__catorder-form-row">
+                      <label className="admin__catorder-form-label">카테고리명</label>
+                      <div className="admin__catorder-form-field">
+                        <input
+                          type="text"
+                          className="admin__catorder-input"
+                          defaultValue={selectedCategoryData.name}
+                          readOnly
+                        />
+                      </div>
+                    </div>
+
+                    {/* 카테고리 옆에 글 개수 표시 */}
+                    <div className="admin__catorder-form-row">
+                      <label className="admin__catorder-form-label"></label>
+                      <div className="admin__catorder-form-field">
+                        <label className="admin__catorder-checkbox-label">
+                          <input type="checkbox" disabled />
+                          <span>카테고리 옆에 글 개수 표시</span>
+                        </label>
+                      </div>
+                    </div>
+
+                    {/* 공개설정 */}
+                    <div className="admin__catorder-form-row">
+                      <label className="admin__catorder-form-label">공개설정</label>
+                      <div className="admin__catorder-form-field">
+                        <label className="admin__catorder-radio-label">
+                          <input type="radio" name="visibility" defaultChecked disabled />
+                          <span>공개</span>
+                        </label>
+                        <label className="admin__catorder-radio-label">
+                          <input type="radio" name="visibility" disabled />
+                          <span>비공개</span>
+                        </label>
+                      </div>
+                    </div>
+
+                    {/* 주제분류 */}
+                    <div className="admin__catorder-form-row">
+                      <label className="admin__catorder-form-label">주제분류</label>
+                      <div className="admin__catorder-form-field">
+                        <select className="admin__catorder-select" disabled>
+                          <option>주제분류 선택하지 않음</option>
+                        </select>
+                      </div>
+                    </div>
+
+                    {/* 글보기 */}
+                    <div className="admin__catorder-form-row">
+                      <label className="admin__catorder-form-label">글보기</label>
+                      <div className="admin__catorder-form-field">
+                        <label className="admin__catorder-radio-label">
+                          <input type="radio" name="viewType" defaultChecked disabled />
+                          <span>블로그형</span>
+                        </label>
+                        <label className="admin__catorder-radio-label">
+                          <input type="radio" name="viewType" disabled />
+                          <span>앨범형</span>
+                        </label>
+                        <p className="admin__catorder-form-desc">
+                          앨범형의 경우, 첨부된 이미지, 동영상 섬네일이 보입니다.
+                        </p>
+                      </div>
+                    </div>
+
+                    {/* 섬네일 비율 */}
+                    <div className="admin__catorder-form-row">
+                      <label className="admin__catorder-form-label">섬네일 비율</label>
+                      <div className="admin__catorder-form-field">
+                        <label className="admin__catorder-radio-label">
+                          <input type="radio" name="thumbRatio" defaultChecked disabled />
+                          <span>정방형</span>
+                        </label>
+                        <label className="admin__catorder-radio-label">
+                          <input type="radio" name="thumbRatio" disabled />
+                          <span>원본비율</span>
+                        </label>
+                        <p className="admin__catorder-form-desc">
+                          정방형 섬네일은 1:1 비율로 노출됩니다.<br />
+                          원본비율 섬네일은 최대 1:2 (가로:세로) 비율로 노출됩니다.
+                        </p>
+                      </div>
+                    </div>
+
+                    {/* 목록보기 */}
+                    <div className="admin__catorder-form-row">
+                      <label className="admin__catorder-form-label">목록보기</label>
+                      <div className="admin__catorder-form-field">
+                        <label className="admin__catorder-radio-label">
+                          <input type="radio" name="listView" defaultChecked disabled />
+                          <span>목록닫기</span>
+                        </label>
+                        <label className="admin__catorder-radio-label">
+                          <input type="radio" name="listView" disabled />
+                          <span>목록열기</span>
+                        </label>
+                        <select className="admin__catorder-select admin__catorder-select--sm" disabled>
+                          <option>5줄 보기</option>
+                        </select>
+                      </div>
+                    </div>
+
+                    {/* 카테고리 정렬 */}
+                    <div className="admin__catorder-form-row">
+                      <label className="admin__catorder-form-label">카테고리 정렬</label>
+                      <div className="admin__catorder-form-field">
+                        <div className="admin__catorder-sort-btns">
+                          <button className="admin__catorder-sort-btn" disabled>위</button>
+                          <button className="admin__catorder-sort-btn" disabled>아래</button>
+                          <button className="admin__catorder-sort-btn" disabled>맨 위</button>
+                          <button className="admin__catorder-sort-btn" disabled>맨 아래</button>
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* 카테고리 접기 */}
+                    <div className="admin__catorder-form-row">
+                      <label className="admin__catorder-form-label">카테고리 접기</label>
+                      <div className="admin__catorder-form-field">
+                        <label className="admin__catorder-radio-label">
+                          <input type="radio" name="fold" defaultChecked disabled />
+                          <span>펼치기</span>
+                        </label>
+                        <label className="admin__catorder-radio-label">
+                          <input type="radio" name="fold" disabled />
+                          <span>접기</span>
+                        </label>
+                      </div>
+                    </div>
+
+                    {/* 기본 카테고리 설정 */}
+                    <div className="admin__catorder-form-row" style={{ marginTop: 12 }}>
+                      <label className="admin__catorder-form-label"></label>
+                      <div className="admin__catorder-form-field">
+                        <label className="admin__catorder-checkbox-label">
+                          <input type="checkbox" disabled />
+                          <span>블로그에서 이 카테고리를 기본으로 보여줍니다.</span>
+                        </label>
+                      </div>
+                    </div>
+                  </div>
+                ) : (
+                  <div className="admin__catorder-placeholder">
+                    왼쪽에서 카테고리를 선택하면<br />설정을 확인할 수 있습니다.
+                  </div>
+                )}
               </div>
-            )}
+            </div>
+
+            {/* 하단 안내 */}
+            <div className="admin__catorder-footer">
+              <div className="admin__catorder-notes">
+                <p>· 드래그앤드랍으로 2단계 카테고리를 만들거나 카테고리 순서를 변경할 수 있습니다.</p>
+                <p>· 글이 많은 카테고리는 설정이 반영되는데 시간이 소요됩니다. (예. 공개설정 변경, 카테고리 상위/하위 정렬변경)</p>
+              </div>
+              <div className="admin__catorder-footer-actions">
+                <button className="admin__catorder-confirm-btn">확인</button>
+              </div>
+            </div>
+          </div>
+        );
+
+      case 'category-edit':
+        return (
+          <div>
+            <h2 className="admin__section-title">카테고리 수정</h2>
+            <div className="admin__empty">구현 예정</div>
+          </div>
+        );
+
+      case 'category-deactivate':
+        return (
+          <div>
+            <h2 className="admin__section-title">카테고리 비활성화</h2>
+            <div className="admin__empty">구현 예정</div>
           </div>
         );
 
@@ -634,35 +1041,130 @@ function AdminDashboard() {
       <NavBar />
       <div className="layout__body">
         <div className="admin">
-
-          {/* Sidebar */}
+          {/* Sidebar - Figma 디자인에 맞게 수정 */}
           <aside className="admin__sidebar">
-            <h1 className="admin__sidebar-title">관리자</h1>
-            <button onClick={goBack} className="admin__sidebar-back">메인으로</button>
+            <div className="admin__sidebar-header">
+              <h1 className="admin__sidebar-title">Manage</h1>
+            </div>
 
             <nav className="admin__nav">
-              {menuItems.map((item) => (
+              {/* 유저 정보 관리 */}
+              <div className="admin__nav-section">
                 <button
-                  key={item.id}
-                  onClick={() => setActiveSection(item.id)}
-                  className={`admin__nav-item ${activeSection === item.id ? 'admin__nav-item--active' : ''}`}
+                  onClick={() => {
+                    setActiveSection('user-info');
+                    setActiveSubSection(null);
+                  }}
+                  className={`admin__nav-section-title ${activeSection === 'user-info' ? 'admin__nav-section-title--active' : ''}`}
                 >
-                  {item.label}
+                  유저 정보 관리
                 </button>
-              ))}
-              <button
-                onClick={() => setActiveSection('pending')}
-                className={`admin__nav-item ${activeSection === 'pending' ? 'admin__nav-item--active' : ''}`}
-              >
-                승인 대기 목록
-                <span className="admin__badge">{pendingUsers.length}</span>
-              </button>
-              <button
-                onClick={() => { setActiveSection('posts'); loadPosts(); }}
-                className={`admin__nav-item ${activeSection === 'posts' ? 'admin__nav-item--active' : ''}`}
-              >
-                글 관리
-              </button>
+                <div className="admin__nav-subsection">
+                  <button
+                    onClick={() => {
+                      setActiveSection('user-info');
+                      setActiveSubSection('user-info');
+                    }}
+                    className={`admin__nav-item ${activeSection === 'user-info' && activeSubSection === 'user-info' ? 'admin__nav-item--active' : ''}`}
+                  >
+                    유저 정보
+                  </button>
+                  <button
+                    onClick={() => {
+                      setActiveSection('pending');
+                      setActiveSubSection('pending');
+                    }}
+                    className={`admin__nav-item ${activeSection === 'pending' ? 'admin__nav-item--active' : ''}`}
+                  >
+                    승인 대기 목록
+                    {pendingUsers.length > 0 && <span className="admin__badge">{pendingUsers.length}</span>}
+                  </button>
+                  <button
+                    onClick={() => {
+                      setActiveSection('mileage');
+                      setActiveSubSection('mileage');
+                    }}
+                    className={`admin__nav-item ${activeSection === 'mileage' ? 'admin__nav-item--active' : ''}`}
+                  >
+                    마일리지 지급
+                  </button>
+                </div>
+              </div>
+
+              {/* 글 관리 */}
+              <div className="admin__nav-section">
+                <button
+                  onClick={() => {
+                    setActiveSection('posts');
+                    setActiveSubSection(null);
+                  }}
+                  className={`admin__nav-section-title ${activeSection === 'posts' ? 'admin__nav-section-title--active' : ''}`}
+                >
+                  글 관리
+                </button>
+                <div className="admin__nav-subsection">
+                  <button
+                    onClick={() => {
+                      setActiveSection('posts');
+                      setActiveSubSection('posts-edit');
+                    }}
+                    className={`admin__nav-item ${activeSection === 'posts' && activeSubSection === 'posts-edit' ? 'admin__nav-item--active' : ''}`}
+                  >
+                    포스트 수정/삭제
+                  </button>
+                  <button
+                    onClick={() => {
+                      setActiveSection('pin-post');
+                      setActiveSubSection('pin-post');
+                    }}
+                    className={`admin__nav-item ${activeSection === 'pin-post' ? 'admin__nav-item--active' : ''}`}
+                  >
+                    게시글 고정
+                  </button>
+                </div>
+              </div>
+
+              {/* 카테고리 관리 */}
+              <div className="admin__nav-section">
+                <button
+                  onClick={() => {
+                    setActiveSection('category-order');
+                    setActiveSubSection(null);
+                  }}
+                  className={`admin__nav-section-title ${activeSection === 'category-order' || activeSection === 'category-edit' || activeSection === 'category-deactivate' ? 'admin__nav-section-title--active' : ''}`}
+                >
+                  카테고리 관리
+                </button>
+                <div className="admin__nav-subsection">
+                  <button
+                    onClick={() => {
+                      setActiveSection('category-order');
+                      setActiveSubSection('category-order');
+                    }}
+                    className={`admin__nav-item ${activeSection === 'category-order' ? 'admin__nav-item--active' : ''}`}
+                  >
+                    순서 설정
+                  </button>
+                  <button
+                    onClick={() => {
+                      setActiveSection('category-edit');
+                      setActiveSubSection('category-edit');
+                    }}
+                    className={`admin__nav-item ${activeSection === 'category-edit' ? 'admin__nav-item--active' : ''}`}
+                  >
+                    카테고리 수정
+                  </button>
+                  <button
+                    onClick={() => {
+                      setActiveSection('category-deactivate');
+                      setActiveSubSection('category-deactivate');
+                    }}
+                    className={`admin__nav-item ${activeSection === 'category-deactivate' ? 'admin__nav-item--active' : ''}`}
+                  >
+                    카테고리 비활성화
+                  </button>
+                </div>
+              </div>
             </nav>
           </aside>
 
@@ -670,10 +1172,160 @@ function AdminDashboard() {
           <main className="admin__content">
             {renderContent()}
           </main>
-
         </div>
       </div>
       <Footer />
+
+      {/* 카테고리 추가 모달 */}
+      {showAddCategoryModal && (
+        <div className="admin__modal-overlay" onClick={() => setShowAddCategoryModal(false)}>
+          <div className="admin__modal" onClick={(e) => e.stopPropagation()}>
+            <div className="admin__modal-header">
+              <h3>카테고리 추가</h3>
+              <button
+                className="admin__modal-close"
+                onClick={() => {
+                  setShowAddCategoryModal(false);
+                  setNewCategoryName('');
+                  setNewCategorySlug('');
+                  setNewCategoryParentId(null);
+                }}
+              >
+                ✕
+              </button>
+            </div>
+
+            <div style={{ padding: '20px' }}>
+              <div style={{ marginBottom: '16px' }}>
+                <label style={{
+                  display: 'block',
+                  marginBottom: '6px',
+                  fontSize: '13px',
+                  fontWeight: 600,
+                  fontFamily: 'Pretendard, sans-serif',
+                  color: 'var(--color-black)'
+                }}>
+                  카테고리명 *
+                </label>
+                <input
+                  type="text"
+                  value={newCategoryName}
+                  onChange={(e) => setNewCategoryName(e.target.value)}
+                  placeholder="예: 공지사항"
+                  style={{
+                    width: '100%',
+                    padding: '8px 12px',
+                    fontSize: '14px',
+                    fontFamily: 'Pretendard, sans-serif',
+                    border: '1px solid var(--color-gray-200)',
+                    borderRadius: '4px',
+                    outline: 'none'
+                  }}
+                />
+              </div>
+
+              <div style={{ marginBottom: '16px' }}>
+                <label style={{
+                  display: 'block',
+                  marginBottom: '6px',
+                  fontSize: '13px',
+                  fontWeight: 600,
+                  fontFamily: 'Pretendard, sans-serif',
+                  color: 'var(--color-black)'
+                }}>
+                  슬러그 (URL) *
+                </label>
+                <input
+                  type="text"
+                  value={newCategorySlug}
+                  onChange={(e) => setNewCategorySlug(e.target.value)}
+                  placeholder="예: notice"
+                  style={{
+                    width: '100%',
+                    padding: '8px 12px',
+                    fontSize: '14px',
+                    fontFamily: 'Pretendard, sans-serif',
+                    border: '1px solid var(--color-gray-200)',
+                    borderRadius: '4px',
+                    outline: 'none'
+                  }}
+                />
+                <p style={{
+                  marginTop: '4px',
+                  fontSize: '11px',
+                  color: 'var(--color-gray-400)',
+                  fontFamily: 'Pretendard, sans-serif'
+                }}>
+                  영문 소문자, 숫자, 하이픈(-)만 사용 가능합니다.
+                </p>
+              </div>
+
+              <div style={{ marginBottom: '20px' }}>
+                <label style={{
+                  display: 'block',
+                  marginBottom: '6px',
+                  fontSize: '13px',
+                  fontWeight: 600,
+                  fontFamily: 'Pretendard, sans-serif',
+                  color: 'var(--color-black)'
+                }}>
+                  부모 카테고리 (선택사항)
+                </label>
+                <select
+                  value={newCategoryParentId || ''}
+                  onChange={(e) => setNewCategoryParentId(e.target.value ? Number(e.target.value) : null)}
+                  style={{
+                    width: '100%',
+                    padding: '8px 12px',
+                    fontSize: '14px',
+                    fontFamily: 'Pretendard, sans-serif',
+                    border: '1px solid var(--color-gray-200)',
+                    borderRadius: '4px',
+                    outline: 'none',
+                    backgroundColor: '#ffffff'
+                  }}
+                >
+                  <option value="">최상위 카테고리</option>
+                  {allCategoriesFlat.map(category => (
+                    <option key={category.id} value={category.id}>
+                      {'  '.repeat(category.level)}{category.name}
+                    </option>
+                  ))}
+                </select>
+              </div>
+
+              <div style={{
+                display: 'flex',
+                gap: '8px',
+                justifyContent: 'flex-end',
+                paddingTop: '16px',
+                borderTop: '1px solid var(--color-gray-200)'
+              }}>
+                <button
+                  className="admin__btn"
+                  onClick={() => {
+                    setShowAddCategoryModal(false);
+                    setNewCategoryName('');
+                    setNewCategorySlug('');
+                    setNewCategoryParentId(null);
+                  }}
+                  disabled={addingCategory}
+                >
+                  취소
+                </button>
+                <button
+                  className="admin__btn--approve"
+                  onClick={handleAddCategory}
+                  disabled={addingCategory}
+                  style={{ padding: '8px 20px' }}
+                >
+                  {addingCategory ? '추가 중...' : '추가'}
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
