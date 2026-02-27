@@ -16,7 +16,6 @@ CREATE TABLE IF NOT EXISTS users (
     nickname VARCHAR(20) NOT NULL UNIQUE,
     password VARCHAR(255) NOT NULL,
     student_num VARCHAR(20) NOT NULL,
-    phone_num VARCHAR(20) NOT NULL,
     email VARCHAR(40) NOT NULL UNIQUE,
     university_name VARCHAR(100),
     major VARCHAR(20) NOT NULL,

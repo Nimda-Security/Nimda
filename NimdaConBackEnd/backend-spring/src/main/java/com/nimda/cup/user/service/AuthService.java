@@ -104,12 +104,12 @@ public class AuthService {
      */
     @Transactional
     public User register(String userId, String name, String nickname, String password,
-            String studentNum, String phoneNum, String email, String major,
+            String studentNum, String email, String major,
             String universityName, String grade) {
 
         // UserService에 사용자 생성 위임 (중복 확인 포함)
         User user = userService.createUser(userId, name, nickname, password,
-                studentNum, phoneNum, email, major, universityName, grade);
+                studentNum, email, major, universityName, grade);
 
         // 비밀번호를 제외한 사용자 정보 반환
         User userWithoutPassword = new User();

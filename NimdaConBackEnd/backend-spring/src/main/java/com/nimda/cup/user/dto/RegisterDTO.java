@@ -34,10 +34,6 @@ public class RegisterDTO {
     @Size(min = 9, max = 9, message = "Student number must be exactly 9 characters")
     private String studentNum;
 
-    @NotBlank(message = "Phone number is required")
-    @Size(max = 20, message = "Phone number must be at most 20 characters")
-    private String phoneNum;
-
     @NotBlank(message = "Email is required")
     @Email(message = "Email should be valid")
     private String email;
