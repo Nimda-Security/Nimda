@@ -31,6 +31,7 @@ package com.nimda.cite.board.entity;
  */
 
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
+import com.fasterxml.jackson.annotation.JsonProperty;
 import com.nimda.cite.board.entity.Category;
 import com.nimda.cup.common.entity.BaseTimeEntity;
 import com.nimda.cup.user.entity.User;
@@ -89,6 +90,7 @@ public class Board extends BaseTimeEntity {
     // [참고] 좋아요는 별도 테이블로 관리하므로 Board 엔터티에 포함하지 않음
     // 좋아요를 별도 테아블로 관리하면 게시글 리스트에서 좋아요 수를 참조할 때
     @Column(name = "post_view", nullable = false)
+    @JsonProperty("views")
     private Integer postView = 0;
 
     // ========== [메인 페이지 API 필요] ==========
