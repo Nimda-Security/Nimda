@@ -270,6 +270,9 @@ function BoardListPage({ slug: propSlug }: BoardListPageProps) {
                 </span>
                 <div className="board-list__meta">
                   <span className="board-list__author">{post.author?.nickname || '익명'}</span>
+                  {post.likeCount !== undefined && post.likeCount > 0 && (
+                    <span className="board-list__likes">❤️ {post.likeCount}</span>
+                  )}
                   <span className="board-list__date">{formatDate(post.createdAt)}</span>
                 </div>
                 <div className="board-list__row-divider" />
@@ -289,6 +292,9 @@ function BoardListPage({ slug: propSlug }: BoardListPageProps) {
                 </span>
                 <div className="board-list__meta">
                   <span className="board-list__author">{post.author?.nickname || '익명'}</span>
+                  {post.likeCount !== undefined && post.likeCount > 0 && (
+                    <span className="board-list__likes">❤️ {post.likeCount}</span>
+                  )}
                   <span className="board-list__date">{formatDate(post.createdAt)}</span>
                 </div>
                 <div className="board-list__row-divider" />
@@ -320,6 +326,9 @@ function BoardListPage({ slug: propSlug }: BoardListPageProps) {
                     <span className="board-list__author">{post.author?.nickname || '익명'}</span>
                     {post.views > 0 && (
                       <span className="board-list__views">조회 {post.views}</span>
+                    )}
+                    {post.likeCount !== undefined && post.likeCount > 0 && (
+                      <span className="board-list__likes">❤️ {post.likeCount}</span>
                     )}
                     <span className="board-list__date">{formatDate(post.createdAt)}</span>
                   </div>

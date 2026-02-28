@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import Layout from '@/components/Layout';
-import { getBoardDetailAPI, deleteBoardAPI, getFileDownloadURL } from '@/api/board';
+import { getBoardDetailAPI, deleteBoardAPI, getFileDownloadURL, getBoardLikeStatusAPI, toggleBoardLikeAPI } from '@/api/board';
 import type { Board } from '../types';
 
 function BoardDetailPage() {
@@ -12,6 +12,9 @@ function BoardDetailPage() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [isDeleting, setIsDeleting] = useState(false);
+  const [likeCount, setLikeCount] = useState(0);
+  const [isLiked, setIsLiked] = useState(false);
+  const [isTogglingLike, setIsTogglingLike] = useState(false);
 
   useEffect(() => {
     if (id) {
@@ -28,6 +31,8 @@ function BoardDetailPage() {
 
       if (response.success && 'board' in response) {
         setBoard(response.board);
+        // 좋아요 상태 조회
+        await fetchLikeStatus(boardId);
       } else {
         setError(response.message);
       }
@@ -35,6 +40,39 @@ function BoardDetailPage() {
       setError('게시글을 불러오는 중 오류가 발생했습니다.');
     } finally {
       setLoading(false);
+    }
+  };
+
+  const fetchLikeStatus = async (boardId: number) => {
+    try {
+      const response = await getBoardLikeStatusAPI(boardId);
+      if (response.success && 'data' in response) {
+        setLikeCount(response.data.likeCount);
+        setIsLiked(response.data.isLiked);
+      }
+    } catch (err) {
+      // 좋아요 상태 조회 실패는 무시 (로그인하지 않은 사용자일 수 있음)
+      console.log('좋아요 상태 조회 실패:', err);
+    }
+  };
+
+  const handleToggleLike = async () => {
+    if (!board || isTogglingLike) return;
+
+    try {
+      setIsTogglingLike(true);
+      const response = await toggleBoardLikeAPI(board.id);
+
+      if (response.success && 'data' in response) {
+        setLikeCount(response.data.likeCount);
+        setIsLiked(response.data.isLiked);
+      } else {
+        alert(response.message || '좋아요 처리에 실패했습니다.');
+      }
+    } catch (err) {
+      alert('좋아요 처리 중 오류가 발생했습니다.');
+    } finally {
+      setIsTogglingLike(false);
     }
   };
 
@@ -144,6 +182,15 @@ function BoardDetailPage() {
               <span>{board.author.nickname}</span>
               <span>{new Date(board.createdAt).toLocaleString()}</span>
               <span>조회 {board.views}</span>
+              <button
+                onClick={handleToggleLike}
+                disabled={isTogglingLike}
+                className={`flex items-center gap-1 hover:opacity-80 disabled:opacity-50 ${isLiked ? 'text-red-500' : 'text-gray-600'
+                  }`}
+              >
+                <span>{isLiked ? '❤️' : '🤍'}</span>
+                <span>좋아요 {likeCount}</span>
+              </button>
               {board.filename && (
                 <button
                   onClick={handleFileDownload}

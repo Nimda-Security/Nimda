@@ -35,6 +35,7 @@ export interface Board {
   category: Category;
   author: BoardAuthor;
   views: number;
+  likeCount?: number; // 좋아요 개수 (선택적)
   pinned: boolean;
   filename?: string | null;
   filepath?: string | null;

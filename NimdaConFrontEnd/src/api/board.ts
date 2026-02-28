@@ -507,3 +507,129 @@ export const getFileDownloadURL = (filepath: string | null | undefined): string 
   return filepath;
 };
 
+/**
+ * 좋아요 상태 조회 응답
+ */
+export interface BoardLikeStatusResponse {
+  success: boolean;
+  message: string;
+  data: {
+    likeCount: number;
+    isLiked: boolean;
+  };
+}
+
+/**
+ * 좋아요 토글 응답
+ */
+export interface BoardLikeToggleResponse {
+  success: boolean;
+  message: string;
+  data: {
+    message: string;
+    likeCount: number;
+    isLiked: boolean;
+  };
+}
+
+const LIKE_API_BASE_URL = '/api/like/board';
+
+/**
+ * 게시글 좋아요 상태 조회 API
+ * 
+ * @param boardId 게시글 ID
+ * @returns 좋아요 상태 (개수, 사용자 좋아요 여부)
+ */
+export const getBoardLikeStatusAPI = async (
+  boardId: number
+): Promise<BoardLikeStatusResponse | BoardErrorResponse> => {
+  try {
+    const token = localStorage.getItem('authToken');
+
+    if (!token) {
+      return {
+        success: false,
+        message: '로그인이 필요합니다.',
+      };
+    }
+
+    const response = await fetch(`${LIKE_API_BASE_URL}/${boardId}/likeStatus`, {
+      method: 'GET',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${token}`,
+      },
+    });
+
+    const result = await parseJsonSafe(response);
+
+    if (response.ok && result?.success) {
+      return {
+        success: true,
+        message: result.message || '좋아요 상태를 조회했습니다.',
+        data: result.data || result,
+      };
+    }
+
+    return {
+      success: false,
+      message: (result?.message as string) || '좋아요 상태 조회에 실패했습니다.',
+    };
+  } catch (error) {
+    console.error('좋아요 상태 조회 API 오류:', error);
+    return {
+      success: false,
+      message: '좋아요 상태를 불러올 수 없습니다.',
+    };
+  }
+};
+
+/**
+ * 게시글 좋아요 토글 API
+ * 
+ * @param boardId 게시글 ID
+ * @returns 좋아요 토글 결과 (메시지, 개수, 사용자 좋아요 여부)
+ */
+export const toggleBoardLikeAPI = async (
+  boardId: number
+): Promise<BoardLikeToggleResponse | BoardErrorResponse> => {
+  try {
+    const token = localStorage.getItem('authToken');
+
+    if (!token) {
+      return {
+        success: false,
+        message: '로그인이 필요합니다.',
+      };
+    }
+
+    const response = await fetch(`${LIKE_API_BASE_URL}/${boardId}`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${token}`,
+      },
+    });
+
+    const result = await parseJsonSafe(response);
+
+    if (response.ok && result?.success) {
+      return {
+        success: true,
+        message: result.message || '좋아요가 처리되었습니다.',
+        data: result.data || result,
+      };
+    }
+
+    return {
+      success: false,
+      message: (result?.message as string) || '좋아요 처리에 실패했습니다.',
+    };
+  } catch (error) {
+    console.error('좋아요 토글 API 오류:', error);
+    return {
+      success: false,
+      message: '좋아요를 처리할 수 없습니다.',
+    };
+  }
+};
