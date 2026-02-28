@@ -1,10 +1,14 @@
 package com.nimda.cite.board.controller;
 
+import com.nimda.cite.board.dto.BoardListResponseDTO;
+import com.nimda.cite.board.dto.BoardResponseDTO;
+import com.nimda.cite.board.dto.CategoryResponseDTO;
 import com.nimda.cite.board.entity.Board;
 import com.nimda.cite.board.entity.Category;
 import com.nimda.cite.board.repository.CategoryRepository;
 import com.nimda.cite.board.service.BoardService;
 import com.nimda.cite.common.response.ApiResponse;
+import com.nimda.cite.like.service.BoardLikeService;
 import com.nimda.cup.common.util.JwtUtil;
 import com.nimda.cup.user.entity.User;
 import com.nimda.cup.user.repository.UserRepository;
@@ -19,7 +23,6 @@ import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
@@ -38,6 +41,9 @@ public class BoardController {
 
     @Autowired
     private UserRepository userRepository;
+
+    @Autowired
+    private BoardLikeService boardLikeService;
 
     @GetMapping
     public ResponseEntity<?> getPostsByCategory(
@@ -88,13 +94,23 @@ public class BoardController {
                 }
             }
 
-            Map<String, Object> data = Map.of(
-                    "posts", boards.getContent(),
-                    "totalElements", boards.getTotalElements(),
-                    "totalPages", boards.getTotalPages(),
-                    "currentPage", boards.getNumber(),
-                    "category", category);
-            return ApiResponse.ok("게시글 목록을 성공적으로 조회했습니다.", data).toResponse();
+            // 게시글 목록에 좋아요 개수 추가하여 DTO로 변환
+            List<BoardResponseDTO> postsDTO = boards.getContent().stream()
+                    .map(board -> {
+                        long likeCount = boardLikeService.getLikeCount(board.getId());
+                        return BoardResponseDTO.from(board, likeCount);
+                    })
+                    .collect(java.util.stream.Collectors.toList());
+
+            BoardListResponseDTO responseDTO = BoardListResponseDTO.builder()
+                    .posts(postsDTO)
+                    .totalElements(boards.getTotalElements())
+                    .totalPages(boards.getTotalPages())
+                    .currentPage(boards.getNumber())
+                    .category(CategoryResponseDTO.from(category))
+                    .build();
+
+            return ApiResponse.ok("게시글 목록을 성공적으로 조회했습니다.", responseDTO).toResponse();
 
         } catch (Exception e) {
             return ApiResponse.fail("게시글 목록 조회 중 오류가 발생했습니다: " + e.getMessage())
@@ -120,10 +136,24 @@ public class BoardController {
             }
 
             Page<Board> boards = boardService.boardListByCategoryWithPinned(category, pageable);
-            Map<String, Object> data = Map.of(
-                    "posts", boards.getContent(),
-                    "totalElements", boards.getTotalElements());
-            return ApiResponse.ok("고정글 목록을 성공적으로 조회했습니다.", data).toResponse();
+
+            // 고정글 목록에 좋아요 개수 추가하여 DTO로 변환
+            List<BoardResponseDTO> postsDTO = boards.getContent().stream()
+                    .map(board -> {
+                        long likeCount = boardLikeService.getLikeCount(board.getId());
+                        return BoardResponseDTO.from(board, likeCount);
+                    })
+                    .collect(java.util.stream.Collectors.toList());
+
+            BoardListResponseDTO responseDTO = BoardListResponseDTO.builder()
+                    .posts(postsDTO)
+                    .totalElements(boards.getTotalElements())
+                    .totalPages(boards.getTotalPages())
+                    .currentPage(boards.getNumber())
+                    .category(CategoryResponseDTO.from(category))
+                    .build();
+
+            return ApiResponse.ok("고정글 목록을 성공적으로 조회했습니다.", responseDTO).toResponse();
 
         } catch (Exception e) {
             return ApiResponse.fail("고정글 목록 조회 중 오류가 발생했습니다: " + e.getMessage())
@@ -138,8 +168,8 @@ public class BoardController {
             @PageableDefault(size = 10, sort = "createdAt", direction = Sort.Direction.DESC) Pageable pageable) {
         try {
             Page<Board> boards;
+            Category category = null;
             if (categoryId != null || slug != null) {
-                Category category = null;
                 if (categoryId != null) {
                     category = categoryRepository.findById(categoryId)
                             .orElseThrow(() -> new RuntimeException("카테고리를 찾을 수 없습니다: " + categoryId));
@@ -152,12 +182,23 @@ public class BoardController {
                 boards = boardService.boardListPopular(pageable);
             }
 
-            Map<String, Object> data = Map.of(
-                    "posts", boards.getContent(),
-                    "totalElements", boards.getTotalElements(),
-                    "totalPages", boards.getTotalPages(),
-                    "currentPage", boards.getNumber());
-            return ApiResponse.ok("인기글 목록을 성공적으로 조회했습니다.", data).toResponse();
+            // 인기글 목록에 좋아요 개수 추가하여 DTO로 변환
+            List<BoardResponseDTO> postsDTO = boards.getContent().stream()
+                    .map(board -> {
+                        long likeCount = boardLikeService.getLikeCount(board.getId());
+                        return BoardResponseDTO.from(board, likeCount);
+                    })
+                    .collect(java.util.stream.Collectors.toList());
+
+            BoardListResponseDTO responseDTO = BoardListResponseDTO.builder()
+                    .posts(postsDTO)
+                    .totalElements(boards.getTotalElements())
+                    .totalPages(boards.getTotalPages())
+                    .currentPage(boards.getNumber())
+                    .category(category != null ? CategoryResponseDTO.from(category) : null)
+                    .build();
+
+            return ApiResponse.ok("인기글 목록을 성공적으로 조회했습니다.", responseDTO).toResponse();
 
         } catch (Exception e) {
             return ApiResponse.fail("인기글 목록 조회 중 오류가 발생했습니다: " + e.getMessage())
