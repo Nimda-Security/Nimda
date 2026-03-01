@@ -633,3 +633,54 @@ export const toggleBoardLikeAPI = async (
     };
   }
 };
+
+/**
+ * 게시글 고정/해제 토글 API
+ * 
+ * @param boardId 게시글 ID
+ * @returns 게시글 고정/해제 응답
+ */
+export const toggleBoardPinAPI = async (
+  boardId: number
+): Promise<BoardWriteResponse | BoardErrorResponse> => {
+  try {
+    const token = localStorage.getItem('authToken');
+
+    if (!token) {
+      return {
+        success: false,
+        message: '로그인이 필요합니다.',
+      };
+    }
+
+    const response = await fetch(`${API_BASE_URL}/${boardId}/pin`, {
+      method: 'PATCH',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${token}`,
+      },
+    });
+
+    const result = await parseJsonSafe(response);
+
+    if (response.ok && result?.success) {
+      const data = result.data || result;
+      return {
+        success: true,
+        message: result.message || '게시글 고정 상태가 변경되었습니다.',
+        board: data.board || result.board,
+      };
+    }
+
+    return {
+      success: false,
+      message: (result?.message as string) || '게시글 고정/해제에 실패했습니다.',
+    };
+  } catch (error) {
+    console.error('게시글 고정/해제 API 오류:', error);
+    return {
+      success: false,
+      message: '게시글 고정/해제 중 오류가 발생했습니다.',
+    };
+  }
+};

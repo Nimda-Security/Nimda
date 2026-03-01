@@ -120,47 +120,47 @@ function BoardListPage({ slug: propSlug }: BoardListPageProps) {
     let cancelled = false;
 
     const fetchPosts = async () => {
-      try {
-        setLoading(true);
-        setError(null);
+    try {
+      setLoading(true);
+      setError(null);
 
         const targetSlug = activeTab === 'all' ? slug : activeTab;
 
-        const response = await getBoardListAPI({
+      const response = await getBoardListAPI({
           slug: targetSlug,
-          searchKeyword: searchKeyword || undefined,
-          page: currentPage,
+        searchKeyword: searchKeyword || undefined,
+        page: currentPage,
           size: 20,
-          sort: 'createdAt,desc',
+        sort: 'createdAt,desc',
           includeChildren: activeTab === 'all' || undefined,
-        });
+      });
 
         if (cancelled) return;
 
-        if (response.success) {
+      if (response.success) {
           const pinned = response.posts.filter(p => p.pinned);
           const regular = response.posts.filter(p => !p.pinned);
           setPinnedPosts(pinned);
           setBoards(regular);
-          setTotalPages(response.totalPages);
+        setTotalPages(response.totalPages);
           if (activeTab === 'all' && response.category?.id) {
-            setCategory(response.category);
-          }
-        } else {
-          setError(response.message);
-          setBoards([]);
-          setPinnedPosts([]);
+          setCategory(response.category);
         }
+      } else {
+        setError(response.message);
+        setBoards([]);
+          setPinnedPosts([]);
+      }
       } catch {
         if (!cancelled) {
-          setError('게시글 목록을 불러오는 중 오류가 발생했습니다.');
-          setBoards([]);
+      setError('게시글 목록을 불러오는 중 오류가 발생했습니다.');
+      setBoards([]);
           setPinnedPosts([]);
         }
-      } finally {
+    } finally {
         if (!cancelled) setLoading(false);
-      }
-    };
+    }
+  };
 
     fetchPosts();
     return () => { cancelled = true; };
@@ -223,7 +223,7 @@ function BoardListPage({ slug: propSlug }: BoardListPageProps) {
           <button className="board-list__write-btn" onClick={handleWriteClick}>
             글쓰기
           </button>
-        </div>
+            </div>
 
         {/* 말머리 탭 */}
         {childCategories.length > 0 && (
@@ -243,7 +243,7 @@ function BoardListPage({ slug: propSlug }: BoardListPageProps) {
                 {child.name}
               </button>
             ))}
-          </div>
+            </div>
         )}
 
         {/* 구분선 */}
@@ -255,15 +255,15 @@ function BoardListPage({ slug: propSlug }: BoardListPageProps) {
         {/* 에러 */}
         {error && <div className="board-list__status board-list__status--error">{error}</div>}
 
-        {!loading && !error && (
+            {!loading && !error && (
           <>
             {/* ===== 글로벌 공지 (notice 카테고리 고정글) - "필독", 핑크 배경 ===== */}
             {displayGlobalNotices.map(post => (
-              <div
+                    <div
                 key={`notice-${post.id}`}
                 className="board-list__row board-list__row--pinned"
                 onClick={() => navigate(`/board/notice/${post.id}`)}
-              >
+                    >
                 <span className="board-list__tag board-list__tag--red">필독</span>
                 <span className="board-list__post-title board-list__post-title--bold">
                   {post.title}
@@ -274,9 +274,9 @@ function BoardListPage({ slug: propSlug }: BoardListPageProps) {
                     <span className="board-list__likes">❤️ {post.likeCount}</span>
                   )}
                   <span className="board-list__date">{formatDate(post.createdAt)}</span>
-                </div>
+                      </div>
                 <div className="board-list__row-divider" />
-              </div>
+                    </div>
             ))}
 
             {/* ===== 현재 카테고리 고정글 - "공지", 회색 배경 ===== */}
@@ -357,10 +357,10 @@ function BoardListPage({ slug: propSlug }: BoardListPageProps) {
                   ‹
                 </button>
                 {renderPageNumbers().map(page => (
-                  <button
-                    key={page}
+                <button
+                  key={page}
                     className={`board-list__page-num ${page === currentPage ? 'board-list__page-num--active' : ''}`}
-                    onClick={() => handlePageChange(page)}
+                  onClick={() => handlePageChange(page)}
                   >
                     {page + 1}
                   </button>
@@ -381,8 +381,8 @@ function BoardListPage({ slug: propSlug }: BoardListPageProps) {
                 >
                   »
                 </button>
-              </div>
-            )}
+            </div>
+          )}
 
             {/* ===== 검색 ===== */}
             <form className="board-list__search" onSubmit={handleSearch}>

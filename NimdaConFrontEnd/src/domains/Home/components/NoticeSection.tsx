@@ -117,25 +117,25 @@ const NoticeSection: React.FC = () => {
           <div
             key={item.id}
             className={`home-notice__row ${item.tagType === "pinned"
-              ? "home-notice__row--pinned"
-              : item.tagType === "notice"
+                ? "home-notice__row--pinned"
+                : item.tagType === "notice"
                 ? "home-notice__row--notice"
                 : "home-notice__row--normal"
-              }`}
+            }`}
           >
             <div
               className={`home-notice__tag ${item.tagType === "pinned" || item.tagType === "notice"
-                ? "home-notice__tag--red"
-                : "home-notice__tag--gray"
-                }`}
+                  ? "home-notice__tag--red"
+                  : "home-notice__tag--gray"
+              }`}
             >
               {item.tag}
             </div>
             <p
               className={`home-notice__title ${item.tagType === "pinned"
-                ? "home-notice__title--bold"
-                : ""
-                }`}
+                  ? "home-notice__title--bold"
+                  : ""
+              }`}
             >
               {item.title}
             </p>
