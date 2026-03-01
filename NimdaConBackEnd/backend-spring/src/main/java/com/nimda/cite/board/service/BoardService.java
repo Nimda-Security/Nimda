@@ -132,4 +132,18 @@ public class BoardService {
         }
         boardRepository.deleteById(id);
     }
+
+    // Note. toggleBoardPin - 게시글 고정/해제 토글
+    // ... 고정/해제는 관리자만 가능하며 권한 체크는 BoardController에서 진행한다.
+    @Transactional
+    public Board toggleBoardPin(Long id) {
+        Board board = boardRepository.findById(id)
+                .orElseThrow(() -> new RuntimeException("게시글을 찾을 수 없습니다: " + id));
+
+        // 현재 고정 상태를 반전
+        board.setPinned(!board.getPinned());
+        boardRepository.save(board);
+
+        return board;
+    }
 }

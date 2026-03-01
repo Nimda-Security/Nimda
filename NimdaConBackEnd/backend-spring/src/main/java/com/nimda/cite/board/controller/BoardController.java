@@ -366,4 +366,49 @@ public class BoardController {
                     .toResponse(HttpStatus.INTERNAL_SERVER_ERROR);
         }
     }
+
+    @PatchMapping("/{id}/pin")
+    public ResponseEntity<?> togglePin(
+            @RequestHeader(value = "Authorization", required = false) String authHeader,
+            @PathVariable("id") Long id) {
+        try {
+            User currentUser = null;
+            if (authHeader != null && authHeader.startsWith("Bearer ")) {
+                String token = authHeader.substring(7);
+                try {
+                    Long userId = jwtUtil.extractUserId(token);
+                    if (userId != null && !jwtUtil.isTokenExpired(token)) {
+                        currentUser = userRepository.findById(userId)
+                                .orElseThrow(() -> new RuntimeException("사용자를 찾을 수 없습니다: " + userId));
+                    }
+                } catch (Exception e) {
+                    // 토큰이 유효하지 않으면 에러 반환
+                }
+            }
+
+            if (currentUser == null) {
+                return ApiResponse.fail("로그인이 필요합니다.").toResponse(HttpStatus.UNAUTHORIZED);
+            }
+
+            // 관리자만 고정/해제 가능
+            boolean isAdmin = currentUser.getAuthorities().stream()
+                    .anyMatch(authority -> authority.getAuthorityName().equals("ROLE_ADMIN"));
+
+            if (!isAdmin) {
+                return ApiResponse.fail("게시글을 고정/해제할 권한이 없습니다. 관리자만 가능합니다.").toResponse(HttpStatus.FORBIDDEN);
+            }
+
+            Board board = boardService.toggleBoardPin(id);
+            String message = board.getPinned() ? "게시글이 고정되었습니다." : "게시글 고정이 해제되었습니다.";
+
+            return ApiResponse.ok(message, Map.of("board", board)).toResponse();
+
+        } catch (RuntimeException e) {
+            return ApiResponse.fail(e.getMessage()).toResponse(HttpStatus.NOT_FOUND);
+
+        } catch (Exception e) {
+            return ApiResponse.fail("게시글 고정/해제 중 오류가 발생했습니다: " + e.getMessage())
+                    .toResponse(HttpStatus.INTERNAL_SERVER_ERROR);
+        }
+    }
 }
