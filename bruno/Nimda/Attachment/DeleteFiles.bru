@@ -1,0 +1,24 @@
+meta {
+  name: DeleteFiles
+  type: http
+  seq: 5
+}
+
+delete {
+  url: {{baseUrl}}/api/cite/attachments
+  body: json
+  auth: bearer
+}
+
+auth:bearer {
+  token: {{jwtToken}}
+}
+
+body:json {
+  {"fileIds": [1, 2]}
+}
+
+settings {
+  encodeUrl: true
+  timeout: 0
+}
