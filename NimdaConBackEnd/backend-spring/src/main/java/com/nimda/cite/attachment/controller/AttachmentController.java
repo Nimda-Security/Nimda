@@ -1,5 +1,6 @@
 package com.nimda.cite.attachment.controller;
 
+import com.nimda.cite.attachment.dto.AttachmentDeleteRequestDto;
 import com.nimda.cite.attachment.dto.AttachmentResponseDto;
 import com.nimda.cite.attachment.entity.Attachment;
 import com.nimda.cite.attachment.service.AttachmentService;
@@ -131,12 +132,12 @@ public class AttachmentController {
     @DeleteMapping
     public ResponseEntity<?> delete(
             @RequestHeader(value = "Authorization", required = false) String authHeader,
-            @RequestBody Map<String, List<Long>> payload) {
+            @RequestBody AttachmentDeleteRequestDto request) {
         Long userId = resolveUserId(authHeader);
         if (userId == null) {
             return ApiResponse.fail("로그인이 필요합니다.").toResponse(HttpStatus.UNAUTHORIZED);
         }
-        List<Long> fileIds = payload != null ? payload.get("fileIds") : null;
+        List<Long> fileIds = request != null ? request.getFileIds() : null;
         if (fileIds == null || fileIds.isEmpty()) {
             return ApiResponse.fail("fileIds가 필요합니다.").toResponse(HttpStatus.BAD_REQUEST);
         }
