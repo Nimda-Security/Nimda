@@ -31,6 +31,7 @@ public class BoardLikeService {
     private final AlarmService alarmService;
     private final ApplicationEventPublisher eventPublisher;
 
+    
     @Transactional
     public String toggleLike(Long userId, Long boardId) {
         // 좋아요 누른 사람
