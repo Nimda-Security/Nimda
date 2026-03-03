@@ -9,6 +9,7 @@ import com.nimda.cite.notification.dto.NotificationResponse;
 import com.nimda.cite.notification.entity.Notification;
 import com.nimda.cite.notification.enums.NotificationType;
 import com.nimda.cite.notification.repositroy.NotificationRepositroy;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.transaction.annotation.Transactional;
 import lombok.RequiredArgsConstructor;
 import org.springframework.context.event.EventListener;
@@ -21,7 +22,6 @@ import java.io.IOException;
 // 비동기 Configuration 설정 및 메인에 @EnableAsync 붙이기
 @RequiredArgsConstructor
 @Service
-@Transactional(readOnly = true)
 public class AlarmService {
 
     private final SseEmitterRepository sseEmitterRepository;
