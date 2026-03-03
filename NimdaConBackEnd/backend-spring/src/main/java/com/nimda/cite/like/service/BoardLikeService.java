@@ -34,8 +34,13 @@ public class BoardLikeService {
     @Transactional
     public String toggleLike(Long userId, Long boardId) {
         // 좋아요 누른 사람
-        User liker = userRepository.findById(userId).orElseThrow();
-        Board board = boardRepository.findById(boardId).orElseThrow();
+        User liker = userRepository.findById(userId).orElseThrow(
+                () -> new ResponseStatusException(HttpStatus.NOT_FOUND)
+        );
+
+        Board board = boardRepository.findById(boardId).orElseThrow(
+                () -> new ResponseStatusException(HttpStatus.NOT_FOUND)
+        );
 
         Optional<BoardLike> like = boardLikeRepository.findByBoardAndLiker(board, liker);
 
@@ -59,7 +64,6 @@ public class BoardLikeService {
 
                 eventPublisher.publishEvent(new PushLikeButtonEvent(this,
                         board, board.getAuthor(), liker));
-
 
                 alarmService.send(notification); // AlarmService의 send 메서드 호출
             }
