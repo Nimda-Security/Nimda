@@ -19,8 +19,12 @@ public interface CommentRepository extends JpaRepository<Comment, Long> {
 
     // 댓글 목록 조회
     // [사용] GET /api/cite/board/{boardId}/comments
-    @EntityGraph(attributePaths = {"author"})
-    List<Comment> findByBoardIdAndParentIsNullOrderByCreatedAtAsc(Long boardId);
+    @Query("SELECT c FROM Comment c " +
+            "JOIN FETCH c.author " +
+            "LEFT JOIN FETCH c.parent " +
+            "WHERE c.board.id = :boardId " +
+            "ORDER BY c.createdAt ASC")
+    List<Comment> findAllByBoardIdOrderByCreatedAtAsc(@Param("boardId") Long boardId);
 
     // 대댓글 목록 조회
     // [사용] GET /api/cite/board/{boardId}/comments/{parentId}/children
@@ -34,18 +38,6 @@ public interface CommentRepository extends JpaRepository<Comment, Long> {
 
 
     // =============== UPDATE ===============
-
-    // 대댓글 수 증가
-    // [사용] 대댓글 생성 시 parent의 replyCount 증가
-    @Modifying
-    @Query("UPDATE Comment c SET c.replyCount = c.replyCount + 1 WHERE c.id = :id")
-    int incrementReplyCount(@Param("id") Long id);
-
-    // 대댓글 수 감소
-    // [사용] 대댓글 삭제 시 parent의 replyCount 감소
-    @Modifying
-    @Query("UPDATE Comment c SET c.replyCount = c.replyCount - 1 WHERE c.id = :id AND c.replyCount > 0")
-    int decrementReplyCount(@Param("id") Long id);
 
 
     // =============== DELETE ===============
