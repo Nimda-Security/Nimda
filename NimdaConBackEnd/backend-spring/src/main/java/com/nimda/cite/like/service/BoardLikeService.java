@@ -82,17 +82,29 @@ public class BoardLikeService {
     // PostLikeService 내부에 추가
     @Transactional(readOnly = true)
     public boolean isUserLiked(Long userId, Long boardId) {
-        // Board와 User 객체 존재 확인 후 존재 여부 반환
+        User user = userRepository.findById(userId).orElseThrow(
+                () -> new ResponseStatusException(HttpStatus.NOT_FOUND)
+        );
+
+        Board board = boardRepository.findById(boardId).orElseThrow(
+                () -> new ResponseStatusException(HttpStatus.NOT_FOUND)
+        );
         return boardLikeRepository.existsByBoardIdAndLikerId(boardId, userId);
     }
 
     @Transactional(readOnly = true)
     public long getTotalLikesReceived(Long authorId) {
+        User user = userRepository.findById(authorId).orElseThrow(
+                () -> new ResponseStatusException(HttpStatus.NOT_FOUND)
+        );
         return boardLikeRepository.countTotalLikesByAuthorId(authorId);
     }
 
     @Transactional(readOnly = true)
     public List<Board> getTotalLikeBoards(Long userId) {
+        User user = userRepository.findById(userId).orElseThrow(
+                () -> new ResponseStatusException(HttpStatus.NOT_FOUND)
+        );
         return boardLikeRepository.findAllByLikerId(userId).stream()
                 .map(BoardLike::getBoard)
                 .collect(Collectors.toList());
