@@ -12,7 +12,7 @@ import java.time.LocalDateTime;
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
 @AllArgsConstructor
 @Builder
-@Table(
+@Table(name = "comment_like",
         uniqueConstraints = {
                 @UniqueConstraint(columnNames = {"user_id", "comment_id"}) // 한 사용자가 한 댓글에 중복 좋아요 방지
         }

@@ -5,7 +5,12 @@ import com.nimda.cup.user.entity.User;
 import com.nimda.cup.user.enums.ApprovalStatus;
 import com.nimda.cup.user.exception.UserNotApprovedException;
 import com.nimda.cup.common.util.JwtUtil;
+import com.nimda.cup.user.security.CustomUserDetails;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.context.ApplicationEventPublisher;
+import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
+import org.springframework.security.authentication.event.AuthenticationSuccessEvent;
+import org.springframework.security.core.Authentication;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -21,6 +26,8 @@ public class AuthService {
     private PasswordEncoder passwordEncoder;
     @Autowired
     private JwtUtil jwtUtil;
+    @Autowired
+    private ApplicationEventPublisher eventPublisher;
 
     /**
      * 사용자 인증
@@ -73,6 +80,12 @@ public class AuthService {
         // 권한 정보를 포함한 전체 User 객체 조회 (@EntityGraph로 권한 정보 함께 로드)
         User fullUser = userService.findById(user.getId())
                 .orElseThrow(() -> new RuntimeException("User not found"));
+
+        CustomUserDetails userDetails = new CustomUserDetails(fullUser);
+        Authentication authentication = new UsernamePasswordAuthenticationToken(
+                userDetails, null, userDetails.getAuthorities());
+
+        eventPublisher.publishEvent(new AuthenticationSuccessEvent(authentication));
 
         // 사용자의 권한 목록 추출 (@EntityGraph로 이미 로드됨)
         java.util.List<String> authorities = fullUser.getAuthorities().stream()
