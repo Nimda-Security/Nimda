@@ -639,6 +639,11 @@ body {
   height: 40px;
   padding: 0 16px;
   position: relative;
+  cursor: pointer;
+}
+
+.home-popular__row:hover {
+  background-color: #e5e5e5;
 }
 
 .home-popular__tag {

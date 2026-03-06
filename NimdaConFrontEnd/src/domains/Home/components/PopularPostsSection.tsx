@@ -104,9 +104,7 @@ const PopularPostsSection: React.FC = () => {
               key={post.id}
               className="home-popular__row"
               onClick={() => navigate(`/board/${categorySlug}/${post.id}`)}
-              style={{ cursor: "pointer" }}
             >
-              <div className="home-popular__tag">{post.category?.name || "기타"}</div>
               <p className="home-popular__title">{post.title}</p>
               <span className="home-popular__comments">0</span>
               <div className="home-popular__likes">
