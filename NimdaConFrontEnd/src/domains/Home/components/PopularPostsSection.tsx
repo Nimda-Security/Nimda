@@ -1,26 +1,7 @@
-import React from "react";
-
-interface PopularPost {
-  id: number;
-  board: string;
-  title: string;
-  comments: number;
-  likes: number;
-  date: string;
-}
-
-const popularPosts: PopularPost[] = [
-  { id: 1, board: "자유", title: "후유증 심한 헌터x헌터 명장면 ㄷ...", comments: 999, likes: 999, date: "02.04" },
-  { id: 2, board: "구함", title: "독도 해커톤 나가실 분 구해요", comments: 5, likes: 17, date: "25.12.31" },
-  { id: 3, board: "학술", title: "[레전%드자$료!] in프@런 C언...", comments: 12, likes: 22, date: "01.30" },
-  { id: 4, board: "사진", title: "MT 사진 가져가세용", comments: 12, likes: 9, date: "01.02" },
-  { id: 5, board: "사진", title: "MT 사진 가져가세용", comments: 12, likes: 9, date: "01.02" },
-  { id: 6, board: "사진", title: "MT 사진 가져가세용", comments: 12, likes: 9, date: "01.02" },
-  { id: 7, board: "사진", title: "MT 사진 가져가세용", comments: 12, likes: 9, date: "01.02" },
-  { id: 8, board: "사진", title: "MT 사진 가져가세용", comments: 12, likes: 9, date: "01.02" },
-  { id: 9, board: "사진", title: "MT 사진 가져가세용", comments: 12, likes: 9, date: "01.02" },
-  { id: 10, board: "사진", title: "MT 사진 가져가세용", comments: 12, likes: 9, date: "01.02" },
-];
+import React, { useState, useEffect } from "react";
+import { useNavigate } from "react-router-dom";
+import { getPopularPostsAPI } from "@/api/board";
+import type { Board } from "@/domains/Board/types";
 
 const HeartIcon: React.FC = () => (
   <svg width="14" height="12" viewBox="0 0 14 12" fill="none" xmlns="http://www.w3.org/2000/svg">
@@ -32,24 +13,111 @@ const HeartIcon: React.FC = () => (
 );
 
 const PopularPostsSection: React.FC = () => {
+  const navigate = useNavigate();
+  const [popularPosts, setPopularPosts] = useState<Board[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    const loadPopularPosts = async () => {
+      try {
+        setLoading(true);
+        // 전체 인기글 조회 (카테고리 제한 없음, 최대 10개)
+        const response = await getPopularPostsAPI(undefined, undefined, 10);
+
+        if (response.success && response.posts) {
+          // 최대 10개로 제한
+          setPopularPosts(response.posts.slice(0, 10));
+        }
+      } catch (error) {
+        console.error("인기글 로드 오류:", error);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    loadPopularPosts();
+  }, []);
+
+  const formatDate = (dateString: string): string => {
+    const date = new Date(dateString);
+    const now = new Date();
+    const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+    const postDate = new Date(date.getFullYear(), date.getMonth(), date.getDate());
+
+    if (postDate.getTime() === today.getTime()) {
+      // 오늘인 경우 시간만 표시
+      return `${String(date.getHours()).padStart(2, "0")}:${String(date.getMinutes()).padStart(2, "0")}`;
+    } else {
+      // 오늘이 아닌 경우 날짜만 표시
+      const month = String(date.getMonth() + 1).padStart(2, "0");
+      const day = String(date.getDate()).padStart(2, "0");
+      const year = date.getFullYear();
+      // 연도가 현재 연도와 다르면 연도 포함
+      if (year !== now.getFullYear()) {
+        return `${String(year).slice(2)}.${month}.${day}`;
+      }
+      return `${month}.${day}`;
+    }
+  };
+
+  const getCategorySlug = (board: Board): string => {
+    return board.category?.slug || "";
+  };
+
+  if (loading) {
+    return (
+      <section className="home-popular">
+        <h2 className="home-section-title">전체 인기글</h2>
+        <div className="home-popular__divider" />
+        <div className="home-popular__list">
+          <div style={{ padding: "16px", textAlign: "center", color: "#999" }}>
+            로딩 중...
+          </div>
+        </div>
+      </section>
+    );
+  }
+
+  if (popularPosts.length === 0) {
+    return (
+      <section className="home-popular">
+        <h2 className="home-section-title">전체 인기글</h2>
+        <div className="home-popular__divider" />
+        <div className="home-popular__list">
+          <div style={{ padding: "16px", textAlign: "center", color: "#999" }}>
+            인기글이 없습니다.
+          </div>
+        </div>
+      </section>
+    );
+  }
+
   return (
     <section className="home-popular">
       <h2 className="home-section-title">전체 인기글</h2>
       <div className="home-popular__divider" />
       <div className="home-popular__list">
-        {popularPosts.map((post) => (
-          <div key={post.id} className="home-popular__row">
-            <div className="home-popular__tag">{post.board}</div>
-            <p className="home-popular__title">{post.title}</p>
-            <span className="home-popular__comments">{post.comments}</span>
-            <div className="home-popular__likes">
-              <HeartIcon />
-              <span className="home-popular__likes-count">{post.likes}</span>
+        {popularPosts.map((post) => {
+          const categorySlug = getCategorySlug(post);
+          return (
+            <div
+              key={post.id}
+              className="home-popular__row"
+              onClick={() => navigate(`/board/${categorySlug}/${post.id}`)}
+              style={{ cursor: "pointer" }}
+            >
+              <div className="home-popular__tag">{post.category?.name || "기타"}</div>
+              <p className="home-popular__title">{post.title}</p>
+              <span className="home-popular__comments">0</span>
+              <div className="home-popular__likes">
+                <HeartIcon />
+                <span className="home-popular__likes-count">{post.likeCount || 0}</span>
+              </div>
+              <span className="home-popular__date">{formatDate(post.createdAt)}</span>
+              <div className="home-popular__row-divider" />
             </div>
-            <span className="home-popular__date">{post.date}</span>
-            <div className="home-popular__row-divider" />
-          </div>
-        ))}
+          );
+        })}
       </div>
     </section>
   );
