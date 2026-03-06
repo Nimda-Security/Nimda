@@ -1,5 +1,5 @@
 -- 1. 알림(Notification) 테이블
-CREATE TABLE notifications (
+CREATE TABLE notification (
     id BIGINT AUTO_INCREMENT PRIMARY KEY,
     recipient_id BIGINT NOT NULL,
     sender_id BIGINT,
@@ -37,12 +37,12 @@ CREATE TABLE comment_like (
     comment_id BIGINT NOT NULL,
     created_at DATETIME,
     CONSTRAINT fk_like_user FOREIGN KEY (user_id) REFERENCES users (id),
-    CONSTRAINT fk_like_comment FOREIGN KEY (comment_id) REFERENCES comment (id),
+    CONSTRAINT fk_like_comment FOREIGN KEY (comment_id) REFERENCES comments (id),
     CONSTRAINT uk_user_comment UNIQUE (user_id, comment_id) -- 중복 좋아요 방지
 );
 
 -- 3. 포인트 상세(PointDetail) 테이블
-CREATE TABLE point_detail (
+CREATE TABLE point_details (
     id BIGINT AUTO_INCREMENT PRIMARY KEY,
     user_id BIGINT,
     amount BIGINT,
@@ -88,6 +88,5 @@ CREATE INDEX idx_point_history_detail_id ON point_history(point_detail_id);
 CREATE INDEX idx_attendance_log_user_date ON attendance_log(user_id, attendance_date);
 CREATE INDEX idx_notification_recipient ON notification(recipient_id);
 CREATE INDEX idx_notification_expired_at ON notification(expired_at);
-CREATE INDEX idx_point_details_user_id ON point_details(user_id);
 CREATE INDEX idx_comments_board_id ON comments(board_id);
 CREATE INDEX idx_comments_parent_id ON comments(parent_comment_id);
