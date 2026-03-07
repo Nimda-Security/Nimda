@@ -113,7 +113,8 @@ public class SecurityConfig {
                         .requestMatchers(HttpMethod.GET, "/api/contest/**").permitAll() // 대회 목록/상세 조회
                         .requestMatchers(HttpMethod.GET, "/api/problems/**").permitAll() // 문제 목록/상세 조회
                         .requestMatchers(HttpMethod.GET, "/api/scoreboard/**").permitAll() // 스코어보드 조회
-                        .requestMatchers("/api/cite/board/**").authenticated() // 게시판 전체 (로그인 필요)
+                        .requestMatchers(HttpMethod.GET, "/api/cite/board/**").permitAll() // 게시판 조회 (공개)
+                        .requestMatchers("/api/cite/board/**").authenticated() // 게시판 작성/수정/삭제 (로그인 필요)
 
                         // 카테고리 관리
                         .requestMatchers(HttpMethod.GET, "/api/cite/category/all").hasRole("ADMIN") // 모든 카테고리 조회 (관리자,

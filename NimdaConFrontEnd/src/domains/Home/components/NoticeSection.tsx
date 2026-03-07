@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from "react";
+import { useNavigate } from "react-router-dom";
 import { getBoardListAPI } from "@/api/board";
 
 interface NoticeItem {
@@ -10,6 +11,7 @@ interface NoticeItem {
 }
 
 const NoticeSection: React.FC = () => {
+  const navigate = useNavigate();
   const [noticeData, setNoticeData] = useState<NoticeItem[]>([]);
   const [loading, setLoading] = useState(true);
 
@@ -122,6 +124,7 @@ const NoticeSection: React.FC = () => {
                 ? "home-notice__row--notice"
                 : "home-notice__row--normal"
             }`}
+            onClick={() => navigate(`/board/notice/${item.id}`)}
           >
             <div
               className={`home-notice__tag ${item.tagType === "pinned" || item.tagType === "notice"
