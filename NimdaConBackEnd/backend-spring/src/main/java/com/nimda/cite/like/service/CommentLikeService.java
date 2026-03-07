@@ -10,8 +10,10 @@ import com.nimda.cite.notification.enums.NotificationType;
 import com.nimda.cup.user.entity.User;
 import com.nimda.cup.user.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
+import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.web.server.ResponseStatusException;
 
 import java.util.Optional;
 
@@ -63,11 +65,21 @@ public class CommentLikeService {
 
     @Transactional(readOnly = true)
     public long getLikeCount(Long commentId) {
+        Comment comment = commentRepository.findById(commentId).orElseThrow(
+                () -> new ResponseStatusException(HttpStatus.NOT_FOUND)
+        );
         return commentLikeRepository.countByCommentId(commentId);
     }
 
     @Transactional(readOnly = true)
     public boolean isUserLiked(Long userId, Long commentId) {
+        User user = userRepository.findById(userId).orElseThrow(
+                () -> new ResponseStatusException(HttpStatus.NOT_FOUND)
+        );
+        Comment comment = commentRepository.findById(commentId).orElseThrow(
+                () -> new ResponseStatusException(HttpStatus.NOT_FOUND)
+        );
+
         return commentLikeRepository.existsByCommentIdAndUserId(commentId, userId);
     }
 }

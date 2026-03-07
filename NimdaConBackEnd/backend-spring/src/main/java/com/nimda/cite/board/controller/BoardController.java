@@ -14,6 +14,7 @@ import com.nimda.cup.user.entity.User;
 import com.nimda.cup.user.repository.UserRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
 import org.springframework.data.web.PageableDefault;
@@ -167,6 +168,13 @@ public class BoardController {
             @RequestParam(value = "slug", required = false) String slug,
             @PageableDefault(size = 10, sort = "createdAt", direction = Sort.Direction.DESC) Pageable pageable) {
         try {
+            // 인기글은 최대 10개로 제한
+            int maxSize = Math.min(pageable.getPageSize(), 10);
+            Pageable limitedPageable = PageRequest.of(
+                    pageable.getPageNumber(),
+                    maxSize,
+                    pageable.getSort());
+
             Page<Board> boards;
             Category category = null;
             if (categoryId != null || slug != null) {
@@ -174,12 +182,16 @@ public class BoardController {
                     category = categoryRepository.findById(categoryId)
                             .orElseThrow(() -> new RuntimeException("카테고리를 찾을 수 없습니다: " + categoryId));
                 } else {
+                    // slug 검증: 영문, 숫자, 하이픈, 언더스코어만 허용 (최대 50자)
+                    if (slug == null || slug.isEmpty() || slug.length() > 50 || !slug.matches("^[a-zA-Z0-9_-]+$")) {
+                        return ApiResponse.fail("유효하지 않은 카테고리 slug입니다.").toResponse(HttpStatus.BAD_REQUEST);
+                    }
                     category = categoryRepository.findBySlugAndIsActiveTrue(slug)
                             .orElseThrow(() -> new RuntimeException("카테고리를 찾을 수 없습니다: " + slug));
                 }
-                boards = boardService.boardListPopularByCategory(category, pageable);
+                boards = boardService.boardListPopularByCategory(category, limitedPageable);
             } else {
-                boards = boardService.boardListPopular(pageable);
+                boards = boardService.boardListPopular(limitedPageable);
             }
 
             // 인기글 목록에 좋아요 개수 추가하여 DTO로 변환

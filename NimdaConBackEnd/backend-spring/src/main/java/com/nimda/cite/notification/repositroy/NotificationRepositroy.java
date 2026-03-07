@@ -7,6 +7,7 @@ import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
+import java.time.LocalDateTime;
 import java.util.List;
 
 @Repository
@@ -27,4 +28,6 @@ public interface NotificationRepositroy extends JpaRepository<Notification, Long
 
     // 읽지 않은 알림 개수
     Long countByRecipientIdAndIsReadFalse(Long userId);
+
+    int deleteByExpiredAtBefore(LocalDateTime now);
 }

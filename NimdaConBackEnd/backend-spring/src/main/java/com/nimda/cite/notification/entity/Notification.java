@@ -36,17 +36,20 @@ public class Notification extends BaseTimeEntity {
     private User sender; // 알림을 유발한 사람
 
     @Enumerated(EnumType.STRING) // Enum은 문자열 저장이 안전함
-    @Column(nullable = false)
+    @Column(nullable = false,name = "notification_type")
     private NotificationType notificationType;
 
     @Column(nullable = false)
     private String message;
 
-    @Column(nullable = false)
+    @Column(nullable = false, name = "is_read")
     private Boolean isRead = false; // 기본값 false
 
     @Column(name = "created_at", nullable = false) @Builder.Default
     private LocalDateTime createdAt = LocalDateTime.now();
+
+    @Column(name = "expired_at")
+    private LocalDateTime expiredAt;
 
     @Column(name = "related_entity_id")
     private Long relatedEntityId;
@@ -54,4 +57,10 @@ public class Notification extends BaseTimeEntity {
     @Column(name = "related_url", length = 500)
     private String relatedUrl;
 
+    @PrePersist
+    public void prePersist() {
+        this.createdAt = LocalDateTime.now();
+        // 생성 시점에 현재 시간 + 14일을 만료일로 자동 세팅
+        this.expiredAt = this.createdAt.plusDays(14);
+    }
 }
