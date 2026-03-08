@@ -11,6 +11,7 @@ export interface Category {
   slug: string;
   sortOrder: number;
   postCount: number;
+  availableTags?: string | null; // 카테고리별 사용 가능한 태그 목록 (JSON 형식의 문자열)
   createdAt: string;
   updatedAt: string;
 }

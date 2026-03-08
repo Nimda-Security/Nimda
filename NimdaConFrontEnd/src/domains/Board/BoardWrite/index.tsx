@@ -14,6 +14,7 @@ function BoardWritePage() {
 
   const [title, setTitle] = useState('');
   const [content, setContent] = useState('');
+  const [tag, setTag] = useState<string>('');
   const [file, setFile] = useState<File | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -55,6 +56,7 @@ function BoardWritePage() {
         categoryId: category.id,
         title: title.trim(),
         content: content.trim(),
+        tag: tag.trim() || undefined,
         file: file || undefined,
       });
 
@@ -86,6 +88,18 @@ function BoardWritePage() {
   const handleRemoveFile = () => {
     setFile(null);
   };
+
+  // 카테고리의 availableTags를 파싱하여 배열로 변환
+  const getAvailableTags = (): string[] => {
+    if (!category?.availableTags) return [];
+    try {
+      return JSON.parse(category.availableTags);
+    } catch {
+      return [];
+    }
+  };
+
+  const availableTags = getAvailableTags();
 
   return (
     <Layout>
@@ -134,6 +148,28 @@ function BoardWritePage() {
                 required
               />
             </div>
+
+            {/* 태그 선택 (카테고리에 availableTags가 있을 때만 표시) */}
+            {availableTags.length > 0 && (
+              <div>
+                <label htmlFor="tag" className="block text-sm font-medium text-gray-700 mb-2">
+                  세부 카테고리 (선택사항)
+                </label>
+                <select
+                  id="tag"
+                  value={tag}
+                  onChange={(e) => setTag(e.target.value)}
+                  className="w-full px-4 py-2 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-black"
+                >
+                  <option value="">세부 카테고리를 선택하세요</option>
+                  {availableTags.map((tagOption) => (
+                    <option key={tagOption} value={tagOption}>
+                      {tagOption}
+                    </option>
+                  ))}
+                </select>
+              </div>
+            )}
 
             {/* 파일 업로드 */}
             <div>
