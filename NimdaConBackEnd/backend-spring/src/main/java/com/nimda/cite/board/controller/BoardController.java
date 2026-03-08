@@ -224,6 +224,7 @@ public class BoardController {
             @RequestParam("categoryId") Long categoryId,
             @RequestParam("title") String title,
             @RequestParam("content") String content,
+            @RequestParam(value = "tag", required = false) String tag,
             @RequestPart(value = "file", required = false) MultipartFile file) {
         try {
             User author = null;
@@ -251,6 +252,7 @@ public class BoardController {
             board.setTitle(title);
             board.setContent(content);
             board.setCategory(category);
+            board.setTag(tag); // 태그 설정 (null 가능)
 
             boardService.write(board, author, file);
 
@@ -285,6 +287,7 @@ public class BoardController {
             @RequestParam("categoryId") Long categoryId,
             @RequestParam("title") String title,
             @RequestParam("content") String content,
+            @RequestParam(value = "tag", required = false) String tag,
             @RequestPart(value = "file", required = false) MultipartFile file) {
         try {
             Board boardTemp = boardService.boardView(id);
@@ -320,6 +323,7 @@ public class BoardController {
             boardTemp.setTitle(title);
             boardTemp.setContent(content);
             boardTemp.setCategory(category);
+            boardTemp.setTag(tag); // 태그 설정 (null 가능)
 
             boardService.write(boardTemp, currentUser, file);
 

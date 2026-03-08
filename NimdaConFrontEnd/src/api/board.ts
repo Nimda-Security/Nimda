@@ -203,6 +203,9 @@ export const createBoardAPI = async (
     formData.append('categoryId', data.categoryId.toString());
     formData.append('title', data.title);
     formData.append('content', data.content);
+    if (data.tag) {
+      formData.append('tag', data.tag);
+    }
     if (data.file) {
       formData.append('file', data.file);
     }
@@ -274,6 +277,9 @@ export const updateBoardAPI = async (
     formData.append('categoryId', data.categoryId.toString());
     formData.append('title', data.title);
     formData.append('content', data.content);
+    if (data.tag) {
+      formData.append('tag', data.tag);
+    }
     if (data.file) {
       formData.append('file', data.file);
     }

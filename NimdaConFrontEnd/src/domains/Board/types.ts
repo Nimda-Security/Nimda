@@ -85,6 +85,7 @@ export interface BoardWriteRequest {
   categoryId: number;
   title: string;
   content: string;
+  tag?: string | null; // 게시글 태그 (예: "필독", "공지", "가입인사")
   file?: File;
 }
 
