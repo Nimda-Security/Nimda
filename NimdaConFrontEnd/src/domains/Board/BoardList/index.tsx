@@ -264,7 +264,12 @@ function BoardListPage({ slug: propSlug }: BoardListPageProps) {
                 className="board-list__row board-list__row--pinned"
                 onClick={() => navigate(`/board/notice/${post.id}`)}
               >
-                <span className="board-list__tag board-list__tag--red">필독</span>
+                {post.tag && (
+                  <span className="board-list__tag board-list__tag--red">{post.tag}</span>
+                )}
+                {!post.tag && (
+                  <span className="board-list__tag board-list__tag--red">필독</span>
+                )}
                 <span className="board-list__post-title board-list__post-title--bold">
                   {post.title}
                 </span>
@@ -286,7 +291,12 @@ function BoardListPage({ slug: propSlug }: BoardListPageProps) {
                 className="board-list__row board-list__row--notice"
                 onClick={() => handleBoardClick(post.id)}
               >
-                <span className="board-list__tag board-list__tag--notice">고정</span>
+                {post.tag && (
+                  <span className="board-list__tag board-list__tag--notice">{post.tag}</span>
+                )}
+                {!post.tag && (
+                  <span className="board-list__tag board-list__tag--notice">고정</span>
+                )}
                 <span className="board-list__post-title board-list__post-title--bold">
                   {post.title}
                 </span>
@@ -316,13 +326,17 @@ function BoardListPage({ slug: propSlug }: BoardListPageProps) {
                   className="board-list__row"
                   onClick={() => handleBoardClick(post.id)}
                 >
-                  {/* 카테고리 태그 (하위 카테고리 정보 표시) */}
-                  {post.category && post.category.name && activeTab === 'all' && childCategories.length > 0 && (
-                    <span className="board-list__tag board-list__tag--gray">
-                      {post.category.name.length > 4
-                        ? post.category.name.slice(0, 4)
-                        : post.category.name}
-                    </span>
+                  {/* 게시글 태그 또는 카테고리 태그 표시 */}
+                  {post.tag ? (
+                    <span className="board-list__tag board-list__tag--gray">{post.tag}</span>
+                  ) : (
+                    post.category && post.category.name && activeTab === 'all' && childCategories.length > 0 && (
+                      <span className="board-list__tag board-list__tag--gray">
+                        {post.category.name.length > 4
+                          ? post.category.name.slice(0, 4)
+                          : post.category.name}
+                      </span>
+                    )
                   )}
                   <span className="board-list__post-title">{post.title}</span>
                   <div className="board-list__meta">
