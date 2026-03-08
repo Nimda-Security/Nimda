@@ -1,5 +1,7 @@
 package com.nimda.cite.board.controller;
 
+import com.fasterxml.jackson.core.type.TypeReference;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.nimda.cite.board.dto.BoardListResponseDTO;
 import com.nimda.cite.board.dto.BoardResponseDTO;
 import com.nimda.cite.board.dto.CategoryResponseDTO;
@@ -45,6 +47,9 @@ public class BoardController {
 
     @Autowired
     private BoardLikeService boardLikeService;
+
+    @Autowired
+    private ObjectMapper objectMapper;
 
     @GetMapping
     public ResponseEntity<?> getPostsByCategory(
@@ -248,6 +253,14 @@ public class BoardController {
             Category category = categoryRepository.findById(categoryId)
                     .orElseThrow(() -> new RuntimeException("카테고리를 찾을 수 없습니다: " + categoryId));
 
+            // validation. 태그가 존재하는 경우에만 검증을 진행한다.
+            if (tag != null && !tag.trim().isEmpty()) {
+                String validationError = validateTag(category, tag);
+                if (validationError != null) {
+                    return ApiResponse.fail(validationError).toResponse(HttpStatus.BAD_REQUEST);
+                }
+            }
+
             Board board = new Board();
             board.setTitle(title);
             board.setContent(content);
@@ -319,6 +332,14 @@ public class BoardController {
 
             Category category = categoryRepository.findById(categoryId)
                     .orElseThrow(() -> new RuntimeException("카테고리를 찾을 수 없습니다: " + categoryId));
+
+            // Validation. 태그가 존재하는 경우에만 검증을 진행한다.
+            if (tag != null && !tag.trim().isEmpty()) {
+                String validationError = validateTag(category, tag);
+                if (validationError != null) {
+                    return ApiResponse.fail(validationError).toResponse(HttpStatus.BAD_REQUEST);
+                }
+            }
 
             boardTemp.setTitle(title);
             boardTemp.setContent(content);
@@ -425,6 +446,45 @@ public class BoardController {
         } catch (Exception e) {
             return ApiResponse.fail("게시글 고정/해제 중 오류가 발생했습니다: " + e.getMessage())
                     .toResponse(HttpStatus.INTERNAL_SERVER_ERROR);
+        }
+    }
+
+    /**
+     * 태그 검증 메서드
+     * 카테고리의 availableTags에 지정된 태그가 포함되어 있는지 확인
+     * 
+     * @param category 카테고리 엔티티
+     * @param tag      검증할 태그
+     * @return 검증 실패 시 에러 메시지, 성공 시 null
+     */
+    private String validateTag(Category category, String tag) {
+
+        // note1. 카테고리에서 availableTags 문자열을 가져온다.
+        String availableTagsStr = category.getAvailableTags();
+
+        // note2. availableTags가 비어있는지 확인한다.
+        if (availableTagsStr == null || availableTagsStr.trim().isEmpty()) {
+            return "이 카테고리에서는 태그를 사용할 수 없습니다.";
+        }
+
+        try {
+
+            // note3. ObjectMapper로 JSON 문자열을 List<String> 타입으로 파싱한다.
+            List<String> availableTags = objectMapper.readValue(
+                    availableTagsStr,
+                    new TypeReference<List<String>>() {
+                    });
+
+            // note4. 태그가 허용된 목록에 포함되어 있는지 확인
+            if (!availableTags.contains(tag)) {
+                return String.format("'%s' 태그는 이 카테고리에서 사용할 수 없습니다. 사용 가능한 태그: %s",
+                        tag, String.join(", ", availableTags));
+            }
+
+            return null;
+
+        } catch (Exception e) {
+            return "카테고리의 태그 설정이 올바르지 않습니다.";
         }
     }
 }
