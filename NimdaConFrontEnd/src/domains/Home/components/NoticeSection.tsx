@@ -56,14 +56,14 @@ const NoticeSection: React.FC = () => {
           const items: NoticeItem[] = [
             ...pinnedPosts.map((post) => ({
               id: post.id,
-              tag: "필독",
+              tag: post.tag || "필독", // post.tag가 있으면 사용, 없으면 기본값 "필독"
               tagType: "pinned" as const,
               title: post.title,
               date: formatDate(post.createdAt),
             })),
             ...normalPosts.map((post, index) => ({
               id: post.id,
-              tag: "공지",
+              tag: post.tag || "공지", // post.tag가 있으면 사용, 없으면 기본값 "공지"
               tagType: index === 0 ? ("notice" as const) : ("normal" as const),
               title: post.title,
               date: formatDate(post.createdAt),
@@ -119,26 +119,26 @@ const NoticeSection: React.FC = () => {
           <div
             key={item.id}
             className={`home-notice__row ${item.tagType === "pinned"
-                ? "home-notice__row--pinned"
-                : item.tagType === "notice"
+              ? "home-notice__row--pinned"
+              : item.tagType === "notice"
                 ? "home-notice__row--notice"
                 : "home-notice__row--normal"
-            }`}
+              }`}
             onClick={() => navigate(`/board/notice/${item.id}`)}
           >
             <div
               className={`home-notice__tag ${item.tagType === "pinned" || item.tagType === "notice"
-                  ? "home-notice__tag--red"
-                  : "home-notice__tag--gray"
-              }`}
+                ? "home-notice__tag--red"
+                : "home-notice__tag--gray"
+                }`}
             >
               {item.tag}
             </div>
             <p
               className={`home-notice__title ${item.tagType === "pinned"
-                  ? "home-notice__title--bold"
-                  : ""
-              }`}
+                ? "home-notice__title--bold"
+                : ""
+                }`}
             >
               {item.title}
             </p>

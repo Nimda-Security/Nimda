@@ -6,6 +6,8 @@ import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
+import java.util.List;
+
 /**
  * 카테고리 생성 요청 DTO
  * - 카테고리 생성 시 클라이언트에서 전달하는 데이터
@@ -51,4 +53,11 @@ public class CategoryCreateDTO {
      * - 선택적 (null이면 true로 설정)
      */
     private Boolean isActive;
+
+    /**
+     * 카테고리별 사용 가능한 태그 목록
+     * - 선택적 (null이면 태그 사용 불가)
+     * - 예: ["필독", "공지", "가입인사"]
+     */
+    private List<String> availableTags;
 }

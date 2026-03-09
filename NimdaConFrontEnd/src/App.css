@@ -189,6 +189,47 @@ body {
   line-height: 1.5;
 }
 
+/* 프로필 통계 */
+.sidebar-profile__stats {
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+  margin-top: 16px;
+  padding: 0 24px;
+}
+
+.sidebar-profile__stat-item {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 0;
+  font-size: 14px;
+  font-weight: 500;
+  color: var(--color-black);
+  line-height: 1.5;
+  font-family: "Pretendard", sans-serif;
+}
+
+.sidebar-profile__stat-icon {
+  width: 13px;
+  height: 14px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.sidebar-profile__stat-label {
+  flex: 1;
+  text-align: left;
+}
+
+.sidebar-profile__stat-value {
+  font-weight: 600;
+  text-align: right;
+  margin-left: auto;
+}
+
 /* 구분선 */
 .sidebar-divider {
   height: 1px;
