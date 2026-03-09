@@ -124,7 +124,7 @@ function BoardListPage({ slug: propSlug }: BoardListPageProps) {
   useEffect(() => {
     const collectTags = () => {
       const tagSet = new Set<string>();
-      
+
       // 0단 카테고리인 경우 (하위 카테고리가 있는 경우): 하위 카테고리들의 태그만 수집
       if (childCategories.length > 0) {
         childCategories.forEach(cat => {
@@ -139,7 +139,7 @@ function BoardListPage({ slug: propSlug }: BoardListPageProps) {
             }
           }
         });
-      } 
+      }
       // 1단 카테고리인 경우: 현재 카테고리의 태그 수집
       else if (category) {
         if (category.availableTags) {
@@ -224,7 +224,9 @@ function BoardListPage({ slug: propSlug }: BoardListPageProps) {
   };
 
   const handleWriteClick = () => {
-    navigate(`/board/${slug}/write`);
+    // 선택된 태그가 있으면 쿼리 파라미터로 전달
+    const tagParam = selectedTag ? `?tag=${encodeURIComponent(selectedTag)}` : '';
+    navigate(`/board/${slug}/write${tagParam}`);
   };
 
   const handlePageChange = (page: number) => {

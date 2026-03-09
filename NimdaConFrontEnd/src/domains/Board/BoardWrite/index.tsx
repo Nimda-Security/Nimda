@@ -1,16 +1,21 @@
 import { useState, useEffect } from 'react';
-import { useNavigate, useParams } from 'react-router-dom';
+import { useNavigate, useParams, useSearchParams } from 'react-router-dom';
 import Layout from '@/components/Layout';
 import { createBoardAPI } from '@/api/board';
-import { getCategoryBySlugAPI } from '@/api/category';
+import { getCategoryBySlugAPI, getAllCategoriesAPI } from '@/api/category';
 import type { Category } from '../types';
 
 function BoardWritePage() {
   const navigate = useNavigate();
   const { boardType: paramBoardType } = useParams<{ boardType: string }>();
+  const [searchParams] = useSearchParams();
 
   const slug = paramBoardType?.toLowerCase() || 'news';
+  const tagFromUrl = searchParams.get('tag'); // URL 쿼리 파라미터에서 태그 가져오기
+
   const [category, setCategory] = useState<Category | null>(null);
+  const [selectedCategoryId, setSelectedCategoryId] = useState<number | null>(null);
+  const [allCategories, setAllCategories] = useState<Category[]>([]);
 
   const [title, setTitle] = useState('');
   const [content, setContent] = useState('');
@@ -19,15 +24,58 @@ function BoardWritePage() {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
+  // 모든 카테고리 목록 가져오기
+  useEffect(() => {
+    const fetchAllCategories = async () => {
+      try {
+        const categories = await getAllCategoriesAPI();
+        setAllCategories(categories);
+      } catch (err) {
+        console.error('카테고리 목록 로드 오류:', err);
+      }
+    };
+    fetchAllCategories();
+  }, []);
+
+  // URL slug로 카테고리 자동 선택
   useEffect(() => {
     const fetchCategory = async () => {
       const categoryData = await getCategoryBySlugAPI(slug);
       if (categoryData) {
         setCategory(categoryData);
+        setSelectedCategoryId(categoryData.id);
       }
     };
     fetchCategory();
   }, [slug]);
+
+  // URL에서 태그 자동 선택 (카테고리가 로드된 후)
+  useEffect(() => {
+    if (tagFromUrl && category) {
+      const availableTags = getAvailableTags(category);
+      if (availableTags.includes(tagFromUrl)) {
+        setTag(tagFromUrl);
+      }
+    } else if (!tagFromUrl) {
+      // URL에 태그가 없으면 초기화
+      setTag('');
+    }
+  }, [tagFromUrl, category]);
+
+  // 선택된 카테고리 변경 시 해당 카테고리 정보 업데이트
+  useEffect(() => {
+    if (selectedCategoryId) {
+      const selectedCategory = allCategories.find(cat => cat.id === selectedCategoryId);
+      if (selectedCategory) {
+        setCategory(selectedCategory);
+        // 카테고리 변경 시 태그 초기화 (새 카테고리의 태그 목록에 없을 수 있음)
+        const availableTags = getAvailableTags(selectedCategory);
+        if (tag && !availableTags.includes(tag)) {
+          setTag('');
+        }
+      }
+    }
+  }, [selectedCategoryId, allCategories]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -37,14 +85,8 @@ function BoardWritePage() {
       return;
     }
 
-    if (!category) {
-      setError('카테고리 정보를 불러올 수 없습니다.');
-      return;
-    }
-
-    // category.id가 유효한지 확인
-    if (!category.id || typeof category.id !== 'number') {
-      setError('카테고리 ID가 유효하지 않습니다.');
+    if (!selectedCategoryId) {
+      setError('카테고리를 선택해주세요.');
       return;
     }
 
@@ -53,7 +95,7 @@ function BoardWritePage() {
       setError(null);
 
       const response = await createBoardAPI({
-        categoryId: category.id,
+        categoryId: selectedCategoryId,
         title: title.trim(),
         content: content.trim(),
         tag: tag.trim() || undefined,
@@ -62,7 +104,10 @@ function BoardWritePage() {
 
       if (response.success && 'board' in response) {
         alert('게시글이 작성되었습니다.');
-        navigate(`/board/${slug}/${response.board.id}`);
+        // 작성된 게시글의 카테고리 slug로 이동
+        const writtenCategory = allCategories.find(cat => cat.id === selectedCategoryId);
+        const categorySlug = writtenCategory?.slug || slug;
+        navigate(`/board/${categorySlug}/${response.board.id}`);
       } else {
         setError(response.message || '게시글 작성에 실패했습니다.');
       }
@@ -90,10 +135,11 @@ function BoardWritePage() {
   };
 
   // 카테고리의 availableTags를 파싱하여 배열로 변환
-  const getAvailableTags = (): string[] => {
-    if (!category?.availableTags) return [];
+  const getAvailableTags = (cat?: Category | null): string[] => {
+    const targetCategory = cat || category;
+    if (!targetCategory?.availableTags) return [];
     try {
-      return JSON.parse(category.availableTags);
+      return JSON.parse(targetCategory.availableTags);
     } catch {
       return [];
     }
@@ -116,6 +162,29 @@ function BoardWritePage() {
           </header>
 
           <form onSubmit={handleSubmit} className="space-y-6">
+            {/* 카테고리 선택 */}
+            <div>
+              <label htmlFor="category" className="block text-sm font-medium text-gray-700 mb-2">
+                카테고리
+              </label>
+              <select
+                id="category"
+                value={selectedCategoryId || ''}
+                onChange={(e) => setSelectedCategoryId(Number(e.target.value))}
+                className="w-full px-4 py-2 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-black"
+                required
+              >
+                <option value="">카테고리를 선택하세요</option>
+                {allCategories
+                  .filter(cat => cat.isActive)
+                  .map((cat) => (
+                    <option key={cat.id} value={cat.id}>
+                      {cat.name}
+                    </option>
+                  ))}
+              </select>
+            </div>
+
             {/* 제목 */}
             <div>
               <label htmlFor="title" className="block text-sm font-medium text-gray-700 mb-2">
