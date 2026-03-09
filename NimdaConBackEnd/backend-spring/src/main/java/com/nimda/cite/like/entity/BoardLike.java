@@ -9,9 +9,9 @@ import java.time.LocalDateTime;
 
 @Entity
 @AllArgsConstructor
+@Getter
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
 @Builder
-@Data
 @Table(name = "board_like",
         uniqueConstraints = {
                 @UniqueConstraint(columnNames = {"user_id", "board_id"}) // 한 사용자가 한 게시글에 중복 좋아요 방지

@@ -18,6 +18,7 @@ public class PointDetail {
     @Id @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
+    @ToString.Exclude
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "user_balance_id", nullable = false) // DB의 FK 컬럼명
     private UserBalance userBalance;
