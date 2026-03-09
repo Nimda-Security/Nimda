@@ -31,6 +31,9 @@ function AdminDashboard() {
   const [newCategorySlug, setNewCategorySlug] = useState('');
   const [newCategoryParentId, setNewCategoryParentId] = useState(null);
   const [addingCategory, setAddingCategory] = useState(false);
+  const [categoryTags, setCategoryTags] = useState([]); // 선택된 카테고리의 태그 목록
+  const [newTagInput, setNewTagInput] = useState(''); // 새 태그 입력 필드
+  const [savingTags, setSavingTags] = useState(false); // 태그 저장 중 상태
 
   const goBack = () => {
     navigate('/');
@@ -531,6 +534,21 @@ function AdminDashboard() {
     }
   }, [activeSection]);
 
+  // 선택된 카테고리가 변경될 때 태그 목록 로드
+  useEffect(() => {
+    if (selectedCategoryData?.availableTags) {
+      try {
+        const tags = JSON.parse(selectedCategoryData.availableTags);
+        setCategoryTags(Array.isArray(tags) ? tags : []);
+      } catch {
+        setCategoryTags([]);
+      }
+    } else {
+      setCategoryTags([]);
+    }
+    setNewTagInput(''); // 새 태그 입력 필드 초기화
+  }, [selectedCategoryId]);
+
   const getUserRoles = (user) => {
     if (!user.authorities || user.authorities.length === 0) return [];
     return user.authorities.map(auth => auth.authorityName || auth);
@@ -909,9 +927,124 @@ function AdminDashboard() {
                         <input
                           type="text"
                           className="admin__catorder-input"
-                          defaultValue={selectedCategoryData.name}
+                          value={selectedCategoryData.name}
                           readOnly
                         />
+                      </div>
+                    </div>
+
+                    {/* 태그목록 */}
+                    <div className="admin__catorder-form-row">
+                      <label className="admin__catorder-form-label">태그목록</label>
+                      <div className="admin__catorder-form-field">
+                        {/* 현재 태그 목록 표시 */}
+                        {categoryTags.length > 0 && (
+                          <div style={{ display: 'flex', flexWrap: 'wrap', gap: '8px', marginBottom: '12px', width: '100%' }}>
+                            {categoryTags.map((tag, index) => (
+                              <span
+                                key={index}
+                                style={{
+                                  display: 'inline-flex',
+                                  alignItems: 'center',
+                                  padding: '4px 12px',
+                                  backgroundColor: '#f0f0f0',
+                                  borderRadius: '4px',
+                                  fontSize: '14px',
+                                  gap: '8px'
+                                }}
+                              >
+                                {tag}
+                                <button
+                                  type="button"
+                                  onClick={() => {
+                                    const newTags = categoryTags.filter((_, i) => i !== index);
+                                    setCategoryTags(newTags);
+                                  }}
+                                  style={{
+                                    background: 'none',
+                                    border: 'none',
+                                    cursor: 'pointer',
+                                    color: '#999',
+                                    fontSize: '16px',
+                                    padding: 0,
+                                    lineHeight: 1
+                                  }}
+                                >
+                                  ×
+                                </button>
+                              </span>
+                            ))}
+                          </div>
+                        )}
+                        {/* 태그 추가 입력 필드 */}
+                        <div style={{ display: 'flex', gap: '8px', width: '100%' }}>
+                          <input
+                            type="text"
+                            className="admin__catorder-input"
+                            placeholder="태그를 입력하세요"
+                            value={newTagInput || ''}
+                            onChange={(e) => {
+                              const value = e.target.value;
+                              setNewTagInput(value);
+                            }}
+                            onKeyDown={(e) => {
+                              if (e.key === 'Enter') {
+                                e.preventDefault();
+                                if (newTagInput && newTagInput.trim() && !categoryTags.includes(newTagInput.trim())) {
+                                  setCategoryTags([...categoryTags, newTagInput.trim()]);
+                                  setNewTagInput('');
+                                }
+                              }
+                            }}
+                          />
+                          <button
+                            type="button"
+                            className="admin__btn"
+                            onClick={() => {
+                              if (newTagInput.trim() && !categoryTags.includes(newTagInput.trim())) {
+                                setCategoryTags([...categoryTags, newTagInput.trim()]);
+                                setNewTagInput('');
+                              }
+                            }}
+                            disabled={!newTagInput.trim() || categoryTags.includes(newTagInput.trim())}
+                          >
+                            추가
+                          </button>
+                          <button
+                            type="button"
+                            className="admin__btn"
+                            onClick={async () => {
+                              if (!selectedCategoryId) return;
+
+                              setSavingTags(true);
+                              try {
+                                const result = await updateCategoryAPI(selectedCategoryId, {
+                                  name: null,
+                                  slug: null,
+                                  parentId: null,
+                                  sortOrder: null,
+                                  isActive: null,
+                                  availableTags: categoryTags.length > 0 ? categoryTags : null
+                                });
+
+                                if (result.success) {
+                                  alert('태그가 성공적으로 저장되었습니다.');
+                                  await loadCategories();
+                                } else {
+                                  alert(result.message || '태그 저장에 실패했습니다.');
+                                }
+                              } catch (error) {
+                                console.error('태그 저장 오류:', error);
+                                alert('태그 저장 중 오류가 발생했습니다.');
+                              } finally {
+                                setSavingTags(false);
+                              }
+                            }}
+                            disabled={savingTags}
+                          >
+                            {savingTags ? '저장 중...' : '저장'}
+                          </button>
+                        </div>
                       </div>
                     </div>
 
@@ -941,16 +1074,6 @@ function AdminDashboard() {
                       </div>
                     </div>
 
-                    {/* 주제분류 */}
-                    <div className="admin__catorder-form-row">
-                      <label className="admin__catorder-form-label">주제분류</label>
-                      <div className="admin__catorder-form-field">
-                        <select className="admin__catorder-select" disabled>
-                          <option>주제분류 선택하지 않음</option>
-                        </select>
-                      </div>
-                    </div>
-
                     {/* 글보기 */}
                     <div className="admin__catorder-form-row">
                       <label className="admin__catorder-form-label">글보기</label>
@@ -966,56 +1089,6 @@ function AdminDashboard() {
                         <p className="admin__catorder-form-desc">
                           앨범형의 경우, 첨부된 이미지, 동영상 섬네일이 보입니다.
                         </p>
-                      </div>
-                    </div>
-
-                    {/* 섬네일 비율 */}
-                    <div className="admin__catorder-form-row">
-                      <label className="admin__catorder-form-label">섬네일 비율</label>
-                      <div className="admin__catorder-form-field">
-                        <label className="admin__catorder-radio-label">
-                          <input type="radio" name="thumbRatio" defaultChecked disabled />
-                          <span>정방형</span>
-                        </label>
-                        <label className="admin__catorder-radio-label">
-                          <input type="radio" name="thumbRatio" disabled />
-                          <span>원본비율</span>
-                        </label>
-                        <p className="admin__catorder-form-desc">
-                          정방형 섬네일은 1:1 비율로 노출됩니다.<br />
-                          원본비율 섬네일은 최대 1:2 (가로:세로) 비율로 노출됩니다.
-                        </p>
-                      </div>
-                    </div>
-
-                    {/* 목록보기 */}
-                    <div className="admin__catorder-form-row">
-                      <label className="admin__catorder-form-label">목록보기</label>
-                      <div className="admin__catorder-form-field">
-                        <label className="admin__catorder-radio-label">
-                          <input type="radio" name="listView" defaultChecked disabled />
-                          <span>목록닫기</span>
-                        </label>
-                        <label className="admin__catorder-radio-label">
-                          <input type="radio" name="listView" disabled />
-                          <span>목록열기</span>
-                        </label>
-                        <select className="admin__catorder-select admin__catorder-select--sm" disabled>
-                          <option>5줄 보기</option>
-                        </select>
-                      </div>
-                    </div>
-
-                    {/* 카테고리 정렬 */}
-                    <div className="admin__catorder-form-row">
-                      <label className="admin__catorder-form-label">카테고리 정렬</label>
-                      <div className="admin__catorder-form-field">
-                        <div className="admin__catorder-sort-btns">
-                          <button className="admin__catorder-sort-btn" disabled>위</button>
-                          <button className="admin__catorder-sort-btn" disabled>아래</button>
-                          <button className="admin__catorder-sort-btn" disabled>맨 위</button>
-                          <button className="admin__catorder-sort-btn" disabled>맨 아래</button>
-                        </div>
                       </div>
                     </div>
 

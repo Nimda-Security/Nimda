@@ -53,6 +53,8 @@ function BoardListPage({ slug: propSlug }: BoardListPageProps) {
   const [searchKeyword, setSearchKeyword] = useState('');
   // 검색 실행 트리거 (검색 버튼 클릭 시 증가)
   const [searchTrigger, setSearchTrigger] = useState(0);
+  const [selectedTag, setSelectedTag] = useState<string | null>(null); // 선택된 태그 (null = 전체)
+  const [availableTags, setAvailableTags] = useState<string[]>([]); // 사용 가능한 태그 목록
 
   // 공지사항(필독) 가져오기 - notice 카테고리의 글 (컴포넌트 마운트 시 1회)
   useEffect(() => {
@@ -92,6 +94,7 @@ function BoardListPage({ slug: propSlug }: BoardListPageProps) {
     setActiveTab(tabFromUrl || 'all');
     setCurrentPage(0);
     setSearchKeyword('');
+    setSelectedTag(null); // 태그 필터 초기화
 
     const loadCategoryInfo = async () => {
       try {
@@ -114,6 +117,48 @@ function BoardListPage({ slug: propSlug }: BoardListPageProps) {
     loadCategoryInfo();
     return () => { cancelled = true; };
   }, [slug, tabFromUrl]);
+
+  // 태그 목록 수집: 
+  // - 0단 카테고리인 경우: 하위 1단 카테고리들의 태그 수집
+  // - 1단 카테고리인 경우: 해당 카테고리의 태그 수집
+  useEffect(() => {
+    const collectTags = () => {
+      const tagSet = new Set<string>();
+      
+      // 0단 카테고리인 경우 (하위 카테고리가 있는 경우): 하위 카테고리들의 태그만 수집
+      if (childCategories.length > 0) {
+        childCategories.forEach(cat => {
+          if (cat.availableTags) {
+            try {
+              const tags = JSON.parse(cat.availableTags);
+              if (Array.isArray(tags)) {
+                tags.forEach((tag: string) => tagSet.add(tag));
+              }
+            } catch {
+              // JSON 파싱 실패 시 무시
+            }
+          }
+        });
+      } 
+      // 1단 카테고리인 경우: 현재 카테고리의 태그 수집
+      else if (category) {
+        if (category.availableTags) {
+          try {
+            const tags = JSON.parse(category.availableTags);
+            if (Array.isArray(tags)) {
+              tags.forEach((tag: string) => tagSet.add(tag));
+            }
+          } catch {
+            // JSON 파싱 실패 시 무시
+          }
+        }
+      }
+
+      setAvailableTags(Array.from(tagSet).sort());
+    };
+
+    collectTags();
+  }, [category, childCategories]);
 
   // 게시글 목록 불러오기 (slug, activeTab, currentPage, searchKeyword 변경 시)
   useEffect(() => {
@@ -138,8 +183,16 @@ function BoardListPage({ slug: propSlug }: BoardListPageProps) {
         if (cancelled) return;
 
         if (response.success) {
-          const pinned = response.posts.filter(p => p.pinned);
-          const regular = response.posts.filter(p => !p.pinned);
+          // 태그 필터링 적용
+          let filteredPosts = response.posts;
+          if (selectedTag !== null) {
+            // selectedTag가 null이 아니면 해당 태그만 필터링
+            // selectedTag가 null이면 전체 (필터링 안 함)
+            filteredPosts = response.posts.filter(p => p.tag === selectedTag);
+          }
+
+          const pinned = filteredPosts.filter(p => p.pinned);
+          const regular = filteredPosts.filter(p => !p.pinned);
           setPinnedPosts(pinned);
           setBoards(regular);
           setTotalPages(response.totalPages);
@@ -164,7 +217,7 @@ function BoardListPage({ slug: propSlug }: BoardListPageProps) {
 
     fetchPosts();
     return () => { cancelled = true; };
-  }, [slug, activeTab, currentPage, searchTrigger]);
+  }, [slug, activeTab, currentPage, searchTrigger, selectedTag]);
 
   const handleBoardClick = (id: number) => {
     navigate(`/board/${slug}/${id}`);
@@ -188,6 +241,11 @@ function BoardListPage({ slug: propSlug }: BoardListPageProps) {
     e.preventDefault();
     setCurrentPage(0);
     setSearchTrigger(prev => prev + 1);
+  };
+
+  const handleTagClick = (tag: string | null) => {
+    setSelectedTag(tag);
+    setCurrentPage(0);
   };
 
   const categoryName = category?.name || CATEGORY_LABELS[slug] || '게시판';
@@ -223,6 +281,25 @@ function BoardListPage({ slug: propSlug }: BoardListPageProps) {
           <button className="board-list__write-btn" onClick={handleWriteClick}>
             글쓰기
           </button>
+        </div>
+
+        {/* 태그 필터 - 전체는 항상 표시 */}
+        <div className="board-list__tag-filter">
+          <button
+            className={`board-list__tag-filter-item ${selectedTag === null ? 'board-list__tag-filter-item--active' : ''}`}
+            onClick={() => handleTagClick(null)}
+          >
+            전체
+          </button>
+          {availableTags.map(tag => (
+            <button
+              key={tag}
+              className={`board-list__tag-filter-item ${selectedTag === tag ? 'board-list__tag-filter-item--active' : ''}`}
+              onClick={() => handleTagClick(tag)}
+            >
+              {tag}
+            </button>
+          ))}
         </div>
 
         {/* 말머리 탭 */}

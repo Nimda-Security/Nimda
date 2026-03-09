@@ -20,6 +20,38 @@
 }
 
 /* ===========================
+   태그 필터
+   =========================== */
+.board-list__tag-filter {
+    display: flex;
+    gap: 32px;
+    margin-bottom: 16px;
+    position: relative;
+}
+
+.board-list__tag-filter-item {
+    font-size: 14px;
+    font-weight: 500;
+    color: var(--color-black);
+    line-height: 1.5;
+    padding: 0;
+    cursor: pointer;
+    background: none;
+    border: none;
+    font-family: "Pretendard", sans-serif;
+    transition: color 0.15s;
+}
+
+.board-list__tag-filter-item:hover {
+    color: #d97399;
+}
+
+.board-list__tag-filter-item--active {
+    font-weight: 600;
+    color: #d97399;
+}
+
+/* ===========================
    말머리 탭 (Sub-category Tabs)
    =========================== */
 .board-list__tabs {
@@ -67,7 +99,7 @@
 .board-list__divider {
     height: 1px;
     background-color: var(--color-gray-200);
-    margin-bottom: 8px;
+    margin-bottom: 0;
 }
 
 .board-list__divider--thick {
@@ -82,7 +114,7 @@
 .board-list__row {
     display: flex;
     align-items: center;
-    min-height: 40px;
+    height: 40px;
     padding: 0 16px;
     position: relative;
     cursor: pointer;
@@ -96,7 +128,7 @@
 /* 고정글 - 필독 (핑크 배경) */
 .board-list__row--pinned {
     background-color: var(--color-pink-bg);
-    min-height: 48px;
+    height: 40px;
 }
 
 .board-list__row--pinned:hover {
