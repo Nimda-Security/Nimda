@@ -73,4 +73,14 @@ public class Category extends BaseTimeEntity {
     @Column(name = "post_count", nullable = false)
     @Builder.Default
     private Integer postCount = 0;
+
+    /**
+     * 카테고리별 사용 가능한 태그 목록 (JSON 형식)
+     * 예: ["필독", "공지", "가입인사"]
+     * 관리자가 카테고리별로 게시글에 사용할 수 있는 태그를 정의
+     * nullable = true로 설정하여 기존 카테고리와의 호환성 유지
+     */
+    @Column(name = "available_tags", length = 500, nullable = true)
+    private String availableTags;
+
 }

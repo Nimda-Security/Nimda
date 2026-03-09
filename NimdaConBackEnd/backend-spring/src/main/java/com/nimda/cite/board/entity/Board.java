@@ -99,6 +99,14 @@ public class Board extends BaseTimeEntity {
     @Column(name = "pinned", nullable = false)
     private Boolean pinned = false;
 
+    // ========== [카테고리별 태그 시스템] ==========
+    // [신규] 게시글 태그 필드 추가
+    // [이유] 카테고리 내부에서 글 종류를 구분하기 위한 태그 (예: "필독", "공지", "가입인사")
+    // [설계 결정] nullable = true로 설정하여 기존 게시글과의 호환성 유지
+    // [설계 결정] length = 20으로 설정하여 짧은 태그명 지원
+    @Column(length = 20, nullable = true)
+    private String tag;
+
     // ========== [기존 코드 유지] ==========
     // [기존] 파일명 - 변경 없음 (파일 업로드 기능 유지)
     @Column(length = 255)

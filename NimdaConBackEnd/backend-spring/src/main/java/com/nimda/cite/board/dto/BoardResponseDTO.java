@@ -31,6 +31,7 @@ public class BoardResponseDTO {
     private Integer views;
     private Long likeCount;
     private Boolean pinned;
+    private String tag; // 게시글 태그 (예: "필독", "공지", "가입인사")
     private String filename;
     private String filepath;
     private LocalDateTime createdAt;
@@ -83,6 +84,7 @@ public class BoardResponseDTO {
                 .views(board.getPostView())
                 .likeCount(likeCount)
                 .pinned(board.getPinned())
+                .tag(board.getTag()) // 태그 필드 추가
                 .filename(board.getFilename())
                 .filepath(board.getFilepath())
                 .createdAt(board.getCreatedAt())

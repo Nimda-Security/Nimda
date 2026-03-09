@@ -28,6 +28,7 @@ public class CategoryResponseDTO {
     private Boolean isActive;
     private Integer sortOrder;
     private Integer postCount;
+    private String availableTags; // 카테고리별 사용 가능한 태그 목록 (JSON 형식의 문자열)
     private LocalDateTime createdAt;
     private LocalDateTime updatedAt;
 
@@ -51,6 +52,7 @@ public class CategoryResponseDTO {
                 .isActive(category.getIsActive())
                 .sortOrder(category.getSortOrder())
                 .postCount(category.getPostCount())
+                .availableTags(category.getAvailableTags())
                 .createdAt(category.getCreatedAt())
                 .updatedAt(category.getUpdatedAt())
                 .build();
