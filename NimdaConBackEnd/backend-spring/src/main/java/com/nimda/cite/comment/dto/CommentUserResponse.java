@@ -9,7 +9,7 @@ import lombok.experimental.SuperBuilder;
 @Getter
 @SuperBuilder
 @AllArgsConstructor
-public class CommentUserResponse extends CommentResponse {
+public class CommentUserResponse extends CommentResponse<CommentUserResponse> {
 
     private Boolean editable;
     private Boolean deletable;
