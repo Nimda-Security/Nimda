@@ -10,3 +10,13 @@ ALTER TABLE point_details CHANGE COLUMN user_id user_balance_id BIGINT;
 ALTER TABLE point_details
     ADD CONSTRAINT fk_point_detail_user_balance
     FOREIGN KEY (user_balance_id) REFERENCES user_balance (user_id);
+
+-- 1. 잔액 테이블에 정보가 없는 유저들을 찾아 0원짜리 잔액 데이터 일괄 생성
+INSERT INTO user_balance (user_id, total_amount, updated_at)
+SELECT id, 0, NOW()
+FROM users
+WHERE id NOT IN (SELECT user_id FROM user_balance);
+
+-- 2. (확인 쿼리) 이제 부모가 없는 포인트 내역이 있는지 다시 확인
+SELECT * FROM point_details
+WHERE user_balance_id NOT IN (SELECT user_id FROM user_balance);
