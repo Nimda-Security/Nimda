@@ -22,6 +22,8 @@ public class PointDetail {
     private Long amount;
     @Column(name = "remaining_amount", nullable = false)
     private Long remainingAmount;
+    @Column(name = "description", nullable = false)
+    private String description;
     @Column(name = "expired_at", nullable = false)
     private LocalDateTime expiredAt;
     @Column(name = "created_at")
