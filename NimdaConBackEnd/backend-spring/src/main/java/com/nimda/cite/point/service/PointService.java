@@ -14,7 +14,7 @@ import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.server.ResponseStatusException;
 
 import java.time.LocalDateTime;
-import java.util.Optional;
+import java.util.List;
 
 @Service
 @RequiredArgsConstructor
@@ -25,7 +25,7 @@ public class PointService {
     private final UserRepository userRepository;
 
     // 계좌 삭제 시 cascade를 직접 하는 것이 좀 더 나은 선택임
-    // softDelete를 할 수 있기 때문
+    // softDelete 를 할 수 있기 때문
     @Transactional
     public void deleteBalance(Long userId) {
 
@@ -49,10 +49,27 @@ public class PointService {
         }
     }
 
+    @Transactional(readOnly = true)
+    public List<UserBalance> findAllUserBalance() {
+        return userBalanceRepository.findAll();
+    }
+
     // 수동 적립 - 행사 참여 같이 내용이 변동되거나 포인트 지급이 다 다른 경우
     @Transactional
     public void updateBalance(Long balanceId,String description ,Long point) {
 
     }
 
+    @Transactional(readOnly = true)
+    public UserBalance findUserBalance(Long userId) {
+        return userBalanceRepository.findById(userId)
+                .orElseThrow(
+                        () -> new ResponseStatusException(HttpStatus.NOT_FOUND, "계좌가 존재하지 않습니다.")
+                );
+    }
+
+    @Transactional
+    public List<PointDetail> findPointDetail(Long userId) {
+        return pointDetailRepository.findByUserBalanceId(userId);
+    }
 }
