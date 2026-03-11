@@ -15,6 +15,7 @@ import org.springframework.web.server.ResponseStatusException;
 
 import java.time.LocalDateTime;
 import java.util.List;
+import java.util.Optional;
 
 @Service
 @RequiredArgsConstructor
@@ -29,6 +30,26 @@ public class PointService {
     @Transactional
     public void deleteBalance(Long userId) {
 
+    }
+
+    // 회원가입 시 계좌 생성
+    @Transactional
+    public void createBalance(Long userId) {
+        Optional<UserBalance> balance = userBalanceRepository.findById(userId);
+
+        User user = userRepository.findById(userId).orElseThrow(
+                () -> new ResponseStatusException(HttpStatus.NOT_FOUND)
+        );
+
+        Optional<UserBalance> userBalance = userBalanceRepository.findById(userId);
+
+        if(userBalance.isEmpty()) {
+            UserBalance newBalance = UserBalance.builder()
+                    .user(user)
+                    .updatedAt(LocalDateTime.now())
+                    .totalAmount(0L)
+                    .build();
+        }
     }
 
     // 자동 적립 - 출석, 알고리즘 풀이, 스터디 참여
