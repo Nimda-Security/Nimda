@@ -3,6 +3,7 @@ import { useNavigate, useParams } from 'react-router-dom';
 import Layout from '@/components/Layout';
 import { getBoardDetailAPI, deleteBoardAPI, getFileDownloadURL, getBoardLikeStatusAPI, toggleBoardLikeAPI } from '@/api/board';
 import type { Board } from '../types';
+import CommentSection from '@/domains/Comment';
 
 function BoardDetailPage() {
   const navigate = useNavigate();
@@ -208,6 +209,9 @@ function BoardDetailPage() {
               {board.content}
             </div>
           </main>
+
+          {/* 댓글 */}
+          <CommentSection boardId={board.id} />
 
           {/* 액션 버튼 */}
           {isAuthor() && (

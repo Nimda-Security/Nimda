@@ -37,9 +37,17 @@ public class CommentController {
             @Valid @RequestBody CommentCreateRequest request,
             @RequestHeader("Authorization") String authHeader
     ) {
-        Long userId = jwtUtil.extractUserId(resolveToken(authHeader));
-        CommentUserResponse response = commentService.createComment(boardId, request, userId);
-        return ApiResponse.ok(Map.of("comment", response)).toResponse(HttpStatus.CREATED);
+        try {
+            Long userId = jwtUtil.extractUserId(resolveToken(authHeader));
+            CommentUserResponse response = commentService.createComment(boardId, request, userId);
+            return ApiResponse.ok("댓글이 성공적으로 작성되었습니다.",
+                    Map.of("comment", response)).toResponse(HttpStatus.CREATED);
+
+        } catch(Exception e) {
+            return ApiResponse.fail("댓글 작성 중 오류가 발생했습니다: " + e.getMessage())
+                    .toResponse(HttpStatus.INTERNAL_SERVER_ERROR);
+        }
+
     }
 
 
@@ -52,15 +60,25 @@ public class CommentController {
             @PathVariable Long boardId,
             @RequestHeader("Authorization") String authHeader
     ) {
-        String token = resolveToken(authHeader);
-        List<String> authorities = jwtUtil.extractAuthorities(token);
+        try {
+            String token = resolveToken(authHeader);
+            List<String> authorities = jwtUtil.extractAuthorities(token);
 
-        if (authorities.contains("ROLE_ADMIN")) {
-            return ApiResponse.ok(Map.of("comments", commentService.getCommentsForAdmin(boardId))).toResponse();
+            // 어드민 댓글 조회
+            if (authorities.contains("ROLE_ADMIN")) {
+                return ApiResponse.ok("댓글을 성공적으로 조회했습니다.",
+                        Map.of("comments", commentService.getCommentsForAdmin(boardId))).toResponse();
+            }
+
+            // 유저 댓글 조회
+            Long userId = jwtUtil.extractUserId(token);
+            return ApiResponse.ok("댓글을 성공적으로 조회했습니다.",
+                    Map.of("comments", commentService.getCommentsForUser(boardId, userId))).toResponse();
+
+        } catch (Exception e) {
+            return ApiResponse.fail("댓글 조회 중 오류가 발생했습니다: " + e.getMessage())
+                    .toResponse(HttpStatus.INTERNAL_SERVER_ERROR);
         }
-
-        Long userId = jwtUtil.extractUserId(token);
-        return ApiResponse.ok(Map.of("comments", commentService.getCommentsForUser(boardId, userId))).toResponse();
     }
 
 
@@ -74,9 +92,16 @@ public class CommentController {
             @Valid @RequestBody CommentUpdateRequest request,
             @RequestHeader("Authorization") String authHeader
     ) {
-        Long userId = jwtUtil.extractUserId(resolveToken(authHeader));
-        CommentUserResponse response = commentService.updateComment(commentId, request, userId);
-        return ApiResponse.ok(Map.of("comment", response)).toResponse();
+        try {
+            Long userId = jwtUtil.extractUserId(resolveToken(authHeader));
+            CommentUserResponse response = commentService.updateComment(commentId, request, userId);
+            return ApiResponse.ok("댓글을 성공적으로 수정했습니다.",
+                    Map.of("comment", response)).toResponse();
+
+        } catch (Exception e) {
+            return ApiResponse.fail("댓글 수정 중 오류가 발생했습니다: " + e.getMessage())
+                    .toResponse(HttpStatus.INTERNAL_SERVER_ERROR);
+        }
     }
 
     /**
@@ -90,8 +115,15 @@ public class CommentController {
             @Valid @RequestBody CommentStatusUpdateRequest request,
             @RequestHeader("Authorization") String authHeader
     ) {
-        CommentAdminResponse response = commentService.updateCommentStatus(commentId, request);
-        return ApiResponse.ok(Map.of("comment", response)).toResponse();
+        try {
+            CommentAdminResponse response = commentService.updateCommentStatus(commentId, request);
+            return ApiResponse.ok("댓글을 성공적으로 숨겼습니다.",
+                    Map.of("comment", response)).toResponse();
+
+        } catch (Exception e) {
+            return ApiResponse.fail("댓글 숨김 중 오류가 발생했습니다: " + e.getMessage())
+                    .toResponse(HttpStatus.INTERNAL_SERVER_ERROR);
+        }
     }
 
     /**
@@ -103,9 +135,16 @@ public class CommentController {
             @PathVariable Long commentId,
             @RequestHeader("Authorization") String authHeader
     ) {
-        Long userId = jwtUtil.extractUserId(resolveToken(authHeader));
-        commentService.deleteComment(commentId, userId);
-        return ApiResponse.ok(Map.of("message", "댓글이 성공적으로 삭제되었습니다.")).toResponse();
+        try {
+            Long userId = jwtUtil.extractUserId(resolveToken(authHeader));
+            commentService.deleteComment(commentId, userId);
+            return ApiResponse.ok("댓글이 성공적으로 삭제되었습니다.").toResponse();
+
+        } catch (Exception e) {
+            return ApiResponse.fail("댓글 삭제 중 오류가 발생했습니다: " + e.getMessage())
+                    .toResponse(HttpStatus.INTERNAL_SERVER_ERROR);
+        }
+
     }
 
 

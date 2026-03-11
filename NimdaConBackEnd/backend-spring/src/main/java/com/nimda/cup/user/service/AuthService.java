@@ -1,5 +1,8 @@
 package com.nimda.cup.user.service;
 
+import com.nimda.cite.alarm.Event.RegisterUserEvent;
+import com.nimda.cite.point.entity.UserBalance;
+import com.nimda.cite.point.repositroy.UserBalanceRepository;
 import com.nimda.cup.user.dto.LoginResponseDTO;
 import com.nimda.cup.user.entity.User;
 import com.nimda.cup.user.enums.ApprovalStatus;
@@ -15,6 +18,7 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.time.LocalDateTime;
 import java.util.Optional;
 
 @Service
@@ -28,6 +32,8 @@ public class AuthService {
     private JwtUtil jwtUtil;
     @Autowired
     private ApplicationEventPublisher eventPublisher;
+    @Autowired
+    private UserBalanceRepository userBalanceRepository;
 
     /**
      * 사용자 인증
@@ -130,6 +136,14 @@ public class AuthService {
         userWithoutPassword.setUserId(user.getUserId());
         userWithoutPassword.setNickname(user.getNickname());
         userWithoutPassword.setEmail(user.getEmail());
+
+        // 유저 계좌 생성
+        UserBalance userBalance = UserBalance.builder()
+                .user(user)
+                .totalAmount(0L)
+                .updatedAt(LocalDateTime.now())
+                .build();
+        userBalanceRepository.save(userBalance);
 
         return userWithoutPassword;
     }
