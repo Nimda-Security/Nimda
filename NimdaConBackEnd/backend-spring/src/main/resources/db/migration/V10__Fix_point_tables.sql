@@ -20,3 +20,5 @@ WHERE id NOT IN (SELECT user_id FROM user_balance);
 -- 2. (확인 쿼리) 이제 부모가 없는 포인트 내역이 있는지 다시 확인
 SELECT * FROM point_details
 WHERE user_balance_id NOT IN (SELECT user_id FROM user_balance);
+
+ALTER TABLE point_details ADD COLUMN description VARCHAR(255) NOT NULL;
