@@ -104,7 +104,7 @@ const PopularPostsSection: React.FC = () => {
                 <span className="home-popular__comments-count">{0}</span>
               </div>
               <div className="home-popular__likes">
-                <HeartIcon />
+                <HeartIcon filled={true} />
                 <span className="home-popular__likes-count">{post.likeCount || 0}</span>
               </div>
               <span className="home-popular__date">{formatDate(post.createdAt)}</span>
