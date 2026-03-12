@@ -3,7 +3,7 @@
 /**
  * 댓글 상태 타입
  */
-export type CommentStatus = 'PUBLIC' | 'PRIVATE' | 'DELETED' | 'HIDDEN';
+export type CommentStatus = 'PUBLIC' | 'DELETED' | 'HIDDEN';
 
 /**
  * 공통 댓글 인터페이스 (CommentResponse))

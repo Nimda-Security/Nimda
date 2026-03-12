@@ -16,9 +16,11 @@ export default defineConfig(({ mode }) => {
       port: 3000,
       proxy: {
         '/api': {
-          target: 'https://api.nimda.kr',
+          // target: 'https://api.nimda.kr',
+          target: 'http://localhost:8080',
           changeOrigin: true,
           secure: true,
+          // secure: false,
         },
         '/solvedac-api': {
           target: 'https://solved.ac',

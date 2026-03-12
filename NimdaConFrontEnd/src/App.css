@@ -715,11 +715,17 @@ body {
 }
 
 .home-popular__comments {
-  font-size: 12px;
-  font-weight: 700;
-  color: var(--color-blue);
+  display: flex;
+  align-items: center;
+  gap: 4px;
   flex-shrink: 0;
   margin-right: 16px;
+  color: var(--color-blue);
+}
+
+.home-popular__comments-count {
+  font-size: 12px;
+  font-weight: 700;
 }
 
 .home-popular__likes {
@@ -728,12 +734,12 @@ body {
   gap: 4px;
   flex-shrink: 0;
   margin-right: 16px;
+  color: var(--color-red);
 }
 
 .home-popular__likes-count {
   font-size: 12px;
   font-weight: 700;
-  color: var(--color-red);
 }
 
 .home-popular__date {
