@@ -45,12 +45,6 @@ public class Comment extends BaseTimeEntity {
     @JsonIgnoreProperties({ "hibernateLazyInitializer", "handler" })
     private User author;
 
-    // 카테고리
-    @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "category_id", nullable = false)
-    @JsonIgnoreProperties({ "hibernateLazyInitializer", "handler" })
-    private Category category;
-
     // 내용
     @Column(columnDefinition = "TEXT", length = 500, nullable = false)
     private String context;

@@ -81,6 +81,25 @@ public class CommentController {
         }
     }
 
+    /**
+     * 마이페이지 작성 댓글 조회
+     * GET /api/my-page/comments
+     */
+    @GetMapping("/my-page/comments")
+    public ResponseEntity<?> getMyComments(
+            @RequestHeader("Authorization") String authHeader
+    ) {
+        try {
+            Long userId = jwtUtil.extractUserId(resolveToken(authHeader));
+            return ApiResponse.ok("댓글을 성공적으로 조회했습니다.",
+                    Map.of("comments", commentService.getMyComments(userId))).toResponse();
+
+        } catch (Exception e) {
+            return ApiResponse.fail("마이 페이지 작성 댓글 조회 중 오류가 발생했습니다: " + e.getMessage())
+                    .toResponse(HttpStatus.INTERNAL_SERVER_ERROR);
+        }
+    }
+
 
     /**
      * 댓글 수정
@@ -145,6 +164,26 @@ public class CommentController {
                     .toResponse(HttpStatus.INTERNAL_SERVER_ERROR);
         }
 
+    }
+
+    /**
+     * 마이페이지 선택 댓글 삭제
+     * DELETE /api/my-page/comments
+     */
+    @DeleteMapping("/my-page/comments")
+    public ResponseEntity<?> deleteMyComments(
+            @RequestHeader("Authorization") String authHeader,
+            @RequestBody MyCommentsDeleteRequest request
+    ) {
+        try {
+            Long userId = jwtUtil.extractUserId(resolveToken(authHeader));
+            commentService.deleteMyComments(request.getCommentIds(), userId);
+            return ApiResponse.ok("선택한 댓글이 성공적으로 삭제되었습니다.").toResponse();
+
+        } catch (Exception e) {
+            return ApiResponse.fail("댓글 삭제 중 오류가 발생했습니다: " + e.getMessage())
+                    .toResponse(HttpStatus.INTERNAL_SERVER_ERROR);
+        }
     }
 
 
