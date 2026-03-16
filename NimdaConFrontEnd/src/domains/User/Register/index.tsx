@@ -1,4 +1,5 @@
 import "@/App.css";
+import "./Register.css";
 import BlackButton from "@/components/Button/Black";
 import Layout from "@/components/Layout";
 import { useNavigate } from "react-router-dom";
@@ -61,7 +62,7 @@ function RegisterPage() {
   };
 
   return (
-    <Layout>
+    <Layout hideSidebar>
       <div className="flex flex-col items-center justify-center pt-24">
         <h1 className="text-3xl font-bold mb-12">NIMDA CON</h1>
         <div className="text-xl font-bold mb-4">회원가입</div>
