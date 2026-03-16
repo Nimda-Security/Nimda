@@ -82,4 +82,10 @@ public class AttendanceService {
     public List<AttendanceLog> getUserLogs(Long userId) {
         return logRepository.findByUserIdOrderByAttendanceDateDesc(userId);
     }
+
+    @Transactional(readOnly = true)
+    public Long getMyTotalAttendanceCount(Long userId) {
+        // findById로 가져온 뒤 totalCount 필드만 반환
+        return attendanceRepository.findTotalCountByUserId(userId).orElse(0L);
+    }
 }
