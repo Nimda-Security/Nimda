@@ -1,0 +1,120 @@
+/* 회원가입 페이지 - :root 변수는 App.css 참조 */
+
+.register-page {
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: calc(var(--header-height) + 32px) 24px 48px;
+  background-color: var(--color-white);
+}
+
+.register-page__inner {
+  width: 100%;
+  max-width: 420px;
+}
+
+.register-page__brand {
+  font-size: 24px;
+  font-weight: 700;
+  color: var(--color-black);
+  text-align: center;
+  margin-bottom: 32px;
+  font-family: "Pretendard", sans-serif;
+}
+
+.register-page__title {
+  font-size: 20px;
+  font-weight: 700;
+  color: var(--color-black);
+  margin-bottom: 24px;
+  font-family: "Pretendard", sans-serif;
+}
+
+.register-page__form {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+.register-page__field {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.register-page__label {
+  font-size: 14px;
+  font-weight: 500;
+  color: var(--color-black);
+  font-family: "Pretendard", sans-serif;
+}
+
+.register-page__label--optional::after {
+  content: " (선택)";
+  font-weight: 400;
+  color: var(--color-gray-500);
+}
+
+.register-page__input {
+  width: 100%;
+  padding: 12px 16px;
+  font-size: 14px;
+  color: var(--color-black);
+  background-color: #fff;
+  border: 1px solid var(--color-gray-200);
+  border-radius: 8px;
+  outline: none;
+  font-family: "Pretendard", sans-serif;
+  transition: border-color 0.2s ease;
+}
+
+.register-page__input::placeholder {
+  color: var(--color-gray-400);
+}
+
+.register-page__input:hover {
+  border-color: var(--color-gray-300);
+}
+
+.register-page__input:focus {
+  border-color: var(--color-black);
+}
+
+.register-page__submit {
+  width: 100%;
+  padding: 14px 24px;
+  font-size: 16px;
+  font-weight: 700;
+  color: #fff;
+  background-color: var(--color-black);
+  border: none;
+  border-radius: 8px;
+  cursor: pointer;
+  font-family: "Pretendard", sans-serif;
+  margin-top: 8px;
+  transition: background-color 0.2s ease;
+}
+
+.register-page__submit:hover {
+  background-color: var(--color-blue);
+}
+
+.register-page__login-link-wrap {
+  text-align: center;
+  margin-top: 24px;
+}
+
+.register-page__login-link {
+  font-size: 14px;
+  font-weight: 500;
+  color: var(--color-gray-600);
+  text-decoration: none;
+  font-family: "Pretendard", sans-serif;
+}
+
+.register-page__login-link:hover {
+  color: var(--color-blue);
+  text-decoration: underline;
+}

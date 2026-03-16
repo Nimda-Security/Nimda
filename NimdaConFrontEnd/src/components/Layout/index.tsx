@@ -5,26 +5,25 @@ import Footer from "./Footer";
 
 interface LayoutProps {
   children: React.ReactNode;
+  /** true면 로그인/회원가입 등에서 사이드바 숨김 */
+  hideSidebar?: boolean;
 }
 
-const Layout: React.FC<LayoutProps> = ({ children }) => {
+const Layout: React.FC<LayoutProps> = ({ children, hideSidebar }) => {
   return (
     <div className="layout">
-      {/* Header: 전체 너비, 내부 1200px */}
       <NavBar />
 
-      {/* Body: Header 고정 높이 + 간격만큼 padding-top */}
-      <div className="layout__body">
-        <div className="layout__container">
-          {/* 사이드바: 282px */}
-          <Sidebar />
+      <div className={`layout__body ${hideSidebar ? "layout__body--no-sidebar" : ""}`}>
+        <div className={`layout__container ${hideSidebar ? "layout__container--no-sidebar" : ""}`}>
+          {!hideSidebar && <Sidebar />}
 
-          {/* 본문 콘텐츠: 894px */}
-          <main className="layout__content">{children}</main>
+          <main className={`layout__content ${hideSidebar ? "layout__content--full" : ""}`}>
+            {children}
+          </main>
         </div>
       </div>
 
-      {/* Footer: 전체 너비, 내부 1200px, 높이 180px */}
       <Footer />
     </div>
   );
