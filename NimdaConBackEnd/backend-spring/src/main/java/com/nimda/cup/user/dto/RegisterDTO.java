@@ -46,4 +46,7 @@ public class RegisterDTO {
 
     private String grade;
 
+    /** 백준 ID (선택) */
+    private String bojId;
+
 }
