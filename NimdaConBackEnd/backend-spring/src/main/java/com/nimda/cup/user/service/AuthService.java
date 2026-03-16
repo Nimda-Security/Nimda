@@ -1,6 +1,5 @@
 package com.nimda.cup.user.service;
 
-import com.nimda.cite.alarm.Event.RegisterUserEvent;
 import com.nimda.cite.point.entity.UserBalance;
 import com.nimda.cite.point.repositroy.UserBalanceRepository;
 import com.nimda.cup.user.dto.LoginResponseDTO;
