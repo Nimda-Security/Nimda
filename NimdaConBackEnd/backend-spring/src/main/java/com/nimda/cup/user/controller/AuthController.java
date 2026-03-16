@@ -84,7 +84,8 @@ public class AuthController {
                     registerRequest.getEmail(),
                     registerRequest.getMajor(),
                     registerRequest.getUniversityName(),
-                    registerRequest.getGrade());
+                    registerRequest.getGrade(),
+                    registerRequest.getBojId());
 
             return ResponseEntity.status(HttpStatus.CREATED).body(user);
         }
@@ -127,6 +128,7 @@ public class AuthController {
                     .universityName(user.getUniversityName())
                     .major(user.getMajor())
                     .grade(user.getGrade())
+                    .bojId(user.getBojId())
                     .profileImage(user.getProfileImage())
                     .createdAt(user.getCreatedAt())
                     .updatedAt(user.getUpdatedAt())
