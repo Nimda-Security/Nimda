@@ -83,6 +83,10 @@ public class User extends BaseTimeEntity {
     private String birth;
     // 생년월일
 
+    @Column(name = "boj_id", length = 50)
+    private String bojId;
+    // 백준 ID (선택, Null 허용)
+
     @Column(name = "profile_image", length = 255)
     private String profileImage;
     // 프로필 이미지 URL
