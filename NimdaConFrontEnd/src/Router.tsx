@@ -2,6 +2,7 @@ import { BrowserRouter, Routes, Route } from "react-router-dom";
 
 import LoginPage from "@/domains/User/Login/Page";
 import SignUp from "@/domains/User/Register";
+import MyPageMileage from "@/domains/User/MyPage/Point/index";
 import ProblemSubmitPage from "@/domains/Contest/Problem/ProblemSubmit"; // [DEBUG] 테스트용 코드
 import JudgingStatusPage from "@/domains/Contest/Problem/JudgingStatus";
 import ProblemsPage from "@/domains/Contest/Problem/Problems";
@@ -27,6 +28,7 @@ const Router = () => {
         <Route path="/" element={<Home />} />
         <Route path="/login" element={<LoginPage />} />
         <Route path="/signup" element={<SignUp />} />
+        <Route path="/mypage" element={<MyPageMileage />} />
         <Route path="/403" element={<ForbiddenPage />} />
         <Route path="/problems" element={<ProblemsPage />} />
         <Route path="/problem-submit" element={<ProblemSubmitPage />} />

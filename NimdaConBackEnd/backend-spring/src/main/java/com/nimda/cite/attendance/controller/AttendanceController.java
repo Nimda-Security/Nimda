@@ -83,4 +83,13 @@ public class AttendanceController {
         List<AttendanceLog> logs = attendanceService.getUserLogs(userId);
         return ApiResponse.ok(logs).toResponse();
     }
+
+    @GetMapping
+    public ResponseEntity<?> getMyTotalAttendanceCount(@RequestHeader("Authorization") String authHeader) {
+        Long userId = jwtUtil.extractUserId(authHeader.substring(7));
+        Long dto = attendanceService.getMyTotalAttendanceCount(userId);
+
+        // 누적 출석 횟수(totalCount)만 추출하여 반환
+        return ApiResponse.ok(Map.of("visitCount", dto)).toResponse();
+    }
 }
