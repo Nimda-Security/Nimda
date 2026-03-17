@@ -1,0 +1,354 @@
+/* ===========================
+   Comment Section (댓글)
+   Figma: 1693:122
+   =========================== */
+
+.comment-section {
+  margin-top: 32px;
+  padding-top: 24px;
+  border-top: 1px solid var(--color-gray-200);
+}
+
+.comment-section__title {
+  font-size: 20px;
+  font-weight: 700;
+  color: var(--color-black);
+  line-height: 1.5;
+  margin-bottom: 24px;
+}
+
+/* ===========================
+   댓글 입력
+   =========================== */
+.comment-input {
+  display: flex;
+  gap: 8px;
+  align-items: flex-start;
+  margin-bottom: 24px;
+}
+
+.comment-input__avatar {
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  background: var(--color-gray-200);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--color-gray-500);
+  flex-shrink: 0;
+}
+
+.comment-input__body {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.comment-input__textarea {
+  width: 100%;
+  min-height: 120px;
+  padding: 12px 16px;
+  font-size: 12px;
+  font-weight: 500;
+  line-height: 1.5;
+  color: var(--color-black);
+  background-color: var(--color-white);
+  border: 1px solid var(--color-gray-200);
+  border-radius: 8px;
+  resize: vertical;
+  font-family: "Pretendard", sans-serif;
+  transition: border-color 0.2s;
+}
+
+.comment-input__textarea::placeholder {
+  color: var(--color-gray-500);
+}
+
+.comment-input__textarea:focus {
+  outline: none;
+  border: 2px solid var(--color-pink);
+}
+
+.comment-input__footer {
+  display: flex;
+  justify-content: flex-end;
+}
+
+.comment-input__submit {
+  padding: 4px 16px;
+  height: 26px;
+  font-size: 12px;
+  font-weight: 500;
+  line-height: 1.5;
+  color: var(--color-pink);
+  background-color: var(--color-white);
+  border: 1px solid var(--color-pink);
+  border-radius: 8px;
+  cursor: pointer;
+  font-family: "Pretendard", sans-serif;
+}
+
+.comment-input__submit:hover:not(:disabled) {
+  opacity: 0.85;
+}
+
+.comment-input__submit:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+
+/* ===========================
+   댓글 목록
+   =========================== */
+.comment-list {
+  border-top: 1px solid var(--color-gray-200);
+}
+
+/* 단일 댓글 아이템 */
+.comment-item {
+  display: flex;
+  gap: 8px;
+  align-items: flex-start;
+  padding: 16px 0;
+  border-bottom: 1px solid var(--color-gray-200);
+}
+
+.comment-item:last-child {
+  border-bottom: none;
+}
+
+/* 대댓글 들여쓰기 */
+.comment-item--reply {
+  margin-left: 48px;
+  padding-left: 0;
+  border-bottom: 1px solid var(--color-gray-100);
+}
+
+.comment-item__avatar {
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  object-fit: cover;
+  flex-shrink: 0;
+}
+
+.comment-item__avatar-placeholder {
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  background: var(--color-gray-200);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--color-gray-500);
+  flex-shrink: 0;
+}
+
+.comment-item__body {
+  flex: 1;
+  min-width: 0;
+}
+
+/* 작성자, 날짜 */
+.comment-item__header {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 4px;
+}
+
+.comment-item__author {
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--color-black);
+  line-height: 1.5;
+  white-space: nowrap;
+}
+
+.comment-item__date {
+  font-size: 12px;
+  font-weight: 400;
+  color: var(--color-gray-500);
+  line-height: 1.5;
+  white-space: nowrap;
+}
+
+.comment-item__edited {
+  font-size: 12px;
+  font-weight: 400;
+  color: var(--color-gray-500);
+  line-height: 1.5;
+  white-space: nowrap;
+}
+
+/* 본문 */
+.comment-item__content {
+  font-size: 14px;
+  font-weight: 400;
+  color: var(--color-black);
+  line-height: 1.5;
+  white-space: pre-wrap;
+  word-break: break-word;
+  margin-bottom: 8px;
+}
+
+.comment-item__content--deleted,
+.comment-item__content--hidden {
+  font-style: italic;
+  color: var(--color-gray-500);
+}
+
+/* 하단 좋아요/답글 행 */
+.comment-item__footer {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.comment-item__like-btn,
+.comment-item__reply-btn {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 12px;
+  font-weight: 700;
+  line-height: 1.5;
+  padding: 0;
+  border: none;
+  background: none;
+  cursor: pointer;
+  font-family: "Pretendard", sans-serif;
+}
+
+.comment-item__like-btn {
+  color: var(--color-red);
+}
+
+.comment-item__reply-btn {
+  color: var(--color-blue);
+}
+
+.comment-item__like-btn:hover,
+.comment-item__reply-btn:hover {
+  opacity: 0.75;
+}
+
+.comment-item__action {
+  font-size: 12px;
+  font-weight: 400;
+  color: var(--color-gray-500);
+  padding: 0;
+  border: none;
+  background: none;
+  cursor: pointer;
+  font-family: "Pretendard", sans-serif;
+  margin-left: 4px;
+}
+
+.comment-item__action:hover {
+  color: var(--color-black);
+}
+
+.comment-item__action--delete:hover {
+  color: var(--color-red);
+}
+
+.comment-item__more {
+  width: 24px;
+  height: 24px;
+  padding: 0;
+  border: none;
+  background: none;
+  cursor: pointer;
+  color: var(--color-gray-400);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-left: auto;
+  flex-shrink: 0;
+}
+
+.comment-item__more:hover {
+  color: var(--color-black);
+}
+
+/* 답글 입력 (인라인) */
+.comment-reply-input {
+  padding: 12px 0 12px 56px;
+}
+
+.comment-reply-input__label {
+  font-size: 12px;
+  color: var(--color-gray-500);
+  margin-bottom: 8px;
+}
+
+.comment-reply-input__cancel {
+  font-size: 12px;
+  color: var(--color-gray-500);
+  padding: 0;
+  border: none;
+  background: none;
+  cursor: pointer;
+  margin-top: 4px;
+  font-family: "Pretendard", sans-serif;
+}
+
+.comment-reply-input__cancel:hover {
+  color: var(--color-black);
+}
+
+/* 수정 모드 */
+.comment-edit {
+  padding: 16px 0;
+}
+
+/* 빈 상태 / 로딩 / 에러 */
+.comment-section__empty,
+.comment-section__loading,
+.comment-section__error {
+  font-size: 14px;
+  color: var(--color-gray-500);
+  text-align: center;
+  padding: 32px 0;
+}
+
+.comment-section__error {
+  color: var(--color-red);
+}
+
+/* 어드민 배지 */
+.comment-status-badge {
+  font-size: 12px;
+  font-weight: 500;
+  padding: 2px 6px;
+  border-radius: 4px;
+  white-space: nowrap;
+}
+
+.comment-status-badge--public {
+  background: #dcfce7;
+  color: #166534;
+}
+
+.comment-status-badge--private {
+  background: #fef9c3;
+  color: #854d0e;
+}
+
+.comment-status-badge--deleted {
+  background: #fee2e2;
+  color: var(--color-red);
+}
+
+.comment-status-badge--hidden {
+  background: var(--color-gray-100);
+  color: var(--color-gray-500);
+}
