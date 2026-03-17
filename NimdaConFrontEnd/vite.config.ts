@@ -18,7 +18,7 @@ export default defineConfig(({ mode }) => {
         '/api': {
           target: 'https://api.nimda.kr',
           changeOrigin: true,
-          secure: false,
+          secure: true,
         },
         '/solvedac-api': {
           target: 'https://solved.ac',
