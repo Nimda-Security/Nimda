@@ -24,6 +24,7 @@ package com.nimda.cite.board.repository;
 
 import com.nimda.cite.board.entity.Board;
 import com.nimda.cite.board.entity.Category;
+import com.nimda.cup.user.entity.User;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.EntityGraph;
@@ -95,4 +96,6 @@ public interface BoardRepository extends JpaRepository<Board, Long> { // [수정
     // [신규] 여러 카테고리 + 검색어
     @EntityGraph(attributePaths = { "author", "category" })
     Page<Board> findByCategoryInAndTitleContaining(List<Category> categories, String searchKeyword, Pageable pageable);
+
+    long countByAuthor(User author);
 }

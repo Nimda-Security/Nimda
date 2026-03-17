@@ -146,4 +146,9 @@ public class BoardService {
 
         return board;
     }
+
+    // BoardService.java (또는 구현체)
+    public long countByAuthor(User author) {
+        return boardRepository.countByAuthor(author);
+    }
 }

@@ -710,4 +710,35 @@ export const toggleBoardPinAPI = async (
       message: '게시글 고정/해제 중 오류가 발생했습니다.',
     };
   }
+
+
+};
+
+/**
+ * 내가 쓴 게시글 개수 조회 API
+ */
+export const getMyBoardCountAPI = async (): Promise<number> => {
+  try {
+    const token = localStorage.getItem('authToken');
+    if (!token) return 0;
+
+    const response = await fetch(`${API_BASE_URL}/my/board-count`, {
+      method: 'GET',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${token}`,
+      },
+    });
+
+    const result = await response.json();
+
+    // 백엔드 ApiResponse.ok 구조에 맞춰 data.postCount 추출
+    if (response.ok && result.success) {
+      return result.data.postCount || 0;
+    }
+    return 0;
+  } catch (error) {
+    console.error('내 게시글 개수 조회 오류:', error);
+    return 0;
+  }
 };

@@ -324,3 +324,28 @@ export const deleteCommentAPI = async (
     return { success: false, message: '댓글 삭제 중 오류가 발생했습니다.' };
   }
 };
+
+// 작성 댓글 개수 가지고 오기
+export const getMyCommentCountAPI = async (): Promise<number> => {
+  try {
+    const token = localStorage.getItem('authToken');
+    if (!token) return 0;
+
+    const response = await fetch(`${API_BASE_URL}/comments/my/count`, {
+      method: 'GET',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${token}`,
+      },
+    });
+
+    const result = await response.json();
+    if (response.ok && result.success) {
+      return result.data.commentCount || 0;
+    }
+    return 0;
+  } catch (error) {
+    console.error('내 댓글 개수 조회 오류:', error);
+    return 0;
+  }
+};

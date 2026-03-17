@@ -54,31 +54,59 @@ public class PointService {
 
     // 자동 적립 - 출석, 알고리즘 풀이, 스터디 참여
     @Transactional
-    public void updateBalance(Long userId, PointTypes type) {
+    public UserBalance updateBalanceAuto(Long userId, PointTypes type) {
         // 최초 출석 시 계좌가 존재하지 않기 때문에 생성해야 함
         User user = userRepository.findById(userId).orElseThrow(
                 () -> new ResponseStatusException(HttpStatus.NOT_FOUND, "존재하지 않는 유저입니다.")
         );
+        UserBalance balance = userBalanceRepository.findById(userId).orElseThrow(
+                () -> new ResponseStatusException(HttpStatus.BAD_REQUEST, "계좌가 없습니다.")
+        );
+        balance.setTotalAmount(balance.getTotalAmount() + type.getDefaultAmount());
 
-        // 유저의 계좌가 존재하지 않음
-        if(userBalanceRepository.existsById(user.getId())) {
-            UserBalance newUserBalance = UserBalance.builder()
-                    .totalAmount(0L)
-                    .updatedAt(LocalDateTime.now())
-                    .build();
-            userBalanceRepository.save(newUserBalance);
-        }
+        // 계좌 내역 생성
+        PointDetail pointDetail = PointDetail.builder()
+                .userBalance(balance)
+                .amount(type.getDefaultAmount())
+                .description(type.getDescription())
+                .createdAt(LocalDateTime.now())
+                .expiredAt(LocalDateTime.now().plusYears(1L))
+                .remainingAmount(balance.getTotalAmount())
+                .build();
+        pointDetailRepository.save(pointDetail);
+        return balance;
+    }
+
+    @Transactional
+    public UserBalance updateBalanceManual(Long userId, String description, Long pointAmount) {
+        User user = userRepository.findById(userId).orElseThrow(
+                () -> new ResponseStatusException(HttpStatus.NOT_FOUND, "유저가 존재하지 않습니다.")
+        );
+
+        UserBalance balance = userBalanceRepository.findById(userId).orElseThrow(
+                () -> new ResponseStatusException(HttpStatus.NOT_FOUND,"포인트 계좌가 존재하지 않습니다! 승인 대기 중일 수 있습니다.")
+        );
+
+        balance.setUpdatedAt(LocalDateTime.now());
+        balance.setTotalAmount(balance.getTotalAmount()+pointAmount);
+
+        // Detail 생성
+        PointDetail pointDetail = PointDetail.builder()
+                .userBalance(balance)
+                .amount(pointAmount)
+                .description(description)
+                .createdAt(LocalDateTime.now())
+                .expiredAt(LocalDateTime.now().plusYears(1L))
+                .remainingAmount(balance.getTotalAmount())
+                .build();
+
+        pointDetailRepository.save(pointDetail);
+        return balance;
     }
 
     @Transactional(readOnly = true)
     public List<UserBalance> findAllUserBalance() {
         return userBalanceRepository.findAll();
-    }
-
-    // 수동 적립 - 행사 참여 같이 내용이 변동되거나 포인트 지급이 다 다른 경우
-    @Transactional
-    public void updateBalance(Long balanceId,String description ,Long point) {
-
     }
 
     @Transactional(readOnly = true)

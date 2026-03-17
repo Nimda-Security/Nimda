@@ -28,4 +28,5 @@ public interface BoardLikeRepository extends JpaRepository<BoardLike, Long> {
         @Query("SELECT bl FROM BoardLike bl JOIN FETCH bl.board WHERE bl.liker.id = :userId")
         List<BoardLike> findAllByLikerId(@Param("userId") Long userId);
 
-    }
+    long countByLikerId(Long userId);
+}

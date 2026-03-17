@@ -487,4 +487,33 @@ public class BoardController {
             return "카테고리의 태그 설정이 올바르지 않습니다.";
         }
     }
+
+    @GetMapping("/my/board-count")
+    public ResponseEntity<?> getMyStats(
+            @RequestHeader(value = "Authorization", required = false) String authHeader) {
+        try {
+            User currentUser = null;
+            if (authHeader != null && authHeader.startsWith("Bearer ")) {
+                String token = authHeader.substring(7);
+                Long userId = jwtUtil.extractUserId(token);
+                if (userId != null && !jwtUtil.isTokenExpired(token)) {
+                    currentUser = userRepository.findById(userId).orElse(null);
+                }
+            }
+
+            if (currentUser == null) {
+                return ApiResponse.fail("로그인이 필요합니다.").toResponse(HttpStatus.UNAUTHORIZED);
+            }
+
+            long postCount = boardService.countByAuthor(currentUser);
+
+            return ApiResponse.ok("통계 정보를 성공적으로 조회했습니다.", Map.of(
+                    "postCount", postCount
+            )).toResponse();
+
+        } catch (Exception e) {
+            return ApiResponse.fail("통계 정보 조회 중 오류가 발생했습니다: " + e.getMessage())
+                    .toResponse(HttpStatus.INTERNAL_SERVER_ERROR);
+        }
+    }
 }
