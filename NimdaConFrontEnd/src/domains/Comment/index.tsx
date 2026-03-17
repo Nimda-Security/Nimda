@@ -21,59 +21,6 @@ interface CommentSectionProps {
   isAdmin?: boolean;
 }
 
-<<<<<<< HEAD
-// =============== 서브 컴포넌트 ===============
-
-/** 프로필 아바타 */
-function Avatar({ src, name }: { src: string | null; name: string }) {
-  const sizeClass = "w-10 h-10";
-
-  if (src) {
-    return (
-      <img
-        src={src}
-        alt={name}
-        className={`${sizeClass} rounded-full object-cover flex-shrink-0 border border-gray-100`}
-      />
-    );
-  }
-  return (
-    <div className={`${sizeClass} rounded-full flex-shrink-0 bg-gray-200 flex items-center justify-center text-sm font-medium text-gray-500 border border-gray-100`}>
-      {name.charAt(0)}
-    </div>
-  );
-}
-
-/** 좋아요/공감 그룹 */
-function EngagementButtons({
-  likeCount,
-  onReply,
-}: {
-  likeCount: number;
-  replyCount: number;
-  onReply: () => void;
-}) {
-  return (
-    <div className="flex items-center gap-4 mt-2">
-      {/* 좋아요 */}
-      <button className="flex items-center gap-1 text-xs text-gray-400 hover:text-blue-400 transition-colors">
-        <span>{likeCount}</span>
-        <span>👍</span>
-      </button>
-            
-      {/* 답글 */}
-      <button
-        onClick={onReply}
-        className="text-xs text-gray-400 hover:text-gray-600 transition-colors"
-      >
-        답글
-      </button>
-    </div>
-  );
-}
-
-/** 댓글 입력 박스 */
-=======
 function CommentAvatar({ src, name }: { src: string | null; name: string }) {
   if (src) {
     return <img src={src} alt="" className="comment-item__avatar" />;
@@ -82,8 +29,6 @@ function CommentAvatar({ src, name }: { src: string | null; name: string }) {
     <div className="comment-item__avatar-placeholder">{name.charAt(0)}</div>
   );
 }
-
->>>>>>> refad/doil/fe
 function CommentInput({
   value,
   onChange,
@@ -128,18 +73,11 @@ function CommentInput({
 }
 
 function StatusBadge({ status }: { status: CommentStatus }) {
-<<<<<<< HEAD
-  const map: Record<CommentStatus, { label: string; className: string }> = {
-    PUBLIC: { label: '공개', className: 'bg-green-100 text-green-700' },
-    DELETED: { label: '삭제됨', className: 'bg-red-100 text-red-700' },
-    HIDDEN: { label: '숨김', className: 'bg-gray-100 text-gray-500' },
-=======
   const map: Record<CommentStatus, { label: string; mod: string }> = {
     PUBLIC: { label: '공개', mod: '--public' },
     PRIVATE: { label: '비공개', mod: '--private' },
     DELETED: { label: '삭제됨', mod: '--deleted' },
     HIDDEN: { label: '숨김', mod: '--hidden' },
->>>>>>> refad/doil/fe
   };
   const { label, mod } = map[status] ?? map.PUBLIC;
   return <span className={`comment-status-badge comment-status-badge${mod}`}>{label}</span>;
@@ -217,14 +155,6 @@ function CommentItem({
           )}
 
           {!isDeleted && (
-<<<<<<< HEAD
-            <div className="flex items-center gap-3 mt-2">
-              <EngagementButtons
-                likeCount={comment.likeCount}
-                replyCount={comment.children?.length || 0}
-                onReply={() => onReply(comment.id, comment.authorName)}
-              />
-=======
             <div className="comment-item__footer">
               <button type="button" className="comment-item__like-btn">
                 <Heart size={12} />
@@ -238,7 +168,6 @@ function CommentItem({
                 <MessageCircle size={12} />
                 <span>답글</span>
               </button>
->>>>>>> refad/doil/fe
               {userComment?.editable && (
                 <button type="button" onClick={() => onEdit(comment.id, comment.context)} className="comment-item__action">수정</button>
               )}
