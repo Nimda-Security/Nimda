@@ -2,6 +2,7 @@ package com.nimda.cite.point.controller;
 
 import com.nimda.cite.common.response.ApiResponse;
 import com.nimda.cite.point.dto.BalanceResponse;
+import com.nimda.cite.point.dto.ManualBalanceUpdateRequest;
 import com.nimda.cite.point.dto.PointDetailResponse;
 import com.nimda.cite.point.entity.UserBalance;
 import com.nimda.cite.point.service.PointService;
@@ -20,16 +21,20 @@ public class PointController {
     private final PointService pointService;
     private final UserRepository userRepository;
 
-    // 계좌 조회
+    // PointController.java 수정
+
     @GetMapping
     public ResponseEntity<?> getBalance(@RequestHeader("Authorization") String authHeader) {
+        // 바디 대신 헤더의 토큰에서 userId를 가져옵니다.
         Long userId = jwtUtil.extractUserId(resolveToken(authHeader));
+
         UserBalance balance = pointService.findUserBalance(userId);
         BalanceResponse dto = BalanceResponse.builder()
                 .totalAmount(balance.getTotalAmount())
                 .updatedAt(balance.getUpdatedAt())
                 .build();
-        return ApiResponse.ok("계좌 조회에 성공했습니다.",dto).toResponse();
+
+        return ApiResponse.ok("계좌 조회에 성공했습니다.", dto).toResponse();
     }
 
     // 계좌 전체 조회
@@ -50,6 +55,17 @@ public class PointController {
                 PointDetailResponse::from).toList();
 
         return ApiResponse.ok("포인트 내역 조회에 성공했습니다.",dto).toResponse();
+    }
+
+    @PostMapping
+    public ResponseEntity<?> updateUserBalanceManual(
+            @RequestHeader("Authorization") String authHeader, @RequestBody ManualBalanceUpdateRequest req) {
+
+        Long userId = jwtUtil.extractUserId(resolveToken(authHeader));
+        BalanceResponse dto = BalanceResponse.from(
+                pointService.updateBalanceManual(userId, req.getDescription(),req.getAmount())
+                );
+        return ApiResponse.ok("마일리지 지급이 완료되었습니다.",dto).toResponse();
     }
 
     protected String resolveToken(String authHeader) {

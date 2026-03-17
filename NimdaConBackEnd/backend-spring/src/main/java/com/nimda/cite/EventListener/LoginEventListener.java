@@ -2,6 +2,8 @@ package com.nimda.cite.EventListener;
 
 import com.nimda.cite.alarm.service.AlarmService;
 import com.nimda.cite.attendance.service.AttendanceService;
+import com.nimda.cite.point.enums.PointTypes;
+import com.nimda.cite.point.service.PointService;
 import com.nimda.cup.user.security.CustomUserDetails;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -16,7 +18,8 @@ import org.springframework.stereotype.Component;
 public class LoginEventListener {
 
     private final AttendanceService attendanceService;
-    private final AlarmService alarmService; // 알림 서비스 주입
+    private final AlarmService alarmService;
+    private final PointService pointService;
 
     @Async
     @EventListener
@@ -27,20 +30,27 @@ public class LoginEventListener {
             Long userId = userDetails.getUser().getId();
 
             // 1. 자동 출석 체크
-            handleAutoAttendance(userId);
+            boolean isAttendance = handleAutoAttendance(userId);
 
             // 2. 알림 구독/초기화 로직
             handleNotificationSubscription(userId);
+
+            if(isAttendance) {
+                // 출석 마일리지 지급
+                handleAddAttendancePoint(userId);
+            }
         }
     }
 
-    private void handleAutoAttendance(Long userId) {
+    private boolean handleAutoAttendance(Long userId) {
         try {
             attendanceService.markAttendance(userId);
             log.info("사용자 {} - 자동 출석 완료", userId);
+            return true;
         } catch (Exception e) {
             log.info("사용자 {} - 자동 출석 건너뜀: {}", userId, e.getMessage());
         }
+        return false;
     }
 
     private void handleNotificationSubscription(Long userId) {
@@ -52,5 +62,9 @@ public class LoginEventListener {
         } catch (Exception e) {
             log.error("사용자 {} - 알림 구독 처리 중 오류: {}", userId, e.getMessage());
         }
+    }
+
+    private void handleAddAttendancePoint(Long userId) {
+        pointService.updateBalanceAuto(userId, PointTypes.ATTENDANCE);
     }
 }

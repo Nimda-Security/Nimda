@@ -147,6 +147,30 @@ public class CommentController {
 
     }
 
+    /**
+     * 내가 작성한 댓글 개수 조회
+     * GET /api/comments/my/count
+     */
+    @GetMapping("/comments/my/count")
+    public ResponseEntity<?> getMyCommentCount(
+            @RequestHeader("Authorization") String authHeader
+    ) {
+        try {
+            // 토큰에서 유저 ID 추출
+            Long userId = jwtUtil.extractUserId(resolveToken(authHeader));
+
+            // Service에서 해당 유저의 댓글 개수 조회
+            // commentService에 countByUserId(userId) 메서드가 구현되어 있어야 합니다.
+            long commentCount =     commentService.countByUserId(userId);
+
+            return ApiResponse.ok("댓글 개수를 성공적으로 조회했습니다.",
+                    Map.of("commentCount", commentCount)).toResponse();
+
+        } catch (Exception e) {
+            return ApiResponse.fail("댓글 개수 조회 중 오류가 발생했습니다: " + e.getMessage())
+                    .toResponse(HttpStatus.INTERNAL_SERVER_ERROR);
+        }
+    }
 
     // =============== PRIVATE ===============
 

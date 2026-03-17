@@ -64,71 +64,63 @@ public class SecurityConfig {
     @Bean
     public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
         http
-                // 1. CORS 설정 적용 필터
+                // 1. CORS 설정 (프론트엔드와 통신 허용)
                 .cors(cors -> cors.configurationSource(corsConfigurationSource()))
 
-                // 2. CSRF 비활성화 (JWT 기반)
+                // 2. CSRF 비활성화 (JWT 사용 시 필수)
                 .csrf(csrf -> csrf.disable())
 
-                // 3. 세션 정책 설정
+                // 3. 세션 정책 설정 (Stateless)
                 .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
 
-                // 4. JWT 필터 추가 (UsernamePasswordAuthenticationFilter 전에 실행)
-                // 폼 로그인용 필터라 JWT 방식에서는 사용되지 않으나, 표준 관례상 기준점으로 사용
+                // 4. JWT 필터 추가
                 .addFilterBefore(jwtAuthenticationFilter, UsernamePasswordAuthenticationFilter.class)
 
-                // 5. 요청별 권한 제어
+                // 5. 요청별 권한 제어 (순서가 매우 중요함)
                 .authorizeHttpRequests(authz -> authz
-                        // 공개 API (인증 불필요)
-                        .requestMatchers("/api/auth/login").permitAll() // 로그인
-                        .requestMatchers("/api/auth/register").permitAll() // 회원가입
-                        .requestMatchers("/api/auth/me").authenticated() // 현재 사용자 정보 조회 (인증 필요)
+                        // [우선순위 1] OPTIONS 예비 요청은 무조건 전체 허용 (CORS 해결)
+                        .requestMatchers(HttpMethod.OPTIONS, "/**").permitAll()
 
-                        // 관리자 전용 API
-                        // AdminUserController: /api/admin/** 패턴으로 관리자 권한 설정
-                        .requestMatchers("/api/admin/**").hasRole("ADMIN") // 관리자 전용 API
+                        // [우선순위 2] 로그인 및 회원가입 (통행증 발급 창구)
+                        .requestMatchers("/api/auth/login", "/api/auth/register").permitAll()
+                        .requestMatchers("/api/auth/me").authenticated()
 
-                        // 기존 사용자 관리 API (하위 호환성 유지)
-                        .requestMatchers(HttpMethod.DELETE, "/api/users/**").hasRole("ADMIN") // 사용자 삭제
-                        .requestMatchers(HttpMethod.PUT, "/api/users/*/role").hasRole("ADMIN") // 사용자 권한 변경
-
-                        // 그룹 관리
-                        .requestMatchers(HttpMethod.GET, "/api/groups").hasRole("ADMIN") // 모든 그룹 조회
-                        .requestMatchers(HttpMethod.POST, "/api/groups").hasRole("ADMIN") // 그룹 생성
-
-                        // 문제 관리
-                        .requestMatchers(HttpMethod.GET, "/api/problems/*/admin").hasRole("ADMIN") // 관리자용 문제 조회 (공개
-                                                                                                   // 조회보다 먼저)
-                        .requestMatchers(HttpMethod.POST, "/api/problems").hasRole("ADMIN") // 문제 생성
-                        .requestMatchers(HttpMethod.PUT, "/api/problems/**").hasRole("ADMIN") // 문제 수정
-                        .requestMatchers(HttpMethod.DELETE, "/api/problems/**").hasRole("ADMIN") // 문제 삭제
-
-                        // 대회 관리
-                        .requestMatchers(HttpMethod.POST, "/api/contest").hasRole("ADMIN") // 대회 생성
-                        .requestMatchers(HttpMethod.PUT, "/api/contest/**").hasRole("ADMIN") // 대회 수정
-                        .requestMatchers(HttpMethod.DELETE, "/api/contest/**").hasRole("ADMIN") // 대회 삭제
-                        // /api/contest/*/problems/**는 /api/contest/**에 포함되므로 별도 설정 불필요
-
-                        // 공개 조회 API (인증 불필요)
-                        .requestMatchers(HttpMethod.GET, "/api/contest/**").permitAll() // 대회 목록/상세 조회
-                        .requestMatchers(HttpMethod.GET, "/api/problems/**").permitAll() // 문제 목록/상세 조회
-                        .requestMatchers(HttpMethod.GET, "/api/scoreboard/**").permitAll() // 스코어보드 조회
-                        .requestMatchers(HttpMethod.GET, "/api/cite/board/**").permitAll() // 게시판 조회 (공개)
-                        .requestMatchers("/api/cite/board/**").authenticated() // 게시판 작성/수정/삭제 (로그인 필요)
-
-                        // 카테고리 관리
-                        .requestMatchers(HttpMethod.GET, "/api/cite/category/all").hasRole("ADMIN") // 모든 카테고리 조회 (관리자,
-                                                                                                    // isActive 무관)
-                        .requestMatchers(HttpMethod.GET, "/api/cite/category/**").permitAll() // 카테고리 조회 (공개, 활성화된 것만)
-                        .requestMatchers(HttpMethod.POST, "/api/cite/category/**").hasRole("ADMIN") // 카테고리 생성 (관리자)
-                        .requestMatchers(HttpMethod.PUT, "/api/cite/category/**").hasRole("ADMIN") // 카테고리 수정 (관리자)
-                        .requestMatchers(HttpMethod.DELETE, "/api/cite/category/**").hasRole("ADMIN") // 카테고리 삭제 (관리자)
-
-                        // 첨부파일 (cite): 업로드/조회/다운로드/내 목록/삭제 — 인증 필요
+                        // [우선순위 3] 도현님 마이페이지/좋아요/출석 API (최상단 보호)
+                        // 다른 permitAll 규칙에 먹히지 않도록 위로 격상
+                        .requestMatchers("/api/like/board/**").authenticated()
+                        .requestMatchers("/api/cite/attendance/**").authenticated()
                         .requestMatchers("/api/cite/attachments/**").authenticated()
+                        .requestMatchers("/api/cite/point/**").authenticated()
 
-                        // 나머지는 인증 필요
-                        .anyRequest().authenticated());
+                        // [우선순위 4] 관리자 전용 API (구체적인 경로 우선)
+                        .requestMatchers("/api/admin/**").hasRole("ADMIN")
+                        .requestMatchers(HttpMethod.DELETE, "/api/users/**").hasRole("ADMIN")
+                        .requestMatchers(HttpMethod.PUT, "/api/users/*/role").hasRole("ADMIN")
+                        .requestMatchers(HttpMethod.GET, "/api/groups").hasRole("ADMIN")
+                        .requestMatchers(HttpMethod.POST, "/api/groups").hasRole("ADMIN")
+                        .requestMatchers(HttpMethod.GET, "/api/problems/*/admin").hasRole("ADMIN")
+                        .requestMatchers(HttpMethod.POST, "/api/problems", "/api/contest").hasRole("ADMIN")
+                        .requestMatchers(HttpMethod.PUT, "/api/problems/**", "/api/contest/**").hasRole("ADMIN")
+                        .requestMatchers(HttpMethod.DELETE, "/api/problems/**", "/api/contest/**").hasRole("ADMIN")
+                        .requestMatchers(HttpMethod.GET, "/api/cite/category/all").hasRole("ADMIN")
+                        .requestMatchers(HttpMethod.POST, "/api/cite/category/**").hasRole("ADMIN")
+                        .requestMatchers(HttpMethod.PUT, "/api/cite/category/**").hasRole("ADMIN")
+                        .requestMatchers(HttpMethod.DELETE, "/api/cite/category/**").hasRole("ADMIN")
+
+                        // [우선순위 5] 공개 조회 API (인증 없이 누구나 GET 가능)
+                        // 이 아래에 있는 것들은 오직 GET 요청만 로그인 없이 허용됨
+                        .requestMatchers(HttpMethod.GET, "/api/contest/**").permitAll()
+                        .requestMatchers(HttpMethod.GET, "/api/problems/**").permitAll()
+                        .requestMatchers(HttpMethod.GET, "/api/scoreboard/**").permitAll()
+                        .requestMatchers(HttpMethod.GET, "/api/cite/board/**").permitAll()
+                        .requestMatchers(HttpMethod.GET, "/api/cite/category/**").permitAll()
+
+                        // [우선순위 6] 게시판 쓰기/수정/삭제 (위의 GET 제외 나머지 메서드 보호)
+                        .requestMatchers("/api/cite/board/**").authenticated()
+
+                        // [우선순위 7] 나머지 모든 요청
+                        .anyRequest().authenticated()
+                );
 
         return http.build();
     }

@@ -2,10 +2,7 @@ package com.nimda.cite.point.entity;
 
 import com.nimda.cup.user.entity.User;
 import jakarta.persistence.*;
-import lombok.AllArgsConstructor;
-import lombok.Builder;
-import lombok.Getter;
-import lombok.NoArgsConstructor;
+import lombok.*;
 
 import java.time.LocalDateTime;
 import java.util.List;
@@ -13,6 +10,7 @@ import java.util.List;
 @Table(name = "user_balance")
 @Entity
 @Getter
+@Setter
 @Builder
 @NoArgsConstructor
 @AllArgsConstructor
@@ -22,12 +20,14 @@ public class UserBalance {
 
     @MapsId
     @OneToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "user_id", nullable = false)
+    @JoinColumn(name = "user_id", nullable = false, updatable = false)
     private User user;
 
+    @Setter
     @Column(name = "total_amount", nullable = false)
     private Long totalAmount;
 
+    @Setter
     @Column(name = "updated_at", nullable = false)
     private LocalDateTime updatedAt;
 }

@@ -231,4 +231,7 @@ public class CommentService {
         comment.updateStatus(STATUS.DELETED);
     }
 
+    public long countByUserId(Long userId) {
+        return commentRepository.countByAuthorId(userId); // 엔티티의 작성자 필드명에 맞춰 수정
+    }
 }
