@@ -16,7 +16,7 @@ export default defineConfig(({ mode }) => {
       port: 3000,
       proxy: {
         '/api': {
-          target: 'http://localhost:8080',
+          target: 'https://api.nimda.kr',
           changeOrigin: true,
           secure: false,
         },
