@@ -20,7 +20,10 @@ public class CommentUserResponse extends CommentResponse<CommentUserResponse> {
         boolean isHidden = comment.getStatus() == STATUS.HIDDEN;
         boolean isAuthor = comment.getAuthor().getId().equals(currentUserId);
 
-        String displayContext = isDeleted ? "삭제된 댓글입니다." : (isHidden ? "숨겨진 댓글입니다." : comment.getContext());
+        String displayContext = isDeleted ? "삭제된 댓글입니다." :
+                                (isAuthor ? comment.getContext() :
+                                (isHidden ? "숨겨진 댓글입니다." : comment.getContext()));
+
         String displayName = isDeleted ? "(삭제됨)" : comment.getAuthor().getNickname();
 
         return CommentUserResponse.builder()
