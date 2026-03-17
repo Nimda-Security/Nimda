@@ -4,14 +4,11 @@ import com.nimda.cite.comment.dto.*;
 import com.nimda.cite.comment.service.CommentService;
 import com.nimda.cite.common.response.ApiResponse;
 import com.nimda.cup.common.util.JwtUtil;
-import com.nimda.cup.user.security.CustomUserDetails;
 import jakarta.validation.Valid;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
-import org.springframework.security.core.GrantedAuthority;
-import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;

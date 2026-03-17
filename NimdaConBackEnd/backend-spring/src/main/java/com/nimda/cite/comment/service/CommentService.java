@@ -12,6 +12,7 @@ import com.nimda.cite.comment.enums.STATUS;
 import com.nimda.cite.comment.repository.CommentRepository;
 import com.nimda.cup.user.entity.User;
 import com.nimda.cup.user.repository.UserRepository;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.security.access.AccessDeniedException;
@@ -118,10 +119,10 @@ public class CommentService {
     // 댓글 조회(유저용)
     @Transactional(readOnly = true)
     public List<CommentUserResponse> getCommentsForUser(Long boardId, Long userId) {
-        List<Comment> allComments = commentRepository.findAllByBoardIdOrderByCreatedAtAsc(boardId);
+        List<Comment> allComments = commentRepository.findAllCommentsByBoardId(boardId);
 
-        Map<Long, CommentUserResponse> map = new HashMap<>();
         List<CommentUserResponse> rootComments = new ArrayList<>();
+        Map<Long, CommentUserResponse> map = new HashMap<>();
 
         for (Comment comment : allComments) {
             CommentUserResponse dto = CommentUserResponse.from(comment, userId);
@@ -131,10 +132,11 @@ public class CommentService {
                 // 댓글인 경우
                 rootComments.add(dto);
             } else {
-                // 대댓글인 경우
                 CommentUserResponse parentDto = map.get(comment.getParent().getId());
                 if (parentDto != null) {
                     parentDto.getChildren().add(dto);
+                } else {
+                    // TODO 로그 남기기
                 }
             }
         }
@@ -145,7 +147,7 @@ public class CommentService {
     // 댓글 조회(어드민용)
     @Transactional(readOnly = true)
     public List<CommentAdminResponse> getCommentsForAdmin(Long boardId) {
-        List<Comment> allComments = commentRepository.findAllByBoardIdOrderByCreatedAtAsc(boardId);
+        List<Comment> allComments = commentRepository.findAllCommentsByBoardId(boardId);
 
         Map<Long, CommentAdminResponse> map = new HashMap<>();
         List<CommentAdminResponse> rootComments = new ArrayList<>();
@@ -155,12 +157,17 @@ public class CommentService {
             map.put(dto.getId(), dto);
 
             if (comment.getParent() == null) {
+                // 댓글인 경우
                 rootComments.add(dto);
             } else {
+                // 대댓글인 경우
                 CommentAdminResponse parentDto = map.get(comment.getParent().getId());
                 if (parentDto != null) {
                     parentDto.getChildren().add(dto);
+                } else {
+                    // TODO 로그 남기기
                 }
+
             }
         }
 

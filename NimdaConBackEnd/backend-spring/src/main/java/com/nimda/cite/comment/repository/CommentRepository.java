@@ -22,10 +22,9 @@ public interface CommentRepository extends JpaRepository<Comment, Long> {
     // [사용] GET /api/cite/board/{boardId}/comments
     @Query("SELECT c FROM Comment c " +
             "JOIN FETCH c.author " +
-            "LEFT JOIN FETCH c.parent " +
             "WHERE c.board.id = :boardId " +
-            "ORDER BY c.createdAt ASC")
-    List<Comment> findAllByBoardIdOrderByCreatedAtAsc(@Param("boardId") Long boardId);
+            "ORDER BY c.parent.id ASC NULLS FIRST, c.createdAt ASC")
+    List<Comment> findAllCommentsByBoardId(@Param("boardId") Long boardId);
 
     // 대댓글 목록 조회
     // [사용] GET /api/cite/board/{boardId}/comments/{parentId}/children
