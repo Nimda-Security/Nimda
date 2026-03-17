@@ -463,8 +463,6 @@ body {
 .home-banner {
   position: relative;
   width: 100%;
-  max-width: 894px;
-  height: 400px;
   overflow: hidden;
 }
 
@@ -483,9 +481,22 @@ body {
   pointer-events: none;
 }
 
+/* 단일 이미지 배너: 높이를 이미지 비율에 맞춤 */
+.home-banner__slide--img {
+  position: relative;
+  height: auto;
+}
+
 .home-banner__slide--active {
   opacity: 1;
   pointer-events: auto;
+}
+
+.home-banner__img {
+  width: 100%;
+  height: auto;
+  display: block;
+  vertical-align: middle;
 }
 
 .home-banner__btn {
