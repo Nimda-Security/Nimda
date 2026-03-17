@@ -25,17 +25,19 @@ interface CommentSectionProps {
 
 /** 프로필 아바타 */
 function Avatar({ src, name }: { src: string | null; name: string }) {
+  const sizeClass = "w-10 h-10";
+
   if (src) {
     return (
       <img
         src={src}
         alt={name}
-        className="w-9 h-9 rounded-full object-cover flex-shrink-0 border border-gray-100"
+        className={`${sizeClass} rounded-full object-cover flex-shrink-0 border border-gray-100`}
       />
     );
   }
   return (
-    <div className="w-9 h-9 rounded-full flex-shrink-0 bg-gray-200 flex items-center justify-center text-sm font-medium text-gray-500 border border-gray-100">
+    <div className={`${sizeClass} rounded-full flex-shrink-0 bg-gray-200 flex items-center justify-center text-sm font-medium text-gray-500 border border-gray-100`}>
       {name.charAt(0)}
     </div>
   );
@@ -47,7 +49,6 @@ function EngagementButtons({
   onReply,
 }: {
   likeCount: number;
-  dislikeCount: number;
   replyCount: number;
   onReply: () => void;
 }) {
@@ -114,7 +115,6 @@ function CommentInput({
 function StatusBadge({ status }: { status: CommentStatus }) {
   const map: Record<CommentStatus, { label: string; className: string }> = {
     PUBLIC: { label: '공개', className: 'bg-green-100 text-green-700' },
-    PRIVATE: { label: '비공개', className: 'bg-yellow-100 text-yellow-700' },
     DELETED: { label: '삭제됨', className: 'bg-red-100 text-red-700' },
     HIDDEN: { label: '숨김', className: 'bg-gray-100 text-gray-500' },
   };
@@ -196,7 +196,6 @@ function CommentItem({
             <div className="flex items-center gap-3 mt-2">
               <EngagementButtons
                 likeCount={comment.likeCount}
-                dislikeCount={0}
                 replyCount={comment.children?.length || 0}
                 onReply={() => onReply(comment.id, comment.authorName)}
               />
