@@ -5,6 +5,12 @@ import { useNavigate } from 'react-router-dom';
 import { getAllUsersAPI, getPendingUsersAPI, approveUserAPI, rejectUserAPI } from '@/api/admin/admin';
 import { getBoardListAPI, deleteBoardAPI, toggleBoardPinAPI } from '@/api/board';
 import { getAllCategoriesAdminAPI, updateCategoryAPI, createCategoryAPI, deleteCategoryAPI } from '@/api/category';
+import UserInfo from './sections/UserInfo';
+import PendingUsers from './sections/PendingUsers';
+import PostManagement from './sections/PostManagement';
+import CategoryManagement from './sections/CategoryManagement';
+import PinPostManagement from './sections/PinPostManagement';
+import AdminSidebar from './components/AdminSidebar';
 import './AdminDashboard.css';
 
 function AdminDashboard() {
@@ -562,739 +568,84 @@ function AdminDashboard() {
     switch (activeSection) {
       case 'user-info':
         return (
-          <div>
-            <div className="admin__header-row">
-              <h2 className="admin__section-title">유저 정보</h2>
-              <button onClick={loadUsers} disabled={loading} className="admin__btn">
-                {loading ? '로딩 중' : '새로고침'}
-              </button>
-            </div>
-
-            {users.length > 0 ? (
-              <div className="admin__table-wrap">
-                <table className="admin__table">
-                  <thead>
-                    <tr>
-                      <th>ID</th>
-                      <th>사용자명</th>
-                      <th>이메일</th>
-                      <th>가입일</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {users.map((user) => (
-                      <tr key={user.id} style={{ cursor: 'pointer' }} onClick={() => setSelectedUser(user)}>
-                        <td>{user.id}</td>
-                        <td style={{ textAlign: 'left' }}>
-                          <span>{user.nickname || user.userId}</span>
-                          {hasRole(user, 'ADMIN') && (
-                            <span className="admin__role admin__role--admin" style={{ marginLeft: 8 }}>ADMIN</span>
-                          )}
-                          {hasRole(user, 'USER') && (
-                            <span className="admin__role admin__role--user" style={{ marginLeft: 8 }}>USER</span>
-                          )}
-                        </td>
-                        <td>{user.email}</td>
-                        <td>{user.createdAt ? new Date(user.createdAt).toLocaleDateString() : '-'}</td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
-              </div>
-            ) : (
-              <div className="admin__empty">
-                <p style={{ marginBottom: 16 }}>사용자 목록이 비어있습니다.</p>
-                <button onClick={loadUsers} className="admin__btn">불러오기</button>
-              </div>
-            )}
-
-            {selectedUser && (
-              <div className="admin__modal-overlay" onClick={() => setSelectedUser(null)}>
-                <div className="admin__modal" onClick={(e) => e.stopPropagation()}>
-                  <div className="admin__modal-header">
-                    <h3>사용자 정보</h3>
-                    <button className="admin__modal-close" onClick={() => setSelectedUser(null)}>✕</button>
-                  </div>
-
-                  <div style={{ padding: '20px', borderBottom: '1px solid #e0e0e0', textAlign: 'center' }}>
-                    <div style={{ marginBottom: '12px' }}>
-                      {selectedUser.profileImage ? (
-                        <img
-                          src={selectedUser.profileImage}
-                          alt="프로필"
-                          style={{
-                            width: '120px',
-                            height: '120px',
-                            borderRadius: '50%',
-                            objectFit: 'cover',
-                            border: '2px solid #e0e0e0'
-                          }}
-                        />
-                      ) : (
-                        <div style={{
-                          width: '120px',
-                          height: '120px',
-                          borderRadius: '50%',
-                          backgroundColor: '#f0f0f0',
-                          display: 'flex',
-                          alignItems: 'center',
-                          justifyContent: 'center',
-                          margin: '0 auto',
-                          border: '2px solid #e0e0e0',
-                          fontSize: '48px',
-                          color: '#999'
-                        }}>
-                          👤
-                        </div>
-                      )}
-                    </div>
-                    <div>
-                      <input
-                        type="file"
-                        id="profile-image-input"
-                        accept="image/*"
-                        style={{ display: 'none' }}
-                        onChange={handleImageUpload}
-                        disabled={uploadingImage}
-                      />
-                      <button
-                        className="admin__btn"
-                        disabled={uploadingImage}
-                        onClick={() => document.getElementById('profile-image-input').click()}
-                        style={{ cursor: uploadingImage ? 'not-allowed' : 'pointer' }}
-                      >
-                        {uploadingImage ? '업로드 중...' : '사진 추가'}
-                      </button>
-                    </div>
-                  </div>
-
-                  <div className="admin__modal-grid">
-                    <div><p className="admin__modal-label">ID</p><p className="admin__modal-value">{selectedUser.id}</p></div>
-                    <div><p className="admin__modal-label">사용자 ID</p><p className="admin__modal-value">{selectedUser.userId}</p></div>
-                    <div><p className="admin__modal-label">실명</p><p className="admin__modal-value">{selectedUser.name || '-'}</p></div>
-                    <div><p className="admin__modal-label">닉네임</p><p className="admin__modal-value">{selectedUser.nickname || '-'}</p></div>
-                    <div><p className="admin__modal-label">이메일</p><p className="admin__modal-value">{selectedUser.email || '-'}</p></div>
-                    <div><p className="admin__modal-label">학번</p><p className="admin__modal-value">{selectedUser.studentNum || '-'}</p></div>
-                    <div><p className="admin__modal-label">학과</p><p className="admin__modal-value">{selectedUser.major || '-'}</p></div>
-                    <div><p className="admin__modal-label">대학교</p><p className="admin__modal-value">{selectedUser.universityName || '-'}</p></div>
-                    <div><p className="admin__modal-label">학년</p><p className="admin__modal-value">{selectedUser.grade || '-'}</p></div>
-                    <div><p className="admin__modal-label">생년월일</p><p className="admin__modal-value">{selectedUser.birth || '-'}</p></div>
-                    <div><p className="admin__modal-label">상태</p><p className="admin__modal-value">{selectedUser.status || '-'}</p></div>
-                    <div><p className="admin__modal-label">가입일</p><p className="admin__modal-value">{selectedUser.createdAt ? new Date(selectedUser.createdAt).toLocaleString() : '-'}</p></div>
-                    <div><p className="admin__modal-label">수정일</p><p className="admin__modal-value">{selectedUser.updatedAt ? new Date(selectedUser.updatedAt).toLocaleString() : '-'}</p></div>
-                    <div>
-                      <p className="admin__modal-label">권한</p>
-                      <div style={{ display: 'flex', gap: 8, marginTop: 4 }}>
-                        {getUserRoles(selectedUser).map((role, idx) => (
-                          <span key={idx} className={`admin__role ${role.includes('ADMIN') ? 'admin__role--admin' : 'admin__role--user'}`}>
-                            {role}
-                          </span>
-                        ))}
-                      </div>
-                    </div>
-                  </div>
-                </div>
-              </div>
-            )}
-          </div>
+          <UserInfo
+            users={users}
+            loading={loading}
+            loadUsers={loadUsers}
+            selectedUser={selectedUser}
+            setSelectedUser={setSelectedUser}
+            hasRole={hasRole}
+            getUserRoles={getUserRoles}
+            uploadingImage={uploadingImage}
+            handleImageUpload={handleImageUpload}
+          />
         );
-
       case 'pending':
         return (
-          <div>
-            <div className="admin__header-row">
-              <h2 className="admin__section-title">승인 대기 목록</h2>
-              <button onClick={loadPendingUsers} disabled={pendingUsersLoading} className="admin__btn">
-                {pendingUsersLoading ? '로딩 중' : '새로고침'}
-              </button>
-            </div>
-
-            {pendingUsersLoading ? (
-              <div className="admin__empty">로딩 중...</div>
-            ) : pendingUsers.length > 0 ? (
-              <div className="admin__table-wrap">
-                <table className="admin__table">
-                  <thead>
-                    <tr>
-                      <th>ID</th>
-                      <th>닉네임</th>
-                      <th>사용자 ID</th>
-                      <th>이메일</th>
-                      <th>신청일</th>
-                      <th>작업</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {pendingUsers.map((user) => (
-                      <tr key={user.id}>
-                        <td>{user.id}</td>
-                        <td>{user.nickname || user.userId}</td>
-                        <td>{user.userId}</td>
-                        <td>{user.email}</td>
-                        <td>{user.createdAt ? new Date(user.createdAt).toLocaleDateString() : '-'}</td>
-                        <td>
-                          <div className="admin__actions">
-                            <button onClick={() => handleApproveUser(user.id)} className="admin__btn--approve">승인</button>
-                            <button onClick={() => handleRejectUser(user.id)} className="admin__btn--reject">거부</button>
-                          </div>
-                        </td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
-              </div>
-            ) : (
-              <div className="admin__empty">승인 대기 중인 사용자가 없습니다.</div>
-            )}
-          </div>
+          <PendingUsers
+            pendingUsers={pendingUsers}
+            pendingUsersLoading={pendingUsersLoading}
+            loadPendingUsers={loadPendingUsers}
+            handleApproveUser={handleApproveUser}
+            handleRejectUser={handleRejectUser}
+          />
         );
-
       case 'posts':
-        // 포스트 관리용 카테고리 렌더링 함수 (깔끔한 디자인)
-        const renderPostCategoryItem = (category, level = 0) => {
-          const isParent = category.children && category.children.length > 0;
-          const isSelected = selectedPostCategoryId === category.id;
-          const childCount = category.children ? category.children.length : 0;
-
-          return (
-            <div key={category.id}>
-              <div
-                className={`admin__post-category-item ${isSelected ? 'admin__post-category-item--selected' : ''} ${level > 0 ? 'admin__post-category-item--child' : ''}`}
-                style={{ paddingLeft: level > 0 ? `${24 + level * 16}px` : '16px' }}
-                onClick={() => {
-                  setSelectedPostCategoryId(category.id);
-                  loadPosts(category.slug);
-                }}
-              >
-                <span className="admin__post-category-name">
-                  {category.name}
-                  {isParent && <span className="admin__post-category-count"> ({childCount})</span>}
-                </span>
-              </div>
-              {isParent && category.children?.map(child => renderPostCategoryItem(child, level + 1))}
-            </div>
-          );
-        };
-
         return (
-          <div>
-            <h2 className="admin__section-title">포스트 수정/삭제</h2>
-
-            {/* 2패널 레이아웃 */}
-            <div className="admin__catorder-wrap">
-              {/* 왼쪽: 카테고리 트리 */}
-              <div className="admin__catorder-left">
-                <div className="admin__catorder-left-header">
-                  <span>카테고리 ({getTotalCategoryCount(activeCategoryTree)})</span>
-                </div>
-                <div className="admin__post-category-list">
-                  {categoriesLoading ? (
-                    <div className="admin__empty" style={{ border: 'none', padding: '24px' }}>로딩 중...</div>
-                  ) : activeCategoryTree.length > 0 ? (
-                    activeCategoryTree.map(category => renderPostCategoryItem(category, 0))
-                  ) : (
-                    <div className="admin__empty" style={{ border: 'none', padding: '24px' }}>
-                      <p style={{ marginBottom: 16 }}>카테고리가 없습니다.</p>
-                      <button onClick={loadCategories} className="admin__btn">불러오기</button>
-                    </div>
-                  )}
-                </div>
-              </div>
-
-              {/* 오른쪽: 게시글 목록 */}
-              <div className="admin__catorder-right">
-                <div className="admin__header-row" style={{ marginBottom: '16px' }}>
-                  <h3 style={{ margin: 0 }}>
-                    {selectedPostCategoryId
-                      ? findCategoryById(activeCategoryTree, selectedPostCategoryId)?.name || '게시글 목록'
-                      : '카테고리를 선택하세요'}
-                  </h3>
-                  {selectedPostCategoryId && (
-                    <button
-                      onClick={() => {
-                        const selectedCategory = findCategoryById(activeCategoryTree, selectedPostCategoryId);
-                        if (selectedCategory) {
-                          loadPosts(selectedCategory.slug);
-                        }
-                      }}
-                      disabled={postsLoading}
-                      className="admin__btn"
-                    >
-                      {postsLoading ? '로딩 중' : '새로고침'}
-                    </button>
-                  )}
-                </div>
-
-                {selectedPostCategoryId ? (
-                  postsLoading ? (
-                    <div className="admin__empty" style={{ border: 'none' }}>로딩 중...</div>
-                  ) : posts.length > 0 ? (
-                    <div className="admin__table-wrap">
-                      <table className="admin__table">
-                        <thead>
-                          <tr>
-                            <th>ID</th>
-                            <th>제목</th>
-                            <th>작성자</th>
-                            <th>작성일</th>
-                            <th>작업</th>
-                          </tr>
-                        </thead>
-                        <tbody>
-                          {posts.map((post) => (
-                            <tr key={post.id}>
-                              <td>{post.id}</td>
-                              <td style={{ textAlign: 'left' }}>{post.title}</td>
-                              <td>{post.author?.nickname || '-'}</td>
-                              <td>{post.createdAt ? new Date(post.createdAt).toLocaleDateString() : '-'}</td>
-                              <td>
-                                <div className="admin__actions">
-                                  <button onClick={(e) => { e.stopPropagation(); handleDeletePost(post.id); }} className="admin__btn--reject">삭제</button>
-                                </div>
-                              </td>
-                            </tr>
-                          ))}
-                        </tbody>
-                      </table>
-                    </div>
-                  ) : (
-                    <div className="admin__empty">
-                      <p style={{ marginBottom: 16 }}>게시글이 없습니다.</p>
-                    </div>
-                  )
-                ) : (
-                  <div className="admin__empty">
-                    <p>왼쪽에서 카테고리를 선택하면 해당 카테고리의 게시글 목록이 표시됩니다.</p>
-                  </div>
-                )}
-              </div>
-            </div>
-          </div>
+          <PostManagement
+            categoriesLoading={categoriesLoading}
+            activeCategoryTree={activeCategoryTree}
+            getTotalCategoryCount={getTotalCategoryCount}
+            selectedPostCategoryId={selectedPostCategoryId}
+            setSelectedPostCategoryId={setSelectedPostCategoryId}
+            loadPosts={loadPosts}
+            loadCategories={loadCategories}
+            postsLoading={postsLoading}
+            posts={posts}
+            handleDeletePost={handleDeletePost}
+            findCategoryById={findCategoryById}
+          />
         );
-
       case 'category-order':
-        return (
-          <div>
-            <h2 className="admin__section-title">순서 설정</h2>
-
-            {/* 상단 액션 버튼 */}
-            <div className="admin__catorder-toolbar">
-              <button
-                className="admin__catorder-toolbar-btn"
-                onClick={() => setShowAddCategoryModal(true)}
-              >
-                + 카테고리 추가
-              </button>
-              <button className="admin__catorder-toolbar-btn">+ 구분선 추가</button>
-              <button
-                className="admin__catorder-toolbar-btn admin__catorder-toolbar-btn--danger"
-                onClick={handleDeleteCategory}
-                disabled={!selectedCategoryId}
-              >
-                × 삭제
-              </button>
-            </div>
-
-            {/* 2패널 레이아웃 */}
-            <div className="admin__catorder-wrap">
-              {/* 왼쪽: 카테고리 트리 */}
-              <div className="admin__catorder-left">
-                <div className="admin__catorder-left-header">
-                  <span>카테고리 전체보기 ({getTotalCategoryCount(categoryTree)})</span>
-                </div>
-                <div className="admin__catorder-tree">
-                  {categoriesLoading ? (
-                    <div className="admin__empty" style={{ border: 'none' }}>로딩 중...</div>
-                  ) : categoryTree.length > 0 ? (
-                    categoryTree.map(category => renderCategoryOrderItem(category, 0))
-                  ) : (
-                    <div className="admin__empty" style={{ border: 'none' }}>
-                      <p style={{ marginBottom: 16 }}>카테고리가 없습니다.</p>
-                      <button onClick={loadCategories} className="admin__btn">불러오기</button>
-                    </div>
-                  )}
-                </div>
-              </div>
-
-              {/* 오른쪽: 카테고리 설정 폼 */}
-              <div className="admin__catorder-right">
-                {selectedCategoryData ? (
-                  <div className="admin__catorder-form">
-                    {/* 카테고리명 */}
-                    <div className="admin__catorder-form-row">
-                      <label className="admin__catorder-form-label">카테고리명</label>
-                      <div className="admin__catorder-form-field">
-                        <input
-                          type="text"
-                          className="admin__catorder-input"
-                          value={selectedCategoryData.name}
-                          readOnly
-                        />
-                      </div>
-                    </div>
-
-                    {/* 태그목록 */}
-                    <div className="admin__catorder-form-row">
-                      <label className="admin__catorder-form-label">태그목록</label>
-                      <div className="admin__catorder-form-field">
-                        {/* 현재 태그 목록 표시 */}
-                        {categoryTags.length > 0 && (
-                          <div style={{ display: 'flex', flexWrap: 'wrap', gap: '8px', marginBottom: '12px', width: '100%' }}>
-                            {categoryTags.map((tag, index) => (
-                              <span
-                                key={index}
-                                style={{
-                                  display: 'inline-flex',
-                                  alignItems: 'center',
-                                  padding: '4px 12px',
-                                  backgroundColor: '#f0f0f0',
-                                  borderRadius: '4px',
-                                  fontSize: '14px',
-                                  gap: '8px'
-                                }}
-                              >
-                                {tag}
-                                <button
-                                  type="button"
-                                  onClick={() => {
-                                    const newTags = categoryTags.filter((_, i) => i !== index);
-                                    setCategoryTags(newTags);
-                                  }}
-                                  style={{
-                                    background: 'none',
-                                    border: 'none',
-                                    cursor: 'pointer',
-                                    color: '#999',
-                                    fontSize: '16px',
-                                    padding: 0,
-                                    lineHeight: 1
-                                  }}
-                                >
-                                  ×
-                                </button>
-                              </span>
-                            ))}
-                          </div>
-                        )}
-                        {/* 태그 추가 입력 필드 */}
-                        <div style={{ display: 'flex', gap: '8px', width: '100%' }}>
-                          <input
-                            type="text"
-                            className="admin__catorder-input"
-                            placeholder="태그를 입력하세요"
-                            value={newTagInput || ''}
-                            onChange={(e) => {
-                              const value = e.target.value;
-                              setNewTagInput(value);
-                            }}
-                            onKeyDown={(e) => {
-                              if (e.key === 'Enter') {
-                                e.preventDefault();
-                                if (newTagInput && newTagInput.trim() && !categoryTags.includes(newTagInput.trim())) {
-                                  setCategoryTags([...categoryTags, newTagInput.trim()]);
-                                  setNewTagInput('');
-                                }
-                              }
-                            }}
-                          />
-                          <button
-                            type="button"
-                            className="admin__btn"
-                            onClick={() => {
-                              if (newTagInput.trim() && !categoryTags.includes(newTagInput.trim())) {
-                                setCategoryTags([...categoryTags, newTagInput.trim()]);
-                                setNewTagInput('');
-                              }
-                            }}
-                            disabled={!newTagInput.trim() || categoryTags.includes(newTagInput.trim())}
-                          >
-                            추가
-                          </button>
-                          <button
-                            type="button"
-                            className="admin__btn"
-                            onClick={async () => {
-                              if (!selectedCategoryId) return;
-
-                              setSavingTags(true);
-                              try {
-                                const result = await updateCategoryAPI(selectedCategoryId, {
-                                  name: null,
-                                  slug: null,
-                                  parentId: null,
-                                  sortOrder: null,
-                                  isActive: null,
-                                  availableTags: categoryTags.length > 0 ? categoryTags : null
-                                });
-
-                                if (result.success) {
-                                  alert('태그가 성공적으로 저장되었습니다.');
-                                  await loadCategories();
-                                } else {
-                                  alert(result.message || '태그 저장에 실패했습니다.');
-                                }
-                              } catch (error) {
-                                console.error('태그 저장 오류:', error);
-                                alert('태그 저장 중 오류가 발생했습니다.');
-                              } finally {
-                                setSavingTags(false);
-                              }
-                            }}
-                            disabled={savingTags}
-                          >
-                            {savingTags ? '저장 중...' : '저장'}
-                          </button>
-                        </div>
-                      </div>
-                    </div>
-
-                    {/* 카테고리 옆에 글 개수 표시 */}
-                    <div className="admin__catorder-form-row">
-                      <label className="admin__catorder-form-label"></label>
-                      <div className="admin__catorder-form-field">
-                        <label className="admin__catorder-checkbox-label">
-                          <input type="checkbox" disabled />
-                          <span>카테고리 옆에 글 개수 표시</span>
-                        </label>
-                      </div>
-                    </div>
-
-                    {/* 공개설정 */}
-                    <div className="admin__catorder-form-row">
-                      <label className="admin__catorder-form-label">공개설정</label>
-                      <div className="admin__catorder-form-field">
-                        <label className="admin__catorder-radio-label">
-                          <input type="radio" name="visibility" defaultChecked disabled />
-                          <span>공개</span>
-                        </label>
-                        <label className="admin__catorder-radio-label">
-                          <input type="radio" name="visibility" disabled />
-                          <span>비공개</span>
-                        </label>
-                      </div>
-                    </div>
-
-                    {/* 글보기 */}
-                    <div className="admin__catorder-form-row">
-                      <label className="admin__catorder-form-label">글보기</label>
-                      <div className="admin__catorder-form-field">
-                        <label className="admin__catorder-radio-label">
-                          <input type="radio" name="viewType" defaultChecked disabled />
-                          <span>블로그형</span>
-                        </label>
-                        <label className="admin__catorder-radio-label">
-                          <input type="radio" name="viewType" disabled />
-                          <span>앨범형</span>
-                        </label>
-                        <p className="admin__catorder-form-desc">
-                          앨범형의 경우, 첨부된 이미지, 동영상 섬네일이 보입니다.
-                        </p>
-                      </div>
-                    </div>
-
-                    {/* 카테고리 접기 */}
-                    <div className="admin__catorder-form-row">
-                      <label className="admin__catorder-form-label">카테고리 접기</label>
-                      <div className="admin__catorder-form-field">
-                        <label className="admin__catorder-radio-label">
-                          <input type="radio" name="fold" defaultChecked disabled />
-                          <span>펼치기</span>
-                        </label>
-                        <label className="admin__catorder-radio-label">
-                          <input type="radio" name="fold" disabled />
-                          <span>접기</span>
-                        </label>
-                      </div>
-                    </div>
-
-                    {/* 기본 카테고리 설정 */}
-                    <div className="admin__catorder-form-row" style={{ marginTop: 12 }}>
-                      <label className="admin__catorder-form-label"></label>
-                      <div className="admin__catorder-form-field">
-                        <label className="admin__catorder-checkbox-label">
-                          <input type="checkbox" disabled />
-                          <span>블로그에서 이 카테고리를 기본으로 보여줍니다.</span>
-                        </label>
-                      </div>
-                    </div>
-                  </div>
-                ) : (
-                  <div className="admin__catorder-placeholder">
-                    왼쪽에서 카테고리를 선택하면<br />설정을 확인할 수 있습니다.
-                  </div>
-                )}
-              </div>
-            </div>
-
-            {/* 하단 안내 */}
-            <div className="admin__catorder-footer">
-              <div className="admin__catorder-notes">
-                <p>· 드래그앤드랍으로 2단계 카테고리를 만들거나 카테고리 순서를 변경할 수 있습니다.</p>
-                <p>· 글이 많은 카테고리는 설정이 반영되는데 시간이 소요됩니다. (예. 공개설정 변경, 카테고리 상위/하위 정렬변경)</p>
-              </div>
-              <div className="admin__catorder-footer-actions">
-                <button className="admin__catorder-confirm-btn">확인</button>
-              </div>
-            </div>
-          </div>
-        );
-
       case 'category-edit':
-        return (
-          <div>
-            <h2 className="admin__section-title">카테고리 수정</h2>
-            <div className="admin__empty">구현 예정</div>
-          </div>
-        );
-
       case 'category-deactivate':
         return (
-          <div>
-            <h2 className="admin__section-title">카테고리 비활성화</h2>
-            <div className="admin__empty">구현 예정</div>
-          </div>
+          <CategoryManagement
+            activeSection={activeSection}
+            setShowAddCategoryModal={setShowAddCategoryModal}
+            handleDeleteCategory={handleDeleteCategory}
+            selectedCategoryId={selectedCategoryId}
+            getTotalCategoryCount={getTotalCategoryCount}
+            categoryTree={categoryTree}
+            categoriesLoading={categoriesLoading}
+            renderCategoryOrderItem={renderCategoryOrderItem}
+            loadCategories={loadCategories}
+            selectedCategoryData={selectedCategoryData}
+            categoryTags={categoryTags}
+            setCategoryTags={setCategoryTags}
+            newTagInput={newTagInput}
+            setNewTagInput={setNewTagInput}
+            updateCategoryAPI={updateCategoryAPI}
+            savingTags={savingTags}
+            setSavingTags={setSavingTags}
+          />
         );
-
       case 'pin-post':
-        // 게시글 고정용 카테고리 렌더링 함수
-        const renderPinPostCategoryItem = (category, level = 0) => {
-          const isParent = category.children && category.children.length > 0;
-          const isSelected = selectedPinPostCategoryId === category.id;
-          const childCount = category.children ? category.children.length : 0;
-
-          return (
-            <div key={category.id}>
-              <div
-                className={`admin__post-category-item ${isSelected ? 'admin__post-category-item--selected' : ''} ${level > 0 ? 'admin__post-category-item--child' : ''}`}
-                style={{ paddingLeft: level > 0 ? `${24 + level * 16}px` : '16px' }}
-                onClick={() => {
-                  setSelectedPinPostCategoryId(category.id);
-                  loadPinPosts(category.slug);
-                }}
-              >
-                <span className="admin__post-category-name">
-                  {category.name}
-                  {isParent && <span className="admin__post-category-count"> ({childCount})</span>}
-                </span>
-              </div>
-              {isParent && category.children?.map(child => renderPinPostCategoryItem(child, level + 1))}
-            </div>
-          );
-        };
-
         return (
-          <div>
-            <h2 className="admin__section-title">게시글 고정</h2>
-
-            {/* 2패널 레이아웃 */}
-            <div className="admin__catorder-wrap">
-              {/* 왼쪽: 카테고리 트리 */}
-              <div className="admin__catorder-left">
-                <div className="admin__catorder-left-header">
-                  <span>카테고리 ({getTotalCategoryCount(activeCategoryTree)})</span>
-                </div>
-                <div className="admin__post-category-list">
-                  {categoriesLoading ? (
-                    <div className="admin__empty" style={{ border: 'none', padding: '24px' }}>로딩 중...</div>
-                  ) : activeCategoryTree.length > 0 ? (
-                    activeCategoryTree.map(category => renderPinPostCategoryItem(category, 0))
-                  ) : (
-                    <div className="admin__empty" style={{ border: 'none', padding: '24px' }}>
-                      <p style={{ marginBottom: 16 }}>카테고리가 없습니다.</p>
-                      <button onClick={loadCategories} className="admin__btn">불러오기</button>
-                    </div>
-                  )}
-                </div>
-              </div>
-
-              {/* 오른쪽: 게시글 목록 */}
-              <div className="admin__catorder-right">
-                <div className="admin__header-row" style={{ marginBottom: '16px' }}>
-                  <h3 style={{ margin: 0 }}>
-                    {selectedPinPostCategoryId
-                      ? findCategoryById(activeCategoryTree, selectedPinPostCategoryId)?.name || '게시글 목록'
-                      : '카테고리를 선택하세요'}
-                  </h3>
-                  {selectedPinPostCategoryId && (
-                    <button
-                      onClick={() => {
-                        const selectedCategory = findCategoryById(activeCategoryTree, selectedPinPostCategoryId);
-                        if (selectedCategory) {
-                          loadPinPosts(selectedCategory.slug);
-                        }
-                      }}
-                      disabled={pinPostsLoading}
-                      className="admin__btn"
-                    >
-                      {pinPostsLoading ? '로딩 중' : '새로고침'}
-                    </button>
-                  )}
-                </div>
-
-                {selectedPinPostCategoryId ? (
-                  pinPostsLoading ? (
-                    <div className="admin__empty" style={{ border: 'none' }}>로딩 중...</div>
-                  ) : pinPosts.length > 0 ? (
-                    <div className="admin__table-wrap">
-                      <table className="admin__table">
-                        <thead>
-                          <tr>
-                            <th>ID</th>
-                            <th>제목</th>
-                            <th>작성자</th>
-                            <th>고정 상태</th>
-                            <th>작성일</th>
-                            <th>작업</th>
-                          </tr>
-                        </thead>
-                        <tbody>
-                          {pinPosts.map((post) => (
-                            <tr key={post.id}>
-                              <td>{post.id}</td>
-                              <td style={{ textAlign: 'left' }}>{post.title}</td>
-                              <td>{post.author?.nickname || '-'}</td>
-                              <td>
-                                <span style={{
-                                  color: post.pinned ? '#4CAF50' : '#999',
-                                  fontWeight: post.pinned ? 'bold' : 'normal'
-                                }}>
-                                  {post.pinned ? '✓ 고정됨' : '고정 안됨'}
-                                </span>
-                              </td>
-                              <td>{post.createdAt ? new Date(post.createdAt).toLocaleDateString() : '-'}</td>
-                              <td>
-                                <div className="admin__actions">
-                                  <button
-                                    onClick={(e) => {
-                                      e.stopPropagation();
-                                      handleTogglePin(post.id);
-                                    }}
-                                    className={post.pinned ? "admin__btn--reject" : "admin__btn--approve"}
-                                  >
-                                    {post.pinned ? '고정 해제' : '고정'}
-                                  </button>
-                                </div>
-                              </td>
-                            </tr>
-                          ))}
-                        </tbody>
-                      </table>
-                    </div>
-                  ) : (
-                    <div className="admin__empty">
-                      <p style={{ marginBottom: 16 }}>게시글이 없습니다.</p>
-                    </div>
-                  )
-                ) : (
-                  <div className="admin__empty">
-                    <p>왼쪽에서 카테고리를 선택하면 해당 카테고리의 게시글 목록이 표시됩니다.</p>
-                  </div>
-                )}
-              </div>
-            </div>
-          </div>
+          <PinPostManagement
+            categoriesLoading={categoriesLoading}
+            activeCategoryTree={activeCategoryTree}
+            getTotalCategoryCount={getTotalCategoryCount}
+            selectedPinPostCategoryId={selectedPinPostCategoryId}
+            setSelectedPinPostCategoryId={setSelectedPinPostCategoryId}
+            loadPinPosts={loadPinPosts}
+            loadCategories={loadCategories}
+            pinPostsLoading={pinPostsLoading}
+            pinPosts={pinPosts}
+            handleTogglePin={handleTogglePin}
+            findCategoryById={findCategoryById}
+          />
         );
-
       default:
         return null;
     }
@@ -1305,132 +656,15 @@ function AdminDashboard() {
       <NavBar />
       <div className="layout__body">
         <div className="admin">
-          {/* Sidebar - Figma 디자인에 맞게 수정 */}
-          <aside className="admin__sidebar">
-            <div className="admin__sidebar-header">
-              <h1 className="admin__sidebar-title">Manage</h1>
-            </div>
-
-            <nav className="admin__nav">
-              {/* 유저 정보 관리 */}
-              <div className="admin__nav-section">
-                <button
-                  onClick={() => {
-                    setActiveSection('user-info');
-                    setActiveSubSection(null);
-                  }}
-                  className={`admin__nav-section-title ${activeSection === 'user-info' ? 'admin__nav-section-title--active' : ''}`}
-                >
-                  유저 정보 관리
-                </button>
-                <div className="admin__nav-subsection">
-                  <button
-                    onClick={() => {
-                      setActiveSection('user-info');
-                      setActiveSubSection('user-info');
-                    }}
-                    className={`admin__nav-item ${activeSection === 'user-info' && activeSubSection === 'user-info' ? 'admin__nav-item--active' : ''}`}
-                  >
-                    유저 정보
-                  </button>
-                  <button
-                    onClick={() => {
-                      setActiveSection('pending');
-                      setActiveSubSection('pending');
-                    }}
-                    className={`admin__nav-item ${activeSection === 'pending' ? 'admin__nav-item--active' : ''}`}
-                  >
-                    승인 대기 목록
-                    {pendingUsers.length > 0 && <span className="admin__badge">{pendingUsers.length}</span>}
-                  </button>
-                  <button
-                    onClick={() => {
-                      setActiveSection('mileage');
-                      setActiveSubSection('mileage');
-                    }}
-                    className={`admin__nav-item ${activeSection === 'mileage' ? 'admin__nav-item--active' : ''}`}
-                  >
-                    마일리지 지급
-                  </button>
-                </div>
-              </div>
-
-              {/* 글 관리 */}
-              <div className="admin__nav-section">
-                <button
-                  onClick={() => {
-                    setActiveSection('posts');
-                    setActiveSubSection(null);
-                  }}
-                  className={`admin__nav-section-title ${activeSection === 'posts' ? 'admin__nav-section-title--active' : ''}`}
-                >
-                  글 관리
-                </button>
-                <div className="admin__nav-subsection">
-                  <button
-                    onClick={() => {
-                      setActiveSection('posts');
-                      setActiveSubSection('posts-edit');
-                    }}
-                    className={`admin__nav-item ${activeSection === 'posts' && activeSubSection === 'posts-edit' ? 'admin__nav-item--active' : ''}`}
-                  >
-                    포스트 수정/삭제
-                  </button>
-                  <button
-                    onClick={() => {
-                      setActiveSection('pin-post');
-                      setActiveSubSection('pin-post');
-                    }}
-                    className={`admin__nav-item ${activeSection === 'pin-post' ? 'admin__nav-item--active' : ''}`}
-                  >
-                    게시글 고정
-                  </button>
-                </div>
-              </div>
-
-              {/* 카테고리 관리 */}
-              <div className="admin__nav-section">
-                <button
-                  onClick={() => {
-                    setActiveSection('category-order');
-                    setActiveSubSection(null);
-                  }}
-                  className={`admin__nav-section-title ${activeSection === 'category-order' || activeSection === 'category-edit' || activeSection === 'category-deactivate' ? 'admin__nav-section-title--active' : ''}`}
-                >
-                  카테고리 관리
-                </button>
-                <div className="admin__nav-subsection">
-                  <button
-                    onClick={() => {
-                      setActiveSection('category-order');
-                      setActiveSubSection('category-order');
-                    }}
-                    className={`admin__nav-item ${activeSection === 'category-order' ? 'admin__nav-item--active' : ''}`}
-                  >
-                    순서 설정
-                  </button>
-                  <button
-                    onClick={() => {
-                      setActiveSection('category-edit');
-                      setActiveSubSection('category-edit');
-                    }}
-                    className={`admin__nav-item ${activeSection === 'category-edit' ? 'admin__nav-item--active' : ''}`}
-                  >
-                    카테고리 수정
-                  </button>
-                  <button
-                    onClick={() => {
-                      setActiveSection('category-deactivate');
-                      setActiveSubSection('category-deactivate');
-                    }}
-                    className={`admin__nav-item ${activeSection === 'category-deactivate' ? 'admin__nav-item--active' : ''}`}
-                  >
-                    카테고리 비활성화
-                  </button>
-                </div>
-              </div>
-            </nav>
-          </aside>
+          {/* Sidebar - Component로 분리 */}
+          <AdminSidebar 
+            activeSection={activeSection}
+            activeSubSection={activeSubSection}
+            setActiveSection={setActiveSection}
+            setActiveSubSection={setActiveSubSection}
+            pendingUsersCount={pendingUsers.length}
+            theme="default"
+          />
 
           {/* Content */}
           <main className="admin__content">
