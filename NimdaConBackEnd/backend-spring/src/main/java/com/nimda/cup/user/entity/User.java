@@ -58,12 +58,6 @@ public class User extends BaseTimeEntity {
     // 학번 (9글자 고정)
 
     @NotBlank
-    @Size(max = 20)
-    @Column(name = "phone_num", nullable = false, length = 20)
-    private String phoneNum;
-    // 휴대폰 번호
-
-    @NotBlank
     @Email
     @Column(unique = true, nullable = false, length = 40)
     private String email;
@@ -89,6 +83,10 @@ public class User extends BaseTimeEntity {
     private String birth;
     // 생년월일
 
+    @Column(name = "boj_id", length = 50)
+    private String bojId;
+    // 백준 ID (선택, Null 허용)
+
     @Column(name = "profile_image", length = 255)
     private String profileImage;
     // 프로필 이미지 URL
@@ -99,13 +97,12 @@ public class User extends BaseTimeEntity {
 
     // ERD 기반 전체 필드 생성자
     public User(String userId, String name, String nickname, String password,
-            String studentNum, String phoneNum, String email, String major) {
+            String studentNum, String email, String major) {
         this.userId = userId;
         this.name = name;
         this.nickname = nickname;
         this.password = password;
         this.studentNum = studentNum;
-        this.phoneNum = phoneNum;
         this.email = email;
         this.major = major;
     }

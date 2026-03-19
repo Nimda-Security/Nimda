@@ -69,7 +69,6 @@ public class JudgeService {
                     anonymousUser.setEmail("anonymous@nimda.com");
                     // 필수 필드 임시값 설정 (ERD 기반 필수 필드)
                     anonymousUser.setStudentNum("000000000");
-                    anonymousUser.setPhoneNum("01000000000");
                     anonymousUser.setMajor("미지정");
                     return userRepository.save(anonymousUser);
                 });

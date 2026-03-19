@@ -9,8 +9,6 @@ import java.util.Optional;
 
 /**
  * 카테고리 Repository
- * 
- * [설계 이유]
  * - 활성화된 카테고리만 조회 (isActive = true)
  * - 부모 카테고리로 자식 조회 (계층 구조)
  * - Slug로 조회 (URL 라우팅용)
@@ -43,4 +41,10 @@ public interface CategoryRepository extends JpaRepository<Category, Long> {
      * Slug 존재 여부 확인
      */
     boolean existsBySlug(String slug);
+
+    /**
+     * 모든 카테고리 조회 (isActive 여부 관계없이, 정렬 순서대로)
+     * - 관리자용 전체 카테고리 조회
+     */
+    List<Category> findAllByOrderBySortOrderAsc();
 }

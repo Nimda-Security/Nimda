@@ -31,6 +31,7 @@ package com.nimda.cite.board.entity;
  */
 
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
+import com.fasterxml.jackson.annotation.JsonProperty;
 import com.nimda.cite.board.entity.Category;
 import com.nimda.cup.common.entity.BaseTimeEntity;
 import com.nimda.cup.user.entity.User;
@@ -87,7 +88,9 @@ public class Board extends BaseTimeEntity {
     // [신규] 조회수 필드 추가 (ERD의 post_view)
     // [이유] 메인 페이지 인기글 섹션, 게시글 조회수 기능
     // [참고] 좋아요는 별도 테이블로 관리하므로 Board 엔터티에 포함하지 않음
+    // 좋아요를 별도 테아블로 관리하면 게시글 리스트에서 좋아요 수를 참조할 때
     @Column(name = "post_view", nullable = false)
+    @JsonProperty("views")
     private Integer postView = 0;
 
     // ========== [메인 페이지 API 필요] ==========
@@ -95,6 +98,14 @@ public class Board extends BaseTimeEntity {
     // [이유] 메인 페이지 공지사항 섹션 (고정글 우선 표시)
     @Column(name = "pinned", nullable = false)
     private Boolean pinned = false;
+
+    // ========== [카테고리별 태그 시스템] ==========
+    // [신규] 게시글 태그 필드 추가
+    // [이유] 카테고리 내부에서 글 종류를 구분하기 위한 태그 (예: "필독", "공지", "가입인사")
+    // [설계 결정] nullable = true로 설정하여 기존 게시글과의 호환성 유지
+    // [설계 결정] length = 20으로 설정하여 짧은 태그명 지원
+    @Column(length = 20, nullable = true)
+    private String tag;
 
     // ========== [기존 코드 유지] ==========
     // [기존] 파일명 - 변경 없음 (파일 업로드 기능 유지)

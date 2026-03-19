@@ -1,0 +1,17 @@
+info:
+  name: 게시글 좋아요 누르기
+  type: http
+  seq: 3
+
+http:
+  method: POST
+  url: /api/like/board/{boardId}
+  auth:
+    type: bearer
+    token: eyJhbGciOiJIUzI1NiJ9.eyJuaWNrbmFtZSI6IuydtOyYge2drCIsInVzZXJJZCI6NCwiYXV0aG9yaXRpZXMiOltdLCJzdWIiOiLsnbTsmIHtnawiLCJpYXQiOjE3NzE4Mzg0NTQsImV4cCI6MTc3MTkyNDg1NH0.n68SggICJQeRhKSSUWMraXvbV02bko83-kU-JR3v_sA
+
+settings:
+  encodeUrl: true
+  timeout: 0
+  followRedirects: true
+  maxRedirects: 5

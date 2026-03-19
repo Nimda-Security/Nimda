@@ -1,0 +1,21 @@
+meta {
+  name: ToggleBoardPin
+  type: http
+  seq: 3
+}
+
+patch {
+  url: {{baseUrl}}/api/cite/board/3/pin
+  body: none
+  auth: inherit
+}
+
+headers {
+  Authorization: Bearer {{jwtToken}}
+  Content-Type: application/json
+}
+
+settings {
+  encodeUrl: true
+  timeout: 0
+}

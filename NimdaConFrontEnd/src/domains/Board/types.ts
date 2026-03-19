@@ -11,6 +11,7 @@ export interface Category {
   slug: string;
   sortOrder: number;
   postCount: number;
+  availableTags?: string | null; // 카테고리별 사용 가능한 태그 목록 (JSON 형식의 문자열)
   createdAt: string;
   updatedAt: string;
 }
@@ -35,7 +36,9 @@ export interface Board {
   category: Category;
   author: BoardAuthor;
   views: number;
+  likeCount?: number; // 좋아요 개수 (선택적)
   pinned: boolean;
+  tag?: string | null; // 게시글 태그 (예: "필독", "공지", "가입인사")
   filename?: string | null;
   filepath?: string | null;
   createdAt: string;
@@ -52,6 +55,7 @@ export interface BoardListParams {
   page?: number;
   size?: number;
   sort?: 'createdAt,desc' | 'createdAt,asc' | 'title,asc' | 'title,desc';
+  includeChildren?: boolean;
 }
 
 /**
@@ -83,6 +87,7 @@ export interface BoardWriteRequest {
   categoryId: number;
   title: string;
   content: string;
+  tag?: string | null; // 게시글 태그 (예: "필독", "공지", "가입인사")
   file?: File;
 }
 

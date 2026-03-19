@@ -1,0 +1,31 @@
+meta {
+  name: CreateCategory
+  type: http
+  seq: 5
+}
+
+post {
+  url: {{baseUrl}}/api/cite/category
+  body: json
+  auth: inherit
+}
+
+headers {
+  Content-Type: application/json
+  Authorization: Bearer {{jwtToken}}
+}
+
+body:json {
+  {
+    "name": "테스트 카테고리 하위 카테고리",
+    "slug": "test-category-child",
+    "parentId": 6,
+    "sortOrder": 0,
+    "isActive": true
+  }
+}
+
+settings {
+  encodeUrl: true
+  timeout: 0
+}

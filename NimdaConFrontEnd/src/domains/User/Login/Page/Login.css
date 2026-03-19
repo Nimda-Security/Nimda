@@ -1,0 +1,159 @@
+/* 로그인 페이지 (Figma 1379-47) - :root 변수는 App.css 참조 */
+/* Layout hideSidebar + layout__content--full 로 화면 전체 가운데 정렬 */
+
+.login-page {
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 32px 24px;
+  background-color: var(--color-white);
+}
+
+.login-page__inner {
+  width: 100%;
+  max-width: 361px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.login-page__brand {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  margin-bottom: 64px;
+}
+
+.login-page__title {
+  font-size: 32px;
+  font-weight: 700;
+  line-height: 1.2;
+  color: var(--color-black);
+  font-family: "Pretendard", sans-serif;
+  margin-bottom: 0;
+}
+
+.login-page__form {
+  width: 100%;
+  max-width: 360px;
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+}
+
+.login-page__field {
+  position: relative;
+  width: 100%;
+}
+
+.login-page__input {
+  width: 100%;
+  height: 44px;
+  padding: 12px 16px;
+  font-size: 14px;
+  font-weight: 500;
+  color: var(--color-black);
+  background-color: var(--color-gray-50);
+  border: 1px solid var(--color-gray-border);
+  border-radius: 8px;
+  outline: none;
+  font-family: "Pretendard", sans-serif;
+  transition: border-color 0.2s ease;
+}
+
+.login-page__input::placeholder {
+  color: var(--color-gray-600);
+}
+
+.login-page__input:hover {
+  border-color: var(--color-gray-300);
+}
+
+.login-page__input:focus {
+  border-color: var(--color-black);
+}
+
+.login-page__password-wrap {
+  position: relative;
+  width: 100%;
+}
+
+.login-page__password-toggle {
+  position: absolute;
+  right: 12px;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 24px;
+  height: 24px;
+  padding: 0;
+  border: none;
+  background: none;
+  cursor: pointer;
+  color: var(--color-gray-600);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.login-page__password-toggle:hover {
+  color: var(--color-black);
+}
+
+.login-page__password-wrap .login-page__input {
+  padding-right: 40px;
+}
+
+/* 로그인 실패 시 에러 메시지 (Figma 1547-181) */
+.login-page__error {
+  font-size: 14px;
+  font-weight: 500;
+  line-height: 1.5;
+  color: #d97399;
+  font-family: "Pretendard", sans-serif;
+  text-align: center;
+  margin-top: 2px;
+}
+
+.login-page__submit {
+  width: 100%;
+  height: 40px;
+  padding: 0 24px;
+  font-size: 16px;
+  font-weight: 700;
+  line-height: 1.5;
+  color: var(--color-white);
+  background-color: var(--color-black);
+  border: none;
+  border-radius: 8px;
+  cursor: pointer;
+  font-family: "Pretendard", sans-serif;
+  margin-top: 24px;
+  transition: background-color 0.2s ease;
+}
+
+.login-page__submit:hover {
+  background-color: var(--color-blue);
+}
+
+.login-page__signup-wrap {
+  text-align: center;
+  margin-top: 16px;
+}
+
+.login-page__signup-link {
+  font-size: 12px;
+  font-weight: 500;
+  color: var(--color-gray-600);
+  text-decoration: underline;
+  font-family: "Pretendard", sans-serif;
+  background: none;
+  border: none;
+  cursor: pointer;
+  padding: 0;
+}
+
+.login-page__signup-link:hover {
+  color: var(--color-black);
+}

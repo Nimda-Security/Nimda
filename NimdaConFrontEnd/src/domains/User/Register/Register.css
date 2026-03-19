@@ -1,0 +1,285 @@
+/* 회원가입 3단계 페이지 (Figma 1693-118) */
+
+.reg {
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 32px 24px;
+}
+
+/* 타이틀 */
+.reg__title {
+  font-size: 24px;
+  font-weight: 700;
+  line-height: 1.2;
+  color: var(--color-black);
+  font-family: "Pretendard", sans-serif;
+  text-align: center;
+  padding-bottom: 8px;
+  border-bottom: 2px solid var(--color-black);
+  margin-bottom: 20px;
+}
+
+/* 단계 표시 */
+.reg__steps {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  margin-bottom: 32px;
+}
+
+.reg__step {
+  font-size: 14px;
+  font-weight: 500;
+  line-height: 1.5;
+  color: #8b8b8b;
+  font-family: "Pretendard", sans-serif;
+}
+
+.reg__step--active {
+  font-weight: 600;
+  color: #d97399;
+}
+
+.reg__step-dot {
+  width: 4px;
+  height: 4px;
+  border-radius: 50%;
+  background-color: #8b8b8b;
+}
+
+/* 카드 영역 */
+.reg__card {
+  width: 100%;
+  max-width: 1136px;
+  border: 1px solid var(--color-gray-200);
+  border-radius: 4px;
+  padding: 31px 0 31px;
+  position: relative;
+  min-height: 363px;
+}
+
+/* 2열 레이아웃 */
+.reg__columns {
+  display: flex;
+  justify-content: center;
+  gap: 120px;
+  padding: 0 80px;
+}
+
+.reg__col {
+  width: 240px;
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+}
+
+/* 필드 */
+.reg__field {
+  width: 240px;
+  min-height: 61px;
+}
+
+.reg__label {
+  font-size: 16px;
+  font-weight: 500;
+  line-height: 1.5;
+  color: #525252;
+  font-family: "Pretendard", sans-serif;
+  margin-bottom: 6px;
+}
+
+.reg__required {
+  color: #d97399;
+  margin-left: 4px;
+}
+
+/* 밑줄 입력 */
+.reg__input {
+  width: 100%;
+  padding: 6px 0;
+  font-size: 14px;
+  font-weight: 500;
+  color: var(--color-black);
+  background: none;
+  border: none;
+  border-bottom: 1px solid var(--color-gray-border);
+  outline: none;
+  font-family: "Pretendard", sans-serif;
+  transition: border-color 0.2s ease;
+}
+
+.reg__input::placeholder {
+  color: #8b8b8b;
+}
+
+.reg__input:focus {
+  border-bottom-color: var(--color-black);
+}
+
+.reg__input--error {
+  border-bottom-color: #d97399;
+}
+
+/* 박스형 입력 (비밀번호, 학과 select, 생년월일) */
+.reg__input-box {
+  width: 100%;
+  height: 32px;
+  padding: 0 12px;
+  font-size: 14px;
+  font-weight: 500;
+  color: var(--color-black);
+  background: none;
+  border: 1px solid var(--color-gray-border);
+  border-radius: 4px;
+  outline: none;
+  font-family: "Pretendard", sans-serif;
+  transition: border-color 0.2s ease;
+}
+
+.reg__input-box::placeholder {
+  color: #8b8b8b;
+}
+
+.reg__input-box:focus {
+  border-color: var(--color-black);
+}
+
+.reg__input-box--error {
+  border-color: #d97399;
+  border-width: 2px;
+}
+
+/* 비밀번호 래핑 */
+.reg__pw-wrap {
+  position: relative;
+  width: 100%;
+}
+
+.reg__pw-toggle {
+  position: absolute;
+  right: 8px;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 16px;
+  height: 16px;
+  padding: 0;
+  border: none;
+  background: none;
+  cursor: pointer;
+  color: #8b8b8b;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.reg__pw-toggle:hover {
+  color: var(--color-black);
+}
+
+/* 생년월일 3칸 */
+.reg__birth-row {
+  display: flex;
+  gap: 8px;
+}
+
+.reg__birth-input {
+  height: 32px;
+  padding: 0 8px;
+  font-size: 14px;
+  font-weight: 500;
+  color: var(--color-black);
+  background: none;
+  border: 1px solid var(--color-gray-border);
+  border-radius: 4px;
+  outline: none;
+  font-family: "Pretendard", sans-serif;
+}
+
+.reg__birth-input--year {
+  width: 96px;
+}
+
+.reg__birth-input--month,
+.reg__birth-input--day {
+  width: 64px;
+}
+
+.reg__birth-input::placeholder {
+  color: #8b8b8b;
+}
+
+.reg__birth-input:focus {
+  border-color: var(--color-black);
+}
+
+/* 에러 메시지 */
+.reg__error {
+  font-size: 12px;
+  font-weight: 400;
+  line-height: 1.5;
+  color: #d97399;
+  font-family: "Pretendard", sans-serif;
+  margin-top: 8px;
+}
+
+/* 버튼 영역 */
+.reg__actions {
+  display: flex;
+  gap: 12px;
+  justify-content: flex-end;
+  padding: 0 80px;
+  margin-top: 24px;
+}
+
+.reg__btn {
+  width: 88px;
+  height: 36px;
+  border-radius: 8px;
+  font-size: 16px;
+  font-weight: 500;
+  line-height: 1.5;
+  font-family: "Pretendard", sans-serif;
+  cursor: pointer;
+  transition: opacity 0.2s ease;
+}
+
+.reg__btn:hover {
+  opacity: 0.85;
+}
+
+.reg__btn--primary {
+  background-color: #d97399;
+  color: var(--color-white);
+  border: none;
+}
+
+.reg__btn--secondary {
+  background-color: var(--color-white);
+  color: #d97399;
+  border: 1px solid #d97399;
+}
+
+/* 완료 화면 */
+.reg__complete {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  min-height: 300px;
+  gap: 32px;
+}
+
+.reg__complete-msg {
+  font-size: 16px;
+  font-weight: 500;
+  line-height: 1.8;
+  color: var(--color-black);
+  font-family: "Pretendard", sans-serif;
+  text-align: center;
+}
+
+.reg__btn--confirm {
+  width: 102px;
+}

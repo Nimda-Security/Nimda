@@ -15,8 +15,9 @@ import java.util.Optional;
 public interface UserRepository extends JpaRepository<User, Long> {
 
     /**
-     * 닉네임으로 사용자 찾기
+     * 닉네임으로 사용자 찾기 (권한 정보 포함)
      */
+    @EntityGraph(attributePaths = { "authorities" })
     Optional<User> findByNickname(String nickname);
 
     /**

@@ -1,15 +1,23 @@
 package com.nimda.cup.user.service;
 
+import com.nimda.cite.point.entity.UserBalance;
+import com.nimda.cite.point.repositroy.UserBalanceRepository;
 import com.nimda.cup.user.dto.LoginResponseDTO;
 import com.nimda.cup.user.entity.User;
 import com.nimda.cup.user.enums.ApprovalStatus;
 import com.nimda.cup.user.exception.UserNotApprovedException;
 import com.nimda.cup.common.util.JwtUtil;
+import com.nimda.cup.user.security.CustomUserDetails;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.context.ApplicationEventPublisher;
+import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
+import org.springframework.security.authentication.event.AuthenticationSuccessEvent;
+import org.springframework.security.core.Authentication;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.time.LocalDateTime;
 import java.util.Optional;
 
 @Service
@@ -21,6 +29,10 @@ public class AuthService {
     private PasswordEncoder passwordEncoder;
     @Autowired
     private JwtUtil jwtUtil;
+    @Autowired
+    private ApplicationEventPublisher eventPublisher;
+    @Autowired
+    private UserBalanceRepository userBalanceRepository;
 
     /**
      * 사용자 인증
@@ -74,6 +86,12 @@ public class AuthService {
         User fullUser = userService.findById(user.getId())
                 .orElseThrow(() -> new RuntimeException("User not found"));
 
+        CustomUserDetails userDetails = new CustomUserDetails(fullUser);
+        Authentication authentication = new UsernamePasswordAuthenticationToken(
+                userDetails, null, userDetails.getAuthorities());
+
+        eventPublisher.publishEvent(new AuthenticationSuccessEvent(authentication));
+
         // 사용자의 권한 목록 추출 (@EntityGraph로 이미 로드됨)
         java.util.List<String> authorities = fullUser.getAuthorities().stream()
                 .map(authority -> authority.getAuthorityName())
@@ -104,12 +122,12 @@ public class AuthService {
      */
     @Transactional
     public User register(String userId, String name, String nickname, String password,
-            String studentNum, String phoneNum, String email, String major,
-            String universityName, String grade) {
+            String studentNum, String email, String major,
+            String universityName, String grade, String bojId) {
 
         // UserService에 사용자 생성 위임 (중복 확인 포함)
         User user = userService.createUser(userId, name, nickname, password,
-                studentNum, phoneNum, email, major, universityName, grade);
+                studentNum, email, major, universityName, grade, bojId);
 
         // 비밀번호를 제외한 사용자 정보 반환
         User userWithoutPassword = new User();
@@ -117,6 +135,14 @@ public class AuthService {
         userWithoutPassword.setUserId(user.getUserId());
         userWithoutPassword.setNickname(user.getNickname());
         userWithoutPassword.setEmail(user.getEmail());
+
+        // 유저 계좌 생성
+        UserBalance userBalance = UserBalance.builder()
+                .user(user)
+                .totalAmount(0L)
+                .updatedAt(LocalDateTime.now())
+                .build();
+        userBalanceRepository.save(userBalance);
 
         return userWithoutPassword;
     }

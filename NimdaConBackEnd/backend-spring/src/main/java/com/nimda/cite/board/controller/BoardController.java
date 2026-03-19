@@ -1,14 +1,22 @@
 package com.nimda.cite.board.controller;
 
+import com.fasterxml.jackson.core.type.TypeReference;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.nimda.cite.board.dto.BoardListResponseDTO;
+import com.nimda.cite.board.dto.BoardResponseDTO;
+import com.nimda.cite.board.dto.CategoryResponseDTO;
 import com.nimda.cite.board.entity.Board;
 import com.nimda.cite.board.entity.Category;
 import com.nimda.cite.board.repository.CategoryRepository;
 import com.nimda.cite.board.service.BoardService;
+import com.nimda.cite.common.response.ApiResponse;
+import com.nimda.cite.like.service.BoardLikeService;
 import com.nimda.cup.common.util.JwtUtil;
 import com.nimda.cup.user.entity.User;
 import com.nimda.cup.user.repository.UserRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
 import org.springframework.data.web.PageableDefault;
@@ -17,7 +25,8 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
-import java.util.HashMap;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Map;
 
 @RestController
@@ -36,11 +45,18 @@ public class BoardController {
     @Autowired
     private UserRepository userRepository;
 
+    @Autowired
+    private BoardLikeService boardLikeService;
+
+    @Autowired
+    private ObjectMapper objectMapper;
+
     @GetMapping
-    public ResponseEntity<Map<String, Object>> getPostsByCategory(
+    public ResponseEntity<?> getPostsByCategory(
             @RequestParam(value = "categoryId", required = false) Long categoryId,
             @RequestParam(value = "slug", required = false) String slug,
             @RequestParam(value = "searchKeyword", required = false) String searchKeyword,
+            @RequestParam(value = "includeChildren", required = false, defaultValue = "false") Boolean includeChildren,
             @PageableDefault(size = 10, sort = "createdAt", direction = Sort.Direction.DESC) Pageable pageable) {
         try {
             Category category = null;
@@ -51,40 +67,65 @@ public class BoardController {
                 category = categoryRepository.findBySlugAndIsActiveTrue(slug)
                         .orElseThrow(() -> new RuntimeException("카테고리를 찾을 수 없습니다: " + slug));
             } else {
-                Map<String, Object> errorResponse = new HashMap<>();
-                errorResponse.put("success", false);
-                errorResponse.put("message", "categoryId 또는 slug 파라미터가 필요합니다.");
-                return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(errorResponse);
+                return ApiResponse.fail("categoryId 또는 slug 파라미터가 필요합니다.").toResponse(HttpStatus.BAD_REQUEST);
             }
 
             Page<Board> boards;
-            if (searchKeyword == null || searchKeyword.isEmpty()) {
-                boards = boardService.boardListByCategory(category, pageable);
+
+            // includeChildren=true 이면 하위 카테고리 게시글도 함께 조회
+            if (Boolean.TRUE.equals(includeChildren)) {
+                List<Category> categories = new ArrayList<>();
+                categories.add(category);
+                // 직계 자식 카테고리 추가
+                List<Category> children = categoryRepository
+                        .findByParentIdAndIsActiveTrueOrderBySortOrderAsc(category.getId());
+                categories.addAll(children);
+                // 손자 카테고리도 추가 (3단 지원)
+                for (Category child : children) {
+                    List<Category> grandChildren = categoryRepository
+                            .findByParentIdAndIsActiveTrueOrderBySortOrderAsc(child.getId());
+                    categories.addAll(grandChildren);
+                }
+
+                if (searchKeyword == null || searchKeyword.isEmpty()) {
+                    boards = boardService.boardListByCategories(categories, pageable);
+                } else {
+                    boards = boardService.boardSearchListByCategories(categories, searchKeyword, pageable);
+                }
             } else {
-                boards = boardService.boardSearchListByCategory(category, searchKeyword, pageable);
+                if (searchKeyword == null || searchKeyword.isEmpty()) {
+                    boards = boardService.boardListByCategory(category, pageable);
+                } else {
+                    boards = boardService.boardSearchListByCategory(category, searchKeyword, pageable);
+                }
             }
 
-            Map<String, Object> response = new HashMap<>();
-            response.put("success", true);
-            response.put("message", "게시글 목록을 성공적으로 조회했습니다.");
-            response.put("posts", boards.getContent());
-            response.put("totalElements", boards.getTotalElements());
-            response.put("totalPages", boards.getTotalPages());
-            response.put("currentPage", boards.getNumber());
-            response.put("category", category);
+            // 게시글 목록에 좋아요 개수 추가하여 DTO로 변환
+            List<BoardResponseDTO> postsDTO = boards.getContent().stream()
+                    .map(board -> {
+                        long likeCount = boardLikeService.getLikeCount(board.getId());
+                        return BoardResponseDTO.from(board, likeCount);
+                    })
+                    .collect(java.util.stream.Collectors.toList());
 
-            return ResponseEntity.ok(response);
+            BoardListResponseDTO responseDTO = BoardListResponseDTO.builder()
+                    .posts(postsDTO)
+                    .totalElements(boards.getTotalElements())
+                    .totalPages(boards.getTotalPages())
+                    .currentPage(boards.getNumber())
+                    .category(CategoryResponseDTO.from(category))
+                    .build();
+
+            return ApiResponse.ok("게시글 목록을 성공적으로 조회했습니다.", responseDTO).toResponse();
 
         } catch (Exception e) {
-            Map<String, Object> errorResponse = new HashMap<>();
-            errorResponse.put("success", false);
-            errorResponse.put("message", "게시글 목록 조회 중 오류가 발생했습니다: " + e.getMessage());
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(errorResponse);
+            return ApiResponse.fail("게시글 목록 조회 중 오류가 발생했습니다: " + e.getMessage())
+                    .toResponse(HttpStatus.INTERNAL_SERVER_ERROR);
         }
     }
 
     @GetMapping("/pinned")
-    public ResponseEntity<Map<String, Object>> getPinnedPosts(
+    public ResponseEntity<?> getPinnedPosts(
             @RequestParam(value = "categoryId", required = false) Long categoryId,
             @RequestParam(value = "slug", required = false) String slug,
             @PageableDefault(size = 4, sort = "createdAt", direction = Sort.Direction.DESC) Pageable pageable) {
@@ -97,85 +138,105 @@ public class BoardController {
                 category = categoryRepository.findBySlugAndIsActiveTrue(slug)
                         .orElseThrow(() -> new RuntimeException("카테고리를 찾을 수 없습니다: " + slug));
             } else {
-                Map<String, Object> errorResponse = new HashMap<>();
-                errorResponse.put("success", false);
-                errorResponse.put("message", "categoryId 또는 slug 파라미터가 필요합니다.");
-                return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(errorResponse);
+                return ApiResponse.fail("categoryId 또는 slug 파라미터가 필요합니다.").toResponse(HttpStatus.BAD_REQUEST);
             }
 
             Page<Board> boards = boardService.boardListByCategoryWithPinned(category, pageable);
 
-            Map<String, Object> response = new HashMap<>();
-            response.put("success", true);
-            response.put("message", "고정글 목록을 성공적으로 조회했습니다.");
-            response.put("posts", boards.getContent());
-            response.put("totalElements", boards.getTotalElements());
+            // 고정글 목록에 좋아요 개수 추가하여 DTO로 변환
+            List<BoardResponseDTO> postsDTO = boards.getContent().stream()
+                    .map(board -> {
+                        long likeCount = boardLikeService.getLikeCount(board.getId());
+                        return BoardResponseDTO.from(board, likeCount);
+                    })
+                    .collect(java.util.stream.Collectors.toList());
 
-            return ResponseEntity.ok(response);
+            BoardListResponseDTO responseDTO = BoardListResponseDTO.builder()
+                    .posts(postsDTO)
+                    .totalElements(boards.getTotalElements())
+                    .totalPages(boards.getTotalPages())
+                    .currentPage(boards.getNumber())
+                    .category(CategoryResponseDTO.from(category))
+                    .build();
+
+            return ApiResponse.ok("고정글 목록을 성공적으로 조회했습니다.", responseDTO).toResponse();
 
         } catch (Exception e) {
-            Map<String, Object> errorResponse = new HashMap<>();
-            errorResponse.put("success", false);
-            errorResponse.put("message", "고정글 목록 조회 중 오류가 발생했습니다: " + e.getMessage());
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(errorResponse);
+            return ApiResponse.fail("고정글 목록 조회 중 오류가 발생했습니다: " + e.getMessage())
+                    .toResponse(HttpStatus.INTERNAL_SERVER_ERROR);
         }
     }
 
     @GetMapping("/popular")
-    public ResponseEntity<Map<String, Object>> getPopularPosts(
+    public ResponseEntity<?> getPopularPosts(
             @RequestParam(value = "categoryId", required = false) Long categoryId,
             @RequestParam(value = "slug", required = false) String slug,
             @PageableDefault(size = 10, sort = "createdAt", direction = Sort.Direction.DESC) Pageable pageable) {
         try {
+            // 인기글은 최대 10개로 제한
+            int maxSize = Math.min(pageable.getPageSize(), 10);
+            Pageable limitedPageable = PageRequest.of(
+                    pageable.getPageNumber(),
+                    maxSize,
+                    pageable.getSort());
+
             Page<Board> boards;
+            Category category = null;
             if (categoryId != null || slug != null) {
-                Category category = null;
                 if (categoryId != null) {
                     category = categoryRepository.findById(categoryId)
                             .orElseThrow(() -> new RuntimeException("카테고리를 찾을 수 없습니다: " + categoryId));
                 } else {
+                    // slug 검증: 영문, 숫자, 하이픈, 언더스코어만 허용 (최대 50자)
+                    if (slug == null || slug.isEmpty() || slug.length() > 50 || !slug.matches("^[a-zA-Z0-9_-]+$")) {
+                        return ApiResponse.fail("유효하지 않은 카테고리 slug입니다.").toResponse(HttpStatus.BAD_REQUEST);
+                    }
                     category = categoryRepository.findBySlugAndIsActiveTrue(slug)
                             .orElseThrow(() -> new RuntimeException("카테고리를 찾을 수 없습니다: " + slug));
                 }
-                boards = boardService.boardListPopularByCategory(category, pageable);
+                boards = boardService.boardListPopularByCategory(category, limitedPageable);
             } else {
-                boards = boardService.boardListPopular(pageable);
+                boards = boardService.boardListPopular(limitedPageable);
             }
 
-            Map<String, Object> response = new HashMap<>();
-            response.put("success", true);
-            response.put("message", "인기글 목록을 성공적으로 조회했습니다.");
-            response.put("posts", boards.getContent());
-            response.put("totalElements", boards.getTotalElements());
-            response.put("totalPages", boards.getTotalPages());
-            response.put("currentPage", boards.getNumber());
+            // 인기글 목록에 좋아요 개수 추가하여 DTO로 변환
+            List<BoardResponseDTO> postsDTO = boards.getContent().stream()
+                    .map(board -> {
+                        long likeCount = boardLikeService.getLikeCount(board.getId());
+                        return BoardResponseDTO.from(board, likeCount);
+                    })
+                    .collect(java.util.stream.Collectors.toList());
 
-            return ResponseEntity.ok(response);
+            BoardListResponseDTO responseDTO = BoardListResponseDTO.builder()
+                    .posts(postsDTO)
+                    .totalElements(boards.getTotalElements())
+                    .totalPages(boards.getTotalPages())
+                    .currentPage(boards.getNumber())
+                    .category(category != null ? CategoryResponseDTO.from(category) : null)
+                    .build();
+
+            return ApiResponse.ok("인기글 목록을 성공적으로 조회했습니다.", responseDTO).toResponse();
 
         } catch (Exception e) {
-            Map<String, Object> errorResponse = new HashMap<>();
-            errorResponse.put("success", false);
-            errorResponse.put("message", "인기글 목록 조회 중 오류가 발생했습니다: " + e.getMessage());
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(errorResponse);
+            return ApiResponse.fail("인기글 목록 조회 중 오류가 발생했습니다: " + e.getMessage())
+                    .toResponse(HttpStatus.INTERNAL_SERVER_ERROR);
         }
     }
 
     @PostMapping
-    public ResponseEntity<Map<String, Object>> write(
+    public ResponseEntity<?> write(
             @RequestHeader(value = "Authorization", required = false) String authHeader,
             @RequestParam("categoryId") Long categoryId,
             @RequestParam("title") String title,
             @RequestParam("content") String content,
+            @RequestParam(value = "tag", required = false) String tag,
             @RequestPart(value = "file", required = false) MultipartFile file) {
         try {
             User author = null;
             if (authHeader != null && authHeader.startsWith("Bearer ")) {
                 String token = authHeader.substring(7);
                 if (jwtUtil.isTokenExpired(token)) {
-                    Map<String, Object> errorResponse = new HashMap<>();
-                    errorResponse.put("success", false);
-                    errorResponse.put("message", "토큰이 만료되었습니다. 다시 로그인해주세요.");
-                    return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(errorResponse);
+                    return ApiResponse.fail("토큰이 만료되었습니다. 다시 로그인해주세요.").toResponse(HttpStatus.UNAUTHORIZED);
                 }
 
                 Long userId = jwtUtil.extractUserId(token);
@@ -186,70 +247,60 @@ public class BoardController {
             }
 
             if (author == null) {
-                Map<String, Object> errorResponse = new HashMap<>();
-                errorResponse.put("success", false);
-                errorResponse.put("message", "로그인이 필요합니다.");
-                return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(errorResponse);
+                return ApiResponse.fail("로그인이 필요합니다.").toResponse(HttpStatus.UNAUTHORIZED);
             }
 
             Category category = categoryRepository.findById(categoryId)
                     .orElseThrow(() -> new RuntimeException("카테고리를 찾을 수 없습니다: " + categoryId));
 
+            // validation. 태그가 존재하는 경우에만 검증을 진행한다.
+            if (tag != null && !tag.trim().isEmpty()) {
+                String validationError = validateTag(category, tag);
+                if (validationError != null) {
+                    return ApiResponse.fail(validationError).toResponse(HttpStatus.BAD_REQUEST);
+                }
+            }
+
             Board board = new Board();
             board.setTitle(title);
             board.setContent(content);
             board.setCategory(category);
+            board.setTag(tag); // 태그 설정 (null 가능)
 
             boardService.write(board, author, file);
 
-            Map<String, Object> response = new HashMap<>();
-            response.put("success", true);
-            response.put("message", "게시글이 성공적으로 작성되었습니다.");
-            response.put("board", board);
-
-            return ResponseEntity.status(HttpStatus.CREATED).body(response);
+            return ApiResponse.ok("게시글이 성공적으로 작성되었습니다.", Map.of("board", board))
+                    .toResponse(HttpStatus.CREATED);
 
         } catch (Exception e) {
-            Map<String, Object> errorResponse = new HashMap<>();
-            errorResponse.put("success", false);
-            errorResponse.put("message", "게시글 작성 중 오류가 발생했습니다: " + e.getMessage());
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(errorResponse);
+            return ApiResponse.fail("게시글 작성 중 오류가 발생했습니다: " + e.getMessage())
+                    .toResponse(HttpStatus.INTERNAL_SERVER_ERROR);
         }
     }
 
     @GetMapping("/{id}")
-    public ResponseEntity<Map<String, Object>> view(@PathVariable("id") Long id) {
+    public ResponseEntity<?> view(@PathVariable("id") Long id) {
         try {
             Board board = boardService.boardView(id);
-
-            Map<String, Object> response = new HashMap<>();
-            response.put("success", true);
-            response.put("message", "게시글을 성공적으로 조회했습니다.");
-            response.put("board", board);
-
-            return ResponseEntity.ok(response);
+            return ApiResponse.ok("게시글을 성공적으로 조회했습니다.", Map.of("board", board)).toResponse();
 
         } catch (RuntimeException e) {
-            Map<String, Object> errorResponse = new HashMap<>();
-            errorResponse.put("success", false);
-            errorResponse.put("message", e.getMessage());
-            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(errorResponse);
+            return ApiResponse.fail(e.getMessage()).toResponse(HttpStatus.NOT_FOUND);
 
         } catch (Exception e) {
-            Map<String, Object> errorResponse = new HashMap<>();
-            errorResponse.put("success", false);
-            errorResponse.put("message", "게시글 조회 중 오류가 발생했습니다: " + e.getMessage());
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(errorResponse);
+            return ApiResponse.fail("게시글 조회 중 오류가 발생했습니다: " + e.getMessage())
+                    .toResponse(HttpStatus.INTERNAL_SERVER_ERROR);
         }
     }
 
     @PutMapping("/{id}")
-    public ResponseEntity<Map<String, Object>> update(
+    public ResponseEntity<?> update(
             @RequestHeader(value = "Authorization", required = false) String authHeader,
             @PathVariable("id") Long id,
             @RequestParam("categoryId") Long categoryId,
             @RequestParam("title") String title,
             @RequestParam("content") String content,
+            @RequestParam(value = "tag", required = false) String tag,
             @RequestPart(value = "file", required = false) MultipartFile file) {
         try {
             Board boardTemp = boardService.boardView(id);
@@ -269,54 +320,47 @@ public class BoardController {
             }
 
             if (currentUser == null) {
-                Map<String, Object> errorResponse = new HashMap<>();
-                errorResponse.put("success", false);
-                errorResponse.put("message", "로그인이 필요합니다.");
-                return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(errorResponse);
+                return ApiResponse.fail("로그인이 필요합니다.").toResponse(HttpStatus.UNAUTHORIZED);
             }
 
             boolean isAdmin = currentUser.getAuthorities().stream()
                     .anyMatch(authority -> authority.getAuthorityName().equals("ROLE_ADMIN"));
 
             if (!isAdmin && !boardTemp.getAuthor().getId().equals(currentUser.getId())) {
-                Map<String, Object> errorResponse = new HashMap<>();
-                errorResponse.put("success", false);
-                errorResponse.put("message", "게시글을 수정할 권한이 없습니다.");
-                return ResponseEntity.status(HttpStatus.FORBIDDEN).body(errorResponse);
+                return ApiResponse.fail("게시글을 수정할 권한이 없습니다.").toResponse(HttpStatus.FORBIDDEN);
             }
 
             Category category = categoryRepository.findById(categoryId)
                     .orElseThrow(() -> new RuntimeException("카테고리를 찾을 수 없습니다: " + categoryId));
 
+            // Validation. 태그가 존재하는 경우에만 검증을 진행한다.
+            if (tag != null && !tag.trim().isEmpty()) {
+                String validationError = validateTag(category, tag);
+                if (validationError != null) {
+                    return ApiResponse.fail(validationError).toResponse(HttpStatus.BAD_REQUEST);
+                }
+            }
+
             boardTemp.setTitle(title);
             boardTemp.setContent(content);
             boardTemp.setCategory(category);
+            boardTemp.setTag(tag); // 태그 설정 (null 가능)
 
             boardService.write(boardTemp, currentUser, file);
 
-            Map<String, Object> response = new HashMap<>();
-            response.put("success", true);
-            response.put("message", "게시글이 성공적으로 수정되었습니다.");
-            response.put("board", boardTemp);
-
-            return ResponseEntity.ok(response);
+            return ApiResponse.ok("게시글이 성공적으로 수정되었습니다.", Map.of("board", boardTemp)).toResponse();
 
         } catch (RuntimeException e) {
-            Map<String, Object> errorResponse = new HashMap<>();
-            errorResponse.put("success", false);
-            errorResponse.put("message", e.getMessage());
-            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(errorResponse);
+            return ApiResponse.fail(e.getMessage()).toResponse(HttpStatus.NOT_FOUND);
 
         } catch (Exception e) {
-            Map<String, Object> errorResponse = new HashMap<>();
-            errorResponse.put("success", false);
-            errorResponse.put("message", "게시글 수정 중 오류가 발생했습니다: " + e.getMessage());
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(errorResponse);
+            return ApiResponse.fail("게시글 수정 중 오류가 발생했습니다: " + e.getMessage())
+                    .toResponse(HttpStatus.INTERNAL_SERVER_ERROR);
         }
     }
 
     @DeleteMapping("/{id}")
-    public ResponseEntity<Map<String, Object>> delete(
+    public ResponseEntity<?> delete(
             @RequestHeader(value = "Authorization", required = false) String authHeader,
             @PathVariable("id") Long id) {
         try {
@@ -337,41 +381,139 @@ public class BoardController {
             }
 
             if (currentUser == null) {
-                Map<String, Object> errorResponse = new HashMap<>();
-                errorResponse.put("success", false);
-                errorResponse.put("message", "로그인이 필요합니다.");
-                return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(errorResponse);
+                return ApiResponse.fail("로그인이 필요합니다.").toResponse(HttpStatus.UNAUTHORIZED);
             }
 
             boolean isAdmin = currentUser.getAuthorities().stream()
                     .anyMatch(authority -> authority.getAuthorityName().equals("ROLE_ADMIN"));
 
             if (!isAdmin && !board.getAuthor().getId().equals(currentUser.getId())) {
-                Map<String, Object> errorResponse = new HashMap<>();
-                errorResponse.put("success", false);
-                errorResponse.put("message", "게시글을 삭제할 권한이 없습니다.");
-                return ResponseEntity.status(HttpStatus.FORBIDDEN).body(errorResponse);
+                return ApiResponse.fail("게시글을 삭제할 권한이 없습니다.").toResponse(HttpStatus.FORBIDDEN);
             }
 
             boardService.boardDelete(id);
 
-            Map<String, Object> response = new HashMap<>();
-            response.put("success", true);
-            response.put("message", "게시글이 성공적으로 삭제되었습니다.");
-
-            return ResponseEntity.ok(response);
+            return ApiResponse.ok("게시글이 성공적으로 삭제되었습니다.").toResponse();
 
         } catch (RuntimeException e) {
-            Map<String, Object> errorResponse = new HashMap<>();
-            errorResponse.put("success", false);
-            errorResponse.put("message", e.getMessage());
-            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(errorResponse);
+            return ApiResponse.fail(e.getMessage()).toResponse(HttpStatus.NOT_FOUND);
 
         } catch (Exception e) {
-            Map<String, Object> errorResponse = new HashMap<>();
-            errorResponse.put("success", false);
-            errorResponse.put("message", "게시글 삭제 중 오류가 발생했습니다: " + e.getMessage());
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(errorResponse);
+            return ApiResponse.fail("게시글 삭제 중 오류가 발생했습니다: " + e.getMessage())
+                    .toResponse(HttpStatus.INTERNAL_SERVER_ERROR);
+        }
+    }
+
+    @PatchMapping("/{id}/pin")
+    public ResponseEntity<?> togglePin(
+            @RequestHeader(value = "Authorization", required = false) String authHeader,
+            @PathVariable("id") Long id) {
+        try {
+            User currentUser = null;
+            if (authHeader != null && authHeader.startsWith("Bearer ")) {
+                String token = authHeader.substring(7);
+                try {
+                    Long userId = jwtUtil.extractUserId(token);
+                    if (userId != null && !jwtUtil.isTokenExpired(token)) {
+                        currentUser = userRepository.findById(userId)
+                                .orElseThrow(() -> new RuntimeException("사용자를 찾을 수 없습니다: " + userId));
+                    }
+                } catch (Exception e) {
+                    // 토큰이 유효하지 않으면 에러 반환
+                }
+            }
+
+            if (currentUser == null) {
+                return ApiResponse.fail("로그인이 필요합니다.").toResponse(HttpStatus.UNAUTHORIZED);
+            }
+
+            // 관리자만 고정/해제 가능
+            boolean isAdmin = currentUser.getAuthorities().stream()
+                    .anyMatch(authority -> authority.getAuthorityName().equals("ROLE_ADMIN"));
+
+            if (!isAdmin) {
+                return ApiResponse.fail("게시글을 고정/해제할 권한이 없습니다. 관리자만 가능합니다.").toResponse(HttpStatus.FORBIDDEN);
+            }
+
+            Board board = boardService.toggleBoardPin(id);
+            String message = board.getPinned() ? "게시글이 고정되었습니다." : "게시글 고정이 해제되었습니다.";
+
+            return ApiResponse.ok(message, Map.of("board", board)).toResponse();
+
+        } catch (RuntimeException e) {
+            return ApiResponse.fail(e.getMessage()).toResponse(HttpStatus.NOT_FOUND);
+
+        } catch (Exception e) {
+            return ApiResponse.fail("게시글 고정/해제 중 오류가 발생했습니다: " + e.getMessage())
+                    .toResponse(HttpStatus.INTERNAL_SERVER_ERROR);
+        }
+    }
+
+    /**
+     * 태그 검증 메서드
+     * 카테고리의 availableTags에 지정된 태그가 포함되어 있는지 확인
+     * 
+     * @param category 카테고리 엔티티
+     * @param tag      검증할 태그
+     * @return 검증 실패 시 에러 메시지, 성공 시 null
+     */
+    private String validateTag(Category category, String tag) {
+
+        // note1. 카테고리에서 availableTags 문자열을 가져온다.
+        String availableTagsStr = category.getAvailableTags();
+
+        // note2. availableTags가 비어있는지 확인한다.
+        if (availableTagsStr == null || availableTagsStr.trim().isEmpty()) {
+            return "이 카테고리에서는 태그를 사용할 수 없습니다.";
+        }
+
+        try {
+
+            // note3. ObjectMapper로 JSON 문자열을 List<String> 타입으로 파싱한다.
+            List<String> availableTags = objectMapper.readValue(
+                    availableTagsStr,
+                    new TypeReference<List<String>>() {
+                    });
+
+            // note4. 태그가 허용된 목록에 포함되어 있는지 확인
+            if (!availableTags.contains(tag)) {
+                return String.format("'%s' 태그는 이 카테고리에서 사용할 수 없습니다. 사용 가능한 태그: %s",
+                        tag, String.join(", ", availableTags));
+            }
+
+            return null;
+
+        } catch (Exception e) {
+            return "카테고리의 태그 설정이 올바르지 않습니다.";
+        }
+    }
+
+    @GetMapping("/my/board-count")
+    public ResponseEntity<?> getMyStats(
+            @RequestHeader(value = "Authorization", required = false) String authHeader) {
+        try {
+            User currentUser = null;
+            if (authHeader != null && authHeader.startsWith("Bearer ")) {
+                String token = authHeader.substring(7);
+                Long userId = jwtUtil.extractUserId(token);
+                if (userId != null && !jwtUtil.isTokenExpired(token)) {
+                    currentUser = userRepository.findById(userId).orElse(null);
+                }
+            }
+
+            if (currentUser == null) {
+                return ApiResponse.fail("로그인이 필요합니다.").toResponse(HttpStatus.UNAUTHORIZED);
+            }
+
+            long postCount = boardService.countByAuthor(currentUser);
+
+            return ApiResponse.ok("통계 정보를 성공적으로 조회했습니다.", Map.of(
+                    "postCount", postCount
+            )).toResponse();
+
+        } catch (Exception e) {
+            return ApiResponse.fail("통계 정보 조회 중 오류가 발생했습니다: " + e.getMessage())
+                    .toResponse(HttpStatus.INTERNAL_SERVER_ERROR);
         }
     }
 }
