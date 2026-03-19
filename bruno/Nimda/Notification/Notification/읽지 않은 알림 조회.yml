@@ -1,0 +1,17 @@
+info:
+  name: 읽지 않은 알림 조회
+  type: http
+  seq: 1
+
+http:
+  method: GET
+  url: /api/notifications/unRead
+  auth:
+    type: bearer
+    token: eyJhbGciOiJIUzI1NiJ9.eyJuaWNrbmFtZSI6Iuq4uOuPmeydtCIsInVzZXJJZCI6MSwiYXV0aG9yaXRpZXMiOlsiUk9MRV9BRE1JTiIsIkFETUlOIiwiUk9MRV9VU0VSIl0sInN1YiI6Iuq4uOuPmeydtCIsImlhdCI6MTc3MTgzNjM1MiwiZXhwIjoxNzcxOTIyNzUyfQ.q6-NV4PAzyJ3v6NKXsdYFPJabPIDIaRMTQ70rVtjaW8
+
+settings:
+  encodeUrl: true
+  timeout: 0
+  followRedirects: true
+  maxRedirects: 5

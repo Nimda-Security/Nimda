@@ -6,15 +6,16 @@ import org.springframework.boot.autoconfigure.domain.EntityScan;
 import org.springframework.context.annotation.ComponentScan;
 import org.springframework.data.jpa.repository.config.EnableJpaAuditing;
 import org.springframework.data.jpa.repository.config.EnableJpaRepositories;
+import org.springframework.scheduling.annotation.EnableAsync;
+import org.springframework.scheduling.annotation.EnableScheduling;
 
+@EnableScheduling
 @SpringBootApplication
 @EnableJpaAuditing
-@ComponentScan(basePackages = { "com.nimda.cup", "com.nimda.cite" }) // 컨트롤러 스캔 추가
-@EntityScan(basePackages = { "com.nimda.cup.user.entity", "com.nimda.cup.judge.entity",
-        "com.nimda.cup.contest.entity", "com.nimda.cup.group.entity", "com.nimda.cite.board.entity" })
-@EnableJpaRepositories(basePackages = { "com.nimda.cup.user.repository", "com.nimda.cup.judge.repository",
-        "com.nimda.cup.contest.repository", "com.nimda.cup.group.repository",
-        "com.nimda.cite.board.repository" })
+@EnableAsync // 알림 비동기 방식으로 처리
+@ComponentScan(basePackages = { "com.nimda.cup", "com.nimda.cite" })
+@EntityScan(basePackages = { "com.nimda.cup", "com.nimda.cite" })
+@EnableJpaRepositories(basePackages = { "com.nimda.cup", "com.nimda.cite" })
 public class NimdaConApplication {
 
     public static void main(String[] args) {

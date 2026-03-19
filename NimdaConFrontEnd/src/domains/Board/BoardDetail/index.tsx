@@ -1,8 +1,11 @@
 import { useEffect, useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
+import { Heart, MessageCircle, MoreVertical } from 'lucide-react';
 import Layout from '@/components/Layout';
-import { getBoardDetailAPI, deleteBoardAPI, getFileDownloadURL } from '@/api/board';
+import { getBoardDetailAPI, deleteBoardAPI, getFileDownloadURL, getBoardLikeStatusAPI, toggleBoardLikeAPI } from '@/api/board';
 import type { Board } from '../types';
+import CommentSection from '@/domains/Comment';
+import './BoardDetail.css';
 
 function BoardDetailPage() {
   const navigate = useNavigate();
@@ -12,95 +15,95 @@ function BoardDetailPage() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [isDeleting, setIsDeleting] = useState(false);
+  const [likeCount, setLikeCount] = useState(0);
+  const [isLiked, setIsLiked] = useState(false);
+  const [isTogglingLike, setIsTogglingLike] = useState(false);
 
-  useEffect(() => {
-    if (id) {
-      fetchBoard(parseInt(id));
-    }
-  }, [id]);
+  useEffect(() => { if (id) fetchBoard(parseInt(id)); }, [id]);
 
   const fetchBoard = async (boardId: number) => {
     try {
       setLoading(true);
       setError(null);
-
-      const response = await getBoardDetailAPI(boardId);
-
-      if (response.success && 'board' in response) {
-        setBoard(response.board);
+      const res = await getBoardDetailAPI(boardId);
+      if (res.success && 'board' in res) {
+        setBoard(res.board);
+        await fetchLikeStatus(boardId);
       } else {
-        setError(response.message);
+        setError(res.message);
       }
-    } catch (err) {
-      setError('게시글을 불러오는 중 오류가 발생했습니다.');
-    } finally {
-      setLoading(false);
-    }
+    } catch { setError('게시글을 불러오는 중 오류가 발생했습니다.'); }
+    finally { setLoading(false); }
+  };
+
+  const fetchLikeStatus = async (boardId: number) => {
+    try {
+      const res = await getBoardLikeStatusAPI(boardId);
+      if (res.success && 'data' in res) {
+        setLikeCount(res.data.likeCount);
+        setIsLiked(res.data.isLiked);
+      }
+    } catch { /* 비로그인 상태 */ }
+  };
+
+  const handleToggleLike = async () => {
+    if (!board || isTogglingLike) return;
+    try {
+      setIsTogglingLike(true);
+      const res = await toggleBoardLikeAPI(board.id);
+      if (res.success && 'data' in res) {
+        setLikeCount(res.data.likeCount);
+        setIsLiked(res.data.isLiked);
+      } else {
+        alert(res.message || '좋아요 처리에 실패했습니다.');
+      }
+    } catch { alert('좋아요 처리 중 오류가 발생했습니다.'); }
+    finally { setIsTogglingLike(false); }
   };
 
   const handleGoBack = () => {
-    if (board?.category?.slug) {
-      navigate(`/board/${board.category.slug}`);
-    } else if (boardType) {
-      navigate(`/board/${boardType}`);
-    } else {
-      navigate('/');
-    }
+    if (board?.category?.slug) navigate(`/board/${board.category.slug}`);
+    else if (boardType) navigate(`/board/${boardType}`);
+    else navigate('/');
   };
 
   const handleEdit = () => {
-    if (board) {
-      const slug = board.category?.slug || boardType;
-      navigate(`/board/${slug}/edit/${board.id}`);
-    }
+    if (board) navigate(`/board/${board.category?.slug || boardType}/edit/${board.id}`);
   };
 
   const handleDelete = async () => {
-    if (!board || !window.confirm('정말 삭제하시겠습니까?')) {
-      return;
-    }
-
+    if (!board || !window.confirm('정말 삭제하시겠습니까?')) return;
     try {
       setIsDeleting(true);
-      const response = await deleteBoardAPI(board.id);
-
-      if (response.success) {
-        alert('게시글이 삭제되었습니다.');
-        handleGoBack();
-      } else {
-        alert(response.message || '게시글 삭제에 실패했습니다.');
-      }
-    } catch (err) {
-      alert('게시글 삭제 중 오류가 발생했습니다.');
-    } finally {
-      setIsDeleting(false);
-    }
+      const res = await deleteBoardAPI(board.id);
+      if (res.success) { alert('게시글이 삭제되었습니다.'); handleGoBack(); }
+      else alert(res.message || '게시글 삭제에 실패했습니다.');
+    } catch { alert('게시글 삭제 중 오류가 발생했습니다.'); }
+    finally { setIsDeleting(false); }
   };
 
   const handleFileDownload = () => {
     if (board?.filepath) {
-      const downloadURL = getFileDownloadURL(board.filepath);
-      if (downloadURL) {
-        window.open(downloadURL, '_blank');
-      }
+      const url = getFileDownloadURL(board.filepath);
+      if (url) window.open(url, '_blank');
     }
   };
 
-  // 작성자 확인 (수정/삭제 버튼 표시용)
-  const isAuthor = () => {
-    if (!board) return false;
-    // TODO: 현재 로그인한 사용자와 비교
-    return false;
+  const isAuthor = () => !board ? false : false;
+
+  const fmtDate = (s: string) => {
+    const d = new Date(s);
+    return `${String(d.getFullYear()).slice(2)}/${String(d.getMonth() + 1).padStart(2, '0')}/${String(d.getDate()).padStart(2, '0')}`;
+  };
+  const fmtTime = (s: string) => {
+    const d = new Date(s);
+    return `${String(d.getHours()).padStart(2, '0')}:${String(d.getMinutes()).padStart(2, '0')}`;
   };
 
   if (loading) {
     return (
       <Layout>
-        <div className="min-h-screen bg-white pt-8">
-          <div className="container mx-auto px-4 py-6 max-w-6xl">
-            <div className="text-center py-12 text-gray-600">로딩 중...</div>
-          </div>
-        </div>
+        <div className="board-detail__status board-detail__status--loading">로딩 중...</div>
       </Layout>
     );
   }
@@ -108,20 +111,9 @@ function BoardDetailPage() {
   if (error || !board) {
     return (
       <Layout>
-        <div className="min-h-screen bg-white pt-8">
-          <div className="container mx-auto px-4 py-6 max-w-6xl">
-            <div className="text-center py-12 text-red-600">
-              {error || '게시글을 찾을 수 없습니다.'}
-            </div>
-            <div className="text-center">
-              <button
-                onClick={handleGoBack}
-                className="px-4 py-2 bg-gray-200 text-gray-700 rounded hover:bg-gray-300"
-              >
-                목록으로 돌아가기
-              </button>
-            </div>
-          </div>
+        <div className="board-detail__status">
+          <p className="board-detail__status--error">{error || '게시글을 찾을 수 없습니다.'}</p>
+          <button type="button" onClick={handleGoBack} className="board-detail__btn board-detail__btn--edit">목록으로</button>
         </div>
       </Layout>
     );
@@ -129,62 +121,72 @@ function BoardDetailPage() {
 
   return (
     <Layout>
-      <div className="min-h-screen bg-white pt-8">
-        <div className="container mx-auto px-4 py-6 max-w-6xl">
-          {/* 헤더 */}
-          <header className="mb-6">
-            <button
-              onClick={handleGoBack}
-              className="text-gray-600 hover:text-black text-sm mb-4"
-            >
-              ← 목록으로 돌아가기
+      <div>
+        <button type="button" onClick={handleGoBack} className="board-detail__back">← 목록으로 돌아가기</button>
+
+        {/* Head */}
+        <header className="board-detail__head">
+          <p className="board-detail__category">{board.category?.name ?? boardType ?? '게시판'}</p>
+          <h1 className="board-detail__title">{board.title}</h1>
+
+          <div className="board-detail__meta">
+            <div className="board-detail__avatar-placeholder">
+              {board.author?.nickname?.charAt(0) ?? '?'}
+            </div>
+            <span className="board-detail__author">{board.author?.nickname ?? '알 수 없음'}</span>
+            <span className="board-detail__date">{fmtDate(board.createdAt)}</span>
+            <span className="board-detail__date">{fmtTime(board.createdAt)}</span>
+
+            <div className="board-detail__stats">
+              <span className="board-detail__stat-comments">
+                <MessageCircle size={12} />
+                {board.likeCount ?? 0}
+              </span>
+              <span className="board-detail__stat-likes">
+                <Heart size={12} fill={isLiked ? 'currentColor' : 'none'} />
+                {likeCount}
+              </span>
+            </div>
+
+            {board.filename && (
+              <button type="button" onClick={handleFileDownload} className="board-detail__file-btn">
+                📎 첨부파일
+              </button>
+            )}
+            <button type="button" className="board-detail__more-btn" aria-label="더보기">
+              <MoreVertical size={20} />
             </button>
-            <h1 className="text-2xl font-bold text-black mb-2">{board.title}</h1>
-            <div className="flex items-center gap-4 text-sm text-gray-600">
-              <span>{board.author.nickname}</span>
-              <span>{new Date(board.createdAt).toLocaleString()}</span>
-              <span>조회 {board.views}</span>
-              {board.filename && (
-                <button
-                  onClick={handleFileDownload}
-                  className="text-blue-600 hover:underline"
-                >
-                  📎 {board.filename.split('_').slice(1).join('_')}
-                </button>
-              )}
-            </div>
-          </header>
+          </div>
+        </header>
 
-          {/* 본문 */}
-          <main className="mb-8">
-            <div className="prose max-w-none whitespace-pre-wrap">
-              {board.content}
-            </div>
-          </main>
+        <hr className="board-detail__divider" />
 
-          {/* 액션 버튼 */}
-          {isAuthor() && (
-            <footer className="flex gap-2 pt-4 border-t">
-              <button
-                onClick={handleEdit}
-                className="px-4 py-2 bg-gray-200 text-gray-700 rounded hover:bg-gray-300"
-              >
-                수정
-              </button>
-              <button
-                onClick={handleDelete}
-                disabled={isDeleting}
-                className="px-4 py-2 bg-red-100 text-red-700 rounded hover:bg-red-200 disabled:opacity-50"
-              >
-                {isDeleting ? '삭제 중...' : '삭제'}
-              </button>
-            </footer>
-          )}
+        {/* Body */}
+        <div className="board-detail__body">{board.content}</div>
+
+        {/* 좋아요 */}
+        <div className="board-detail__like-area">
+          <button type="button" onClick={handleToggleLike} disabled={isTogglingLike} className="board-detail__like-btn">
+            <Heart size={18} fill={isLiked ? 'currentColor' : 'none'} />
+            <span className="board-detail__like-count">{likeCount}</span>
+          </button>
         </div>
+
+        {/* 댓글 */}
+        <CommentSection boardId={board.id} />
+
+        {/* 수정/삭제 */}
+        {isAuthor() && (
+          <footer className="board-detail__actions">
+            <button type="button" onClick={handleEdit} className="board-detail__btn board-detail__btn--edit">수정</button>
+            <button type="button" onClick={handleDelete} disabled={isDeleting} className="board-detail__btn board-detail__btn--delete">
+              {isDeleting ? '삭제 중...' : '삭제'}
+            </button>
+          </footer>
+        )}
       </div>
     </Layout>
   );
 }
 
 export default BoardDetailPage;
-

@@ -1,6 +1,8 @@
 spring:
   application:
     name: nimda-cup
+  profiles:
+    active: local
   
   datasource:
     url: ${SPRING_DATASOURCE_URL:jdbc:mysql://mysql:3306/nimda_con?useSSL=false&serverTimezone=Asia/Seoul&allowPublicKeyRetrieval=true}
@@ -38,6 +40,7 @@ spring:
     baseline-on-migrate: true  # 기존 DB가 있을 경우 baseline 설정
     validate-on-migrate: true
     clean-disabled: true
+    out-of-order: true  # DB에서 version 10이 빠진 경우 등, 순서 밖 마이그레이션 허용
   
   security:
     user:
@@ -61,6 +64,11 @@ jwt:
   header: Authorization # JWT Token을 Request Header에서 탐색할 때 사용할 헤더 이름 
   secret: bmltZGEtY29uLXNlY3JldC1rZXktMjAyNC12ZXJ5LWxvbmctc2VjcmV0LWtleS1mb3Itand0LXNlY3VyaXR5 # JWT 토큰 서명 검증키 (Base64 인코딩됨)
   token-validity-in-seconds: 86400 # JWT 토큰 만료 시간 24시간 (초)
+
+# 첨부파일 로컬 저장 (cite attachment)
+nimda:
+  file:
+    upload-dir: ${FILE_UPLOAD_DIR:${user.home}/nimda-attachments}
 
 # AWS 설정 
 aws:

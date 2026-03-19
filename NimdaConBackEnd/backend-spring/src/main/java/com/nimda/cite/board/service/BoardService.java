@@ -12,6 +12,7 @@ import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.io.File;
+import java.util.List;
 import java.util.UUID;
 
 @Service
@@ -85,6 +86,18 @@ public class BoardService {
         return boardRepository.findByCategoryAndTitleContaining(category, searchKeyword, pageable);
     }
 
+    // Note. boardListByCategories - 여러 카테고리(부모+자식)의 게시글을 페이지네이션으로 조회한다.
+    @Transactional(readOnly = true)
+    public Page<Board> boardListByCategories(List<Category> categories, Pageable pageable) {
+        return boardRepository.findByCategoryIn(categories, pageable);
+    }
+
+    // Note. boardSearchListByCategories - 여러 카테고리 내부에서 검색어로 게시글을 조회한다.
+    @Transactional(readOnly = true)
+    public Page<Board> boardSearchListByCategories(List<Category> categories, String searchKeyword, Pageable pageable) {
+        return boardRepository.findByCategoryInAndTitleContaining(categories, searchKeyword, pageable);
+    }
+
     // Note. boardListPopular - 전체 게시판 인기글을 조회한다.(조회수 기반)
     @Transactional(readOnly = true)
     public Page<Board> boardListPopular(Pageable pageable) {
@@ -118,5 +131,24 @@ public class BoardService {
             throw new RuntimeException("게시글을 찾을 수 없습니다: " + id);
         }
         boardRepository.deleteById(id);
+    }
+
+    // Note. toggleBoardPin - 게시글 고정/해제 토글
+    // ... 고정/해제는 관리자만 가능하며 권한 체크는 BoardController에서 진행한다.
+    @Transactional
+    public Board toggleBoardPin(Long id) {
+        Board board = boardRepository.findById(id)
+                .orElseThrow(() -> new RuntimeException("게시글을 찾을 수 없습니다: " + id));
+
+        // 현재 고정 상태를 반전
+        board.setPinned(!board.getPinned());
+        boardRepository.save(board);
+
+        return board;
+    }
+
+    // BoardService.java (또는 구현체)
+    public long countByAuthor(User author) {
+        return boardRepository.countByAuthor(author);
     }
 }

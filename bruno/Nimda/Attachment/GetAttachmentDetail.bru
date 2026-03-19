@@ -1,0 +1,20 @@
+meta {
+  name: GetAttachmentDetail
+  type: http
+  seq: 2
+}
+
+get {
+  url: {{baseUrl}}/api/cite/attachments/2
+  body: none
+  auth: bearer
+}
+
+auth:bearer {
+  token: {{jwtToken}}
+}
+
+settings {
+  encodeUrl: true
+  timeout: 0
+}

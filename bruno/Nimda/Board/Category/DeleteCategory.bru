@@ -1,0 +1,20 @@
+meta {
+  name: DeleteCategory
+  type: http
+  seq: 6
+}
+
+delete {
+  url: {{baseUrl}}/api/cite/category/7
+  body: none
+  auth: inherit
+}
+
+headers {
+  Authorization: Bearer {{jwtToken}}
+}
+
+settings {
+  encodeUrl: true
+  timeout: 0
+}

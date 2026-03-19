@@ -1,0 +1,26 @@
+meta {
+  name: UploadFile
+  type: http
+  seq: 1
+}
+
+post {
+  url: {{baseUrl}}/api/cite/attachments/upload
+  body: multipartForm
+  auth: bearer
+}
+
+auth:bearer {
+  token: {{jwtToken}}
+}
+
+body:multipart-form {
+  file: @file(C:\Users\주윤호\Pictures\Screenshots\스크린샷 2025-12-14 142248.png)
+  boardId: 1 @contentType(text/plain)
+  categoryId: 2 @contentType(text/plain)
+}
+
+settings {
+  encodeUrl: true
+  timeout: 0
+}

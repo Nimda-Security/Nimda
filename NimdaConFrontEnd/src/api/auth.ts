@@ -28,11 +28,12 @@ export interface RegisterRequest {
   nickname: string;
   password: string;
   studentNum: string;
-  phoneNum: string;
   email: string;
   major: string;
   universityName?: string;
   grade?: string;
+  bojId?: string;
+  birth?: string;
 }
 
 /**
@@ -119,7 +120,6 @@ export const registerAPI = async (
       nickname: registerData.nickname,
       password: registerData.password,
       studentNum: registerData.studentNum,
-      phoneNum: registerData.phoneNum,
       email: registerData.email,
       major: registerData.major,
     };
@@ -129,6 +129,12 @@ export const registerAPI = async (
     }
     if (registerData.grade?.trim()) {
       cleanedData.grade = registerData.grade.trim();
+    }
+    if (registerData.bojId?.trim()) {
+      cleanedData.bojId = registerData.bojId.trim();
+    }
+    if (registerData.birth?.trim()) {
+      cleanedData.birth = registerData.birth.trim();
     }
 
     const response = await fetch(`${API_BASE_URL}/auth/register`, {
