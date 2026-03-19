@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 
-const MileagePaymentForm = ({ onGrant }) => {
-    const [studentId, setStudentId] = useState('');
+const MileagePaymentForm = ({ onGrant, initialStudentId }) => {
+    const [studentId, setStudentId] = useState(initialStudentId || '');
     const [mileageAmount, setMileageAmount] = useState('');
     const [reason, setReason] = useState('');
     const [showDropdown, setShowDropdown] = useState(false);

@@ -1,4 +1,5 @@
 import React from 'react';
+import { useNavigate } from 'react-router-dom';
 
 const UserInfo = ({
   users,
@@ -11,6 +12,7 @@ const UserInfo = ({
   uploadingImage,
   handleImageUpload,
 }) => {
+  const navigate = useNavigate();
   return (
     <div>
       <div className="admin__header-row">
@@ -141,6 +143,18 @@ const UserInfo = ({
                     </span>
                   ))}
                 </div>
+              </div>
+              <div style={{ gridColumn: 'span 2', marginTop: '10px' }}>
+                <button
+                  className="admin__btn--approve"
+                  style={{ width: '100%', padding: '10px' }}
+                  onClick={() => {
+                    const studentNum = selectedUser.studentNum || selectedUser.userId;
+                    navigate(`/admin/mileage`, { state: { studentId: studentNum } });
+                  }}
+                >
+                  💰 이 사용자에게 마일리지 직접 지급하기
+                </button>
               </div>
             </div>
           </div>

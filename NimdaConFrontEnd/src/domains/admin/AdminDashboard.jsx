@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import NavBar from '@/components/Layout/Header/NavBar';
 import Footer from '@/components/Layout/Footer';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useLocation } from 'react-router-dom';
 import { getAllUsersAPI, getPendingUsersAPI, approveUserAPI, rejectUserAPI } from '@/api/admin/admin';
 import { getBoardListAPI, deleteBoardAPI, toggleBoardPinAPI } from '@/api/board';
 import { getAllCategoriesAdminAPI, updateCategoryAPI, createCategoryAPI, deleteCategoryAPI } from '@/api/category';
@@ -15,6 +15,7 @@ import './AdminDashboard.css';
 
 function AdminDashboard() {
   const navigate = useNavigate();
+  const location = useLocation();
   const [activeSection, setActiveSection] = useState('category-order');
   const [activeSubSection, setActiveSubSection] = useState(null);
   const [users, setUsers] = useState([]);
@@ -40,6 +41,16 @@ function AdminDashboard() {
   const [categoryTags, setCategoryTags] = useState([]); // 선택된 카테고리의 태그 목록
   const [newTagInput, setNewTagInput] = useState(''); // 새 태그 입력 필드
   const [savingTags, setSavingTags] = useState(false); // 태그 저장 중 상태
+  
+  // 사이드바에서 넘겨준 상태 처리 (다른 페이지에서 관리자 홈으로 돌아올 때)
+  useEffect(() => {
+    if (location.state) {
+      if (location.state.section) setActiveSection(location.state.section);
+      if (location.state.subSection) setActiveSubSection(location.state.subSection);
+      // 상태 사용 후 초기화 (뒤로가기 시 중복 처리 방지)
+      window.history.replaceState({}, document.title);
+    }
+  }, [location.state]);
 
   const goBack = () => {
     navigate('/');

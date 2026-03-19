@@ -1,4 +1,4 @@
-import React from 'react';
+import { useNavigate, useLocation } from 'react-router-dom';
 import NavBar from '@/components/Layout/Header/NavBar';
 import Footer from '@/components/Layout/Footer';
 import AdminSidebar from './components/AdminSidebar';
@@ -6,6 +6,9 @@ import MileagePaymentForm from './components/MileagePaymentForm'; // 분리한 �
 import { updatePointManual } from '@/api/point';
 
 function AdminMileage() {
+  const location = useLocation();
+  const initialStudentId = location.state?.studentId || '';
+
   // 실제 서버에 데이터를 보내는 로직
   const handleGrantSubmit = async (data) => {
     const { studentId, mileageAmount, reason } = data;
@@ -39,7 +42,7 @@ function AdminMileage() {
             </div>
 
             {/* 분리된 입력 폼 컴포넌트 호출 */}
-            <MileagePaymentForm onGrant={handleGrantSubmit} />
+            <MileagePaymentForm onGrant={handleGrantSubmit} initialStudentId={initialStudentId} />
 
             {/* 하단 안내 사항 (필요시 추가) */}
             <div className="mt-8 text-sm text-gray-400">
