@@ -3,7 +3,7 @@ import { BrowserRouter, Routes, Route } from "react-router-dom";
 // 기존 임포트 항목들
 import LoginPage from "@/domains/User/Login/Page";
 import SignUp from "@/domains/User/Register";
-import MyPageMileage from "@/domains/User/MyPage/Point/index";
+import MyPageMileage from "@/domains/User/MyPage/Point/index"; // /mypage 연결 컴포넌트
 import ProblemSubmitPage from "@/domains/Contest/Problem/ProblemSubmit";
 import JudgingStatusPage from "@/domains/Contest/Problem/JudgingStatus";
 import ProblemsPage from "@/domains/Contest/Problem/Problems";
@@ -22,9 +22,8 @@ import BoardDetailPage from "@/domains/Board/BoardDetail";
 import BoardWritePage from "@/domains/Board/BoardWrite";
 import BoardEditPage from "@/domains/Board/BoardEdit";
 
-// [추가] 마일리지 지급 페이지 컴포넌트 임포트
+// [추가] 관리자 마일리지 지급 페이지 컴포넌트 임포트
 import AdminMileage from "@/domains/admin/AdminMileage.jsx";
-
 
 const Router = () => {
   return (
@@ -34,7 +33,10 @@ const Router = () => {
         <Route path="/" element={<Home />} />
         <Route path="/login" element={<LoginPage />} />
         <Route path="/signup" element={<SignUp />} />
+
+        {/* 마이페이지 경로 (정상 연결 확인) */}
         <Route path="/mypage" element={<MyPageMileage />} />
+
         <Route path="/403" element={<ForbiddenPage />} />
         <Route path="/problems" element={<ProblemsPage />} />
         <Route path="/problem-submit" element={<ProblemSubmitPage />} />
@@ -45,8 +47,7 @@ const Router = () => {
         <Route path="/scoreboard" element={<Scoreboard />} />
         <Route path="/contest" element={<ContestHome />} />
 
-        {/* [수정/추가] 관리자 관련 경로 */}
-        {/* 1. 관리자 대시보드 메인 */}
+        {/* 관리자 관련 경로 - ProtectedRoute로 보호 */}
         <Route
           path="/admin"
           element={
@@ -55,7 +56,8 @@ const Router = () => {
             </ProtectedRoute>
           }
         />
-        {/* 2. 관리자 마일리지 지급 페이지 */}
+
+        {/* 관리자 마일리지 지급 페이지 경로 추가 */}
         <Route
           path="/admin/mileage"
           element={
