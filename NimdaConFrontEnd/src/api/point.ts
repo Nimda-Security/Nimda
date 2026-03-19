@@ -85,7 +85,8 @@ export const getPointDetailsAPI = async (): Promise<PointHistoryItem[]> => {
           type: item.amount > 0 ? "earn" : (item.amount < 0 ? "use" : "expire"),
         }));
       }
-      return getMockPointData();
+      // 빈 배열 반환 (프로덕션 환경)
+      return [];
     }
     return [];
   } catch (error) {
@@ -139,14 +140,4 @@ export const updatePointManual = async (studentId: string, description: string, 
     return { success: false, message: "서버 통신 중 오류가 발생했습니다." };
   }
 };
-
-/**
- * 테스트용 포인트 데이터 (Mock Data)
- */
-const getMockPointData = (): PointHistoryItem[] => {
-  return [
-    { id: 1, description: "제1 회 NIMDACON 참여", amount: 100, date: "03.03", type: "earn" },
-    { id: 2, description: "제1 회 NIMDACON 참여", amount: 100, date: "25.12.28", type: "earn" },
-    { id: 6, description: "프로필 아이콘 구매", amount: -20, date: "25.12.28", type: "use" },
-  ];
-};
+

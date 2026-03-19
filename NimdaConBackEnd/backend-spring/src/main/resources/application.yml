@@ -40,6 +40,7 @@ spring:
     baseline-on-migrate: true  # 기존 DB가 있을 경우 baseline 설정
     validate-on-migrate: true
     clean-disabled: true
+    out-of-order: true  # DB에서 version 10이 빠진 경우 등, 순서 밖 마이그레이션 허용
   
   security:
     user:
