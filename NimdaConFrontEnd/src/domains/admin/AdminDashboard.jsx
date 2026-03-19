@@ -41,7 +41,7 @@ function AdminDashboard() {
   const [categoryTags, setCategoryTags] = useState([]); // 선택된 카테고리의 태그 목록
   const [newTagInput, setNewTagInput] = useState(''); // 새 태그 입력 필드
   const [savingTags, setSavingTags] = useState(false); // 태그 저장 중 상태
-  
+
   // 사이드바에서 넘겨준 상태 처리 (다른 페이지에서 관리자 홈으로 돌아올 때)
   useEffect(() => {
     if (location.state) {
@@ -331,7 +331,7 @@ function AdminDashboard() {
 
     setUploadingImage(true);
     try {
-      const token = localStorage.getItem('token');
+      const token = localStorage.getItem('authToken');
 
       const presignedResponse = await fetch(`/api/users/me/profile-image/presigned-url`, {
         method: 'POST',
@@ -668,7 +668,7 @@ function AdminDashboard() {
       <div className="layout__body">
         <div className="admin">
           {/* Sidebar - Component로 분리 */}
-          <AdminSidebar 
+          <AdminSidebar
             activeSection={activeSection}
             activeSubSection={activeSubSection}
             setActiveSection={setActiveSection}
