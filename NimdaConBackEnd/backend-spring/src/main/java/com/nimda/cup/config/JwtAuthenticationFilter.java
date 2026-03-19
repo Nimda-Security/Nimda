@@ -3,7 +3,7 @@ package com.nimda.cup.config;
 import com.nimda.cup.common.util.JwtUtil;
 import com.nimda.cup.user.entity.User;
 import com.nimda.cup.user.repository.UserRepository;
-import com.nimda.cup.user.security.UserPrincipal;
+import com.nimda.cup.user.security.CustomUserDetails;
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
@@ -62,14 +62,14 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
 
                         // 토큰 유효성 검증
                         if (jwtUtil.validateToken(token, user.getNickname())) {
-                            // UserPrincipal 생성
-                            UserPrincipal userPrincipal = new UserPrincipal(user);
+                            // CustomUserDetails 생성
+                            CustomUserDetails customUserDetails = new CustomUserDetails(user);
 
                             // Authentication 객체 생성
                             UsernamePasswordAuthenticationToken authentication = new UsernamePasswordAuthenticationToken(
-                                    userPrincipal,
+                                    customUserDetails,
                                     null,
-                                    userPrincipal.getAuthorities());
+                                    customUserDetails.getAuthorities());
 
                             // 요청 정보 설정
                             authentication.setDetails(new WebAuthenticationDetailsSource().buildDetails(request));

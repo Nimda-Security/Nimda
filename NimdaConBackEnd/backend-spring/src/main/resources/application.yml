@@ -3,11 +3,9 @@ spring:
     name: nimda-cup
   
   datasource:
-    # 환경변수로 오버라이드 가능 (docker-compose.yml에서 설정)
-    # 기본값: docker-compose의 MySQL 서비스 이름으로 연결
     url: ${SPRING_DATASOURCE_URL:jdbc:mysql://mysql:3306/nimda_con?useSSL=false&serverTimezone=Asia/Seoul&allowPublicKeyRetrieval=true}
-    username: ${SPRING_DATASOURCE_USERNAME:nimda}
-    password: ${SPRING_DATASOURCE_PASSWORD:nimda123}
+    username: ${SPRING_DATASOURCE_USERNAME}
+    password: ${SPRING_DATASOURCE_PASSWORD}
     driver-class-name: com.mysql.cj.jdbc.Driver
     
     hikari:
@@ -45,6 +43,13 @@ spring:
     user:
       name: admin
       password: 1234
+  
+  # 파일 업로드 설정 (Multipart)
+  servlet:
+    multipart:
+      max-file-size: 10MB        # 파일당 최대 크기 (nginx의 client_max_body_size와 일치)
+      max-request-size: 10MB     # 요청 전체 최대 크기
+      enabled: true
 
 server:
   # 환경변수로 오버라이드 가능 (docker-compose.yml에서 설정)
@@ -56,6 +61,25 @@ jwt:
   header: Authorization # JWT Token을 Request Header에서 탐색할 때 사용할 헤더 이름 
   secret: bmltZGEtY29uLXNlY3JldC1rZXktMjAyNC12ZXJ5LWxvbmctc2VjcmV0LWtleS1mb3Itand0LXNlY3VyaXR5 # JWT 토큰 서명 검증키 (Base64 인코딩됨)
   token-validity-in-seconds: 86400 # JWT 토큰 만료 시간 24시간 (초)
+
+# AWS 설정 
+aws:
+  s3:
+    bucket: ${AWS_S3_BUCKET}
+    region: ${AWS_REGION}
+    access-key: ${AWS_ACCESS_KEY_ID}
+    secret-key: ${AWS_SECRET_ACCESS_KEY}
+
+    # 파일 저장 경로 
+    profile-image-path: profiles/ # 프로필 이미지 저장
+    board-image-path: boards/ # 게시판 이미지
+    board-file-path: boards/files # 게시판 첨부파일
+
+    # 파일 크기 제한 
+    max-file-size: 10485760 # 10mb
+    allowed-image-types: jpg,jpeg,png,gif,webp # 허용 이미지 타입
+    allowed-file-types: pdf,doc,docx,xls,xlsx,zip  # 허용된 파일 타입 
+
 
 logging:
   level:

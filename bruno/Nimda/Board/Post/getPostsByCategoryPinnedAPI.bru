@@ -1,0 +1,20 @@
+meta {
+  name: getPostsByCategoryPinnedAPI
+  type: http
+  seq: 2
+}
+
+get {
+  url: {{baseUrl}}/api/cite/board/pinned?categoryId=1
+  body: none
+  auth: inherit
+}
+
+params:query {
+  categoryId: 1
+}
+
+settings {
+  encodeUrl: true
+  timeout: 0
+}
