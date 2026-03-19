@@ -6,11 +6,8 @@ const MileagePaymentForm = ({ onGrant }) => {
     const [reason, setReason] = useState('');
     const [showDropdown, setShowDropdown] = useState(false);
 
-    // 실제 데이터 연동 전 임시 데이터
-    const dummyUsers = [
-        { id: '202202161', name: '이도현' },
-        { id: '202202163', name: '이명건' },
-    ];
+    // 실제 데이터 연동 전 임시 데이터 (깃허브 올릴 땐 비워둡니다)
+    const dummyUsers = []; // TODO: 추후 학번 검색 API 연동 필요
 
     const handleButtonClick = () => {
         if (!studentId || !mileageAmount) {
