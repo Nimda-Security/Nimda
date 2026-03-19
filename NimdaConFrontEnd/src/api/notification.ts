@@ -58,3 +58,4 @@ export const notificationApi = {
     await api.delete(`/${notificationId}`);
   }
 };
+
