@@ -244,8 +244,9 @@ public class CommentService {
 
         commentRepository.deleteAllByIdInAndAuthor(commentIds, user);
     }
-	@Transactional
+    @Transactional(readOnly = true)
     public long countByUserId(Long userId) {
-        return commentRepository.countByAuthorId(userId); // 엔티티의 작성자 필드명에 맞춰 수정
+        // 삭제된 댓글(DELETED)은 개수에서 제외합니다.
+        return commentRepository.countByAuthorIdAndStatusNot(userId, STATUS.DELETED);
     }
 }

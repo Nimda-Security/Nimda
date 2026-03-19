@@ -70,5 +70,6 @@ public interface CommentRepository extends JpaRepository<Comment, Long> {
     // [사용] DELETE /api/cite/board/{boardId}
     void deleteAllByBoardId(Long boardId);
 
-    long countByAuthorId(Long userId);
+    // 내가 작성한 유지 중인 댓글 수 조회
+    long countByAuthorIdAndStatusNot(Long userId, STATUS status);
 }
