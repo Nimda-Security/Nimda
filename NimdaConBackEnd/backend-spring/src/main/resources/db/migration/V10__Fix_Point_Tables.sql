@@ -46,4 +46,4 @@ SET @has_desc2 = (SELECT COUNT(*) FROM information_schema.COLUMNS
 SET @sql_mod = IF(@has_desc2 > 0, 'ALTER TABLE point_details MODIFY COLUMN description VARCHAR(255) NOT NULL', 'SELECT 1');
 PREPARE stmt FROM @sql_mod;
 EXECUTE stmt;
-DEALLOCATE PREPARE stmt;2
+DEALLOCATE PREPARE stmt;
