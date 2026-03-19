@@ -48,6 +48,7 @@ application-*.yml
 application-*.properties
 !application-test.yml
 !application-test.properties
+# application-local.yml은 로컬 개발용 설정이므로 무시됨 (application-*.yml 패턴에 포함)
 
 # Database
 *.db
@@ -78,10 +79,12 @@ certbot-www/
 *.sql
 !schema.sql
 !**/db/migration/*.sql
+# 로컬 개발용 초기 데이터 (Git에 올리지 않음)
+**/data-local.sql
 
 # Bruno 환경변수 (민감 정보)
-bruno/**/vars.json
-!bruno/**/vars.example.json
+bruno/**/environments/*.bru
+!bruno/**/environments/*.example.bru
 
 # Test results
 load-tests/results/

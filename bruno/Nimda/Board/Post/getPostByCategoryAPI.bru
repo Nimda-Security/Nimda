@@ -1,0 +1,20 @@
+meta {
+  name: getPostByCategoryAPI
+  type: http
+  seq: 1
+}
+
+get {
+  url: {{baseUrl}}/api/cite/board?categoryId=1
+  body: none
+  auth: inherit
+}
+
+params:query {
+  categoryId: 1
+}
+
+settings {
+  encodeUrl: true
+  timeout: 0
+}

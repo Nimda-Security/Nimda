@@ -26,6 +26,7 @@ function AdminDashboard() {
   const [pendingUsersLoading, setPendingUsersLoading] = useState(false);
   const [posts, setPosts] = useState([]);
   const [postsLoading, setPostsLoading] = useState(false);
+  const [uploadingImage, setUploadingImage] = useState(false);
 
   const goToProblemCreate = () => {
     navigate('/problem-create');
@@ -253,6 +254,94 @@ function AdminDashboard() {
     return getUserRoles(user).some(r => r.includes(role));
   };
 
+  const handleImageUpload = async (event) => {
+    // File input의 change event
+    const file = event.target.files[0];
+    if (!file) return;
+
+    // 파일 타입 검증
+    if (!file.type.startsWith('image/')) {
+      alert('이미지 파일만 업로드 가능합니다.');
+      return;
+    }
+
+    // 파일 크기 검증 (10MB)
+    if (file.size > 10 * 1024 * 1024) {
+      alert('파일 크기는 10MB 이하여야 합니다.');
+      return;
+    }
+
+    // 업로드 시작 전에 로딩 상태 설정 
+    setUploadingImage(true);
+    try {
+      const token = localStorage.getItem('token');
+
+      // =========================== 1단계: Presigned URL 요청 =========================== 
+      const presignedResponse = await fetch(`/api/users/me/profile-image/presigned-url`, {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
+          fileName: file.name,
+          contentType: file.type
+        })
+      });
+
+      const presignedResult = await presignedResponse.json();
+
+      if (!presignedResponse.ok || !presignedResult.success) {
+        alert(presignedResult.message || 'Presigned URL 생성에 실패했습니다.');
+        return;
+      }
+
+      // =========================== 2단계: S3에 직접 업로드 =========================== 
+      const s3UploadResponse = await fetch(presignedResult.presignedUrl, {
+        method: 'PUT',
+        headers: {
+          'Content-Type': file.type
+        },
+        body: file
+      });
+
+      if (!s3UploadResponse.ok) {
+        alert('S3 업로드에 실패했습니다.');
+        return;
+      }
+
+      // =========================== 3단계: DB 업데이트 요청 =========================== 
+      const dbUpdateResponse = await fetch(`/api/users/me/profile-image`, {
+        method: 'PUT',
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
+          imageUrl: presignedResult.imageUrl
+        })
+      });
+
+      const dbUpdateResult = await dbUpdateResponse.json();
+
+      if (dbUpdateResponse.ok && dbUpdateResult.success) {
+        // 사용자 정보 업데이트
+        setSelectedUser({ ...selectedUser, profileImage: dbUpdateResult.profileImage });
+        // 사용자 목록도 업데이트
+        setUsers(users.map(u => u.id === selectedUser.id ? { ...u, profileImage: dbUpdateResult.profileImage } : u));
+        alert('프로필 이미지가 업데이트되었습니다.');
+      } else {
+        alert(dbUpdateResult.message || '프로필 이미지 업데이트에 실패했습니다.');
+      }
+    } catch (error) {
+      console.error('이미지 업로드 오류:', error);
+      alert('이미지 업로드 중 오류가 발생했습니다.');
+    } finally {
+      setUploadingImage(false);
+      event.target.value = '';
+    }
+  };
+
   const renderContent = () => {
     switch (activeSection) {
       case 'dashboard':
@@ -327,6 +416,60 @@ function AdminDashboard() {
                     <h3>사용자 정보</h3>
                     <button className="admin__modal-close" onClick={() => setSelectedUser(null)}>✕</button>
                   </div>
+
+                  {/* 프로필 이미지 섹션 */}
+                  <div style={{ padding: '20px', borderBottom: '1px solid #e0e0e0', textAlign: 'center' }}>
+                    <div style={{ marginBottom: '12px' }}>
+                      {selectedUser.profileImage ? (
+                        <img
+                          src={selectedUser.profileImage}
+                          alt="프로필"
+                          style={{
+                            width: '120px',
+                            height: '120px',
+                            borderRadius: '50%',
+                            objectFit: 'cover',
+                            border: '2px solid #e0e0e0'
+                          }}
+                        />
+                      ) : (
+                        <div style={{
+                          width: '120px',
+                          height: '120px',
+                          borderRadius: '50%',
+                          backgroundColor: '#f0f0f0',
+                          display: 'flex',
+                          alignItems: 'center',
+                          justifyContent: 'center',
+                          margin: '0 auto',
+                          border: '2px solid #e0e0e0',
+                          fontSize: '48px',
+                          color: '#999'
+                        }}>
+                          👤
+                        </div>
+                      )}
+                    </div>
+                    <div>
+                      <input
+                        type="file"
+                        id="profile-image-input"
+                        accept="image/*"
+                        style={{ display: 'none' }}
+                        onChange={handleImageUpload}
+                        disabled={uploadingImage}
+                      />
+                      <button
+                        className="admin__btn"
+                        disabled={uploadingImage}
+                        onClick={() => document.getElementById('profile-image-input').click()}
+                        style={{ cursor: uploadingImage ? 'not-allowed' : 'pointer' }}
+                      >
+                        {uploadingImage ? '업로드 중...' : '사진 추가'}
+                      </button>
+                    </div>
+                  </div>
+
                   <div className="admin__modal-grid">
                     <div><p className="admin__modal-label">ID</p><p className="admin__modal-value">{selectedUser.id}</p></div>
                     <div><p className="admin__modal-label">사용자 ID</p><p className="admin__modal-value">{selectedUser.userId}</p></div>
