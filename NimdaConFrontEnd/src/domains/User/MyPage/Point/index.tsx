@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import Header from "@/components/Layout/Header/Navbar";
+import Header from "@/components/Layout/Header/NavBar";
 import Footer from "@/components/Layout/Footer";
 
 import ProfileSection from "./Components/Profile/ProfileSection";

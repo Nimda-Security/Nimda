@@ -11,6 +11,8 @@ import PostManagement from './sections/PostManagement';
 import CategoryManagement from './sections/CategoryManagement';
 import PinPostManagement from './sections/PinPostManagement';
 import AdminSidebar from './components/AdminSidebar';
+import MileagePaymentForm from './components/MileagePaymentForm';
+import { updatePointManual } from '@/api/point';
 import './AdminDashboard.css';
 
 function AdminDashboard() {
@@ -656,6 +658,27 @@ function AdminDashboard() {
             handleTogglePin={handleTogglePin}
             findCategoryById={findCategoryById}
           />
+        );
+      case 'mileage':
+        return (
+          <div>
+            <div className="admin__header-row">
+              <h2 className="admin__section-title">마일리지 지급</h2>
+            </div>
+            <MileagePaymentForm onGrant={async (data) => {
+              const { studentId, mileageAmount, reason } = data;
+              const result = await updatePointManual(studentId, reason, Number(mileageAmount));
+              if (result.success) {
+                alert(`[지급 성공]\n학번: ${studentId}\n금액: ${mileageAmount}\n사유: ${reason}`);
+              } else {
+                alert(`[지급 실패]\n${result.message}`);
+              }
+            }} />
+            <div style={{ marginTop: '32px', fontSize: '13px', color: '#999' }}>
+              <p>· 정확한 학번을 입력했는지 다시 한번 확인해 주세요.</p>
+              <p>· 사유는 사용자 마이페이지에 그대로 노출됩니다.</p>
+            </div>
+          </div>
         );
       default:
         return null;

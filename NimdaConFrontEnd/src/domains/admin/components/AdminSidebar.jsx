@@ -6,17 +6,8 @@ const AdminSidebar = ({ activeSection, activeSubSection, setActiveSection, setAc
   const location = useLocation();
 
   const handleNavClick = (section, subSection) => {
-    if (section === 'mileage') {
-      navigate('/admin/mileage');
-    } else {
-      if (location.pathname.includes('/admin/mileage')) {
-        // 임시로 관리자 메인으로 돌아가면서 state 남기기
-        navigate('/admin', { state: { section, subSection } });
-      } else {
-        if (setActiveSection) setActiveSection(section);
-        if (setActiveSubSection) setActiveSubSection(subSection);
-      }
-    }
+    if (setActiveSection) setActiveSection(section);
+    if (setActiveSubSection) setActiveSubSection(subSection);
   };
 
   return (
