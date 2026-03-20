@@ -2,8 +2,8 @@ import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { getPopularPostsAPI } from "@/api/board";
 import type { Board } from "@/domains/Board/types";
-import { HeartIcon } from "@/components/icons/Heart";
-import { CommentIcon } from "@/components/icons/Comment";
+import { Heart } from "@/components/icons/Heart";
+import { MessageBox } from "@/components/icons/MessageBox";
 
 const PopularPostsSection: React.FC = () => {
   const navigate = useNavigate();
@@ -100,11 +100,11 @@ const PopularPostsSection: React.FC = () => {
             >
               <p className="home-popular__title">{post.title}</p>
               <div className="home-popular__comments">
-                <CommentIcon />
+                <MessageBox />
                 <span className="home-popular__comments-count">{0}</span>
               </div>
               <div className="home-popular__likes">
-                <HeartIcon filled={true} />
+                <Heart filled={true} />
                 <span className="home-popular__likes-count">{post.likeCount || 0}</span>
               </div>
               <span className="home-popular__date">{formatDate(post.createdAt)}</span>
