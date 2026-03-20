@@ -12,7 +12,6 @@ import com.nimda.cite.comment.enums.STATUS;
 import com.nimda.cite.comment.repository.CommentRepository;
 import com.nimda.cup.user.entity.User;
 import com.nimda.cup.user.repository.UserRepository;
-import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.security.access.AccessDeniedException;
@@ -40,9 +39,6 @@ public class CommentService {
     private UserRepository userRepository;
 
     @Autowired
-    private CategoryRepository categoryRepository;
-
-    @Autowired
     private AlarmService alarmService;
 
     @Autowired
@@ -52,7 +48,7 @@ public class CommentService {
 
     // 댓글 등록
     @Transactional
-    public CommentUserResponse createComment(Long boardId, CommentCreateRequest request, Long userId) {
+    public CommentResponse createComment(Long boardId, CommentCreateRequest request, Long userId) {
 
         // 연관 엔티티 조회
         // 게시글
@@ -110,50 +106,25 @@ public class CommentService {
             }
         }
 
-        return CommentUserResponse.from(saved, userId);
+        return CommentResponse.forUser(saved, userId);
     }
 
 
     // =============== READ ===============
 
-    // 댓글 조회(유저용)
+    // 댓글 조회
     @Transactional(readOnly = true)
-    public List<CommentUserResponse> getCommentsForUser(Long boardId, Long userId) {
+    public List<CommentResponse> getComments(Long boardId, Long userId, boolean isAdmin) {
         List<Comment> allComments = commentRepository.findAllCommentsByBoardId(boardId);
 
-        List<CommentUserResponse> rootComments = new ArrayList<>();
-        Map<Long, CommentUserResponse> map = new HashMap<>();
+        List<CommentResponse> rootComments = new ArrayList<>();
+        Map<Long, CommentResponse> map = new HashMap<>();
 
         for (Comment comment : allComments) {
-            CommentUserResponse dto = CommentUserResponse.from(comment, userId);
-            map.put(dto.getId(), dto);
+            CommentResponse dto = isAdmin
+                    ? CommentResponse.forAdmin(comment, userId)
+                    : CommentResponse.forUser(comment, userId);
 
-            if (comment.getParent() == null) {
-                // 댓글인 경우
-                rootComments.add(dto);
-            } else {
-                CommentUserResponse parentDto = map.get(comment.getParent().getId());
-                if (parentDto != null) {
-                    parentDto.getChildren().add(dto);
-                } else {
-                    // TODO 로그 남기기
-                }
-            }
-        }
-
-        return rootComments;
-    }
-
-    // 댓글 조회(어드민용)
-    @Transactional(readOnly = true)
-    public List<CommentAdminResponse> getCommentsForAdmin(Long boardId) {
-        List<Comment> allComments = commentRepository.findAllCommentsByBoardId(boardId);
-
-        Map<Long, CommentAdminResponse> map = new HashMap<>();
-        List<CommentAdminResponse> rootComments = new ArrayList<>();
-
-        for (Comment comment : allComments) {
-            CommentAdminResponse dto = CommentAdminResponse.from(comment);
             map.put(dto.getId(), dto);
 
             if (comment.getParent() == null) {
@@ -161,13 +132,13 @@ public class CommentService {
                 rootComments.add(dto);
             } else {
                 // 대댓글인 경우
-                CommentAdminResponse parentDto = map.get(comment.getParent().getId());
+                CommentResponse parentDto = map.get(comment.getParent().getId());
                 if (parentDto != null) {
                     parentDto.getChildren().add(dto);
                 } else {
+                    // 자식 댓글의 부모가 db에 없는 경우
                     // TODO 로그 남기기
                 }
-
             }
         }
 
@@ -190,7 +161,7 @@ public class CommentService {
     // =============== UPDATE ===============
 
     @Transactional
-    public CommentAdminResponse updateCommentStatus(Long commentId, CommentStatusUpdateRequest request) {
+    public CommentResponse updateCommentStatus(Long commentId, CommentStatusUpdateRequest request) {
 
         Comment comment = commentRepository.findById(commentId)
                 .orElseThrow(() -> new IllegalArgumentException("댓글을 찾을 수 없습니다. id=" + commentId));
@@ -201,11 +172,11 @@ public class CommentService {
 
         comment.updateStatus(request.getStatus());
 
-        return CommentAdminResponse.from(comment);
+        return CommentResponse.forAdmin(comment);
     }
 
     @Transactional
-    public CommentUserResponse updateComment(Long commentId, CommentUpdateRequest request, Long userId) {
+    public CommentResponse updateComment(Long commentId, CommentUpdateRequest request, Long userId) {
 
         Comment comment = commentRepository.findById(commentId)
                 .orElseThrow(() -> new IllegalArgumentException("댓글을 찾을 수 없습니다. id=" + commentId));
@@ -220,7 +191,7 @@ public class CommentService {
 
         comment.updateContext(request.getContext());
 
-        return CommentUserResponse.from(comment, userId);
+        return CommentResponse.forUser(comment, userId);
     }
 
 
