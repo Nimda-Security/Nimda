@@ -1,10 +1,10 @@
 import React from "react";
 
-interface HeartIconProps {
+interface HeartProps {
   filled?: boolean;
 }
 
-export const HeartIcon: React.FC<HeartIconProps> = ({ filled = false }) => (
+export const Heart: React.FC<HeartProps> = ({ filled = false }) => (
   <svg width="14" height="12" viewBox="0 0 14 12" fill="none" xmlns="http://www.w3.org/2000/svg">
     {filled ? (
       <path
