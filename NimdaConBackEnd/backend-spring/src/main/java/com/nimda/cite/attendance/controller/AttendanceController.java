@@ -37,8 +37,6 @@ public class AttendanceController {
     /**
      * [GET] 오늘 출석자 전체 조회
      */
-
-
     @GetMapping("/today")
     public ResponseEntity<ApiResponse<List<AttendanceLog>>> getTodayVisitors() {
         List<AttendanceLog> visitors = attendanceService.getTodayVisitors();

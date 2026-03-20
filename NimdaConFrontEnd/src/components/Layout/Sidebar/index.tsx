@@ -3,6 +3,11 @@ import { Link } from "react-router-dom";
 import { getCurrentNickname } from "@/utils/jwt";
 import { isLoggedIn } from "@/api/auth";
 import { getAllCategoriesAPI } from "@/api/category";
+import { getMyTotalAttendanceCount } from "@/api/attendance";
+import { getMyBoardCountAPI } from "@/api/board";
+import { getMyCommentCountAPI } from "@/api/comment";
+import { getPushedBoardLikesCount } from "@/api/boardLike";
+import { getUserBalance } from "@/api/point";
 import type { Category } from "@/domains/Board/types";
 
 /* D-Day 더미 데이터 */
@@ -27,6 +32,13 @@ const Sidebar: React.FC = () => {
   const [isLoggedInState, setIsLoggedInState] = useState(false);
   const [categories, setCategories] = useState<Category[]>([]);
   const [categoriesLoading, setCategoriesLoading] = useState(false);
+
+  // 프로필 통계 상태
+  const [visitCount, setVisitCount] = useState(0);
+  const [boardCount, setBoardCount] = useState(0);
+  const [commentCount, setCommentCount] = useState(0);
+  const [likeCount, setLikeCount] = useState(0);
+  const [coinBalance, setCoinBalance] = useState(0);
 
   // 카테고리를 트리 구조로 변환
   type CategoryWithChildren = Category & { children: CategoryWithChildren[] };
@@ -72,6 +84,35 @@ const Sidebar: React.FC = () => {
     setNickname(currentNickname);
     setIsLoggedInState(loggedIn);
   }, []);
+
+  // 로그인 상태일 때 프로필 통계 API 호출
+  useEffect(() => {
+    if (!isLoggedInState) return;
+
+    const loadProfileStats = async () => {
+      try {
+        const [visits, boards, comments, likes, balance] = await Promise.all([
+          getMyTotalAttendanceCount(),
+          getMyBoardCountAPI(),
+          getMyCommentCountAPI(),
+          getPushedBoardLikesCount(),
+          getUserBalance(),
+        ]);
+
+        setVisitCount(visits);
+        setBoardCount(boards);
+        setCommentCount(comments);
+        setLikeCount(likes);
+        if (balance.success) {
+          setCoinBalance(balance.currentBalance || 0);
+        }
+      } catch (error) {
+        console.error('프로필 통계 로드 오류:', error);
+      }
+    };
+
+    loadProfileStats();
+  }, [isLoggedInState]);
 
   useEffect(() => {
     const loadCategories = async () => {
@@ -121,7 +162,7 @@ const Sidebar: React.FC = () => {
                 </svg>
               </div>
               <span className="sidebar-profile__stat-label">방문</span>
-              <span className="sidebar-profile__stat-value">0 회</span>
+              <span className="sidebar-profile__stat-value">{visitCount} 회</span>
             </div>
             {/* 작성 게시글 */}
             <div className="sidebar-profile__stat-item">
@@ -131,7 +172,7 @@ const Sidebar: React.FC = () => {
                 </svg>
               </div>
               <span className="sidebar-profile__stat-label">작성 게시글</span>
-              <span className="sidebar-profile__stat-value">0 개</span>
+              <span className="sidebar-profile__stat-value">{boardCount} 개</span>
             </div>
             {/* 작성 댓글 */}
             <div className="sidebar-profile__stat-item">
@@ -141,7 +182,7 @@ const Sidebar: React.FC = () => {
                 </svg>
               </div>
               <span className="sidebar-profile__stat-label">작성 댓글</span>
-              <span className="sidebar-profile__stat-value">0 개</span>
+              <span className="sidebar-profile__stat-value">{commentCount} 개</span>
             </div>
             {/* 누른 좋아요 */}
             <div className="sidebar-profile__stat-item">
@@ -151,7 +192,7 @@ const Sidebar: React.FC = () => {
                 </svg>
               </div>
               <span className="sidebar-profile__stat-label">누른 좋아요</span>
-              <span className="sidebar-profile__stat-value">0 개</span>
+              <span className="sidebar-profile__stat-value">{likeCount} 개</span>
             </div>
             {/* 보유 코인 */}
             <div className="sidebar-profile__stat-item">
@@ -161,7 +202,7 @@ const Sidebar: React.FC = () => {
                 </svg>
               </div>
               <span className="sidebar-profile__stat-label">보유 코인</span>
-              <span className="sidebar-profile__stat-value">0 NC</span>
+              <span className="sidebar-profile__stat-value">{coinBalance} NC</span>
             </div>
           </div>
         ) : (
