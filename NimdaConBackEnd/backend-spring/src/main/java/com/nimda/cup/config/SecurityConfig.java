@@ -40,7 +40,8 @@ public class SecurityConfig {
         configuration.setAllowedOriginPatterns(Arrays.asList(
                 "http://localhost:*", // 로컬 개발 (모든 포트)
                 "https://nimda.kr", // 프로덕션 도메인
-                "https://*.nimda.kr" // 서브도메인 포함
+                "https://*.nimda.kr", // 서브도메인 포함
+                "https://*.vercel.app" // Vercel 배포 도메인
         ));
 
         configuration.setAllowedMethods(Arrays.asList("GET", "POST", "PUT", "DELETE", "PATCH", "OPTIONS"));
