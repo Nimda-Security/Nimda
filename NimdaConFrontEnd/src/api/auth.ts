@@ -237,7 +237,60 @@ export const getMyPageInfo = async () => {
     };
   }
 };
+/**
+ * 이메일 숨김 상태 토글 API (fetch 버전)
+ */
+export const toggleEmailHide = async () => {
+  try {
+    const token = getAuthToken();
+    if (!token) {
+      return { success: false, message: "로그인이 필요합니다." };
+    }
 
+    // axios 대신 fetch 사용
+    const response = await fetch(`${API_BASE_URL}/auth/email-hide`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        "Authorization": `Bearer ${token}`, // 인증 헤더 추가
+      },
+      // POST 요청이지만 보낼 데이터(Body)가 없으므로 빈 객체 전달
+      body: JSON.stringify({}),
+    });
+
+    let result;
+    try {
+      result = await response.json();
+    } catch (e) {
+      return {
+        success: false,
+        message: `서버 오류 (${response.status}): 응답을 파싱할 수 없습니다.`,
+      };
+    }
+
+    if (response.ok) {
+      // 백엔드에서 준 { success: true, emailHide: boolean, ... } 반환
+      return {
+        success: true,
+        message: result.message || "변경 성공",
+        emailHide: result.emailHide
+      };
+    } else {
+      // 403 Forbidden 등 에러 처리
+      const errorMessage = result.message || `변경에 실패했습니다. (${response.status})`;
+      return {
+        success: false,
+        message: errorMessage,
+      };
+    }
+  } catch (error) {
+    console.error("이메일 상태 변경 API 에러:", error);
+    return {
+      success: false,
+      message: "서버에 연결할 수 없습니다.",
+    };
+  }
+};
 /**
  * 토큰 가져오기
  */

@@ -85,6 +85,7 @@ public class SecurityConfig {
                         // [우선순위 2] 로그인 및 회원가입 (통행증 발급 창구)
                         .requestMatchers("/api/auth/login", "/api/auth/register").permitAll()
                         .requestMatchers("/api/auth/me").authenticated()
+                        .requestMatchers("/api/auth/email-hide").authenticated()
 
                         // 마이페이지/좋아요/출석 API (최상단 보호)
                         // 다른 permitAll 규칙에 먹히지 않도록 위로 격상

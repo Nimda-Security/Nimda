@@ -49,7 +49,6 @@ function MyPagePoint() {
           });
         }
 
-        // ✅ 모든 API를 병렬로 호출합니다.
         const [balanceRes, attendanceCount, boardLikeCount, myPostCount, myCommentCount] = await Promise.all([
           getUserBalance(),
           getMyTotalAttendanceCount(),
@@ -58,14 +57,11 @@ function MyPagePoint() {
           getMyCommentCountAPI(),
         ]);
 
-        // 1. 잔액 업데이트: 백엔드 DTO인 totalAmount 필드를 우선적으로 확인합니다.
         if (balanceRes && balanceRes.success) {
-          // 백엔드 ApiResponse.ok(..., dto) 구조이므로 result.data.totalAmount를 참조합니다.
           const amount = balanceRes.data?.totalAmount ?? balanceRes.currentBalance ?? 0;
           setUserBalance(amount);
         }
 
-        // 2. 상단 통계 수치 업데이트
         setStats({
           visitCount: attendanceCount || 0,
           likeCount: boardLikeCount || 0,
@@ -99,24 +95,32 @@ function MyPagePoint() {
     <div className="min-h-screen bg-[#F8F9FA] font-sans text-[#0c0c0c] flex flex-col">
       <Header />
       <div className="h-[56px] w-full" />
+
       <main className="flex-1 flex justify-center pt-10 pb-12 overflow-x-hidden">
         <div className="w-full max-w-[1050px] px-6">
-          <ProfileSection userInfo={userInfo} activeTab={activeTab} setActiveTab={setActiveTab} />
-          {activeTab === "profile" && (
-            <div className="mt-10">
+          {/* 상단 프로필 및 탭 메뉴 */}
+          <ProfileSection
+            userInfo={userInfo}
+            activeTab={activeTab}
+            setActiveTab={setActiveTab}
+          />
+
+          {/* ✅ 교정 포인트: 탭 메뉴와 아래 콘텐츠 사이의 간격을 모든 탭에서 24px로 통일 */}
+          <div style={{ marginTop: '24px' }}>
+            {activeTab === "profile" && (
               <UserInfoContent loading={loading} />
-            </div>
-          )}
-          {activeTab === "points" && (
-            <div className="mt-10">
+            )}
+
+            {activeTab === "points" && (
               <PointContent
                 loading={loading}
                 userBalance={userBalance}
               />
-            </div>
-          )}
+            )}
+          </div>
         </div>
       </main>
+
       <Footer />
     </div>
   );
