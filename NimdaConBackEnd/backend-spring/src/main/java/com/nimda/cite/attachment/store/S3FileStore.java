@@ -4,17 +4,19 @@ import com.nimda.cite.common.s3.S3Service;
 import lombok.RequiredArgsConstructor;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnBean;
 import org.springframework.context.annotation.Primary;
 import org.springframework.core.io.Resource;
+import software.amazon.awssdk.services.s3.S3Client;
 import org.springframework.stereotype.Component;
 import org.springframework.web.multipart.MultipartFile;
-import software.amazon.awssdk.services.s3.S3Client;
 import software.amazon.awssdk.services.s3.model.DeleteObjectRequest;
 
 import java.util.Optional;
 
 @Component
-@Primary // 로컬 대신 S3를 기본 저장소로 사용할 경우
+@Primary
+//@ConditionalOnBean(S3Client.class) // aws.s3.bucket 미설정 시 빈 미생성 → LocalFileStore만 사용
 @RequiredArgsConstructor
 public class S3FileStore implements FileStore {
 
@@ -24,7 +26,7 @@ public class S3FileStore implements FileStore {
     private final com.nimda.cite.common.s3.S3Properties s3Properties;
 
     /**
-     * Presigned URL 방식에서는 이 메서드 대신 'getPresignedUrl'을 주로 사용
+     * Presigned URL 방식에서는 이 메서드 대신 getPresignedUpload()를 주로 사용
      * 하지만 인터페이스 규격상 구현이 필요하다면, 서버를 거쳐 S3로 올리는 용도로 사용
      */
     @Override

@@ -3,23 +3,18 @@ import { Link } from "react-router-dom";
 import { getCurrentNickname } from "@/utils/jwt";
 import { isLoggedIn } from "@/api/auth";
 import { getAllCategoriesAPI } from "@/api/category";
+import { getMyTotalAttendanceCount, getTodayVisitors, type AttendanceLog } from "@/api/attendance";
+import { getMyBoardCountAPI } from "@/api/board";
+import { getMyCommentCountAPI } from "@/api/comment";
+import { getPushedBoardLikesCount } from "@/api/boardLike";
+import { getUserBalance } from "@/api/point";
 import type { Category } from "@/domains/Board/types";
 
-/* D-Day 더미 데이터 */
+/* D-Day 더미 데이터 (기존 유지) */
 const ddayItems = [
   { id: 1, title: "1234567890", date: "26.00.00", dday: "D-31" },
   { id: 2, title: "가나다라마바사아자...", date: "26.02.12", dday: "D-9" },
   { id: 3, title: "ABCDEFG", date: "26.02.04", dday: "D-2" },
-];
-
-/* 오늘 방문자 더미 데이터 */
-const visitors = [
-  { id: 1, nickname: "닉네임", color: "#f06292" },
-  { id: 2, nickname: "최대길이6자", color: "#ba68c8" },
-  { id: 3, nickname: "가나다라마바", color: "#4fc3f7" },
-  { id: 4, nickname: "개강하기싫다", color: "#81c784" },
-  { id: 5, nickname: "왜6자까지냐", color: "#ffb74d" },
-  { id: 6, nickname: "디자인편해서", color: "#a1887f" },
 ];
 
 const Sidebar: React.FC = () => {
@@ -28,6 +23,16 @@ const Sidebar: React.FC = () => {
   const [categories, setCategories] = useState<Category[]>([]);
   const [categoriesLoading, setCategoriesLoading] = useState(false);
 
+  // 실시간 오늘 방문자 상태 (백엔드 DTO: { id, userName } 매핑)
+  const [todayVisitors, setTodayVisitors] = useState<AttendanceLog[]>([]);
+
+  // 프로필 통계 상태
+  const [visitCount, setVisitCount] = useState(0);
+  const [boardCount, setBoardCount] = useState(0);
+  const [commentCount, setCommentCount] = useState(0);
+  const [likeCount, setLikeCount] = useState(0);
+  const [coinBalance, setCoinBalance] = useState(0);
+
   // 카테고리를 트리 구조로 변환
   type CategoryWithChildren = Category & { children: CategoryWithChildren[] };
 
@@ -35,12 +40,10 @@ const Sidebar: React.FC = () => {
     const categoryMap = new Map<number, CategoryWithChildren>();
     const rootCategories: CategoryWithChildren[] = [];
 
-    // 모든 카테고리를 맵에 추가
     categories.forEach(cat => {
       categoryMap.set(cat.id, { ...cat, children: [] });
     });
 
-    // 부모-자식 관계 구성
     categories.forEach(cat => {
       const category = categoryMap.get(cat.id);
       if (cat.parentId && categoryMap.has(cat.parentId)) {
@@ -55,7 +58,6 @@ const Sidebar: React.FC = () => {
       }
     });
 
-    // sortOrder로 정렬
     const sortCategories = (cats: CategoryWithChildren[]): CategoryWithChildren[] => {
       return cats.sort((a, b) => a.sortOrder - b.sortOrder).map(cat => ({
         ...cat,
@@ -72,6 +74,49 @@ const Sidebar: React.FC = () => {
     setNickname(currentNickname);
     setIsLoggedInState(loggedIn);
   }, []);
+
+  // 오늘 방문자 데이터 로드 (실시간 API 연동)
+  useEffect(() => {
+    const loadTodayVisitors = async () => {
+      try {
+        const data = await getTodayVisitors();
+        setTodayVisitors(data);
+      } catch (error) {
+        console.error("오늘 방문자 로드 실패:", error);
+      }
+    };
+
+    loadTodayVisitors();
+  }, []);
+
+  // 로그인 상태일 때 프로필 통계 API 호출
+  useEffect(() => {
+    if (!isLoggedInState) return;
+
+    const loadProfileStats = async () => {
+      try {
+        const [visits, boards, comments, likes, balance] = await Promise.all([
+          getMyTotalAttendanceCount(),
+          getMyBoardCountAPI(),
+          getMyCommentCountAPI(),
+          getPushedBoardLikesCount(),
+          getUserBalance(),
+        ]);
+
+        setVisitCount(visits);
+        setBoardCount(boards);
+        setCommentCount(comments);
+        setLikeCount(likes);
+        if (balance.success) {
+          setCoinBalance(balance.currentBalance || 0);
+        }
+      } catch (error) {
+        console.error('프로필 통계 로드 오류:', error);
+      }
+    };
+
+    loadProfileStats();
+  }, [isLoggedInState]);
 
   useEffect(() => {
     const loadCategories = async () => {
@@ -113,7 +158,6 @@ const Sidebar: React.FC = () => {
         </p>
         {isLoggedInState ? (
           <div className="sidebar-profile__stats">
-            {/* 방문 */}
             <div className="sidebar-profile__stat-item">
               <div className="sidebar-profile__stat-icon">
                 <svg width="13" height="14" viewBox="0 0 13 14" fill="none" xmlns="http://www.w3.org/2000/svg">
@@ -121,9 +165,8 @@ const Sidebar: React.FC = () => {
                 </svg>
               </div>
               <span className="sidebar-profile__stat-label">방문</span>
-              <span className="sidebar-profile__stat-value">0 회</span>
+              <span className="sidebar-profile__stat-value">{visitCount} 회</span>
             </div>
-            {/* 작성 게시글 */}
             <div className="sidebar-profile__stat-item">
               <div className="sidebar-profile__stat-icon">
                 <svg width="13" height="14" viewBox="0 0 13 14" fill="none" xmlns="http://www.w3.org/2000/svg">
@@ -131,9 +174,8 @@ const Sidebar: React.FC = () => {
                 </svg>
               </div>
               <span className="sidebar-profile__stat-label">작성 게시글</span>
-              <span className="sidebar-profile__stat-value">0 개</span>
+              <span className="sidebar-profile__stat-value">{boardCount} 개</span>
             </div>
-            {/* 작성 댓글 */}
             <div className="sidebar-profile__stat-item">
               <div className="sidebar-profile__stat-icon">
                 <svg width="14" height="14" viewBox="0 0 14 14" fill="none" xmlns="http://www.w3.org/2000/svg">
@@ -141,9 +183,8 @@ const Sidebar: React.FC = () => {
                 </svg>
               </div>
               <span className="sidebar-profile__stat-label">작성 댓글</span>
-              <span className="sidebar-profile__stat-value">0 개</span>
+              <span className="sidebar-profile__stat-value">{commentCount} 개</span>
             </div>
-            {/* 누른 좋아요 */}
             <div className="sidebar-profile__stat-item">
               <div className="sidebar-profile__stat-icon">
                 <svg width="16" height="14" viewBox="0 0 16 14" fill="none" xmlns="http://www.w3.org/2000/svg">
@@ -151,9 +192,8 @@ const Sidebar: React.FC = () => {
                 </svg>
               </div>
               <span className="sidebar-profile__stat-label">누른 좋아요</span>
-              <span className="sidebar-profile__stat-value">0 개</span>
+              <span className="sidebar-profile__stat-value">{likeCount} 개</span>
             </div>
-            {/* 보유 코인 */}
             <div className="sidebar-profile__stat-item">
               <div className="sidebar-profile__stat-icon">
                 <svg width="14" height="14" viewBox="0 0 14 14" fill="none" xmlns="http://www.w3.org/2000/svg">
@@ -161,45 +201,33 @@ const Sidebar: React.FC = () => {
                 </svg>
               </div>
               <span className="sidebar-profile__stat-label">보유 코인</span>
-              <span className="sidebar-profile__stat-value">0 NC</span>
+              <span className="sidebar-profile__stat-value">{coinBalance} NC</span>
             </div>
           </div>
         ) : (
           <>
-            <p className="sidebar-profile__desc">
-              로그인하고 내 프로필을 만들어 보세요
-            </p>
-            <Link to="/login" className="sidebar-profile__login-btn">
-              로그인
-            </Link>
-            <Link to="/signup" className="sidebar-profile__signup-link">
-              회원가입
-            </Link>
+            <p className="sidebar-profile__desc">로그인하고 내 프로필을 만들어 보세요</p>
+            <Link to="/login" className="sidebar-profile__login-btn">로그인</Link>
+            <Link to="/signup" className="sidebar-profile__signup-link">회원가입</Link>
           </>
         )}
       </div>
 
-      {/* 구분선 */}
       <div className="sidebar-divider" />
 
       {/* 네비게이션 메뉴 */}
       <nav className="sidebar-nav">
         {categoriesLoading ? (
-          <div style={{ padding: '16px', textAlign: 'center', color: '#999', fontSize: '14px' }}>
-            카테고리 로딩 중...
-          </div>
+          <div style={{ padding: '16px', textAlign: 'center', color: '#999', fontSize: '14px' }}>카테고리 로딩 중...</div>
         ) : categoryTree.length > 0 ? (
           categoryTree.map((category) => (
             <CategorySection key={category.id} category={category} />
           ))
         ) : (
-          <div style={{ padding: '16px', textAlign: 'center', color: '#999', fontSize: '14px' }}>
-            카테고리가 없습니다.
-          </div>
+          <div style={{ padding: '16px', textAlign: 'center', color: '#999', fontSize: '14px' }}>카테고리가 없습니다.</div>
         )}
       </nav>
 
-      {/* 구분선 */}
       <div className="sidebar-divider" />
 
       {/* D-DAY 섹션 */}
@@ -226,24 +254,30 @@ const Sidebar: React.FC = () => {
         </div>
       </div>
 
-      {/* 구분선 */}
       <div className="sidebar-divider" />
 
-      {/* 오늘 방문자 섹션 */}
+      {/* 오늘 방문자 섹션 - 백엔드 TodayVisitorResponse에 맞춰 수정됨 */}
       <div className="sidebar-visitors">
         <h3 className="sidebar-visitors__title">오늘 방문자</h3>
         <div className="sidebar-visitors__grid">
-          {visitors.map((visitor) => (
-            <div key={visitor.id} className="sidebar-visitors__item">
-              <div
-                className="sidebar-visitors__avatar"
-                style={{ backgroundColor: visitor.color }}
-              />
-              <span className="sidebar-visitors__name">
-                {visitor.nickname}
-              </span>
-            </div>
-          ))}
+          {todayVisitors.length > 0 ? (
+            todayVisitors.map((visitor) => (
+              <div key={visitor.id} className="sidebar-visitors__item">
+                <div
+                  className="sidebar-visitors__avatar"
+                  style={{ backgroundColor: "#000" }} // 요청하신 검정 동그라미
+                />
+                <span className="sidebar-visitors__name">
+                  {/* 백엔드 DTO 필드명인 userName을 직접 참조 */}
+                  {visitor.userName || "익명"}
+                </span>
+              </div>
+            ))
+          ) : (
+            <p style={{ gridColumn: '1/-1', fontSize: '12px', color: '#999', padding: '10px', textAlign: 'center' }}>
+              아직 방문자가 없습니다.
+            </p>
+          )}
         </div>
       </div>
     </aside>
@@ -251,38 +285,25 @@ const Sidebar: React.FC = () => {
 };
 
 /* 카테고리 섹션 컴포넌트 */
-type CategoryWithChildren = Category & { children: CategoryWithChildren[] };
-
 interface CategorySectionProps {
-  category: CategoryWithChildren;
+  category: any;
 }
 
 const CategorySection: React.FC<CategorySectionProps> = ({ category }) => {
   const [isOpen, setIsOpen] = useState(true);
   const hasChildren = category.children && category.children.length > 0;
 
-  // 하위 카테고리 아이템 렌더링 (3단 카테고리는 부모 페이지의 탭으로 이동)
-  const renderCategoryItems = (items: CategoryWithChildren[]) => {
+  const renderCategoryItems = (items: any[]) => {
     return items.map((item) => {
       const itemHasChildren = item.children && item.children.length > 0;
-
       return (
         <React.Fragment key={item.id}>
           <li className="sidebar-section__item">
-            <Link to={`/board/${item.slug}`} className="sidebar-section__link">
-              {item.name}
-            </Link>
+            <Link to={`/board/${item.slug}`} className="sidebar-section__link">{item.name}</Link>
           </li>
-          {/* 3단 카테고리: 부모(2단) 페이지로 이동하면서 해당 탭 선택 */}
-          {itemHasChildren && item.children.map((child) => (
-            <li
-              key={child.id}
-              className="sidebar-section__item sidebar-section__item--depth"
-              style={{ paddingLeft: '48px' }}
-            >
-              <Link to={`/board/${item.slug}?tab=${child.slug}`} className="sidebar-section__link">
-                {child.name}
-              </Link>
+          {itemHasChildren && item.children.map((child: any) => (
+            <li key={child.id} className="sidebar-section__item sidebar-section__item--depth" style={{ paddingLeft: '48px' }}>
+              <Link to={`/board/${item.slug}?tab=${child.slug}`} className="sidebar-section__link">{child.name}</Link>
             </li>
           ))}
         </React.Fragment>
@@ -292,29 +313,18 @@ const CategorySection: React.FC<CategorySectionProps> = ({ category }) => {
 
   return (
     <div className="sidebar-section">
-      <button
-        className="sidebar-section__header"
-        onClick={() => hasChildren ? setIsOpen(!isOpen) : undefined}
-      >
+      <button className="sidebar-section__header" onClick={() => hasChildren ? setIsOpen(!isOpen) : undefined}>
         {hasChildren ? (
           <>
             <span className="sidebar-section__title">{category.name}</span>
-            <span
-              className={`sidebar-section__arrow ${isOpen ? "sidebar-section__arrow--open" : ""}`}
-            >
-              ▾
-            </span>
+            <span className={`sidebar-section__arrow ${isOpen ? "sidebar-section__arrow--open" : ""}`}>▾</span>
           </>
         ) : (
-          <Link to={`/board/${category.slug}`} className="sidebar-section__title sidebar-section__title--link">
-            {category.name}
-          </Link>
+          <Link to={`/board/${category.slug}`} className="sidebar-section__title sidebar-section__title--link">{category.name}</Link>
         )}
       </button>
       {hasChildren && isOpen && (
-        <ul className="sidebar-section__list">
-          {renderCategoryItems(category.children)}
-        </ul>
+        <ul className="sidebar-section__list">{renderCategoryItems(category.children)}</ul>
       )}
     </div>
   );

@@ -4,7 +4,6 @@ import com.nimda.cite.alarm.Event.AddChildCommentEvent;
 import com.nimda.cite.alarm.Event.AddCommentEvent;
 import com.nimda.cite.alarm.service.AlarmService;
 import com.nimda.cite.board.entity.Board;
-import com.nimda.cite.board.entity.Category;
 import com.nimda.cite.board.repository.BoardRepository;
 import com.nimda.cite.board.repository.CategoryRepository;
 import com.nimda.cite.comment.dto.*;
@@ -24,6 +23,8 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.stream.Collectors;
+
 
 @Service
 public class CommentService {
@@ -61,12 +62,6 @@ public class CommentService {
         User author = userRepository.findById(userId)
                 .orElseThrow(() -> new IllegalArgumentException("사용자를 찾을 수 없습니다."));
 
-        // 카테고리
-        Category category = board.getCategory();
-        if (category == null) {
-            throw new IllegalArgumentException("게시글에 카테고리가 설정되어 있지 않습니다.");
-        }
-
         // 부모 댓글 조회
         Comment parent = null;
         if (request.getParentId() != null && request.getParentId() > 0) {
@@ -88,7 +83,6 @@ public class CommentService {
         Comment comment = Comment.builder()
                 .context(request.getContext())
                 .board(board)
-                .category(category)
                 .author(author)
                 .parent(parent)
                 .status(STATUS.PUBLIC)
@@ -173,6 +167,18 @@ public class CommentService {
         return rootComments;
     }
 
+    // 마이 페이지 작성 댓글 조회
+    public List<MyCommentResponse> getMyComments(Long userId) {
+        // 작성자
+        User user = userRepository.findById(userId)
+                .orElseThrow(() -> new IllegalArgumentException("사용자를 찾을 수 없습니다."));
+
+        List<Comment> comments = commentRepository.findByMyComments(user, List.of(STATUS.DELETED));
+
+        return comments.stream()
+                .map(MyCommentResponse::from)
+                .collect(Collectors.toList());
+    }
 
     // =============== UPDATE ===============
 
@@ -231,4 +237,16 @@ public class CommentService {
         comment.updateStatus(STATUS.DELETED);
     }
 
+    @Transactional
+    public void deleteMyComments(List<Long> commentIds, Long userId) {
+        User user = userRepository.findById(userId)
+                .orElseThrow(() -> new IllegalArgumentException("사용자를 찾을 수 없습니다."));
+
+        commentRepository.deleteAllByIdInAndAuthor(commentIds, user);
+    }
+    @Transactional(readOnly = true)
+    public long countByUserId(Long userId) {
+        // 삭제된 댓글(DELETED)은 개수에서 제외합니다.
+        return commentRepository.countByAuthorIdAndStatusNot(userId, STATUS.DELETED);
+    }
 }

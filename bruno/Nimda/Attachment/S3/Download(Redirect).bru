@@ -1,0 +1,24 @@
+meta {
+  name: Download(Redirect)
+  type: http
+  seq: 5
+}
+
+get {
+  url: {{baseUrl}}/api/cite/attachments/:id/download
+  body: none
+  auth: bearer
+}
+
+params:path {
+  id: 
+}
+
+auth:bearer {
+  token: {{jwtToken}}
+}
+
+settings {
+  encodeUrl: true
+  timeout: 0
+}

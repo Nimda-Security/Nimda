@@ -21,8 +21,11 @@
   --color-gray-400: #a3a3a3;
   --color-gray-500: #8b8b8b;
   --color-gray-600: #737373;
+  --color-gray-50: #ececec;
+  --color-gray-border: #bcbcbc;
   --color-red: #d64454;
   --color-blue: #4a7fcc;
+  --color-pink: #d97399;
   --color-pink-bg: #fff5f5;
 }
 
@@ -107,6 +110,20 @@ body {
   flex: 1;
   max-width: var(--content-width);
   min-width: 0;
+}
+
+/* 사이드바 숨김 (로그인/회원가입 등): 본문만 전체 너비, 화면 가운데 정렬 */
+.layout__container--no-sidebar {
+  max-width: none;
+  padding: 0;
+}
+
+.layout__content--full {
+  max-width: none;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: calc(100vh - var(--header-height) - var(--header-gap) - var(--footer-height) - 48px);
 }
 
 /* Footer */
@@ -447,8 +464,6 @@ body {
 .home-banner {
   position: relative;
   width: 100%;
-  max-width: 894px;
-  height: 400px;
   overflow: hidden;
 }
 
@@ -467,9 +482,22 @@ body {
   pointer-events: none;
 }
 
+/* 단일 이미지 배너: 높이를 이미지 비율에 맞춤 */
+.home-banner__slide--img {
+  position: relative;
+  height: auto;
+}
+
 .home-banner__slide--active {
   opacity: 1;
   pointer-events: auto;
+}
+
+.home-banner__img {
+  width: 100%;
+  height: auto;
+  display: block;
+  vertical-align: middle;
 }
 
 .home-banner__btn {
@@ -715,11 +743,17 @@ body {
 }
 
 .home-popular__comments {
-  font-size: 12px;
-  font-weight: 700;
-  color: var(--color-blue);
+  display: flex;
+  align-items: center;
+  gap: 4px;
   flex-shrink: 0;
   margin-right: 16px;
+  color: var(--color-blue);
+}
+
+.home-popular__comments-count {
+  font-size: 12px;
+  font-weight: 700;
 }
 
 .home-popular__likes {
@@ -728,12 +762,12 @@ body {
   gap: 4px;
   flex-shrink: 0;
   margin-right: 16px;
+  color: var(--color-red);
 }
 
 .home-popular__likes-count {
   font-size: 12px;
   font-weight: 700;
-  color: var(--color-red);
 }
 
 .home-popular__date {

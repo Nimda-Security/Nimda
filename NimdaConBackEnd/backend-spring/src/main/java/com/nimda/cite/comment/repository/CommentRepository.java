@@ -2,6 +2,7 @@ package com.nimda.cite.comment.repository;
 
 import com.nimda.cite.comment.entity.Comment;
 import com.nimda.cite.comment.enums.STATUS;
+import com.nimda.cup.user.entity.User;
 import org.springframework.data.jpa.repository.EntityGraph;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Modifying;
@@ -36,6 +37,16 @@ public interface CommentRepository extends JpaRepository<Comment, Long> {
     @EntityGraph(attributePaths = {"author"})
     Optional<Comment> findWithAuthorById(Long id);
 
+    // 내가 작성한 댓글 조회
+    // [사용] Get /api/my-page/comments
+    @Query("SELECT c FROM Comment c " +
+            "JOIN FETCH c.board " +
+            "WHERE c.author = :author " +
+            "AND c.status NOT IN :excludedStatuses " +
+            "ORDER BY c.createdAt DESC")
+    List<Comment> findByMyComments(@Param("author") User user,
+                                                 @Param("excludedStatuses") List<STATUS> excludedStatuses);
+
 
     // =============== UPDATE ===============
 
@@ -48,8 +59,17 @@ public interface CommentRepository extends JpaRepository<Comment, Long> {
     @Query("UPDATE Comment c SET c.status = :status WHERE c.id = :id")
     int updateStatus(@Param("id") Long id, @Param("status") STATUS status);
 
+    // 마이페이지 작성 댓글에서 여러 댓글 한번에 삭제 처리
+    // [사용] DELETE /api/my-page/comments
+    @Modifying
+    @Query("UPDATE Comment c SET c.status = com.nimda.cite.comment.enums.STATUS.DELETED " +
+            "WHERE c.id IN :ids AND c.author = :author")
+    void deleteAllByIdInAndAuthor(@Param("ids") List<Long> ids, @Param("author") User author);
+
     // 게시글 삭제 시 하위 댓글 전체 삭제
     // [사용] DELETE /api/cite/board/{boardId}
     void deleteAllByBoardId(Long boardId);
 
+    // 내가 작성한 유지 중인 댓글 수 조회
+    long countByAuthorIdAndStatusNot(Long userId, STATUS status);
 }

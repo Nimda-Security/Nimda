@@ -28,6 +28,9 @@ public class MyPageResponseDTO {
     private String universityName;
     private String major;
     private String grade;
+    private String bojId;
+    private String birth;
+    private String studentNum;
     private String profileImage;
     private LocalDateTime createdAt;
     private LocalDateTime updatedAt;

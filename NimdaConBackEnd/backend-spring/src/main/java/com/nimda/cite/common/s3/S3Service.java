@@ -1,9 +1,12 @@
 package com.nimda.cite.common.s3;
 
 import lombok.RequiredArgsConstructor;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnBean;
 import org.springframework.stereotype.Service;
+import software.amazon.awssdk.services.s3.model.GetObjectRequest;
 import software.amazon.awssdk.services.s3.model.PutObjectRequest;
 import software.amazon.awssdk.services.s3.presigner.S3Presigner;
+import software.amazon.awssdk.services.s3.presigner.model.GetObjectPresignRequest;
 import software.amazon.awssdk.services.s3.presigner.model.PutObjectPresignRequest;
 
 import java.time.Duration;
@@ -11,6 +14,7 @@ import java.util.UUID;
 
 @Service
 @RequiredArgsConstructor
+@ConditionalOnBean(S3Presigner.class)
 public class S3Service {
 
     private final S3Presigner s3Presigner;
@@ -24,13 +28,19 @@ public class S3Service {
      * @param fileName 원본 파일명
      */
     public PresignedUpload createPresignedUpload(String type, String fileName) {
-        // 1. 경로 결정
+        // 1. 경로 결정 (null이면 temp/)
         String path = switch (type) {
             case "profile" -> s3Properties.getProfileImagePath();
             case "board" -> s3Properties.getBoardImagePath();
             case "file" -> s3Properties.getBoardFilePath();
             default -> "temp/";
         };
+        if (path == null || path.isBlank()) {
+            path = "temp/";
+        }
+        if (!path.endsWith("/")) {
+            path = path + "/";
+        }
 
         // 2. S3 키(경로 + UUID 파일명) 생성
         String fileKey = path + UUID.randomUUID() + "_" + fileName;
@@ -57,6 +67,28 @@ public class S3Service {
      */
     public String createPresignedUrl(String type, String fileName) {
         return createPresignedUpload(type, fileName).getUrl();
+    }
+
+    /**
+     * 다운로드/보기용 Presigned GET URL 생성.
+     * S3에 저장된 파일을 클라이언트가 직접 받을 때 사용.
+     *
+     * @param key S3 객체 키 (DB에 저장된 storedFilename/filepath)
+     * @param expiryMinutes 유효 시간(분)
+     */
+    public String createPresignedGetUrl(String key, int expiryMinutes) {
+        if (key == null || key.isBlank()) {
+            return null;
+        }
+        GetObjectRequest getRequest = GetObjectRequest.builder()
+                .bucket(s3Properties.getBucket())
+                .key(key)
+                .build();
+        GetObjectPresignRequest presignRequest = GetObjectPresignRequest.builder()
+                .signatureDuration(Duration.ofMinutes(expiryMinutes))
+                .getObjectRequest(getRequest)
+                .build();
+        return s3Presigner.presignGetObject(presignRequest).url().toString();
     }
 
     /**
