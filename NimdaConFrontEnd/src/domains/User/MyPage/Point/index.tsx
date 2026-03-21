@@ -4,6 +4,7 @@ import Footer from "@/components/Layout/Footer";
 
 import ProfileSection from "./Components/Profile/ProfileSection";
 import PointContent from "./Components/PointContent";
+import UserInfoContent from "./Components/UserInfoContent";
 
 import { getUserBalance } from "@/api/point";
 import { getMyTotalAttendanceCount } from "@/api/attendance";
@@ -101,6 +102,11 @@ function MyPagePoint() {
       <main className="flex-1 flex justify-center pt-10 pb-12 overflow-x-hidden">
         <div className="w-full max-w-[1050px] px-6">
           <ProfileSection userInfo={userInfo} activeTab={activeTab} setActiveTab={setActiveTab} />
+          {activeTab === "profile" && (
+            <div className="mt-10">
+              <UserInfoContent loading={loading} />
+            </div>
+          )}
           {activeTab === "points" && (
             <div className="mt-10">
               <PointContent

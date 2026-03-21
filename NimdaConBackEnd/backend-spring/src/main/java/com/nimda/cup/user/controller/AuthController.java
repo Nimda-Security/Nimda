@@ -129,6 +129,8 @@ public class AuthController {
                     .major(user.getMajor())
                     .grade(user.getGrade())
                     .bojId(user.getBojId())
+                    .birth(user.getBirth())
+                    .studentNum(user.getStudentNum())
                     .profileImage(user.getProfileImage())
                     .createdAt(user.getCreatedAt())
                     .updatedAt(user.getUpdatedAt())
