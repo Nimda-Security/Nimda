@@ -80,7 +80,8 @@ public class AuthController {
                     registerRequest.getMajor(),
                     registerRequest.getUniversityName(),
                     registerRequest.getGrade(),
-                    registerRequest.getBojId());
+                    registerRequest.getBojId(),
+                    registerRequest.getBirth());
 
             return ResponseEntity.status(HttpStatus.CREATED).body(user);
         } catch (RuntimeException e) {

@@ -108,37 +108,37 @@ export const loginAPI = async (
   }
 };
 
+
 /**
  * 회원가입 API 호출
+ * @param registerData - 유저가 입력한 회원가입 정보
+ * @returns 성공 여부 및 결과 메시지
  */
 export const registerAPI = async (
   registerData: RegisterRequest
 ): Promise<LoginResponse> => {
   try {
-    // 필수 필드는 항상 전송, 선택 필드는 빈 문자열일 경우 undefined로 변환
-    const cleanedData: any = {
-      userId: registerData.userId,
-      name: registerData.name,
-      nickname: registerData.nickname,
-      password: registerData.password,
-      studentNum: registerData.studentNum,
-      email: registerData.email,
-      major: registerData.major,
+    // 1. 서버로 보낼 데이터 정제 (cleanedData)
+    // 필수 필드는 그대로 가져오고, 선택적 필드는 가공하여 처리합니다.
+    const cleanedData = {
+      userId: registerData.userId.trim(),
+      name: registerData.name.trim(),
+      nickname: registerData.nickname.trim(),
+      password: registerData.password, // 비밀번호는 공백 제거를 하지 않는 것이 일반적입니다.
+      studentNum: registerData.studentNum.trim(),
+      email: registerData.email.trim(),
+      major: registerData.major.trim(),
+
+      // 생년월일: 하이픈(-) 제거 후 8자리 숫자로 통일 (예: 20260321)
+      birth: "20000213",
+
+      // 선택 필드: 값이 비어있거나 공백만 있다면 서버에 보내지 않도록 처리
+      universityName: registerData.universityName?.trim() || undefined,
+      grade: registerData.grade?.trim() || undefined,
+      bojId: registerData.bojId?.trim() || undefined,
     };
 
-    if (registerData.universityName?.trim()) {
-      cleanedData.universityName = registerData.universityName.trim();
-    }
-    if (registerData.grade?.trim()) {
-      cleanedData.grade = registerData.grade.trim();
-    }
-    if (registerData.bojId?.trim()) {
-      cleanedData.bojId = registerData.bojId.trim();
-    }
-    if (registerData.birth?.trim()) {
-      cleanedData.birth = registerData.birth.trim();
-    }
-
+    // 2. 서버 API 호출
     const response = await fetch(`${API_BASE_URL}/auth/register`, {
       method: "POST",
       headers: {
@@ -147,38 +147,44 @@ export const registerAPI = async (
       body: JSON.stringify(cleanedData),
     });
 
+    // 3. 응답 데이터 파싱
     let result;
     try {
       result = await response.json();
     } catch (e) {
-      // JSON 파싱 실패 시
+      // 서버에서 JSON이 아닌 에러 페이지(HTML) 등을 보냈을 경우
       return {
         success: false,
-        message: `서버 오류 (${response.status}): 응답을 파싱할 수 없습니다.`,
+        message: `서버 내부 오류 (${response.status}): 응답 형식이 올바르지 않습니다.`,
       };
     }
 
+    // 4. 결과 반환
     if (response.ok) {
       return {
         success: true,
         message: "회원가입이 완료되었습니다.",
-        user: result,
+        user: result.data ?? result, // 백엔드 응답 구조에 따라 data 필드 여부 확인
       };
     } else {
-      // 회원가입 실패 (400 Bad Request 등)
-      const errorMessage = result.message ||
-        (response.status === 400 ? "입력한 정보를 확인해주세요." :
-          `회원가입에 실패했습니다. (${response.status})`);
+      // 백엔드 validation 에러 메시지가 있으면 우선 사용, 없으면 상태 코드별 기본 메시지
+      const errorMessage =
+        result.message ||
+        (response.status === 400
+          ? "입력하신 정보를 다시 확인해 주세요."
+          : `회원가입 실패 (오류 코드: ${response.status})`);
+
       return {
         success: false,
         message: errorMessage,
       };
     }
   } catch (error) {
-    console.error("회원가입 API 오류:", error);
+    // 네트워크 단절 등 예외 상황 처리
+    console.error("회원가입 API 호출 중 치명적 오류:", error);
     return {
       success: false,
-      message: "서버에 연결할 수 없습니다. 잠시 후 다시 시도해주세요.",
+      message: "서버와 통신할 수 없습니다. 네트워크 연결을 확인해 주세요.",
     };
   }
 };
