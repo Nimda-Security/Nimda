@@ -86,8 +86,10 @@ public class SecurityConfig {
                         .requestMatchers("/api/auth/login", "/api/auth/register").permitAll()
                         .requestMatchers("/api/auth/me").authenticated()
 
-                        // [우선순위 3] 도현님 마이페이지/좋아요/출석 API (최상단 보호)
+                        // 마이페이지/좋아요/출석 API (최상단 보호)
                         // 다른 permitAll 규칙에 먹히지 않도록 위로 격상
+                        // 메인 페이지 방문자 정보는 누구나 볼 수 있음
+                        .requestMatchers("/api/cite/attendance/today").permitAll()
                         .requestMatchers("/api/like/board/**").authenticated()
                         .requestMatchers("/api/cite/attendance/**").authenticated()
                         .requestMatchers("/api/cite/attachments/**").authenticated()
