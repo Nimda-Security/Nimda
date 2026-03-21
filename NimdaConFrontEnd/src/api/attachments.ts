@@ -1,0 +1,164 @@
+/**
+ * 게시글 첨부(S3 presigned → PUT → register) — 백엔드 B안과 동일 흐름.
+ * @see AttachmentController /presigned, /register
+ */
+
+const ATTACHMENTS_BASE = '/api/cite/attachments';
+
+const parseJsonSafe = async (response: Response) => {
+  try {
+    const text = await response.text();
+    if (!text) return null;
+    return JSON.parse(text);
+  } catch {
+    return null;
+  }
+};
+
+export type PresignedBoardUploadResult = {
+  uploadUrl: string;
+  key: string;
+};
+
+/**
+ * S3 업로드용 presigned URL 발급 (type=board: 게시판 첨부 경로)
+ */
+export const requestPresignedUpload = async (
+  type: 'board' | 'file' | 'profile',
+  fileName: string
+): Promise<{ ok: true; data: PresignedBoardUploadResult } | { ok: false; message: string }> => {
+  const token = localStorage.getItem('authToken');
+  if (!token) {
+    return { ok: false, message: '로그인이 필요합니다.' };
+  }
+
+  const params = new URLSearchParams();
+  params.set('type', type);
+  params.set('fileName', fileName);
+
+  const response = await fetch(`${ATTACHMENTS_BASE}/presigned`, {
+    method: 'POST',
+    headers: {
+      Authorization: `Bearer ${token}`,
+      'Content-Type': 'application/x-www-form-urlencoded',
+    },
+    body: params.toString(),
+  });
+
+  const result = await parseJsonSafe(response);
+  if (!response.ok || !result?.success) {
+    return {
+      ok: false,
+      message: (result?.message as string) || 'Presigned URL 발급에 실패했습니다.',
+    };
+  }
+
+  const data = result.data ?? result;
+  const uploadUrl = data.uploadUrl as string | undefined;
+  const key = data.key as string | undefined;
+  if (!uploadUrl || !key) {
+    return { ok: false, message: 'Presigned 응답 형식이 올바르지 않습니다.' };
+  }
+
+  return { ok: true, data: { uploadUrl, key } };
+};
+
+/**
+ * 브라우저에서 S3로 직접 업로드 (PUT)
+ */
+export const putFileToPresignedUrl = async (
+  uploadUrl: string,
+  file: File
+): Promise<{ ok: true } | { ok: false; message: string }> => {
+  const res = await fetch(uploadUrl, {
+    method: 'PUT',
+    headers: {
+      'Content-Type': file.type || 'application/octet-stream',
+    },
+    body: file,
+  });
+
+  if (!res.ok) {
+    return { ok: false, message: `S3 업로드 실패 (${res.status})` };
+  }
+  return { ok: true };
+};
+
+export type RegisterAttachmentBody = {
+  key: string;
+  originFilename: string;
+  fileSize: number;
+  categoryId: number;
+  /** 글 작성 전 등록 시 생략(null). 게시글 저장 후 attachmentIds로 연결. */
+  boardId?: number | null;
+};
+
+/**
+ * S3 업로드 완료 후 DB에 첨부 행 등록 → attachmentId 반환
+ */
+export const registerAttachmentAfterS3 = async (
+  body: RegisterAttachmentBody
+): Promise<{ ok: true; attachmentId: number } | { ok: false; message: string }> => {
+  const token = localStorage.getItem('authToken');
+  if (!token) {
+    return { ok: false, message: '로그인이 필요합니다.' };
+  }
+
+  const response = await fetch(`${ATTACHMENTS_BASE}/register`, {
+    method: 'POST',
+    headers: {
+      Authorization: `Bearer ${token}`,
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify({
+      key: body.key,
+      originFilename: body.originFilename,
+      fileSize: body.fileSize,
+      categoryId: body.categoryId,
+      boardId: body.boardId ?? null,
+    }),
+  });
+
+  const result = await parseJsonSafe(response);
+  if (!response.ok || !result?.success) {
+    return {
+      ok: false,
+      message: (result?.message as string) || '첨부 등록에 실패했습니다.',
+    };
+  }
+
+  const data = result.data ?? result;
+  const attachmentId = data.attachmentId as number | undefined;
+  if (attachmentId == null || Number.isNaN(attachmentId)) {
+    return { ok: false, message: '첨부 ID 응답이 없습니다.' };
+  }
+
+  return { ok: true, attachmentId };
+};
+
+/**
+ * 파일 한 개에 대해 presigned → PUT → register까지 수행 (게시글 작성용 단일 첨부).
+ * S3 미설정 등으로 presigned가 실패하면 메시지 반환.
+ */
+export const uploadBoardFileViaS3 = async (
+  file: File,
+  categoryId: number
+): Promise<{ ok: true; attachmentId: number } | { ok: false; message: string }> => {
+  const presigned = await requestPresignedUpload('board', file.name);
+  if (!presigned.ok) {
+    return presigned;
+  }
+
+  const put = await putFileToPresignedUrl(presigned.data.uploadUrl, file);
+  if (!put.ok) {
+    return put;
+  }
+
+  return registerAttachmentAfterS3({
+    key: presigned.data.key,
+    originFilename: file.name,
+    fileSize: file.size,
+    categoryId,
+    boardId: null,
+  });
+};

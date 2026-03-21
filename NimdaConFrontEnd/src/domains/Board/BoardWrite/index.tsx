@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { useNavigate, useParams, useSearchParams } from 'react-router-dom';
 import Layout from '@/components/Layout';
 import { createBoardAPI } from '@/api/board';
+import { uploadBoardFileViaS3 } from '@/api/attachments';
 import { getCategoryBySlugAPI, getAllCategoriesAPI } from '@/api/category';
 import type { Category } from '../types';
 
@@ -94,12 +95,23 @@ function BoardWritePage() {
       setIsSubmitting(true);
       setError(null);
 
+      // 첨부가 있으면 S3 presigned→PUT→register 후 ID만 전달 (백엔드 B안). file 직접 전송 제거 이유와 동일.
+      let attachmentIds: number[] | undefined;
+      if (file) {
+        const uploaded = await uploadBoardFileViaS3(file, selectedCategoryId);
+        if (!uploaded.ok) {
+          setError(uploaded.message);
+          return;
+        }
+        attachmentIds = [uploaded.attachmentId];
+      }
+
       const response = await createBoardAPI({
         categoryId: selectedCategoryId,
         title: title.trim(),
         content: content.trim(),
         tag: tag.trim() || undefined,
-        file: file || undefined,
+        attachmentIds,
       });
 
       if (response.success && 'board' in response) {
