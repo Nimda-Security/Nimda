@@ -80,10 +80,12 @@ function RegisterPage() {
     if (step === 1) { setErrors({}); setStep(0); }
   };
 
-  const handleSubmit = async () => {
+const handleSubmit = async () => {
     if (!validateStep2()) return;
 
-    const birth = `${form.birthYear}-${form.birthMonth.padStart(2, "0")}-${form.birthDay.padStart(2, "0")}`;
+    // 하이픈(-) 없이 8자리 숫자로 포맷팅 (예: 20260321)
+    // padStart를 사용하여 월, 일이 1자리일 때 앞에 0을 붙여줍니다.
+    const birth = `${form.birthYear}${form.birthMonth.padStart(2, "0")}${form.birthDay.padStart(2, "0")}`;
 
     const result = await registerAPI({
       userId: form.userId.trim(),
@@ -94,12 +96,13 @@ function RegisterPage() {
       email: form.email.trim(),
       major: form.major.trim(),
       bojId: form.bojId.trim() || undefined,
-      birth,
+      birth, // 이제 "20260321" 형식으로 전송됩니다.
     });
 
     if (result.success) {
       setStep(2);
     } else {
+      // 에러 핸들링 로직 (기존과 동일)
       if (result.message?.includes("User ID")) {
         setErrors({ userId: "이미 사용 중인 아이디입니다." });
       } else if (result.message?.includes("Nickname")) {
