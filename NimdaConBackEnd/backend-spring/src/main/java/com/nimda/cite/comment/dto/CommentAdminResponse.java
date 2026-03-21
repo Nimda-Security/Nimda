@@ -9,7 +9,7 @@ import lombok.experimental.SuperBuilder;
 @Getter
 @SuperBuilder
 @AllArgsConstructor
-public class CommentAdminResponse extends CommentResponse {
+public class CommentAdminResponse extends CommentResponse<CommentAdminResponse> {
 
     private Long authorId;
     private STATUS status;

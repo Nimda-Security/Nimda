@@ -109,4 +109,14 @@ public class BoardLikeService {
                 .map(BoardLike::getBoard)
                 .collect(Collectors.toList());
     }
+    
+    // 좋아요 누른 게시글 개수 가지고 오기
+    @Transactional(readOnly = true)
+    public long countTotalLikeBoards(Long userId) {
+        User user = userRepository.findById(userId).orElseThrow(
+                () -> new ResponseStatusException(HttpStatus.NOT_FOUND, "유저를 찾을 수 없습니다.")
+        );
+        // Repository에 countByLikerId 또는 유사한 메서드가 있어야 합니다.
+        return boardLikeRepository.countByLikerId(userId);
+    }
 }

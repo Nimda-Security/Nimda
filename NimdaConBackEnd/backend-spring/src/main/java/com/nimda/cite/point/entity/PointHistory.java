@@ -1,12 +1,11 @@
 package com.nimda.cite.point.entity;
 
-import com.nimda.cup.user.entity.User;
 import jakarta.persistence.*;
-
-import java.time.LocalDateTime;
+import lombok.Getter;
 
 @Table(name = "point_history")
 @Entity
+@Getter
 public class PointHistory {
     @Id @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;

@@ -17,10 +17,10 @@ public class S3Properties {
     private String accessKey;
     private String secretKey;
 
-    // 경로 설정
-    private String profileImagePath;
-    private String boardImagePath;
-    private String boardFilePath;
+    // 경로 설정 (미설정 시 기본값)
+    private String profileImagePath = "profiles/";
+    private String boardImagePath = "boards/";
+    private String boardFilePath = "boards/files/";
 
     // 제약 사항
     private Long maxFileSize;

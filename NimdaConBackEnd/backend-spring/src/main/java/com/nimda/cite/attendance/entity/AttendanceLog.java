@@ -2,7 +2,7 @@ package com.nimda.cite.attendance.entity;
 
 import com.nimda.cup.user.entity.User;
 import jakarta.persistence.*;
-import lombok.AllArgsConstructor;
+        import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;

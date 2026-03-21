@@ -83,9 +83,17 @@ public class User extends BaseTimeEntity {
     private String birth;
     // 생년월일
 
+    @Column(name = "boj_id", length = 50)
+    private String bojId;
+    // 백준 ID (선택, Null 허용)
+
     @Column(name = "profile_image", length = 255)
     private String profileImage;
     // 프로필 이미지 URL
+
+    // 마이페이지 이메일 숨기기
+    @Column(name = "email_hide", nullable = false)
+    private boolean emailHide = false; // 기본값 설정
 
     // 기본 생성자
     public User() {

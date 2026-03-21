@@ -6,7 +6,7 @@ import path from "path";
 // https://vite.dev/config/
 export default defineConfig(({ mode }) => {
   const env = loadEnv(mode, process.cwd(), '')
-  
+
   return {
     plugins: [
       react(),
@@ -16,9 +16,11 @@ export default defineConfig(({ mode }) => {
       port: 3000,
       proxy: {
         '/api': {
-          target: 'https://api.nimda.kr',
+          // target: 'https://api.nimda.kr',
+          target: 'http://localhost:8080',
           changeOrigin: true,
-          secure: true,
+          secure: false,
+          // secure: false,
         },
         '/solvedac-api': {
           target: 'https://solved.ac',

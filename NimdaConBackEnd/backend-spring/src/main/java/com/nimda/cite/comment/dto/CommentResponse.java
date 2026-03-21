@@ -15,7 +15,7 @@ import java.util.List;
 @NoArgsConstructor
 @AllArgsConstructor
 @SuperBuilder // 빌더 상속을 위해 사용
-public abstract class CommentResponse {
+public abstract class CommentResponse<T extends CommentResponse<T>> {
     protected Long id;
     protected Long parentId;
     protected String authorName;
@@ -28,7 +28,7 @@ public abstract class CommentResponse {
 
     // 대댓글
     @Builder.Default
-    protected List<CommentResponse> children = new ArrayList<>();
+    protected List<T> children = new ArrayList<>();
 
     public static final DateTimeFormatter DEFAULT_FORMATTER = DateTimeFormatter.ofPattern("yyyy/MM/dd HH:mm");
 

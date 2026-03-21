@@ -1,13 +1,17 @@
 package com.nimda.cite.attachment.controller;
 
 import com.nimda.cite.attachment.dto.AttachmentDeleteRequestDto;
+import com.nimda.cite.attachment.dto.AttachmentRegisterRequestDto;
 import com.nimda.cite.attachment.dto.AttachmentResponseDto;
 import com.nimda.cite.attachment.entity.Attachment;
 import com.nimda.cite.attachment.service.AttachmentService;
 import com.nimda.cite.attachment.store.FileStore;
+import com.nimda.cite.attachment.store.S3FileStore;
 import com.nimda.cite.board.constants.CategoryConstants;
 import com.nimda.cite.common.response.ApiResponse;
+import com.nimda.cite.common.s3.S3Service;
 import com.nimda.cup.common.util.JwtUtil;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.core.io.Resource;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
@@ -16,6 +20,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
+import java.net.URI;
 import java.net.URLEncoder;
 import java.nio.charset.StandardCharsets;
 import java.util.List;
@@ -37,6 +42,8 @@ public class AttachmentController {
     private final AttachmentService attachmentService;
     private final FileStore fileStore;
     private final JwtUtil jwtUtil;
+    @Autowired(required = false)
+    private S3Service s3Service;
 
     public AttachmentController(AttachmentService attachmentService,
                                 FileStore fileStore,
@@ -96,6 +103,15 @@ public class AttachmentController {
 
             Optional<Resource> resourceOpt = fileStore.getResource(attachment.getStoredFilename());
             if (resourceOpt.isEmpty()) {
+                // 로컬 리소스를 열 수 없고, S3Service가 존재하며 filepath(S3 key)가 있다면 Presigned GET URL로 리다이렉트
+                if (s3Service != null && attachment.getFilepath() != null) {
+                    String presignedUrl = s3Service.createPresignedGetUrl(attachment.getFilepath(), 10);
+                    if (presignedUrl != null) {
+                        HttpHeaders headers = new HttpHeaders();
+                        headers.setLocation(URI.create(presignedUrl));
+                        return new ResponseEntity<>(headers, HttpStatus.FOUND);
+                    }
+                }
                 return ApiResponse.fail("파일을 찾을 수 없습니다.").toResponse(HttpStatus.NOT_FOUND);
             }
             Resource resource = resourceOpt.get();
@@ -110,6 +126,28 @@ public class AttachmentController {
         } catch (RuntimeException e) {
             return ApiResponse.fail(e.getMessage()).toResponse(HttpStatus.NOT_FOUND);
         }
+    }
+
+    /**
+     * S3 기반 다운로드 URL만 반환하는 API.
+     * - S3 사용 시: Presigned GET URL 반환
+     * - 로컬 사용 시: 기존 다운로드 엔드포인트 URL 반환
+     */
+    @GetMapping("/{id}/download-url")
+    public ResponseEntity<?> getDownloadUrl(@PathVariable Long id) {
+        Attachment attachment = attachmentService.getAttachment(id);
+
+        // S3 사용 가능 && filepath(S3 key)가 있는 경우: Presigned GET URL 생성
+        if (s3Service != null && attachment.getFilepath() != null) {
+            String url = s3Service.createPresignedGetUrl(attachment.getFilepath(), 10);
+            if (url != null) {
+                return ApiResponse.ok(Map.of("downloadUrl", url)).toResponse();
+            }
+        }
+
+        // 그 외(로컬 등)는 기존 다운로드 엔드포인트를 URL로 내려준다.
+        String apiUrl = "/api/cite/attachments/" + id + "/download";
+        return ApiResponse.ok(Map.of("downloadUrl", apiUrl)).toResponse();
     }
 
     /**
@@ -147,6 +185,57 @@ public class AttachmentController {
         } catch (RuntimeException e) {
             return ApiResponse.fail(e.getMessage()).toResponse(HttpStatus.FORBIDDEN);
         }
+    }
+
+    /**
+     * [S3] 업로드용 Presigned URL 발급 API.
+     * - type: profile / board / file
+     * - fileName: 원본 파일명
+     */
+    @PostMapping("/presigned")
+    public ResponseEntity<?> createPresignedUpload(
+            @RequestParam("type") String type,
+            @RequestParam("fileName") String fileName) {
+
+        if (!(fileStore instanceof S3FileStore s3FileStore)) {
+            return ApiResponse.fail("S3 저장소가 활성화되지 않았습니다.").toResponse(HttpStatus.BAD_REQUEST);
+        }
+        S3Service.PresignedUpload presigned = s3FileStore.getPresignedUpload(type, fileName);
+        return ApiResponse.ok(Map.of(
+                "uploadUrl", presigned.getUrl(),
+                "key", presigned.getKey()
+        )).toResponse();
+    }
+
+    /**
+     * [S3] Presigned 업로드 후 결과 등록 API.
+     * - 클라이언트는 S3에 업로드 완료 후 key/메타정보만 전달한다.
+     */
+    @PostMapping("/register")
+    public ResponseEntity<?> registerFromS3(
+            @RequestHeader(value = "Authorization", required = false) String authHeader,
+            @RequestBody AttachmentRegisterRequestDto request) {
+        Long userId = resolveUserId(authHeader);
+        if (userId == null) {
+            return ApiResponse.fail("로그인이 필요합니다.").toResponse(HttpStatus.UNAUTHORIZED);
+        }
+        if (request == null || request.getKey() == null || request.getKey().isBlank()) {
+            return ApiResponse.fail("S3 key가 필요합니다.").toResponse(HttpStatus.BAD_REQUEST);
+        }
+
+        Long attachmentId = attachmentService.registerFromS3(
+                request.getKey(),
+                request.getOriginFilename(),
+                request.getFileSize(),
+                request.getBoardId(),
+                request.getCategoryId(),
+                userId
+        );
+
+        return ApiResponse.ok(
+                "파일이 등록되었습니다.",
+                Map.of("attachmentId", attachmentId)
+        ).toResponse(HttpStatus.CREATED);
     }
 
     private Long resolveUserId(String authHeader) {
