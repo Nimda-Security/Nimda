@@ -25,9 +25,11 @@ public class AttachmentRegisterRequestDto {
     private Long fileSize;
 
     /**
-     * 게시글 ID, 카테고리 ID
+     * 게시글 ID — (글 작성 전 presigned 업로드)에서는 null. 글 저장 시 attachmentIds로 연결.
      */
     private Long boardId;
+
+    /** 카테고리 ID (게시판 첨부 시 해당 글 카테고리와 일치해야 함) */
     private Long categoryId;
 }
 

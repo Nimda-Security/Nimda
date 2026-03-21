@@ -151,7 +151,45 @@
   line-height: 1.5;
   white-space: pre-wrap;
   word-break: break-word;
-  margin-bottom: 32px;
+  margin-bottom: 24px;
+}
+
+/* 첨부 목록 (S3·Attachment API 응답) */
+.board-detail__attachments {
+  margin-bottom: 28px;
+}
+
+.board-detail__attachments--legacy {
+  margin-bottom: 28px;
+}
+
+.board-detail__attachments-title {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--color-gray-500);
+  margin: 0 0 8px 0;
+}
+
+.board-detail__attachments-list {
+  margin: 0;
+  padding-left: 1.1rem;
+  list-style: disc;
+}
+
+.board-detail__attachments-list li {
+  margin-bottom: 6px;
+}
+
+.board-detail__attachments-link {
+  font-size: 14px;
+  font-weight: 500;
+  color: var(--color-blue);
+  text-decoration: none;
+  word-break: break-all;
+}
+
+.board-detail__attachments-link:hover {
+  text-decoration: underline;
 }
 
 /* ===========================
