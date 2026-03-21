@@ -17,8 +17,10 @@ export interface LoginResponse {
     nickname: string;
     email: string;
     universityName?: string;
-    department?: string;
+    major?: string;
     grade?: string;
+    birth?: string;
+    studentNum?: string;
   };
 }
 
@@ -190,11 +192,50 @@ export const logoutAPI = () => {
 };
 
 /**
- * 현재 로그인된 사용자 정보 가져오기
+ * 현재 로그인된 사용자 정보 가져오기 (localStorage)
  */
 export const getCurrentUser = () => {
   const userStr = localStorage.getItem("user");
   return userStr ? JSON.parse(userStr) : null;
+};
+
+/**
+ * 내 정보 조회 (서버 API)
+ */
+export const getMyPageInfo = async () => {
+  try {
+    const token = getAuthToken();
+    if (!token) {
+      return { success: false, message: "로그인이 필요합니다.", data: null };
+    }
+
+    const response = await fetch(`${API_BASE_URL}/auth/me`, {
+      method: "GET",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${token}`,
+      },
+    });
+
+    const result = await response.json();
+
+    if (response.ok) {
+      return { success: true, message: "조회 성공", data: result.data ?? result };
+    } else {
+      return {
+        success: false,
+        message: result.message || "정보 조회에 실패했습니다.",
+        data: null,
+      };
+    }
+  } catch (error) {
+    console.error("내 정보 조회 오류:", error);
+    return {
+      success: false,
+      message: "서버에 연결할 수 없습니다.",
+      data: null,
+    };
+  }
 };
 
 /**
