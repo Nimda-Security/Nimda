@@ -1,5 +1,6 @@
 package com.nimda.cite.attendance.controller;
 
+import com.nimda.cite.attendance.dto.TodayVisitorResponse;
 import com.nimda.cite.attendance.entity.Attendance;
 import com.nimda.cite.attendance.entity.AttendanceLog;
 import com.nimda.cite.attendance.service.AttendanceService;
@@ -12,6 +13,7 @@ import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
 import java.util.Map;
+import java.util.stream.Collectors;
 
 @RestController
 @RequestMapping("/api/cite/attendance")
@@ -38,9 +40,12 @@ public class AttendanceController {
      * [GET] 오늘 출석자 전체 조회
      */
     @GetMapping("/today")
-    public ResponseEntity<ApiResponse<List<AttendanceLog>>> getTodayVisitors() {
+    public ResponseEntity<?> getTodayVisitors() {
         List<AttendanceLog> visitors = attendanceService.getTodayVisitors();
-        return ApiResponse.ok(visitors).toResponse();
+        List<TodayVisitorResponse> dto = visitors.stream()
+                .map(TodayVisitorResponse::from)
+                .toList();
+        return ApiResponse.ok("출석자 조회에 성공했습니다", dto).toResponse();
     }
 
     /**

@@ -19,7 +19,7 @@ export default defineConfig(({ mode }) => {
           // target: 'https://api.nimda.kr',
           target: 'http://localhost:8080',
           changeOrigin: true,
-          secure: true,
+          secure: false,
           // secure: false,
         },
         '/solvedac-api': {
