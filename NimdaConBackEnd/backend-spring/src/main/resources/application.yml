@@ -38,7 +38,8 @@ spring:
     enabled: true
     locations: classpath:db/migration
     baseline-on-migrate: true  # 기존 DB가 있을 경우 baseline 설정
-    validate-on-migrate: true
+    repair-on-migrate: true
+    validate-on-migrate: false
     clean-disabled: true
     out-of-order: true  # DB에서 version 10이 빠진 경우 등, 순서 밖 마이그레이션 허용
   
@@ -73,15 +74,15 @@ nimda:
 # AWS 설정 
 aws:
   s3:
-    bucket: ${AWS_S3_BUCKET}
-    region: ${AWS_REGION}
-    access-key: ${AWS_ACCESS_KEY_ID}
-    secret-key: ${AWS_SECRET_ACCESS_KEY}
+    bucket: nimda-bucket
+    region: ap-northeast-2
+    access-key: ${AWS_ACCESS_KEY}
+    secret-key: ${AWS_SECRET_KEY}
 
     # 파일 저장 경로 
     profile-image-path: profiles/ # 프로필 이미지 저장
     board-image-path: boards/ # 게시판 이미지
-    board-file-path: boards/files # 게시판 첨부파일
+    board-file-path: boards/files/ # 게시판 첨부파일
 
     # 파일 크기 제한 
     max-file-size: 10485760 # 10mb

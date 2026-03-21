@@ -131,4 +131,52 @@ public class AttachmentService {
         }
         return originalFilename.substring(pos + 1);
     }
+
+    /**
+     * S3 Presigned 업로드 후, key/메타정보만으로 첨부파일을 등록한다.
+     * - 파일 본문은 이미 S3에 존재한다고 가정한다.
+     */
+    public Long registerFromS3(String key,
+                               String originFilename,
+                               Long fileSize,
+                               Long boardId,
+                               Long categoryId,
+                               Long userId) {
+        if (key == null || key.isBlank()) {
+            throw new RuntimeException("S3 key가 필요합니다.");
+        }
+
+        // key에서 실제 저장 파일명 부분만 추출 (예: boards/files/uuid_name.png -> uuid_name.png)
+        String storedFilename = extractStoredFilenameFromKey(key);
+
+        // 확장자는 원본 파일명 기준으로 우선 추출, 없으면 storedFilename 기준
+        String nameForExt = originFilename != null && !originFilename.isBlank() ? originFilename : storedFilename;
+        String ext = extractExt(nameForExt);
+        if (ext.isBlank()) {
+            ext = "bin";
+        }
+
+        String safeOrigin = (originFilename == null || originFilename.isBlank()) ? storedFilename : originFilename;
+
+        Attachment attachment = Attachment.create(
+                safeOrigin,
+                storedFilename,
+                key,               // filepath에는 S3 key를 그대로 저장해 둔다.
+                ext,
+                fileSize,
+                boardId,
+                categoryId,
+                userId
+        );
+
+        return attachmentRepository.save(attachment).getId();
+    }
+
+    private String extractStoredFilenameFromKey(String key) {
+        int idx = key.lastIndexOf("/");
+        if (idx < 0 || idx == key.length() - 1) {
+            return key;
+        }
+        return key.substring(idx + 1);
+    }
 }
