@@ -994,3 +994,378 @@ body {
   85% { opacity: 1; transform: translate(-50%, 0); }
   100% { opacity: 0; transform: translate(-50%, -5px); }
 }
+
+/* ============================================
+   BoardWrite Page (피그마 2003:338 기반)
+   ============================================ */
+
+.bw-page {
+  background-color: #f5f5f5;
+  min-height: 100%;
+  padding: 32px 0 64px;
+  display: flex;
+  justify-content: center;
+}
+
+.bw-container {
+  width: 960px;
+  background: #ffffff;
+  border: 1px solid #d4d4d4;
+  border-radius: 8px;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+}
+
+/* 구분선 */
+.bw-divider {
+  height: 1px;
+  background-color: #d4d4d4;
+  flex-shrink: 0;
+}
+
+/* ── 상단 게시판 선택바 ── */
+.bw-top-bar {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 24px 32px;
+}
+
+.bw-label {
+  font-size: 14px;
+  font-weight: 600;
+  color: #525252;
+  white-space: nowrap;
+  flex-shrink: 0;
+}
+
+.bw-category-selector {
+  position: relative;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 0 12px;
+  height: 32px;
+  border: 1px solid #bcbcbc;
+  border-radius: 8px;
+  cursor: pointer;
+  user-select: none;
+  min-width: 120px;
+}
+
+.bw-category-selected {
+  font-size: 14px;
+  font-weight: 400;
+  color: #0c0c0c;
+  flex: 1;
+}
+
+.bw-chevron {
+  display: flex;
+  align-items: center;
+  color: #525252;
+  transition: transform 0.2s ease;
+}
+
+.bw-chevron--open {
+  transform: rotate(180deg);
+}
+
+.bw-category-dropdown {
+  position: absolute;
+  top: calc(100% + 4px);
+  left: 0;
+  min-width: 160px;
+  background: #ffffff;
+  border: 1px solid #d4d4d4;
+  border-radius: 8px;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.1);
+  z-index: 100;
+  overflow: hidden;
+}
+
+.bw-category-option {
+  padding: 10px 16px;
+  font-size: 14px;
+  color: #0c0c0c;
+  cursor: pointer;
+  transition: background 0.15s;
+}
+
+.bw-category-option:hover {
+  background: #f5f5f5;
+}
+
+.bw-category-option--active {
+  font-weight: 600;
+  color: #d97399;
+  background: #fff0f5;
+}
+
+/* ── 제목 ── */
+.bw-title-area {
+  padding: 0;
+}
+
+.bw-title-input {
+  width: 100%;
+  padding: 24px 32px;
+  font-size: 24px;
+  font-weight: 700;
+  font-family: "Pretendard", sans-serif;
+  color: #0c0c0c;
+  border: none;
+  outline: none;
+  background: transparent;
+  line-height: 1.2;
+  box-sizing: border-box;
+}
+
+.bw-title-input::placeholder {
+  color: #a3a3a3;
+}
+
+/* ── 툴바 ── */
+.bw-toolbar {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 14px 32px;
+}
+
+.bw-tool-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 28px;
+  height: 28px;
+  background: none;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+  color: #525252;
+  transition: background 0.15s, color 0.15s;
+  padding: 0;
+  flex-shrink: 0;
+}
+
+.bw-tool-btn:hover {
+  background: #f0f0f0;
+  color: #0c0c0c;
+}
+
+.bw-tool-dot {
+  width: 4px;
+  height: 4px;
+  border-radius: 50%;
+  background: #d4d4d4;
+  flex-shrink: 0;
+}
+
+/* ── 내용 ── */
+.bw-content-input {
+  width: 100%;
+  min-height: 600px;
+  padding: 28px 32px;
+  font-size: 16px;
+  font-weight: 400;
+  font-family: "Pretendard", sans-serif;
+  color: #0c0c0c;
+  border: none;
+  outline: none;
+  background: transparent;
+  resize: none;
+  line-height: 1.7;
+  box-sizing: border-box;
+}
+
+.bw-content-input::placeholder {
+  color: #bcbcbc;
+}
+
+/* ── 카테고리(태그) 섹션 ── */
+.bw-section {
+  padding: 20px 32px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.bw-section-label {
+  font-size: 14px;
+  font-weight: 600;
+  color: #525252;
+}
+
+.bw-tag-list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+}
+
+.bw-tag-chip {
+  height: 32px;
+  padding: 0 16px;
+  border: 1px solid #d4d4d4;
+  border-radius: 999px;
+  font-size: 14px;
+  font-weight: 400;
+  color: #a3a3a3;
+  background: #ffffff;
+  cursor: pointer;
+  transition: all 0.15s;
+  font-family: "Pretendard", sans-serif;
+}
+
+.bw-tag-chip:hover {
+  border-color: #d97399;
+  color: #d97399;
+}
+
+.bw-tag-chip--active {
+  border-color: #d97399;
+  color: #d97399;
+  font-weight: 600;
+  background: #fff0f5;
+}
+
+.bw-tag-hint {
+  font-size: 14px;
+  color: #a3a3a3;
+}
+
+.bw-tag-required {
+  font-size: 12px;
+  color: #d64454;
+}
+
+/* ── 파일 첨부 ── */
+.bw-dropzone {
+  border: 1.5px dashed #bcbcbc;
+  border-radius: 8px;
+  height: 167px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  cursor: pointer;
+  transition: border-color 0.2s, background 0.2s;
+}
+
+.bw-dropzone:hover,
+.bw-dropzone--active {
+  border-color: #d97399;
+  background: #fff7fa;
+}
+
+.bw-dropzone-icon {
+  color: #a3a3a3;
+}
+
+.bw-dropzone-text {
+  font-size: 14px;
+  font-weight: 500;
+  color: #737373;
+}
+
+.bw-dropzone-hint {
+  font-size: 12px;
+  color: #bcbcbc;
+}
+
+.bw-file-selected {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 16px;
+  background: #f5f5f5;
+  border-radius: 6px;
+  border: 1px solid #d4d4d4;
+}
+
+.bw-file-name {
+  font-size: 14px;
+  color: #525252;
+  flex: 1;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.bw-file-remove {
+  width: 20px;
+  height: 20px;
+  border: none;
+  background: none;
+  cursor: pointer;
+  font-size: 16px;
+  color: #a3a3a3;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 50%;
+  transition: background 0.15s, color 0.15s;
+  padding: 0;
+}
+
+.bw-file-remove:hover {
+  background: #f0f0f0;
+  color: #d64454;
+}
+
+/* ── 에러 ── */
+.bw-error {
+  margin: 0 32px;
+  padding: 12px 16px;
+  background: #fff0f0;
+  border-radius: 6px;
+  font-size: 14px;
+  color: #d64454;
+}
+
+/* ── 버튼 ── */
+.bw-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 12px;
+  padding: 20px 32px;
+}
+
+.bw-btn {
+  height: 36px;
+  padding: 0 28px;
+  border-radius: 8px;
+  font-size: 16px;
+  font-weight: 500;
+  font-family: "Pretendard", sans-serif;
+  cursor: pointer;
+  transition: opacity 0.15s, background 0.15s;
+  border: none;
+}
+
+.bw-btn--cancel {
+  background: #ffffff;
+  border: 1px solid #d4d4d4;
+  color: #0c0c0c;
+}
+
+.bw-btn--cancel:hover {
+  background: #f5f5f5;
+}
+
+.bw-btn--submit {
+  background: #d97399;
+  color: #f5f5f5;
+}
+
+.bw-btn--submit:hover {
+  opacity: 0.88;
+}
+
+.bw-btn--submit:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
