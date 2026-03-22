@@ -73,6 +73,8 @@ nimda:
   file:
     upload-dir: ${FILE_UPLOAD_DIR:${user.home}/nimda-attachments}
 
+# S3: AWS_S3_ACCESS_KEY / AWS_S3_SECRET_KEY 둘 다 설정 시에만 S3Client·Presigner 빈이 등록됩니다.
+# 미설정 시 첨부는 nimda.file.upload-dir(로컬 디스크)만 사용합니다.
 aws:
   s3:
     bucket: nimda-bucket

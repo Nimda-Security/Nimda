@@ -16,7 +16,7 @@ import java.util.Optional;
 
 @Component
 @Primary
-//@ConditionalOnBean(S3Client.class) // aws.s3.bucket 미설정 시 빈 미생성 → LocalFileStore만 사용
+@ConditionalOnBean(S3Client.class) // 자격 증명 없으면 S3 빈 미생성 → LocalFileStore만 사용
 @RequiredArgsConstructor
 public class S3FileStore implements FileStore {
 
