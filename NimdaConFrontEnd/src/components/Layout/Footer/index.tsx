@@ -22,9 +22,8 @@ const Footer: React.FC = () => {
             textAlign: "center",
           }}
         >
-          {/* 로고 */}
-          <div style={{ opacity: 0.8 }}>
-            <Logo />
+          <div style={{ opacity: 0.8, filter: "grayscale(100%) brightness(1.5)" }}>
+            <Logo showText={false} />
           </div>
 
           {/* 주소 */}
