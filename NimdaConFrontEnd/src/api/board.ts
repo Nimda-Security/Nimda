@@ -742,3 +742,71 @@ export const getMyBoardCountAPI = async (): Promise<number> => {
     return 0;
   }
 };
+
+/**
+ * 내 게시글 목록
+ */
+export interface MyBoard {
+  id: number;
+  title: string;
+  likeCount: number;
+  commentCount: number;
+  createdAt: string;
+  filepath?: string;
+}
+
+export const getMyBoardsAPI = async (): Promise<MyBoard[]> => {
+  try {
+    const token = localStorage.getItem('authToken');
+    if (!token) return [];
+
+    const response = await fetch(`${API_BASE_URL}/my/boards`, {
+      method: 'GET',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${token}`,
+      },
+    });
+
+    const result = await response.json();
+    if (response.ok && result.success && Array.isArray(result.data)) {
+      return result.data.map((b: Record<string, unknown>) => ({
+        id: b.id as number,
+        title: b.title as string,
+        likeCount: (b.likeCount as number) ?? 0,
+        commentCount: (b.commentCount as number) ?? 0,
+        createdAt: b.createdAt as string,
+        filepath: b.filepath as string | undefined,
+      }));
+    }
+    return [];
+  } catch (error) {
+    console.error('내 게시글 목록 조회 오류:', error);
+    return [];
+  }
+};
+
+/**
+ * 내 게시글 삭제
+ */
+export const deleteMyBoardsAPI = async (boardIds: number[]): Promise<{ success: boolean; message?: string }> => {
+  try {
+    const token = localStorage.getItem('authToken');
+    if (!token) return { success: false, message: '로그인이 필요합니다.' };
+
+    const response = await fetch(`${API_BASE_URL}/my/boards`, {
+      method: 'DELETE',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${token}`,
+      },
+      body: JSON.stringify({ boardIds }),
+    });
+
+    const result = await response.json();
+    return { success: result.success, message: result.message };
+  } catch (error) {
+    console.error('내 게시글 삭제 오류:', error);
+    return { success: false, message: '게시글 삭제 중 오류가 발생했습니다.' };
+  }
+};
