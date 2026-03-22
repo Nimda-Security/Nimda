@@ -285,7 +285,7 @@ const Sidebar: React.FC = () => {
                   <img src={item.avatar} alt="avatar" />
                 </div>
                 <span className="sidebar-visitors__name">{item.name}</span>
-                <span className="sidebar-visitors__score">{item.score}NC</span>
+                <span className="sidebar-visitors__score">{item.score}</span>
               </div>
             ))
           )}
