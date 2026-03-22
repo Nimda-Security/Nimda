@@ -104,6 +104,14 @@ jobs:
             docker image prune -a -f &&
             echo '=== 배포 완료 ==='
           "
+      - name: Build with Maven
+        run: mvn clean package
+        env:
+          # 이 4줄이 없으면 GitHub에서 빌드할 때 S3 설정을 못 읽어서 에러
+          AWS_ACCESS_KEY: ${{ secrets.AWS_ACCESS_KEY }}
+          AWS_SECRET_KEY: ${{ secrets.AWS_SECRET_KEY }}
+          AWS_S3_BUCKET: ${{ secrets.AWS_S3_BUCKET }}
+          AWS_REGION: ${{ secrets.AWS_REGION }}    
         # Secrets 설정 필요:
         # - SERVER_HOST: 서버 IP 주소 또는 도메인 (예: 123.456.789.0 또는 server.example.com)
         # - SERVER_USER: SSH 사용자명 (예: ubuntu, root, ec2-user)
