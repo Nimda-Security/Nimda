@@ -6,10 +6,10 @@
 :root {
   --header-height: 56px;
   --header-gap: 32px;
-  --container-width: 1200px;
-  --sidebar-width: 282px;
+  --container-width: 960px;
+  --sidebar-width: 222px;
   --content-gap: 24px;
-  --content-width: 894px;
+  --content-width: 714px;
   --footer-height: 180px;
 
   /* Figma 색상 토큰 */
@@ -155,22 +155,24 @@ body {
 }
 
 .sidebar-profile__avatar {
-  width: 234px;
-  height: 234px;
+  width: 190px;
+  height: 190px;
   border-radius: 50%;
   background-color: var(--color-gray-100);
-  margin: 0 auto 16px;
+  margin: 0 auto 12px;
   display: flex;
   align-items: center;
   justify-content: center;
+  overflow: hidden;
 }
 
 .sidebar-profile__name {
-  font-size: 20px;
+  font-size: 16px;
   font-weight: 700;
   color: var(--color-black);
   line-height: 1.5;
   margin-bottom: 8px;
+  text-align: center;
 }
 
 .sidebar-profile__desc {
@@ -210,26 +212,29 @@ body {
 .sidebar-profile__stats {
   display: flex;
   flex-direction: column;
-  gap: 0;
+  gap: 4px;
   margin-top: 16px;
-  padding: 0 24px;
+  padding: 0 16px;
+  width: 190px;
+  margin-left: auto;
+  margin-right: auto;
 }
 
 .sidebar-profile__stat-item {
   display: flex;
   align-items: center;
-  gap: 8px;
+  gap: 4px;
   padding: 0;
-  font-size: 14px;
-  font-weight: 500;
+  font-size: 12px;
+  font-weight: 400;
   color: var(--color-black);
   line-height: 1.5;
   font-family: "Pretendard", sans-serif;
 }
 
 .sidebar-profile__stat-icon {
-  width: 13px;
-  height: 14px;
+  width: 16px;
+  height: 16px;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -242,9 +247,11 @@ body {
 }
 
 .sidebar-profile__stat-value {
-  font-weight: 600;
+  font-weight: 500;
   text-align: right;
   margin-left: auto;
+  display: flex;
+  gap: 2px;
 }
 
 /* 구분선 */
@@ -257,18 +264,24 @@ body {
 /* 네비게이션 */
 .sidebar-nav {
   padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
 }
 
 .sidebar-section {
   margin-bottom: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
 }
 
 .sidebar-section__header {
   display: flex;
-  justify-content: space-between;
+  gap: 8px;
   align-items: center;
   width: 100%;
-  padding: 8px 24px;
+  padding: 0;
   background: none;
   border: none;
   cursor: pointer;
@@ -276,8 +289,8 @@ body {
 }
 
 .sidebar-section__title {
-  font-size: 16px;
-  font-weight: 700;
+  font-size: 14px;
+  font-weight: 600;
   color: var(--color-black);
   line-height: 1.5;
 }
@@ -296,15 +309,20 @@ body {
   list-style: none;
   padding: 0;
   margin: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding-left: 8px;
 }
 
 .sidebar-section__item {
-  padding: 4px 36px;
+  padding: 0;
   font-size: 14px;
-  font-weight: 500;
+  font-weight: 400;
   color: var(--color-black);
   line-height: 1.5;
   cursor: pointer;
+  width: 100%;
 }
 
 .sidebar-section__item:hover {
@@ -413,21 +431,49 @@ body {
 
 /* 오늘 방문자 */
 .sidebar-visitors {
-  padding: 0 24px;
+  padding: 0 16px;
 }
 
-.sidebar-visitors__title {
-  font-size: 16px;
-  font-weight: 700;
+/* 오늘 방문자 / 월간랭킹 탭 */
+.sidebar-visitors__tabs {
+  display: flex;
+  align-items: center;
+  background-color: var(--color-gray-200);
+  border-radius: 8px;
+  height: 28px;
+  margin-bottom: 16px;
+  overflow: hidden;
+  position: relative;
+  width: 190px;
+}
+
+.sidebar-visitors__tab {
+  flex: 1;
+  height: 100%;
+  border: none;
+  background: none;
+  cursor: pointer;
+  font-size: 14px;
+  font-weight: 600;
   color: var(--color-black);
+  font-family: "Pretendard", sans-serif;
   line-height: 1.5;
-  margin-bottom: 12px;
+  position: relative;
+  z-index: 1;
+  white-space: nowrap;
 }
 
-.sidebar-visitors__grid {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 8px 0;
+.sidebar-visitors__tab--active {
+  background-color: var(--color-white);
+  border-radius: 4px;
+  margin: 4px;
+  height: 20px;
+}
+
+.sidebar-visitors__list {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
 }
 
 .sidebar-visitors__item {
@@ -441,11 +487,13 @@ body {
   height: 24px;
   border-radius: 50%;
   flex-shrink: 0;
+  overflow: hidden;
+  background-color: var(--color-gray-200);
 }
 
 .sidebar-visitors__name {
   font-size: 14px;
-  font-weight: 500;
+  font-weight: 400;
   color: var(--color-black);
   line-height: 1.5;
 }
