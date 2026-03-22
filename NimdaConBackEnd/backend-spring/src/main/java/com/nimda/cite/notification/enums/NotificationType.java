@@ -4,7 +4,8 @@ package com.nimda.cite.notification.enums;
         PushLikeButtonAtBoard("님이 내 게시글을 좋아합니다."),
         PushLikeButtonAtComment("님이 내 댓글을 좋아합니다."),
         AddCommentAtBoard("님이 내 게시글에 댓글을 남겼습니다."),
-        AddChildComment("님이 답글을 남겼습니다.");
+        AddChildComment("님이 답글을 남겼습니다."),
+        NoticePost("새 공지사항이 등록되었습니다.");
 
         private final String suffix;
 

@@ -1,5 +1,6 @@
 package com.nimda.cite.board.service;
 
+import com.nimda.cite.alarm.service.AlarmService;
 import com.nimda.cite.board.entity.Board;
 import com.nimda.cite.board.entity.Category;
 import com.nimda.cite.board.repository.BoardRepository;
@@ -20,6 +21,8 @@ public class BoardService {
 
     @Autowired
     private BoardRepository boardRepository;
+    @Autowired
+    private AlarmService alarmService;
 
     // Note. write Service
     // Param : board : 게시글 정보, author : 작성자, file : 첨부파일
@@ -54,6 +57,11 @@ public class BoardService {
         }
 
         boardRepository.save(board);
+
+        // 공지 카테고리 게시글 작성 시 전체 알림 전송
+        if (board.getCategory().getName().contains("공지")) {
+            alarmService.sendNoticeToAll(board.getId(), board.getTitle(), author.getId());
+        }
     }
 
     // Note. boardListByCategory - 카테고리별 게시글 목록을 페이지네이션으로 조회한다.

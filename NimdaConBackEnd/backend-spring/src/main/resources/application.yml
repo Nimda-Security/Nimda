@@ -20,7 +20,8 @@ spring:
   
   jpa:
     hibernate:
-      ddl-auto: none 
+      ddl-auto: none
+      open-in-view: false
     show-sql: true
     properties:
       hibernate:
@@ -28,6 +29,7 @@ spring:
         format_sql: true # sql Formatting
         show_sql: true
     defer-datasource-initialization: false
+
   
   sql:
     init:
