@@ -23,4 +23,8 @@ public class SseEmitterRepository {
     public void deleteByUserId(Long userId) {
         emitters.remove(userId);
     }
+
+    public Map<Long, SseEmitter> getAll() {
+        return emitters;
+    }
 }
