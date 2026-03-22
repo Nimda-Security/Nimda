@@ -20,9 +20,10 @@ public class NotificationResponse {
     private Boolean isRead;
 
     public static NotificationResponse from(Notification n) {
-        return NotificationResponse.builder().
-                id(n.getId())
-                .senderNickName(n.getSender().getName())
+        return NotificationResponse.builder()
+                .id(n.getId())
+                // Sender가 null인 경우를 대비한 방어
+                .senderNickName(n.getSender() != null ? n.getSender().getNickname() : "시스템")
                 .message(n.getMessage())
                 .url(n.getRelatedUrl())
                 .createdAt(n.getCreatedAt())

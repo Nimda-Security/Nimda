@@ -4,6 +4,7 @@ import Logo from '@/components/icons/Logo';
 import { getCurrentNickname, isAdmin } from '@/utils/jwt';
 import { isLoggedIn, logoutAPI } from '@/api/auth';
 import Logout from '@/components/icons/Logout.svg';
+import NotificationBell from '@/components/Notification/NotificationBell';
 
 const Navbar: React.FC = () => {
   const navigate = useNavigate();
@@ -51,33 +52,8 @@ const Navbar: React.FC = () => {
         <div style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
           {isLoggedInState ? (
             <>
-              {/* 알림 아이콘 (미구현) */}
-              <button
-                style={{
-                  padding: '8px',
-                  borderRadius: '50%',
-                  background: 'rgba(0, 0, 0, 0.05)',
-                  border: 'none',
-                  cursor: 'pointer',
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                }}
-                disabled
-                title="알림 (준비중)"
-              >
-                <svg
-                  width="20"
-                  height="20"
-                  viewBox="0 0 24 24"
-                  fill="none"
-                  stroke="currentColor"
-                  strokeWidth="2"
-                >
-                  <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9" />
-                  <path d="M13.73 21a2 2 0 0 1-3.46 0" />
-                </svg>
-              </button>
+              {/* 알림 */}
+              <NotificationBell />
 
               {/* 관리자 설정 아이콘 */}
               {adminStatus && (

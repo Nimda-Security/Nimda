@@ -1,6 +1,7 @@
 package com.nimda.cite.board.service;
 
 import com.nimda.cite.attachment.service.AttachmentService;
+import com.nimda.cite.alarm.service.AlarmService;
 import com.nimda.cite.board.entity.Board;
 import com.nimda.cite.board.entity.Category;
 import com.nimda.cite.board.repository.BoardRepository;
@@ -18,6 +19,8 @@ public class BoardService {
 
     @Autowired
     private BoardRepository boardRepository;
+    @Autowired
+    private AlarmService alarmService;
 
     @Autowired
     private AttachmentService attachmentService;
@@ -43,14 +46,19 @@ public class BoardService {
 
         boardRepository.save(board);
 
-        Long categoryId = board.getCategory() != null ? board.getCategory().getId() : null;
-
+Long categoryId = board.getCategory() != null ? board.getCategory().getId() : null;
         if (attachmentIds != null) {
             if (isNew) {
                 attachmentService.linkAttachmentsToBoard(attachmentIds, board.getId(), categoryId, author.getId());
             } else {
                 attachmentService.syncAttachmentsForBoard(board.getId(), attachmentIds, categoryId, author.getId());
             }
+        }
+
+        // 2. 공지 알림 전송 (기존 main 기능)
+        if (board.getCategory() != null && board.getCategory().getName().contains("공지")) {
+            alarmService.sendNoticeToAll(board.getId(), board.getTitle(), author.getId());
+        
         }
     }
 

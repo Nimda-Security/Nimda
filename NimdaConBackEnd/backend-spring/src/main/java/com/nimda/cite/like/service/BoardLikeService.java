@@ -65,8 +65,6 @@ public class BoardLikeService {
 
                 eventPublisher.publishEvent(new PushLikeButtonEvent(this,
                         board, board.getAuthor(), liker));
-
-                alarmService.send(notification); // AlarmService의 send 메서드 호출
             }
             return "좋아요 완료";
         }
