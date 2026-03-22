@@ -226,7 +226,12 @@ const InfoField: React.FC<InfoFieldProps> = ({ label, value, editable, onEdit })
         </button>
       )}
     </div>
-    <span className="text-[16px] font-semibold text-[#525252]">{value}</span>
+    <div 
+      tabIndex={0}
+      className="text-[16px] font-semibold text-[#525252] p-2 border-2 border-transparent rounded-[4px] transition-all focus:border-[#d97399] focus:outline-none"
+    >
+      {value}
+    </div>
   </div>
 );
 
