@@ -1,5 +1,7 @@
 package com.nimda.cite.board.dto;
 
+import com.fasterxml.jackson.annotation.JsonInclude;
+import com.nimda.cite.attachment.dto.AttachmentResponseDto;
 import com.nimda.cite.board.entity.Board;
 import com.nimda.cup.user.entity.User;
 import lombok.AllArgsConstructor;
@@ -9,6 +11,7 @@ import lombok.NoArgsConstructor;
 import lombok.Setter;
 
 import java.time.LocalDateTime;
+import java.util.List;
 
 /**
  * 게시글 응답 DTO
@@ -35,6 +38,10 @@ public class BoardResponseDTO {
     private String tag; // 게시글 태그 (예: "필독", "공지", "가입인사")
     private String filename;
     private String filepath;
+
+    /** 상세 조회 시에만 채움 — 게시글에 연결된 첨부(S3+Attachment) */
+    private List<AttachmentResponseDto> attachments;
+
     private LocalDateTime createdAt;
     private LocalDateTime updatedAt;
 
@@ -61,6 +68,13 @@ public class BoardResponseDTO {
      * @return BoardResponseDTO
      */
     public static BoardResponseDTO from(Board board, long likeCount) {
+        return from(board, likeCount, null);
+    }
+
+    /**
+     * @param attachments 상세 응답용. 목록 API에서는 null 전달(필드 생략).
+     */
+    public static BoardResponseDTO from(Board board, long likeCount, List<AttachmentResponseDto> attachments) {
         if (board == null) {
             return null;
         }
@@ -89,6 +103,7 @@ public class BoardResponseDTO {
                 .tag(board.getTag()) // 태그 필드 추가
                 .filename(board.getFilename())
                 .filepath(board.getFilepath())
+                .attachments(attachments)
                 .createdAt(board.getCreatedAt())
                 .updatedAt(board.getUpdatedAt())
                 .build();

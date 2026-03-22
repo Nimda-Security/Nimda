@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import Layout from '@/components/Layout';
 import { getBoardDetailAPI, updateBoardAPI } from '@/api/board';
+import { uploadBoardFileViaS3 } from '@/api/attachments';
 import type { Board } from '../types';
 
 function BoardEditPage() {
@@ -14,7 +15,14 @@ function BoardEditPage() {
   const [title, setTitle] = useState('');
   const [content, setContent] = useState('');
   const [tag, setTag] = useState<string>('');
+  /** 새로 선택한 파일(저장 시 S3 업로드). */
   const [file, setFile] = useState<File | null>(null);
+  /**
+   * 수정 API에 넘길 최종 첨부 ID 목록.
+   * null = 상세에 attachments 필드가 없던 응답(옛 API) → PUT 시 attachmentIds 생략·첨부 동기화 안 함.
+   * 배열 = 동기화(빈 배열이면 서버에서 해당 글 첨부 전부 제거).
+   */
+  const [attachmentIdList, setAttachmentIdList] = useState<number[] | null>(null);
   const [loading, setLoading] = useState(true);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -38,6 +46,11 @@ function BoardEditPage() {
         setTitle(fetchedBoard.title);
         setContent(fetchedBoard.content);
         setTag(fetchedBoard.tag || '');
+        if (fetchedBoard.attachments !== undefined) {
+          setAttachmentIdList(fetchedBoard.attachments.map((a) => a.id));
+        } else {
+          setAttachmentIdList(null);
+        }
       } else {
         setError(response.message);
       }
@@ -65,12 +78,27 @@ function BoardEditPage() {
         return;
       }
 
+      // 첨부 동기화: 상세에 attachments가 있었으면 목록 기준, 새 파일 있으면 S3 업로드 후 ID 추가.
+      // attachmentIdList가 null이면 attachmentIds 필드 자체를 보내지 않음(백엔드가 기존 첨부 유지).
+      let attachmentIds: number[] | undefined;
+      if (attachmentIdList !== null) {
+        attachmentIds = [...attachmentIdList];
+      }
+      if (file) {
+        const uploaded = await uploadBoardFileViaS3(file, board.category.id);
+        if (!uploaded.ok) {
+          setError(uploaded.message);
+          return;
+        }
+        attachmentIds = [...(attachmentIds ?? []), uploaded.attachmentId];
+      }
+
       const response = await updateBoardAPI(board.id, {
         categoryId: board.category.id,
         title: title.trim(),
         content: content.trim(),
         tag: tag.trim() || undefined,
-        file: file || undefined,
+        attachmentIds,
       });
 
       if (response.success && 'board' in response) {
@@ -104,6 +132,11 @@ function BoardEditPage() {
 
   const handleRemoveFile = () => {
     setFile(null);
+  };
+
+  /** 목록에서 첨부 ID 제거(서버 동기화는 저장 시). */
+  const handleRemoveAttachmentId = (id: number) => {
+    setAttachmentIdList((prev) => (prev === null ? null : prev.filter((x) => x !== id)));
   };
 
   // 카테고리의 availableTags를 파싱하여 배열로 변환
@@ -220,15 +253,36 @@ function BoardEditPage() {
               </div>
             )}
 
-            {/* 파일 업로드 */}
+            {/* 첨부: S3 연동 시 attachments 목록 / 옛 글은 filename만 있을 수 있음 */}
             <div>
-              <label htmlFor="file" className="block text-sm font-medium text-gray-700 mb-2">
-                첨부파일
-                {board?.filename && (
-                  <span className="text-sm text-gray-500 ml-2">
-                    (현재: {board.filename.split('_').slice(1).join('_')})
-                  </span>
-                )}
+              <span className="block text-sm font-medium text-gray-700 mb-2">첨부파일</span>
+              {attachmentIdList !== null && attachmentIdList.length > 0 && (
+                <ul className="mb-3 space-y-1 text-sm text-gray-700">
+                  {attachmentIdList.map((aid) => {
+                    const meta = board?.attachments?.find((a) => a.id === aid);
+                    return (
+                      <li key={aid} className="flex items-center gap-2">
+                        <span>{meta?.originFilename ?? `첨부 #${aid}`}</span>
+                        <button
+                          type="button"
+                          onClick={() => handleRemoveAttachmentId(aid)}
+                          className="text-red-600 hover:text-red-800"
+                        >
+                          제거
+                        </button>
+                      </li>
+                    );
+                  })}
+                </ul>
+              )}
+              {board?.attachments === undefined && board?.filename && (
+                <p className="text-xs text-gray-500 mb-2">
+                  (레거시 서버 저장 파일명: {board.filename.split('_').slice(1).join('_')} — S3 첨부 목록이 없을 때만 표시)
+                </p>
+              )}
+
+              <label htmlFor="file" className="block text-sm font-medium text-gray-700 mb-1">
+                새 첨부 추가
               </label>
               {file ? (
                 <div className="flex items-center gap-2">
@@ -250,7 +304,7 @@ function BoardEditPage() {
                 />
               )}
               <p className="text-xs text-gray-500 mt-1">
-                새 파일을 업로드하면 기존 파일이 교체됩니다.
+                저장 시 S3에 업로드 후 글에 연결됩니다. 위 목록에서 제거한 항목은 저장 시 삭제됩니다.
               </p>
             </div>
 

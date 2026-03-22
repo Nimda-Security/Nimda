@@ -35,10 +35,15 @@ jobs:
           restore-keys: ${{ runner.os }}-m2
           # Maven 라이브러리를 캐시해서 다음 빌드가 더 빠릅니다
           
-      # 4단계: Maven으로 빌드 및 테스트
+      # 4단계: Maven으로 빌드 및 테스트 (S3: application.yml의 ${AWS_S3_*} 와 Spring relaxed binding 일치)
       - name: Build and Test with Maven
         working-directory: NimdaConBackEnd/backend-spring
         run: mvn clean package
+        env:
+          AWS_S3_ACCESS_KEY: ${{ secrets.AWS_ACCESS_KEY }}
+          AWS_S3_SECRET_KEY: ${{ secrets.AWS_SECRET_KEY }}
+          AWS_S3_BUCKET: ${{ secrets.AWS_S3_BUCKET }}
+          AWS_S3_REGION: ${{ secrets.AWS_REGION }}
         # clean: 이전 빌드 파일 삭제
         # package: 테스트 실행 후 JAR 파일 생성
         # 테스트가 없으면 자동으로 건너뜀
@@ -104,11 +109,8 @@ jobs:
             docker image prune -a -f &&
             echo '=== 배포 완료 ==='
           "
-        # Secrets 설정 필요:
-        # - SERVER_HOST: 서버 IP 주소 또는 도메인 (예: 123.456.789.0 또는 server.example.com)
-        # - SERVER_USER: SSH 사용자명 (예: ubuntu, root, ec2-user)
-        # - SERVER_SSH_KEY: SSH 개인키 전체 내용
-        # - SERVER_DEPLOY_PATH: docker-compose.yml이 있는 경로 (예: /home/ubuntu/app 또는 /opt/nimda-con)
+
+# Secrets (저장소 Settings → Actions): DOCKER_HUB_*, SERVER_*, AWS_ACCESS_KEY, AWS_SECRET_KEY, AWS_S3_BUCKET, AWS_REGION 등
 
 # 자동 실행 작업 정리
 # 1. 코드 가져오기
