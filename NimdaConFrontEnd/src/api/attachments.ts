@@ -1,5 +1,5 @@
 /**
- * 게시글 첨부(S3 presigned → PUT → register) — 백엔드 B안과 동일 흐름.
+ * 게시글 첨부(S3 presigned → PUT → register) — 백엔드 동일 흐름.
  * @see AttachmentController /presigned, /register
  */
 
@@ -161,4 +161,35 @@ export const uploadBoardFileViaS3 = async (
     categoryId,
     boardId: null,
   });
+};
+
+/**
+ * 첨부 다운로드: 일반 링크로 API를 열면 Authorization이 없어 403.
+ * Spring Security가 /attachments/** 를 막으므로 Bearer로 GET download-url만 호출한 뒤 새 탭에서 연다.
+ */
+export const openAttachmentDownloadInNewTab = async (
+  attachmentId: number
+): Promise<{ ok: true } | { ok: false; message: string }> => {
+  const token = localStorage.getItem('authToken');
+  if (!token) {
+    return { ok: false, message: '로그인이 필요합니다.' };
+  }
+
+  const response = await fetch(`${ATTACHMENTS_BASE}/${attachmentId}/download-url`, {
+    headers: { Authorization: `Bearer ${token}` },
+  });
+  const result = await parseJsonSafe(response);
+  if (!response.ok || !result?.success) {
+    return {
+      ok: false,
+      message: (result?.message as string) || '다운로드 URL을 가져오지 못했습니다.',
+    };
+  }
+  const data = result.data ?? result;
+  const downloadUrl = (data.downloadUrl as string | undefined)?.trim();
+  if (!downloadUrl) {
+    return { ok: false, message: '다운로드 URL이 없습니다.' };
+  }
+  window.open(downloadUrl, '_blank', 'noopener,noreferrer');
+  return { ok: true };
 };

@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { Heart, MessageCircle, MoreVertical } from 'lucide-react';
 import Layout from '@/components/Layout';
+import { openAttachmentDownloadInNewTab } from '@/api/attachments';
 import { getBoardDetailAPI, deleteBoardAPI, getFileDownloadURL, getBoardLikeStatusAPI, toggleBoardLikeAPI } from '@/api/board';
 import type { Board } from '../types';
 import CommentSection from '@/domains/Comment';
@@ -90,10 +91,6 @@ function BoardDetailPage() {
     }
   };
 
-  /** 상세 API의 downloadUrl이 없을 때 id 기반 API 경로 (백엔드 AttachmentResponseDto.downloadUrl과 동일 규칙) */
-  const attachmentDownloadHref = (att: { id: number; downloadUrl?: string }) =>
-    att.downloadUrl?.trim() || `/api/cite/attachments/${att.id}/download`;
-
   const isAuthor = () => !board ? false : false;
 
   const fmtDate = (s: string) => {
@@ -173,10 +170,14 @@ function BoardDetailPage() {
               {board.attachments.map((att) => (
                 <li key={att.id}>
                   <a
-                    href={attachmentDownloadHref(att)}
-                    target="_blank"
-                    rel="noopener noreferrer"
+                    href="#"
                     className="board-detail__attachments-link"
+                    onClick={(e) => {
+                      e.preventDefault();
+                      void openAttachmentDownloadInNewTab(att.id).then((r) => {
+                        if (!r.ok) alert(r.message);
+                      });
+                    }}
                   >
                     📎 {att.originFilename ?? `첨부 #${att.id}`}
                   </a>
