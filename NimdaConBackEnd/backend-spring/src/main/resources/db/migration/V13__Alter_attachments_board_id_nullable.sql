@@ -1,4 +1,4 @@
--- B안: presigned 업로드 후 register 시 아직 게시글이 없을 수 있음 → board_id NULL 허용
+-- presigned 업로드 후 register 시 아직 게시글이 없을 수 있음 → board_id NULL 허용
 -- 기존 V6에서 board_id NOT NULL + FK → FK 제거 후 컬럼 수정, FK 재생성(이름 고정: fk_attachments_board)
 
 SET @fk_name := (

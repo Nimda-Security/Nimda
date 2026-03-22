@@ -98,3 +98,6 @@ Thumbs.db
 
 # TypeScript
 *.tsbuildinfo
+
+# 로컬 전용 설정 파일 제외
+src/main/resources/application-local.yml

@@ -95,7 +95,7 @@ function BoardWritePage() {
       setIsSubmitting(true);
       setError(null);
 
-      // 첨부가 있으면 S3 presigned→PUT→register 후 ID만 전달 (백엔드 B안). file 직접 전송 제거 이유와 동일.
+      // 첨부가 있으면 S3 presigned→PUT→register 후 ID만 전달. file 직접 전송 제거 이유와 동일.
       let attachmentIds: number[] | undefined;
       if (file) {
         const uploaded = await uploadBoardFileViaS3(file, selectedCategoryId);

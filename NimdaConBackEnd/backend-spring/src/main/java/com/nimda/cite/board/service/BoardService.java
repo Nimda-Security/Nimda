@@ -25,7 +25,7 @@ public class BoardService {
     /**
      * 게시글 작성/수정
      *
-     * @param attachmentIds 신규: presigned 등록 후 ID 목록(B안). 수정: 최종 첨부 ID 목록(동기화). null이면 첨부 변경 없음(수정 시).
+     * @param attachmentIds 신규: presiggned 등록 후 ID 목록. 수정: 최종 첨부 ID 목록(동기화). null이면 첨부 변경 없음(수정 시).
      */
     @Transactional
     public void write(Board board, User author, List<Long> attachmentIds) {
