@@ -177,7 +177,7 @@ body {
 
 .sidebar-profile__desc {
   font-size: 14px;
-  font-weight: 500;
+  font-weight: 400;
   color: var(--color-gray-500);
   line-height: 1.5;
   margin-bottom: 20px;
@@ -201,11 +201,16 @@ body {
 .sidebar-profile__signup-link {
   display: block;
   font-size: 12px;
-  font-weight: 500;
+  font-weight: 400;
   color: var(--color-gray-500);
   text-decoration: none;
   text-align: center;
   line-height: 1.5;
+  transition: color 0.2s ease;
+}
+
+.sidebar-profile__signup-link:hover {
+  color: var(--color-black);
 }
 
 /* 프로필 통계 */
@@ -289,6 +294,8 @@ body {
 }
 
 .sidebar-section__title {
+  flex: 1;
+  text-align: left;
   font-size: 14px;
   font-weight: 600;
   color: var(--color-black);
@@ -296,8 +303,10 @@ body {
 }
 
 .sidebar-section__arrow {
-  font-size: 10px;
-  color: var(--color-gray-400);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--color-black);
   transition: transform 0.2s ease;
 }
 
