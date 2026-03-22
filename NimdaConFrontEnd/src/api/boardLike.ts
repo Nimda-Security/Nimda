@@ -117,3 +117,39 @@ export const getBoardLikeStatus = async (boardId: number): Promise<BoardLikeResp
     };
   }
 };
+
+/**
+ * [GET] 내가 좋아요 누른 게시글 목록 조회
+ */
+export interface LikedBoard {
+  id: number;
+  title: string;
+  likeCount: number;
+  createdAt: string;
+}
+
+export const getLikedBoardsAPI = async (): Promise<LikedBoard[]> => {
+  try {
+    const authToken = localStorage.getItem("authToken");
+    if (!authToken) return [];
+
+    const response = await fetch(`${API_BASE_URL}/pushedLikes`, {
+      method: "GET",
+      headers: {
+        "Content-Type": "application/json",
+        "Authorization": `Bearer ${authToken}`,
+      },
+    });
+
+    if (!response.ok) return [];
+
+    const result = await response.json();
+    if (result.success) {
+      return result.data?.boards || [];
+    }
+    return [];
+  } catch (error) {
+    console.error("좋아요 게시글 목록 조회 실패:", error);
+    return [];
+  }
+};

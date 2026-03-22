@@ -50,6 +50,11 @@ public class Attachment extends BaseTimeEntity {
         this.userId = userId;
     }
 
+    /** 게시글 저장 후 미연결 첨부를 해당 글에 연결 */
+    public void linkToBoard(Long boardId) {
+        this.boardId = boardId;
+    }
+
     /** DTO 필드로 엔티티 생성 (저장 전 서비스에서 사용) */
     public static Attachment create(String originFilename, String storedFilename, String filepath,
                                     String extension, Long fileSize, Long boardId, Long categoryId, Long userId) {

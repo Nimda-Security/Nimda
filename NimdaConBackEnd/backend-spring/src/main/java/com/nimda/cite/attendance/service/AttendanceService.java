@@ -58,10 +58,14 @@ public class AttendanceService {
     }
 
     // 오늘 출석자 전체 조회 (최신순)
+    @Transactional(readOnly = true)
     public List<AttendanceLog> getTodayVisitors() {
-        return logRepository.findByAttendanceDateOrderByAttendanceDateDesc(LocalDate.now());
+        LocalDateTime start = LocalDate.now().atStartOfDay(); // 오늘의 시작 00:00:00
+        LocalDateTime end = LocalDateTime.now(); // 현재 시간 혹은 23:59:59
+        return logRepository.findTodayVisitorsWithUser(start, end);
     }
 
+    @Transactional(readOnly = true)
     // 연속 출석(Streak) 상위 5명 조회
     public List<Attendance> getTop5ByConsecutive() {
         return attendanceRepository.findTop5ByOrderByConsecutiveCountDesc();

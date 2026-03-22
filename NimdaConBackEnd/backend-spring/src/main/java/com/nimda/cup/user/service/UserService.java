@@ -36,7 +36,7 @@ public class UserService {
     @Transactional
     public User createUser(String userId, String name, String nickname, String password,
             String studentNum, String email, String major,
-            String universityName, String grade, String bojId) {
+            String universityName, String grade, String bojId, String birth) {
         validateUserUniqueness(userId, nickname, email);
         String encodedPassword = passwordEncoder.encode(password);
 
@@ -52,6 +52,7 @@ public class UserService {
         user.setUniversityName(universityName);
         user.setGrade(grade);
         user.setBojId(bojId);
+        user.setBirth(birth);
 
         // 승인 전까지 권한 없이 생성 (기본값: status = PENDING)
         // 승인 시 AdminUserController에서 ROLE_USER 권한 부여

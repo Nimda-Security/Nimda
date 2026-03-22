@@ -65,14 +65,15 @@ const PointContent: React.FC<PointContentProps> = ({
       {/* 세부정보 컨테이너 */}
       <div
         style={{
-          width: '1136px',
-          height: '834px',
+          width: '100%',
+          minHeight: '834px',
           borderRadius: '4px',
           border: '1px solid #D4D4D4',
-          background: '#F5F5F5',
+          // ✅ [교정] UserInfoContent와 동일하게 배경색 지정을 해제하여 부모 배경색(#F8F9FA)을 따르게 합니다.
+          // background: '#F5F5F5', <- 제거
           display: 'flex',
           flexDirection: 'column',
-          margin: '26px auto 0'
+          margin: '0'
         }}
       >
         {/* 마일리지 정보 + 버튼 */}
@@ -127,7 +128,7 @@ const PointContent: React.FC<PointContentProps> = ({
                   width: '49px',
                   height: '28px',
                   borderRadius: '8px',
-                  background: activeFilter === f.key ? '#D97399' : '#F5F5F5',
+                  background: activeFilter === f.key ? '#D97399' : 'transparent', // ✅ [교정] 미선택 시 투명하게 처리
                   border: activeFilter === f.key ? '1px solid #D97399' : '1.5px solid #D97399'
                 }}
               >
@@ -149,11 +150,11 @@ const PointContent: React.FC<PointContentProps> = ({
                 <div
                   key={record.id || index}
                   style={{
-                    width: '1090px',
+                    width: '100%',
                     height: '72px',
                     flexShrink: 0,
                     borderTop: '1px solid #D4D4D4',
-                    borderBottom: '1px solid #D4D4D4',
+                    borderBottom: index === displayedRecords.length - 1 ? '1px solid #D4D4D4' : 'none',
                     display: 'flex',
                     alignItems: 'center',
                     gap: '16px',
@@ -169,7 +170,6 @@ const PointContent: React.FC<PointContentProps> = ({
                   {/* 거래 설명과 날짜 */}
                   <div className="flex-grow">
                     <p className="text-[14px] font-[500] leading-[150%] text-[#000] flex items-center">
-                      {/* 정규식 대신 수동 분리하여 5px 간격 부여 */}
                       {(() => {
                         const match = record.description?.match(/^(.+?)(\d+)$/);
                         if (match) {

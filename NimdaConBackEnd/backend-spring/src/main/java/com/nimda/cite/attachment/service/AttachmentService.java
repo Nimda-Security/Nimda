@@ -10,7 +10,10 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
 
+import java.util.Collections;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 import java.util.UUID;
 import java.util.stream.Collectors;
 
@@ -109,8 +112,7 @@ public class AttachmentService {
                 throw new RuntimeException("삭제 권한이 없는 파일이 포함되어 있습니다: " + file.getOriginFilename());
             }
 
-            // 1. 실제 서버(AWS)에서 물리 파일 삭제
-            fileStore.deleteFile(file.getStoredFilename());
+            deletePhysicalFile(file);
 
             // 2. DB 레코드 삭제
             attachmentRepository.delete(file);
@@ -130,5 +132,163 @@ public class AttachmentService {
             return "";
         }
         return originalFilename.substring(pos + 1);
+    }
+
+    /**
+     * S3 Presigned 업로드 후, key/메타정보만으로 첨부파일을 등록한다.
+     * - 파일 본문은 이미 S3에 존재한다고 가정한다.
+     */
+    public Long registerFromS3(String key,
+                               String originFilename,
+                               Long fileSize,
+                               Long boardId,
+                               Long categoryId,
+                               Long userId) {
+        if (key == null || key.isBlank()) {
+            throw new RuntimeException("S3 key가 필요합니다.");
+        }
+
+        // key에서 실제 저장 파일명 부분만 추출 (예: boards/files/uuid_name.png -> uuid_name.png)
+        String storedFilename = extractStoredFilenameFromKey(key);
+
+        // 확장자는 원본 파일명 기준으로 우선 추출, 없으면 storedFilename 기준
+        String nameForExt = originFilename != null && !originFilename.isBlank() ? originFilename : storedFilename;
+        String ext = extractExt(nameForExt);
+        if (ext.isBlank()) {
+            ext = "bin";
+        }
+
+        String safeOrigin = (originFilename == null || originFilename.isBlank()) ? storedFilename : originFilename;
+
+        Attachment attachment = Attachment.create(
+                safeOrigin,
+                storedFilename,
+                key,               // filepath에는 S3 key를 그대로 저장해 둔다.
+                ext,
+                fileSize,
+                boardId,
+                categoryId,
+                userId
+        );
+
+        return attachmentRepository.save(attachment).getId();
+    }
+
+    /**
+     * 글 저장 직후: presigned로 등록된 첨부( boardId 미설정 )를 해당 게시글에 연결.
+     */
+    public void linkAttachmentsToBoard(List<Long> attachmentIds, Long boardId, Long categoryId, Long userId) {
+        if (attachmentIds == null || attachmentIds.isEmpty() || boardId == null) {
+            return;
+        }
+        for (Long aid : attachmentIds) {
+            if (aid == null) {
+                continue;
+            }
+            Attachment a = attachmentRepository.findById(aid)
+                    .orElseThrow(() -> new RuntimeException("첨부를 찾을 수 없습니다: " + aid));
+            if (!a.getUserId().equals(userId)) {
+                throw new RuntimeException("첨부 소유자만 글에 연결할 수 있습니다: " + aid);
+            }
+            if (a.getBoardId() != null && !a.getBoardId().equals(boardId)) {
+                throw new RuntimeException("이미 다른 게시글에 연결된 첨부입니다: " + aid);
+            }
+            if (categoryId != null && a.getCategoryId() != null && !a.getCategoryId().equals(categoryId)) {
+                throw new RuntimeException("첨부 카테고리가 게시글 카테고리와 일치하지 않습니다: " + aid);
+            }
+            a.linkToBoard(boardId);
+        }
+    }
+
+    /**
+     * 글 수정: 최종 첨부 ID 목록과 동기화. 목록에서 빠진 첨부는 S3+DB 삭제.
+     *
+     * @param attachmentIds null 이면 첨부 변경 없음
+     */
+    public void syncAttachmentsForBoard(Long boardId, List<Long> attachmentIds, Long categoryId, Long userId) {
+        if (attachmentIds == null) {
+            return;
+        }
+        List<Attachment> current = attachmentRepository.findByBoardIdOrderByIdAsc(boardId);
+        Set<Long> wanted = new HashSet<>();
+        for (Long id : attachmentIds) {
+            if (id != null) {
+                wanted.add(id);
+            }
+        }
+
+        for (Attachment a : current) {
+            if (!wanted.contains(a.getId())) {
+                if (!a.getUserId().equals(userId)) {
+                    throw new RuntimeException("다른 사용자가 올린 첨부는 제거할 수 없습니다: " + a.getId());
+                }
+                deletePhysicalFile(a);
+                attachmentRepository.delete(a);
+            }
+        }
+
+        for (Long aid : wanted) {
+            Attachment a = attachmentRepository.findById(aid)
+                    .orElseThrow(() -> new RuntimeException("첨부를 찾을 수 없습니다: " + aid));
+            if (!a.getUserId().equals(userId)) {
+                throw new RuntimeException("첨부 소유자만 게시글에 포함할 수 있습니다: " + aid);
+            }
+            if (a.getBoardId() != null && !a.getBoardId().equals(boardId)) {
+                throw new RuntimeException("이미 다른 게시글에 연결된 첨부입니다: " + aid);
+            }
+            if (categoryId != null && a.getCategoryId() != null && !a.getCategoryId().equals(categoryId)) {
+                throw new RuntimeException("첨부 카테고리가 게시글 카테고리와 일치하지 않습니다: " + aid);
+            }
+            if (a.getBoardId() == null) {
+                a.linkToBoard(boardId);
+            }
+        }
+    }
+
+    /**
+     * 게시글 상세 응답용 — 해당 글에 연결된 첨부 목록
+     */
+    @Transactional(readOnly = true)
+    public List<AttachmentResponseDto> listAttachmentsForBoard(Long boardId) {
+        if (boardId == null) {
+            return Collections.emptyList();
+        }
+        return attachmentRepository.findByBoardIdOrderByIdAsc(boardId).stream()
+                .map(att -> {
+                    String disp = CategoryConstants.GALLERY_ID.equals(att.getCategoryId()) ? "inline" : "attachment";
+                    return AttachmentResponseDto.from(att, disp);
+                })
+                .collect(Collectors.toList());
+    }
+
+    /**
+     * 게시글 삭제 시 — 연결된 모든 첨부 물리·DB 삭제
+     */
+    public void deleteAttachmentsForBoard(Long boardId) {
+        if (boardId == null) {
+            return;
+        }
+        List<Attachment> list = attachmentRepository.findByBoardId(boardId);
+        for (Attachment a : list) {
+            deletePhysicalFile(a);
+            attachmentRepository.delete(a);
+        }
+    }
+
+    private void deletePhysicalFile(Attachment file) {
+        String key = file.getFilepath();
+        if (key != null && !key.isBlank()) {
+            fileStore.deleteFile(key);
+        } else {
+            fileStore.deleteFile(file.getStoredFilename());
+        }
+    }
+
+    private String extractStoredFilenameFromKey(String key) {
+        int idx = key.lastIndexOf("/");
+        if (idx < 0 || idx == key.length() - 1) {
+            return key;
+        }
+        return key.substring(idx + 1);
     }
 }

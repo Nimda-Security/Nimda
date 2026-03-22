@@ -71,4 +71,7 @@ public interface CommentRepository extends JpaRepository<Comment, Long> {
 
     // 내가 작성한 유지 중인 댓글 수 조회
     long countByAuthorIdAndStatusNot(Long userId, STATUS status);
+
+    // 게시글별 댓글 수 조회
+    long countByBoardIdAndStatusNot(Long boardId, STATUS status);
 }

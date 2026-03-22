@@ -2,6 +2,14 @@ import React from "react";
 import Logo from "@/components/icons/Logo";
 
 const Footer: React.FC = () => {
+  const [showToast, setShowToast] = React.useState(false);
+
+  const handleCopyEmail = () => {
+    navigator.clipboard.writeText("nimda0410@gmail.com");
+    setShowToast(true);
+    setTimeout(() => setShowToast(false), 2000);
+  };
+
   return (
     <footer className="layout__footer">
       <div className="layout__footer-inner">
@@ -14,9 +22,8 @@ const Footer: React.FC = () => {
             textAlign: "center",
           }}
         >
-          {/* 로고 */}
-          <div style={{ opacity: 0.8 }}>
-            <Logo />
+          <div style={{ opacity: 0.8, filter: "grayscale(100%) brightness(1.5)" }}>
+            <Logo showText={false} />
           </div>
 
           {/* 주소 */}
@@ -37,7 +44,12 @@ const Footer: React.FC = () => {
             <span>개인정보 보호정책</span>
             <span>청소년 보호정책</span>
             <span>사이트 이용규칙</span>
-            <span>비즈니스 문의</span>
+            <span 
+              onClick={handleCopyEmail} 
+              style={{ cursor: "pointer" }}
+            >
+              비즈니스 문의
+            </span>
           </div>
 
           {/* 저작권 */}
@@ -46,6 +58,13 @@ const Footer: React.FC = () => {
           </p>
         </div>
       </div>
+
+      {/* 플로팅 토스트 팝업 */}
+      {showToast && (
+        <div className="copy-toast">
+          이메일 주소가 복사되었습니다.
+        </div>
+      )}
     </footer>
   );
 };

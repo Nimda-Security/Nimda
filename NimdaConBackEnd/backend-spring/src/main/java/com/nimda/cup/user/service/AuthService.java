@@ -7,6 +7,7 @@ import com.nimda.cup.user.entity.User;
 import com.nimda.cup.user.enums.ApprovalStatus;
 import com.nimda.cup.user.exception.UserNotApprovedException;
 import com.nimda.cup.common.util.JwtUtil;
+import com.nimda.cup.user.repository.UserRepository;
 import com.nimda.cup.user.security.CustomUserDetails;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.ApplicationEventPublisher;
@@ -33,6 +34,8 @@ public class AuthService {
     private ApplicationEventPublisher eventPublisher;
     @Autowired
     private UserBalanceRepository userBalanceRepository;
+    @Autowired
+    private UserRepository userRepository;
 
     /**
      * 사용자 인증
@@ -123,11 +126,11 @@ public class AuthService {
     @Transactional
     public User register(String userId, String name, String nickname, String password,
             String studentNum, String email, String major,
-            String universityName, String grade, String bojId) {
+            String universityName, String grade, String bojId, String birth) {
 
         // UserService에 사용자 생성 위임 (중복 확인 포함)
         User user = userService.createUser(userId, name, nickname, password,
-                studentNum, email, major, universityName, grade, bojId);
+                studentNum, email, major, universityName, grade, bojId, birth);
 
         // 비밀번호를 제외한 사용자 정보 반환
         User userWithoutPassword = new User();
@@ -145,5 +148,18 @@ public class AuthService {
         userBalanceRepository.save(userBalance);
 
         return userWithoutPassword;
+    }
+
+    @Transactional
+    public boolean toggleEmailHide(Long userId) {
+        // 1. 유저 조회 (없으면 예외 발생)
+        User user = userRepository.findById(userId)
+                .orElseThrow(() -> new IllegalArgumentException("존재하지 않는 사용자입니다."));
+
+        // 2. 상태 반전 (Dirty Checking에 의해 메서드 종료 시 자동 UPDATE)
+        boolean newStatus = !user.isEmailHide();
+        user.setEmailHide(newStatus);
+
+        return newStatus;
     }
 }

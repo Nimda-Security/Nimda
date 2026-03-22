@@ -94,12 +94,10 @@ export const getPointDetailsAPI = async (): Promise<PointHistoryItem[]> => {
     return [];
   }
 };
-
 /**
  * 3. [관리자용] 마일리지 수동 지급 (POST /api/cite/point)
- * 백엔드 ManualBalanceUpdateRequest: { description, amount }
  */
-export const updatePointManual = async (studentId: string, description: string, amount: number) => {
+export const updatePointManual = async (userId: number, description: string, amount: number) => {
   try {
     const authToken = localStorage.getItem("authToken");
 
@@ -114,30 +112,39 @@ export const updatePointManual = async (studentId: string, description: string, 
         "Authorization": `Bearer ${authToken}`,
       },
       body: JSON.stringify({
-        studentId: studentId,      // 대상 학생
-        description: description, // 지급 사유
-        amount: amount             // 지급 금액 (number형)
+        userId: userId,
+        description: description,
+        amount: amount
       }),
     });
 
-    const result = await response.json();
+    // 💡 [수정] 응답 본문이 비어있는지 확인 (204 No Content 또는 Content-Length가 0인 경우)
+    const contentType = response.headers.get("content-type");
+    let result: any = {};
 
-    // 서버 응답이 성공(200 OK)이고 result.success가 true인 경우
-    if (response.ok && result.success) {
+    if (contentType && contentType.includes("application/json")) {
+      result = await response.json();
+    } else {
+      // JSON 응답이 없을 경우 텍스트로 시도하거나 빈 값 처리
+      const text = await response.text();
+      result = text ? { message: text } : {};
+    }
+
+    // 서버 응답 상태 확인
+    if (response.ok) {
       return {
         success: true,
         message: result.message || "마일리지 지급이 완료되었습니다.",
-        data: result.data
+        data: result.data || null
       };
     }
 
     return {
       success: false,
-      message: result.message || "마일리지 지급에 실패했습니다."
+      message: result.message || `마일리지 지급 실패 (에러 코드: ${response.status})`
     };
   } catch (error) {
     console.error("수동 업데이트 오류:", error);
     return { success: false, message: "서버 통신 중 오류가 발생했습니다." };
   }
 };
-
