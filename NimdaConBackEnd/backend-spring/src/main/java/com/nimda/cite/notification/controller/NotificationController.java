@@ -31,7 +31,7 @@ public class NotificationController {
         User user = getUserFromToken(authHeader);
         List<Notification> notifications = notificationRepository.findAllByRecipient(user);
         List<NotificationResponse> dto = notifications.stream().map(NotificationResponse::from).toList();
-        return ApiResponse.ok(Map.of("notifications", dto)).toResponse();
+        return ApiResponse.ok(dto).toResponse();
     }
 
     // 읽지 않은 알림만 조회
@@ -42,7 +42,7 @@ public class NotificationController {
         User user = getUserFromToken(authHeader);
         List<Notification> notifications = notificationRepository.findAllByRecipientAndIsReadFalse(user);
         List<NotificationResponse> dto = notifications.stream().map(NotificationResponse::from).toList();
-        return ApiResponse.ok(Map.of("notifications", dto)).toResponse();
+        return ApiResponse.ok(dto).toResponse();
     }
 
     // 알림 읽기 처리

@@ -1,0 +1,21 @@
+meta {
+  name: Upload Board
+  type: http
+  seq: 3
+}
+
+post {
+  url: {{baseUrl}}/api/cite/board
+  body: none
+  auth: inherit
+}
+
+headers {
+  Authorization: Bearer {{jwtToken}}
+  Content-Type: multipart/form-data
+}
+
+settings {
+  encodeUrl: true
+  timeout: 0
+}
