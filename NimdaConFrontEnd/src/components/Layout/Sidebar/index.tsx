@@ -9,6 +9,7 @@ import { getMyCommentCountAPI } from "@/api/comment";
 import { getPushedBoardLikesCount } from "@/api/boardLike";
 import { getUserBalance } from "@/api/point";
 import type { Category } from "@/domains/Board/types";
+import ChevronDown from "@/components/icons/ChevronDown";
 
 
 
@@ -327,7 +328,9 @@ const CategorySection: React.FC<CategorySectionProps> = ({ category }) => {
         {hasChildren ? (
           <>
             <span className="sidebar-section__title">{category.name}</span>
-            <span className={`sidebar-section__arrow ${isOpen ? "sidebar-section__arrow--open" : ""}`}>▾</span>
+            <span className={`sidebar-section__arrow ${isOpen ? "sidebar-section__arrow--open" : ""}`}>
+              <ChevronDown />
+            </span>
           </>
         ) : (
           <Link to={`/board/${category.slug}`} className="sidebar-section__title sidebar-section__title--link">{category.name}</Link>
