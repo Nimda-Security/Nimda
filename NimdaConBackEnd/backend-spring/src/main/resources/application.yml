@@ -73,13 +73,12 @@ nimda:
   file:
     upload-dir: ${FILE_UPLOAD_DIR:${user.home}/nimda-attachments}
 
-# AWS 설정 
 aws:
   s3:
     bucket: nimda-bucket
     region: ap-northeast-2
-    access-key: ${AWS_ACCESS_KEY}
-    secret-key: ${AWS_SECRET_KEY}
+    access-key: ${AWS_S3_ACCESS_KEY:}
+    secret-key: ${AWS_S3_SECRET_KEY:}
 
     # 파일 저장 경로 
     profile-image-path: profiles/ # 프로필 이미지 저장

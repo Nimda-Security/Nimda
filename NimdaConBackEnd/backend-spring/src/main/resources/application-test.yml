@@ -1,0 +1,13 @@
+# src/test/resources/application-test.yml 수정 시 꼭 말하기
+cloud:
+  aws:
+    credentials:
+      
+      access-key: ${AWS_ACCESS_KEY}
+      secret-key: ${AWS_SECRET_KEY}
+    s3:
+      bucket: ${AWS_S3_BUCKET}
+    region:
+      static: ${AWS_REGION}
+    stack:
+      auto: false

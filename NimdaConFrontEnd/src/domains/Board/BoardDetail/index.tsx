@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { Heart, MessageCircle, MoreVertical } from 'lucide-react';
 import Layout from '@/components/Layout';
+import { openAttachmentDownloadInNewTab } from '@/api/attachments';
 import { getBoardDetailAPI, deleteBoardAPI, getFileDownloadURL, getBoardLikeStatusAPI, toggleBoardLikeAPI } from '@/api/board';
 import type { Board } from '../types';
 import CommentSection from '@/domains/Comment';
@@ -82,7 +83,8 @@ function BoardDetailPage() {
     finally { setIsDeleting(false); }
   };
 
-  const handleFileDownload = () => {
+  /** 레거시(로컬 filepath) 첨부만 사용 — S3·Attachment 첨부는 attachments[].downloadUrl 사용 */
+  const handleLegacyFileDownload = () => {
     if (board?.filepath) {
       const url = getFileDownloadURL(board.filepath);
       if (url) window.open(url, '_blank');
@@ -148,11 +150,7 @@ function BoardDetailPage() {
               </span>
             </div>
 
-            {board.filename && (
-              <button type="button" onClick={handleFileDownload} className="board-detail__file-btn">
-                📎 첨부파일
-              </button>
-            )}
+            {/* 첨부는 본문 아래 attachments 블록으로 이동 — 메타 행은 유지(더보기만) */}
             <button type="button" className="board-detail__more-btn" aria-label="더보기">
               <MoreVertical size={20} />
             </button>
@@ -163,6 +161,40 @@ function BoardDetailPage() {
 
         {/* Body */}
         <div className="board-detail__body">{board.content}</div>
+
+        {/* S3·Attachment 연동 첨부 목록 (상세 API board.attachments) */}
+        {board.attachments && board.attachments.length > 0 && (
+          <section className="board-detail__attachments" aria-label="첨부파일">
+            <h2 className="board-detail__attachments-title">첨부파일</h2>
+            <ul className="board-detail__attachments-list">
+              {board.attachments.map((att) => (
+                <li key={att.id}>
+                  <a
+                    href="#"
+                    className="board-detail__attachments-link"
+                    onClick={(e) => {
+                      e.preventDefault();
+                      void openAttachmentDownloadInNewTab(att.id).then((r) => {
+                        if (!r.ok) alert(r.message);
+                      });
+                    }}
+                  >
+                    📎 {att.originFilename ?? `첨부 #${att.id}`}
+                  </a>
+                </li>
+              ))}
+            </ul>
+          </section>
+        )}
+
+        {/* 레거시 단일 첨부(board-uploads 등) — attachments가 없을 때만 표시 */}
+        {(!board.attachments || board.attachments.length === 0) && board.filename && board.filepath && (
+          <section className="board-detail__attachments board-detail__attachments--legacy" aria-label="첨부파일">
+            <button type="button" onClick={handleLegacyFileDownload} className="board-detail__file-btn">
+              📎 첨부파일 ({board.filename.includes('_') ? board.filename.split('_').slice(1).join('_') : board.filename})
+            </button>
+          </section>
+        )}
 
         {/* 좋아요 */}
         <div className="board-detail__like-area">
