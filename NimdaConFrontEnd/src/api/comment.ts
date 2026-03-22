@@ -318,6 +318,65 @@ export const deleteCommentAPI = async (
   }
 };
 
+// 마이페이지 작성 댓글 목록 조회
+export interface MyComment {
+  id: number;
+  context: string;
+  likeCount: number;
+  createdAt: string;
+  boardId: number;
+}
+
+export const getMyCommentsAPI = async (): Promise<MyComment[]> => {
+  try {
+    const token = getToken();
+    if (!token) return [];
+
+    const response = await fetch(`${API_BASE_URL}/my-page/comments`, {
+      method: 'GET',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${token}`,
+      },
+    });
+
+    const result = await parseJsonSafe(response);
+    if (response.ok && result?.success) {
+      return result.data?.comments || [];
+    }
+    return [];
+  } catch (error) {
+    console.error('내 댓글 목록 조회 오류:', error);
+    return [];
+  }
+};
+
+// 마이페이지 선택 댓글 삭제
+export const deleteMyCommentsAPI = async (commentIds: number[]): Promise<{ success: boolean; message: string }> => {
+  try {
+    const token = getToken();
+    if (!token) return { success: false, message: '로그인이 필요합니다.' };
+
+    const response = await fetch(`${API_BASE_URL}/my-page/comments`, {
+      method: 'DELETE',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${token}`,
+      },
+      body: JSON.stringify({ commentIds }),
+    });
+
+    const result = await parseJsonSafe(response);
+    if (response.ok && result?.success) {
+      return { success: true, message: result.message || '삭제되었습니다.' };
+    }
+    return { success: false, message: result?.message || '삭제에 실패했습니다.' };
+  } catch (error) {
+    console.error('댓글 삭제 오류:', error);
+    return { success: false, message: '삭제 중 오류가 발생했습니다.' };
+  }
+};
+
 // 작성 댓글 개수 가지고 오기
 export const getMyCommentCountAPI = async (): Promise<number> => {
   try {

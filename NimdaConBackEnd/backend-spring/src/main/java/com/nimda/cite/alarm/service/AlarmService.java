@@ -9,6 +9,9 @@ import com.nimda.cite.notification.dto.NotificationResponse;
 import com.nimda.cite.notification.entity.Notification;
 import com.nimda.cite.notification.enums.NotificationType;
 import com.nimda.cite.notification.repositroy.NotificationRepositroy;
+import com.nimda.cup.user.entity.User;
+import com.nimda.cup.user.repository.UserRepository;
+import com.nimda.cup.user.enums.ApprovalStatus;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.transaction.annotation.Transactional;
 import lombok.RequiredArgsConstructor;
@@ -18,6 +21,8 @@ import org.springframework.stereotype.Service;
 import org.springframework.web.servlet.mvc.method.annotation.SseEmitter;
 
 import java.io.IOException;
+import java.time.LocalDateTime;
+import java.util.List;
 
 // 비동기 Configuration 설정 및 메인에 @EnableAsync 붙이기
 @RequiredArgsConstructor
@@ -26,9 +31,9 @@ public class AlarmService {
 
     private final SseEmitterRepository sseEmitterRepository;
     private final NotificationRepositroy notificationRepositroy;
+    private final UserRepository userRepository;
 
-    // 클라이언트가 SSE 구독을 요청할 때 호출
-    @Transactional
+
     public SseEmitter subscribe(Long userId) {
         SseEmitter emitter = new SseEmitter(60 * 1000L * 60 * 24); //
         sseEmitterRepository.save(userId, emitter);
@@ -54,7 +59,8 @@ public class AlarmService {
         Notification notification = Notification.builder()
                 .recipient(event.getRecipient())
                 .sender(event.getSender())
-                .message(event.getBoard().getTitle() + "에 " + event.getSender().getNickname() + "님이 좋아요를 눌렀습니다.")
+                // 프론트에서 파싱
+                .message(event.getSender().getName()+"님이 내 게시글을 좋아합니다.-"+event.getBoard().getTitle())
                 .notificationType(NotificationType.PushLikeButtonAtBoard)
                 .relatedEntityId(event.getBoard().getId())
                 .relatedUrl("/board/view/" + event.getBoard().getId())
@@ -72,7 +78,8 @@ public class AlarmService {
         Notification notification = Notification.builder()
                 .recipient(event.getBoardAuthor()) // 게시글 작성자
                 .sender(event.getCommentAuthor()) // 댓글 작성자
-                .message(event.getBoardTitle() + " 게시글에 새로운 댓글이 달렸습니다.")
+                .message(event.getCommentAuthor().getName()+"님이 댓글을 남겼습니다.-"+
+                        event.getBoardTitle())
                 .notificationType(NotificationType.AddCommentAtBoard)
                 .relatedEntityId(event.getBoardId())
                 // 게시글 url
@@ -91,7 +98,7 @@ public class AlarmService {
         Notification notification = Notification.builder()
                 .recipient(event.getCommentAuthor()) // 댓글 작성자
                 .sender(event.getLikeUser()) // 좋아요 누른 유저
-                .message("작성하신 댓글 '" + event.getCommentContent() + "'에 좋아요가 눌렸습니다.")
+                .message(event.getLikeUser().getName()+"님이 내 댓글을 좋아합니다.-"+ event.getCommentContent())
                 .notificationType(NotificationType.PushLikeButtonAtComment)
                 .relatedEntityId(event.getCommentId())
                 // url은 수정해야함
@@ -118,6 +125,42 @@ public class AlarmService {
                 .build();
 
         this.send(notification);
+    }
+
+    // 공지사항 게시글 등록 시 전체 유저에게 알림 전송
+    @Transactional
+    public void sendNoticeToAll(Long boardId, String boardTitle, Long authorId) {
+        User sender = userRepository.findById(authorId).orElse(null);
+        List<User> allUsers = userRepository.findAll();
+
+        for (User recipient : allUsers) {
+            if (recipient.getId().equals(authorId)) continue;
+
+            Notification notification = Notification.builder()
+                    .recipient(recipient)
+                    .sender(sender)
+                    .message("새 공지사항이 등록되었습니다.-" + boardTitle)
+                    .notificationType(NotificationType.NoticePost)
+                    .relatedEntityId(boardId)
+                    .createdAt(LocalDateTime.now())
+                    .expiredAt(LocalDateTime.now().plusDays(15))
+                    .relatedUrl("/board/view/" + boardId)
+                    .isRead(false)
+                    .build();
+
+            notificationRepositroy.save(notification);
+
+            NotificationResponse data = NotificationResponse.from(notification);
+            sseEmitterRepository.findByUserId(recipient.getId()).ifPresent(emitter -> {
+                try {
+                    emitter.send(SseEmitter.event()
+                            .name("notification")
+                            .data(data));
+                } catch (IOException e) {
+                    sseEmitterRepository.deleteByUserId(recipient.getId());
+                }
+            });
+        }
     }
 
     @Transactional

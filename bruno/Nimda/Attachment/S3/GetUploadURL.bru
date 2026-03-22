@@ -1,0 +1,46 @@
+meta {
+  name: GetUploadURL
+  type: http
+  seq: 1
+}
+
+post {
+  url: {{baseUrl}}/api/cite/attachments/presigned?type=profile&fileName=test.png
+  body: none
+  auth: bearer
+}
+
+params:query {
+  type: profile
+  fileName: test.png
+}
+
+auth:bearer {
+  token: {{jwtToken}}
+}
+
+script:post-response {
+  // 1. 응답 바디를 가져옵니다.
+  const response = res.getBody();
+  
+  // 2. 에러 방지를 위해 데이터가 있는지 먼저 확인합니다.
+  if (response && response.data) {
+      // 서버 응답 구조가 { "status": "success", "data": { "uploadUrl": "...", "key": "..." } } 일 때
+      const uploadUrl = response.data.uploadUrl;
+      const fileKey = response.data.key;
+  
+      // 3. 브루노 환경 변수(또는 폴더 변수)에 저장합니다.
+      if (uploadUrl) {
+          bru.setVar("s3UploadUrl", uploadUrl);
+          bru.setVar("s3FileKey", fileKey);
+          console.log("S3 URL 저장 성공!");
+      }
+  } else {
+      console.error("응답 데이터 구조가 예상과 다릅니다:", response);
+  }
+}
+
+settings {
+  encodeUrl: true
+  timeout: 0
+}

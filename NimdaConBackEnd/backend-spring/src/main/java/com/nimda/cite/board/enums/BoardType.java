@@ -6,4 +6,5 @@ public enum BoardType {
     COMMUNITY,    // 커뮤니티 게시판
     QNA,          // 질문과 답변
     FREE,         // 자유 게시판
+    SYSTEM,
 }

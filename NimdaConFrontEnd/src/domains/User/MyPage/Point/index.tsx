@@ -4,6 +4,11 @@ import Footer from "@/components/Layout/Footer";
 
 import ProfileSection from "./Components/Profile/ProfileSection";
 import PointContent from "./Components/PointContent";
+import UserInfoContent from "./Components/UserInfoContent";
+import MyCommentsContent from "./Components/MyCommentsContent";
+import MyPostsContent from "./Components/MyPostsContent";
+import CommentedPostsContent from "./Components/CommentedPostsContent";
+import LikedPostsContent from "./Components/LikedPostsContent";
 
 import { getUserBalance } from "@/api/point";
 import { getMyTotalAttendanceCount } from "@/api/attendance";
@@ -48,7 +53,6 @@ function MyPagePoint() {
           });
         }
 
-        // ✅ 모든 API를 병렬로 호출합니다.
         const [balanceRes, attendanceCount, boardLikeCount, myPostCount, myCommentCount] = await Promise.all([
           getUserBalance(),
           getMyTotalAttendanceCount(),
@@ -57,14 +61,11 @@ function MyPagePoint() {
           getMyCommentCountAPI(),
         ]);
 
-        // 1. 잔액 업데이트: 백엔드 DTO인 totalAmount 필드를 우선적으로 확인합니다.
         if (balanceRes && balanceRes.success) {
-          // 백엔드 ApiResponse.ok(..., dto) 구조이므로 result.data.totalAmount를 참조합니다.
           const amount = balanceRes.data?.totalAmount ?? balanceRes.currentBalance ?? 0;
           setUserBalance(amount);
         }
 
-        // 2. 상단 통계 수치 업데이트
         setStats({
           visitCount: attendanceCount || 0,
           likeCount: boardLikeCount || 0,
@@ -95,22 +96,46 @@ function MyPagePoint() {
   };
 
   return (
-    <div className="min-h-screen bg-[#F8F9FA] font-sans text-[#0c0c0c] flex flex-col">
+    <div className="min-h-screen bg-[#F5F5F5] font-['Pretendard',sans-serif] text-[#0c0c0c] flex flex-col">
       <Header />
       <div className="h-[56px] w-full" />
+
       <main className="flex-1 flex justify-center pt-10 pb-12 overflow-x-hidden">
-        <div className="w-full max-w-[1050px] px-6">
-          <ProfileSection userInfo={userInfo} activeTab={activeTab} setActiveTab={setActiveTab} />
-          {activeTab === "points" && (
-            <div className="mt-10">
+        <div className="w-full max-w-[1200px] px-[120px]">
+          {/* 상단 프로필 및 탭 메뉴 */}
+          <ProfileSection
+            userInfo={userInfo}
+            activeTab={activeTab}
+            setActiveTab={setActiveTab}
+          />
+
+          {/* 2. 💡 강제 간격 조정 (mt-6 대신 독립적인 div로 24px 확보) */}
+          <div className="h-[24px] w-full" /> 
+
+          {/* 3. 하단 콘텐츠 영역 */}
+          <div className="w-full">
+            {activeTab === "profile" && (
+              <UserInfoContent loading={loading} />
+            )}
+
+            {activeTab === "my_posts" && <MyPostsContent />}
+
+            {activeTab === "my_comments" && <MyCommentsContent />}
+
+            {activeTab === "commented_posts" && <CommentedPostsContent />}
+
+            {activeTab === "liked_posts" && <LikedPostsContent />}
+
+            {activeTab === "points" && (
               <PointContent
                 loading={loading}
                 userBalance={userBalance}
               />
-            </div>
-          )}
+            )}
+          </div>
         </div>
       </main>
+
       <Footer />
     </div>
   );

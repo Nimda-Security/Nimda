@@ -9,6 +9,8 @@ public interface AttachmentRepository extends JpaRepository<Attachment, Long> {
 
     List<Attachment> findByBoardId(Long boardId);
 
+    List<Attachment> findByBoardIdOrderByIdAsc(Long boardId);
+
     List<Attachment> findByUserId(Long userId);
 
     List<Attachment> findByBoardIdAndCategoryId(Long boardId, Long categoryId);

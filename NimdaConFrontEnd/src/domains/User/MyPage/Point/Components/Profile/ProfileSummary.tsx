@@ -10,6 +10,16 @@ interface ProfileSummaryProps {
   };
 }
 
+const maskUserId = (userId?: string) => {
+  if (!userId) return "-";
+  if (userId.length <= 3) return userId; // 3글자 이하인 경우 그대로 노출 (또는 정책에 따라 변경)
+  
+  const prefix = userId.substring(0, 3); // 앞 3자리 추출
+  const mask = "*".repeat(userId.length - 3); // 나머지 길이만큼 * 생성
+  
+  return prefix + mask;
+};
+
 const ProfileSummary: React.FC<ProfileSummaryProps> = ({ userInfo }) => {
   return (
     // 1. 글자 영역: 세로 배치, 왼쪽 정렬
@@ -21,7 +31,7 @@ const ProfileSummary: React.FC<ProfileSummaryProps> = ({ userInfo }) => {
 
       {/* 아이디 */}
       <p className="text-[14px] text-[#8e8e8e] mt-1">
-        {userInfo.id}
+        {maskUserId(userInfo.id)}
       </p>
 
       {/* 2. 통계 바: mt-6(24px) 간격, 가로 배치 */}

@@ -49,11 +49,19 @@ function RegisterPage() {
 
   const validateStep1 = (): boolean => {
     const e: typeof errors = {};
-    if (!form.name.trim()) e.name = "이름을 입력해 주세요.";
+    if (!form.name.trim()) {
+      e.name = "이름을 입력해 주세요.";
+    } else if (!/^[가-힣]{2,4}$/.test(form.name.trim())) {
+      e.name = "유효한 이름을 입력해 주세요.";
+    }
     const y = parseInt(form.birthYear), m = parseInt(form.birthMonth), d = parseInt(form.birthDay);
     if (!form.birthYear || !form.birthMonth || !form.birthDay || isNaN(y) || isNaN(m) || isNaN(d) || m < 1 || m > 12 || d < 1 || d > 31)
       e.birthYear = "유효한 생년월일을 입력해 주세요.";
-    if (!form.email.trim()) e.email = "이메일을 입력해 주세요.";
+    if (!form.email.trim()) {
+      e.email = "이메일을 입력해 주세요.";
+    } else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(form.email)) {
+      e.email = "유효한 이메일 형식을 입력해 주세요.";
+    }
     if (!form.major.trim()) e.major = "학과를 입력해 주세요.";
     if (!form.studentNum.trim()) e.studentNum = "학번을 입력해 주세요.";
     else if (form.studentNum.trim().length !== 9) e.studentNum = "학번은 9자리여야 합니다.";
@@ -80,10 +88,12 @@ function RegisterPage() {
     if (step === 1) { setErrors({}); setStep(0); }
   };
 
-  const handleSubmit = async () => {
+const handleSubmit = async () => {
     if (!validateStep2()) return;
 
-    const birth = `${form.birthYear}-${form.birthMonth.padStart(2, "0")}-${form.birthDay.padStart(2, "0")}`;
+    // 하이픈(-) 없이 8자리 숫자로 포맷팅 (예: 20260321)
+    // padStart를 사용하여 월, 일이 1자리일 때 앞에 0을 붙여줍니다.
+    const birth = `${form.birthYear}${form.birthMonth.padStart(2, "0")}${form.birthDay.padStart(2, "0")}`;
 
     const result = await registerAPI({
       userId: form.userId.trim(),
@@ -94,12 +104,13 @@ function RegisterPage() {
       email: form.email.trim(),
       major: form.major.trim(),
       bojId: form.bojId.trim() || undefined,
-      birth,
+      birth, // 이제 "20260321" 형식으로 전송됩니다.
     });
 
     if (result.success) {
       setStep(2);
     } else {
+      // 에러 핸들링 로직 (기존과 동일)
       if (result.message?.includes("User ID")) {
         setErrors({ userId: "이미 사용 중인 아이디입니다." });
       } else if (result.message?.includes("Nickname")) {
@@ -191,12 +202,19 @@ function RegisterPage() {
                   {/* 학과 */}
                   <div className="reg__field">
                     <div className="reg__label">학과<span className="reg__required">*</span></div>
-                    <input
-                      className={`reg__input-box ${errors.major ? "reg__input-box--error" : ""}`}
+                    <select
+                      className={`reg__input-box ${!form.major ? "reg__input-box--placeholder" : ""} ${errors.major ? "reg__input-box--error" : ""}`}
                       value={form.major}
                       onChange={(e) => set("major", e.target.value)}
-                      placeholder="학과를 입력하세요"
-                    />
+                    >
+                      <option value="" disabled hidden>전공을 선택해 주세요</option>
+                      <option value="소프트웨어학과">소프트웨어학과</option>
+                      <option value="컴퓨터공학과">컴퓨터공학과</option>
+                      <option value="스마트정보기술공학과">스마트정보기술공학과</option>
+                      <option value="전기전자제어공학부">전기전자제어공학부</option>
+                      <option value="인공지능학부">인공지능학부</option>
+                      <option value="정보통신공학과">정보통신공학과</option>
+                    </select>
                     {errors.major && <div className="reg__error">{errors.major}</div>}
                   </div>
 

@@ -36,7 +36,7 @@ public class Notification extends BaseTimeEntity {
     private User sender; // 알림을 유발한 사람
 
     @Enumerated(EnumType.STRING) // Enum은 문자열 저장이 안전함
-    @Column(nullable = false,name = "notification_type")
+    @Column(nullable = false, name = "notification_type", columnDefinition = "VARCHAR(50)")
     private NotificationType notificationType;
 
     @Column(nullable = false)
