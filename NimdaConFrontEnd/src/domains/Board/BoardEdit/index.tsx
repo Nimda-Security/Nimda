@@ -153,7 +153,7 @@ function BoardEditPage() {
 
   if (loading) {
     return (
-      <Layout>
+      <Layout hideSidebar={true}>
         <div className="min-h-screen bg-white pt-8">
           <div className="container mx-auto px-4 py-6 max-w-4xl">
             <div className="text-center py-12 text-gray-600">로딩 중...</div>
@@ -165,7 +165,7 @@ function BoardEditPage() {
 
   if (error && !board) {
     return (
-      <Layout>
+      <Layout hideSidebar={true}>
         <div className="min-h-screen bg-white pt-8">
           <div className="container mx-auto px-4 py-6 max-w-4xl">
             <div className="text-center py-12 text-red-600">{error}</div>
@@ -184,7 +184,7 @@ function BoardEditPage() {
   }
 
   return (
-    <Layout>
+    <Layout hideSidebar={true}>
       <div className="min-h-screen bg-white pt-8">
         <div className="container mx-auto px-4 py-6 max-w-4xl">
           <header className="mb-6">
