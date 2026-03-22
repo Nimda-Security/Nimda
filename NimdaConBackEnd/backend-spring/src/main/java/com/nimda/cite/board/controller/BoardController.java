@@ -9,6 +9,8 @@ import com.nimda.cite.board.entity.Board;
 import com.nimda.cite.board.entity.Category;
 import com.nimda.cite.board.repository.CategoryRepository;
 import com.nimda.cite.board.service.BoardService;
+import com.nimda.cite.comment.enums.STATUS;
+import com.nimda.cite.comment.repository.CommentRepository;
 import com.nimda.cite.common.response.ApiResponse;
 import com.nimda.cite.like.service.BoardLikeService;
 import com.nimda.cup.common.util.JwtUtil;
@@ -50,6 +52,9 @@ public class BoardController {
 
     @Autowired
     private ObjectMapper objectMapper;
+
+    @Autowired
+    private CommentRepository commentRepository;
 
     @GetMapping
     public ResponseEntity<?> getPostsByCategory(
@@ -515,5 +520,68 @@ public class BoardController {
             return ApiResponse.fail("통계 정보 조회 중 오류가 발생했습니다: " + e.getMessage())
                     .toResponse(HttpStatus.INTERNAL_SERVER_ERROR);
         }
+    }
+
+    /**
+     * 내가 작성한 게시글 목록 조회
+     */
+    @GetMapping("/my/boards")
+    public ResponseEntity<?> getMyBoards(
+            @RequestHeader(value = "Authorization", required = false) String authHeader) {
+        try {
+            User currentUser = extractUser(authHeader);
+            if (currentUser == null) {
+                return ApiResponse.fail("로그인이 필요합니다.").toResponse(HttpStatus.UNAUTHORIZED);
+            }
+
+            List<Board> boards = boardService.getMyBoards(currentUser);
+            List<BoardResponseDTO> dtos = boards.stream()
+                    .map(b -> BoardResponseDTO.from(b,
+                            boardLikeService.getLikeCount(b.getId()),
+                            commentRepository.countByBoardIdAndStatusNot(b.getId(), STATUS.DELETED)))
+                    .toList();
+
+            return ApiResponse.ok("내 게시글 목록을 조회했습니다.", dtos).toResponse();
+        } catch (Exception e) {
+            return ApiResponse.fail("내 게시글 조회 중 오류가 발생했습니다: " + e.getMessage())
+                    .toResponse(HttpStatus.INTERNAL_SERVER_ERROR);
+        }
+    }
+
+    /**
+     * 내가 작성한 게시글 삭제 (복수)
+     */
+    @DeleteMapping("/my/boards")
+    public ResponseEntity<?> deleteMyBoards(
+            @RequestHeader(value = "Authorization", required = false) String authHeader,
+            @RequestBody Map<String, List<Long>> body) {
+        try {
+            User currentUser = extractUser(authHeader);
+            if (currentUser == null) {
+                return ApiResponse.fail("로그인이 필요합니다.").toResponse(HttpStatus.UNAUTHORIZED);
+            }
+
+            List<Long> boardIds = body.get("boardIds");
+            if (boardIds == null || boardIds.isEmpty()) {
+                return ApiResponse.fail("삭제할 게시글을 선택해주세요.").toResponse(HttpStatus.BAD_REQUEST);
+            }
+
+            boardService.deleteMyBoards(boardIds, currentUser);
+            return ApiResponse.ok("게시글이 삭제되었습니다.", null).toResponse();
+        } catch (Exception e) {
+            return ApiResponse.fail("게시글 삭제 중 오류가 발생했습니다: " + e.getMessage())
+                    .toResponse(HttpStatus.INTERNAL_SERVER_ERROR);
+        }
+    }
+
+    private User extractUser(String authHeader) {
+        if (authHeader != null && authHeader.startsWith("Bearer ")) {
+            String token = authHeader.substring(7);
+            Long userId = jwtUtil.extractUserId(token);
+            if (userId != null && !jwtUtil.isTokenExpired(token)) {
+                return userRepository.findById(userId).orElse(null);
+            }
+        }
+        return null;
     }
 }

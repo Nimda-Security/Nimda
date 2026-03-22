@@ -159,4 +159,18 @@ public class BoardService {
     public long countByAuthor(User author) {
         return boardRepository.countByAuthor(author);
     }
+
+    @Transactional(readOnly = true)
+    public List<Board> getMyBoards(User author) {
+        return boardRepository.findByAuthorOrderByCreatedAtDesc(author);
+    }
+
+    @Transactional
+    public void deleteMyBoards(List<Long> boardIds, User author) {
+        List<Board> boards = boardRepository.findAllById(boardIds);
+        // 본인 게시글만 삭제
+        boards.stream()
+                .filter(b -> b.getAuthor().getId().equals(author.getId()))
+                .forEach(b -> boardRepository.deleteById(b.getId()));
+    }
 }

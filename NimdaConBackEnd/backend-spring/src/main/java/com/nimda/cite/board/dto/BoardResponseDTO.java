@@ -30,6 +30,7 @@ public class BoardResponseDTO {
     private AuthorInfo author;
     private Integer views;
     private Long likeCount;
+    private Long commentCount;
     private Boolean pinned;
     private String tag; // 게시글 태그 (예: "필독", "공지", "가입인사")
     private String filename;
@@ -83,6 +84,7 @@ public class BoardResponseDTO {
                 .author(authorInfo)
                 .views(board.getPostView())
                 .likeCount(likeCount)
+                .commentCount(0L)
                 .pinned(board.getPinned())
                 .tag(board.getTag()) // 태그 필드 추가
                 .filename(board.getFilename())
@@ -90,5 +92,11 @@ public class BoardResponseDTO {
                 .createdAt(board.getCreatedAt())
                 .updatedAt(board.getUpdatedAt())
                 .build();
+    }
+
+    public static BoardResponseDTO from(Board board, long likeCount, long commentCount) {
+        BoardResponseDTO dto = from(board, likeCount);
+        if (dto != null) dto.setCommentCount(commentCount);
+        return dto;
     }
 }

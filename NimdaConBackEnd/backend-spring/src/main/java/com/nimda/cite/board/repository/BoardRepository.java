@@ -98,4 +98,8 @@ public interface BoardRepository extends JpaRepository<Board, Long> { // [수정
     Page<Board> findByCategoryInAndTitleContaining(List<Category> categories, String searchKeyword, Pageable pageable);
 
     long countByAuthor(User author);
+
+    // 내가 작성한 게시글 목록 (최신순)
+    @EntityGraph(attributePaths = { "author", "category" })
+    List<Board> findByAuthorOrderByCreatedAtDesc(User author);
 }
