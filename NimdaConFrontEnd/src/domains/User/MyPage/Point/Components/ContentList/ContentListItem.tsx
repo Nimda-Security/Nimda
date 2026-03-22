@@ -5,7 +5,9 @@ export interface ContentListItemData {
   id: number;
   text: string;
   likeCount: number;
-  date: string; // 이미지와 같이 "MM.DD" 형식의 문자열이 들어온다고 가정
+  commentCount?: number;
+  date: string;
+  thumbnailUrl?: string;
 }
 
 interface ContentListItemProps {
@@ -13,58 +15,96 @@ interface ContentListItemProps {
   checked: boolean;
   onToggle: () => void;
   isLast?: boolean;
+  onClick?: () => void;
 }
-const ContentListItem: React.FC<ContentListItemProps> = ({ item, checked, onToggle, isLast }) => {
+
+const ContentListItem: React.FC<ContentListItemProps> = ({ item, checked, onToggle, isLast, onClick }) => {
   return (
     <div
-      className={`flex items-center h-[52px] px-[15px] transition-colors bg-transparent ${
-        checked ? "bg-[#fdf2f4]" : "bg-white"
-      } ${!isLast ? "border-b border-[#eeeeee]" : ""}`}
+      className={`relative w-full h-[80px] transition-colors ${
+        checked ? "bg-[#fdf2f4]" : "bg-[#f5f5f5]"
+      } ${!isLast ? "border-b border-[#d4d4d4]" : ""}`}
     >
-
-        <div className="w-[15px] flex-shrink-0" />
-
-      {/* 1. 체크박스: 부모 px-15 때문에 왼쪽 끝에서 15px 지점에 위치 */}
-      <div className="flex-shrink-0">
+      {/* 1. 체크박스 영역 (Left 15px + 여백 반영) */}
+      <div className="absolute left-[30px] top-1/2 -translate-y-1/2 flex-shrink-0">
         <CheckBox checked={checked} onChange={onToggle} />
       </div>
-        <div className="w-[16px] flex-shrink-0" />
 
-      {/* 2. 본문 영역: 디자인처럼 텍스트를 오른쪽으로 확 밀어주기 위해 ml-[20px] 적용 */}
-      <div className="flex items-center flex-1 min-w-0">
-              <p
-                className="truncate"
+      {/* 2. 썸네일 (Left 62px 부근 배치 - 제목 Left 88px 기준 앞쪽) */}
+      {item.thumbnailUrl && (
+        <div className="absolute left-[54px] top-1/2 -translate-y-1/2 w-[24px] h-[24px] rounded overflow-hidden flex-shrink-0">
+          <img
+            src={item.thumbnailUrl}
+            alt=""
+            className="w-full h-full object-cover"
+          />
+        </div>
+      )}
+
+      {/* 3. 게시글 제목 (가이드 완벽 반영) */}
+      <p
+        className="absolute truncate cursor-pointer"
+        onClick={onClick}
+        style={{
+          left: '88px',
+          top: '9px',
+          width: '258px',
+          height: '21px',
+          color: '#0C0C0C',
+          fontFamily: 'Pretendard',
+          fontSize: '14px',
+          fontStyle: 'normal',
+          fontWeight: 500,
+          lineHeight: '150%',
+          letterSpacing: '0%',
+          display: 'flex',
+          alignItems: 'center'
+        }}
+      >
+        {item.text}
+      </p>
+
+      {/* 4. 댓글 수 + 좋아요 수 (제목 아래 6px 간격: 9px + 21px + 6px = Top 36px) */}
+      <div
+        className="absolute flex items-center gap-x-[12px]"
+        style={{ left: '88px', top: '36px' }}
+      >
+        {item.commentCount !== undefined && (
+          <div className="flex items-center gap-x-[4px]">
+            {/* 검은색 SVG를 파란색(#4A7FCC)으로 변경하는 필터 적용 */}
+            <div className="w-[14px] h-[14px] overflow-hidden flex items-center justify-center relative">
+              <img
+                src="/NotificationComment.svg"
+                alt="댓글"
+                className="absolute w-[14px] h-[14px] max-w-none"
                 style={{
-                  color: '#0C0C0C',
-                  fontFamily: 'Pretendard',
-                  fontSize: '14px',
-                  fontStyle: 'normal',
-                  fontWeight: 500,
-                  lineHeight: '150%'
+                  left: '-20px',
+                  filter: 'drop-shadow(#4A7FCC 20px 0)',
                 }}
-              >
-                {item.text}
-              </p>
+              />
+            </div>
+            <span className="text-[12px] font-bold text-[#4A7FCC] leading-none">
+              {item.commentCount}
+            </span>
+          </div>
+        )}
 
-        <div className="w-[20px] flex-shrink-0" />
-
-        {/* 좋아요: 텍스트 바로 옆에 붙임 */}
-        <div className="ml-[8px] flex items-center gap-x-[4px] flex-shrink-0 text-[#ed64a6]">
-          <img src="/heart.svg" alt="like" className="w-[14px] h-[14px]" />
-          <span className="text-[13px] font-medium leading-none mb-[0.5px]">
-          <div className="w-[4px] flex-shrink-0" />
+        <div className="flex items-center gap-x-[4px]">
+          <svg width="14" height="12" viewBox="0 0 14 12" fill="none">
+            <path d="M7 11.5L1.2275 6.09C0.4375 5.3 0 4.26 0 3.15C0 0.93 1.7825 0 3.5 0C4.9525 0 6.265 0.795 7 2.0475C7.735 0.795 9.0475 0 10.5 0C12.2175 0 14 0.93 14 3.15C14 4.26 13.5625 5.3 12.7725 6.09L7 11.5Z" fill="#D64454"/>
+          </svg>
+          <span className="text-[12px] font-bold text-[#D64454] leading-none">
             {item.likeCount}
           </span>
         </div>
       </div>
 
-      {/* 3. 날짜: 오른쪽 끝(px-15)에 위치 */}
-      <div className="ml-[16px] flex-shrink-0">
-        <span className="text-[13px] font-normal text-[#bdbdbd] whitespace-nowrap">
+      {/* 5. 날짜 (우측 끝 정렬) */}
+      <div className="absolute right-[15px] top-[12px] flex-shrink-0">
+        <span className="text-[12px] font-normal text-[#a3a3a3] whitespace-nowrap">
           {item.date}
         </span>
       </div>
-      <div className="w-[15px] flex-shrink-0" />
     </div>
   );
 };

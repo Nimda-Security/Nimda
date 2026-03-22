@@ -2,6 +2,7 @@ package com.nimda.cite.board.controller;
 
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.nimda.cite.attachment.service.AttachmentService;
 import com.nimda.cite.board.dto.BoardListResponseDTO;
 import com.nimda.cite.board.dto.BoardResponseDTO;
 import com.nimda.cite.board.dto.CategoryResponseDTO;
@@ -9,6 +10,8 @@ import com.nimda.cite.board.entity.Board;
 import com.nimda.cite.board.entity.Category;
 import com.nimda.cite.board.repository.CategoryRepository;
 import com.nimda.cite.board.service.BoardService;
+import com.nimda.cite.comment.enums.STATUS;
+import com.nimda.cite.comment.repository.CommentRepository;
 import com.nimda.cite.common.response.ApiResponse;
 import com.nimda.cite.like.service.BoardLikeService;
 import com.nimda.cup.common.util.JwtUtil;
@@ -23,8 +26,6 @@ import org.springframework.data.web.PageableDefault;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
-import org.springframework.web.multipart.MultipartFile;
-
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
@@ -49,7 +50,13 @@ public class BoardController {
     private BoardLikeService boardLikeService;
 
     @Autowired
+    private AttachmentService attachmentService;
+
+    @Autowired
     private ObjectMapper objectMapper;
+
+    @Autowired
+    private CommentRepository commentRepository;
 
     @GetMapping
     public ResponseEntity<?> getPostsByCategory(
@@ -230,7 +237,7 @@ public class BoardController {
             @RequestParam("title") String title,
             @RequestParam("content") String content,
             @RequestParam(value = "tag", required = false) String tag,
-            @RequestPart(value = "file", required = false) MultipartFile file) {
+            @RequestParam(value = "attachmentIds", required = false) List<Long> attachmentIds) {
         try {
             User author = null;
             if (authHeader != null && authHeader.startsWith("Bearer ")) {
@@ -267,9 +274,13 @@ public class BoardController {
             board.setCategory(category);
             board.setTag(tag); // 태그 설정 (null 가능)
 
-            boardService.write(board, author, file);
+            boardService.write(board, author, attachmentIds);
 
-            return ApiResponse.ok("게시글이 성공적으로 작성되었습니다.", Map.of("board", board))
+            long likeCount = boardLikeService.getLikeCount(board.getId());
+            var attachments = attachmentService.listAttachmentsForBoard(board.getId());
+            BoardResponseDTO boardDto = BoardResponseDTO.from(board, likeCount, attachments);
+
+            return ApiResponse.ok("게시글이 성공적으로 작성되었습니다.", Map.of("board", boardDto))
                     .toResponse(HttpStatus.CREATED);
 
         } catch (Exception e) {
@@ -282,7 +293,10 @@ public class BoardController {
     public ResponseEntity<?> view(@PathVariable("id") Long id) {
         try {
             Board board = boardService.boardView(id);
-            return ApiResponse.ok("게시글을 성공적으로 조회했습니다.", Map.of("board", board)).toResponse();
+            long likeCount = boardLikeService.getLikeCount(board.getId());
+            var attachments = attachmentService.listAttachmentsForBoard(board.getId());
+            BoardResponseDTO boardDto = BoardResponseDTO.from(board, likeCount, attachments);
+            return ApiResponse.ok("게시글을 성공적으로 조회했습니다.", Map.of("board", boardDto)).toResponse();
 
         } catch (RuntimeException e) {
             return ApiResponse.fail(e.getMessage()).toResponse(HttpStatus.NOT_FOUND);
@@ -301,7 +315,7 @@ public class BoardController {
             @RequestParam("title") String title,
             @RequestParam("content") String content,
             @RequestParam(value = "tag", required = false) String tag,
-            @RequestPart(value = "file", required = false) MultipartFile file) {
+            @RequestParam(value = "attachmentIds", required = false) List<Long> attachmentIds) {
         try {
             Board boardTemp = boardService.boardView(id);
 
@@ -346,9 +360,13 @@ public class BoardController {
             boardTemp.setCategory(category);
             boardTemp.setTag(tag); // 태그 설정 (null 가능)
 
-            boardService.write(boardTemp, currentUser, file);
+            boardService.write(boardTemp, currentUser, attachmentIds);
 
-            return ApiResponse.ok("게시글이 성공적으로 수정되었습니다.", Map.of("board", boardTemp)).toResponse();
+            long likeCount = boardLikeService.getLikeCount(boardTemp.getId());
+            var attachments = attachmentService.listAttachmentsForBoard(boardTemp.getId());
+            BoardResponseDTO boardDto = BoardResponseDTO.from(boardTemp, likeCount, attachments);
+
+            return ApiResponse.ok("게시글이 성공적으로 수정되었습니다.", Map.of("board", boardDto)).toResponse();
 
         } catch (RuntimeException e) {
             return ApiResponse.fail(e.getMessage()).toResponse(HttpStatus.NOT_FOUND);
@@ -515,5 +533,68 @@ public class BoardController {
             return ApiResponse.fail("통계 정보 조회 중 오류가 발생했습니다: " + e.getMessage())
                     .toResponse(HttpStatus.INTERNAL_SERVER_ERROR);
         }
+    }
+
+    /**
+     * 내가 작성한 게시글 목록 조회
+     */
+    @GetMapping("/my/boards")
+    public ResponseEntity<?> getMyBoards(
+            @RequestHeader(value = "Authorization", required = false) String authHeader) {
+        try {
+            User currentUser = extractUser(authHeader);
+            if (currentUser == null) {
+                return ApiResponse.fail("로그인이 필요합니다.").toResponse(HttpStatus.UNAUTHORIZED);
+            }
+
+            List<Board> boards = boardService.getMyBoards(currentUser);
+            List<BoardResponseDTO> dtos = boards.stream()
+                    .map(b -> BoardResponseDTO.from(b,
+                            boardLikeService.getLikeCount(b.getId()),
+                            commentRepository.countByBoardIdAndStatusNot(b.getId(), STATUS.DELETED)))
+                    .toList();
+
+            return ApiResponse.ok("내 게시글 목록을 조회했습니다.", dtos).toResponse();
+        } catch (Exception e) {
+            return ApiResponse.fail("내 게시글 조회 중 오류가 발생했습니다: " + e.getMessage())
+                    .toResponse(HttpStatus.INTERNAL_SERVER_ERROR);
+        }
+    }
+
+    /**
+     * 내가 작성한 게시글 삭제 (복수)
+     */
+    @DeleteMapping("/my/boards")
+    public ResponseEntity<?> deleteMyBoards(
+            @RequestHeader(value = "Authorization", required = false) String authHeader,
+            @RequestBody Map<String, List<Long>> body) {
+        try {
+            User currentUser = extractUser(authHeader);
+            if (currentUser == null) {
+                return ApiResponse.fail("로그인이 필요합니다.").toResponse(HttpStatus.UNAUTHORIZED);
+            }
+
+            List<Long> boardIds = body.get("boardIds");
+            if (boardIds == null || boardIds.isEmpty()) {
+                return ApiResponse.fail("삭제할 게시글을 선택해주세요.").toResponse(HttpStatus.BAD_REQUEST);
+            }
+
+            boardService.deleteMyBoards(boardIds, currentUser);
+            return ApiResponse.ok("게시글이 삭제되었습니다.", null).toResponse();
+        } catch (Exception e) {
+            return ApiResponse.fail("게시글 삭제 중 오류가 발생했습니다: " + e.getMessage())
+                    .toResponse(HttpStatus.INTERNAL_SERVER_ERROR);
+        }
+    }
+
+    private User extractUser(String authHeader) {
+        if (authHeader != null && authHeader.startsWith("Bearer ")) {
+            String token = authHeader.substring(7);
+            Long userId = jwtUtil.extractUserId(token);
+            if (userId != null && !jwtUtil.isTokenExpired(token)) {
+                return userRepository.findById(userId).orElse(null);
+            }
+        }
+        return null;
     }
 }

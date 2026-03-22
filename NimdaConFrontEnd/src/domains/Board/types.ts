@@ -27,6 +27,15 @@ export interface BoardAuthor {
 }
 
 /**
+ * 게시글 상세에 포함되는 첨부 메타 (백엔드 BoardResponseDTO.attachments)
+ */
+export interface BoardAttachmentMeta {
+  id: number;
+  originFilename?: string;
+  downloadUrl?: string;
+}
+
+/**
  * 게시글 정보
  */
 export interface Board {
@@ -41,6 +50,8 @@ export interface Board {
   tag?: string | null; // 게시글 태그 (예: "필독", "공지", "가입인사")
   filename?: string | null;
   filepath?: string | null;
+  /** S3+Attachment 연동 시 상세 조회에 포함 */
+  attachments?: BoardAttachmentMeta[];
   createdAt: string;
   updatedAt: string;
 }
@@ -88,7 +99,13 @@ export interface BoardWriteRequest {
   title: string;
   content: string;
   tag?: string | null; // 게시글 태그 (예: "필독", "공지", "가입인사")
-  file?: File;
+  /**
+   * presigned→S3→register로 얻은 첨부 ID 목록. 백엔드 `attachmentIds`와 동일.
+   * - 작성: 생략 시 첨부 없음.
+   * - 수정: 생략 시 첨부 동기화 안 함(제목·내용만 변경). 전달 시 최종 ID 목록으로 동기화.
+   */
+  attachmentIds?: number[];
+  // 제거됨: file?: File — 백엔드가 multipart `file`을 제거하고 `attachmentIds`만 받음 (이유: S3 직접 업로드).
 }
 
 /**
