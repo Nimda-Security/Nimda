@@ -27,7 +27,16 @@ const Sidebar: React.FC = () => {
   const [commentCount, setCommentCount] = useState(0);
   const [likeCount, setLikeCount] = useState(0);
   const [coinBalance, setCoinBalance] = useState(0);
-  const [activeVisitorTab, setActiveVisitorTab] = useState<'today' | 'monthly'>('today');
+  const [activeVisitorTab, setActiveVisitorTab] = useState<'today' | 'weekly'>('today');
+
+  /* 주간랭킹 더미 데이터 */
+  const weeklyRanking = [
+    { rank: 1, name: "blue1", score: 2450, avatar: "https://api.dicebear.com/7.x/avataaars/svg?seed=blue1" },
+    { rank: 2, name: "햄스터", score: 2380, avatar: "https://api.dicebear.com/7.x/avataaars/svg?seed=hamster" },
+    { rank: 3, name: "NIMDA", score: 2100, avatar: "https://api.dicebear.com/7.x/avataaars/svg?seed=nimda" },
+    { rank: 4, name: "체스하실분", score: 1890, avatar: "https://api.dicebear.com/7.x/avataaars/svg?seed=chess" },
+    { rank: 5, name: "코딩천재", score: 1750, avatar: "https://api.dicebear.com/7.x/avataaars/svg?seed=smart" },
+  ];
 
   // 카테고리를 트리 구조로 변환
   type CategoryWithChildren = Category & { children: CategoryWithChildren[] };
@@ -224,11 +233,11 @@ const Sidebar: React.FC = () => {
         )}
       </nav>
 
-
+      <div className="sidebar-divider" />
 
       {/* 오늘 방문자 섹션 - 탭 UI 포함 */}
       <div className="sidebar-visitors">
-        {/* 오늘 방문자 / 월간랭킹 탭 */}
+        {/* 오늘 방문자 / 일일랭킹 탭 */}
         <div className="sidebar-visitors__tabs">
           <button
             type="button"
@@ -239,30 +248,45 @@ const Sidebar: React.FC = () => {
           </button>
           <button
             type="button"
-            className={`sidebar-visitors__tab${activeVisitorTab === 'monthly' ? ' sidebar-visitors__tab--active' : ''}`}
-            onClick={() => setActiveVisitorTab('monthly')}
+            className={`sidebar-visitors__tab${activeVisitorTab === 'weekly' ? ' sidebar-visitors__tab--active' : ''}`}
+            onClick={() => setActiveVisitorTab('weekly')}
           >
-            월간랭킹
+            주간랭킹
           </button>
         </div>
-        {/* 방문자 목록 */}
+        {/* 목록 영역 */}
         <div className="sidebar-visitors__list">
-          {todayVisitors.length > 0 ? (
-            todayVisitors.map((visitor) => (
-              <div key={visitor.id} className="sidebar-visitors__item">
-                <div
-                  className="sidebar-visitors__avatar"
-                  style={{ backgroundColor: "var(--color-gray-200)" }}
-                />
-                <span className="sidebar-visitors__name">
-                  {visitor.userName || "익명"}
+          {activeVisitorTab === 'today' ? (
+            todayVisitors.length > 0 ? (
+              todayVisitors.map((visitor) => (
+                <div key={visitor.id} className="sidebar-visitors__item">
+                  <div className="sidebar-visitors__avatar">
+                    <img 
+                      src={`https://api.dicebear.com/7.x/avataaars/svg?seed=${visitor.userName || 'guest'}`} 
+                      alt="avatar" 
+                    />
+                  </div>
+                  <span className="sidebar-visitors__name">
+                    {visitor.userName || "익명"}
+                  </span>
+                </div>
+              ))
+            ) : (
+            <p className="sidebar-visitors__empty">아직 방문자가 없습니다.</p>
+            )
+          ) : (
+            weeklyRanking.map((item) => (
+              <div key={item.rank} className="sidebar-visitors__item sidebar-visitors__item--ranking">
+                <span className={`sidebar-visitors__rank sidebar-visitors__rank--${item.rank}`}>
+                  {item.rank}
                 </span>
+                <div className="sidebar-visitors__avatar">
+                  <img src={item.avatar} alt="avatar" />
+                </div>
+                <span className="sidebar-visitors__name">{item.name}</span>
+                <span className="sidebar-visitors__score">{item.score}NC</span>
               </div>
             ))
-          ) : (
-            <p style={{ fontSize: '12px', color: '#999', padding: '8px 0', textAlign: 'center' }}>
-              아직 방문자가 없습니다.
-            </p>
           )}
         </div>
       </div>
