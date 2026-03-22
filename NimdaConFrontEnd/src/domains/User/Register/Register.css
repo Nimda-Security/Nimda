@@ -52,7 +52,7 @@
 /* 카드 영역 */
 .reg__card {
   width: 100%;
-  max-width: 1136px;
+  max-width: 960px;
   border: 1px solid var(--color-gray-200);
   border-radius: 4px;
   padding: 31px 0 31px;
