@@ -1,5 +1,6 @@
 package com.nimda.cite.board.service;
 
+import com.nimda.cite.attachment.service.AttachmentService;
 import com.nimda.cite.alarm.service.AlarmService;
 import com.nimda.cite.board.entity.Board;
 import com.nimda.cite.board.entity.Category;
@@ -10,11 +11,8 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-import org.springframework.web.multipart.MultipartFile;
 
-import java.io.File;
 import java.util.List;
-import java.util.UUID;
 
 @Service
 public class BoardService {
@@ -24,29 +22,19 @@ public class BoardService {
     @Autowired
     private AlarmService alarmService;
 
-    // Note. write Service
-    // Param : board : 게시글 정보, author : 작성자, file : 첨부파일
+    @Autowired
+    private AttachmentService attachmentService;
+
+    /**
+     * 게시글 작성/수정
+     *
+     * @param attachmentIds 신규: presiggned 등록 후 ID 목록. 수정: 최종 첨부 ID 목록(동기화). null이면 첨부 변경 없음(수정 시).
+     */
     @Transactional
-    public void write(Board board, User author, MultipartFile file) throws Exception {
+    public void write(Board board, User author, List<Long> attachmentIds) {
 
-        // logic1. 파일 저장 로직 TODO: 추후에 보안 취약점은 없는지. 스토리지에 어떻게 보관할 것인지 분석
-        if (file != null && !file.isEmpty()) {
-            String uploadDir = System.getProperty("user.home") + "/board-uploads";
-            File directory = new File(uploadDir);
-            if (!directory.exists()) {
-                directory.mkdirs();
-            }
+        boolean isNew = board.getId() == null;
 
-            UUID uuid = UUID.randomUUID();
-            String fileName = uuid + "_" + file.getOriginalFilename();
-            File saveFile = new File(uploadDir, fileName);
-            file.transferTo(saveFile);
-
-            board.setFilename(fileName);
-            board.setFilepath("/api/download/" + fileName);
-        }
-
-        // logic2. 작성자/조회수/고정여부 등 기본값 설정
         board.setAuthor(author);
 
         if (board.getPostView() == null) {
@@ -58,9 +46,19 @@ public class BoardService {
 
         boardRepository.save(board);
 
-        // 공지 카테고리 게시글 작성 시 전체 알림 전송
-        if (board.getCategory().getName().contains("공지")) {
+Long categoryId = board.getCategory() != null ? board.getCategory().getId() : null;
+        if (attachmentIds != null) {
+            if (isNew) {
+                attachmentService.linkAttachmentsToBoard(attachmentIds, board.getId(), categoryId, author.getId());
+            } else {
+                attachmentService.syncAttachmentsForBoard(board.getId(), attachmentIds, categoryId, author.getId());
+            }
+        }
+
+        // 2. 공지 알림 전송 (기존 main 기능)
+        if (board.getCategory() != null && board.getCategory().getName().contains("공지")) {
             alarmService.sendNoticeToAll(board.getId(), board.getTitle(), author.getId());
+        
         }
     }
 
@@ -138,6 +136,7 @@ public class BoardService {
         if (!boardRepository.existsById(id)) {
             throw new RuntimeException("게시글을 찾을 수 없습니다: " + id);
         }
+        attachmentService.deleteAttachmentsForBoard(id);
         boardRepository.deleteById(id);
     }
 

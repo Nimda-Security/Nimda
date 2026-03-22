@@ -206,8 +206,11 @@ export const createBoardAPI = async (
     if (data.tag) {
       formData.append('tag', data.tag);
     }
-    if (data.file) {
-      formData.append('file', data.file);
+    // multipart `file` 제거됨 — 이유: 백엔드는 S3 presigned 후 `attachmentIds`만 받음.
+    if (data.attachmentIds !== undefined && data.attachmentIds.length > 0) {
+      for (const aid of data.attachmentIds) {
+        formData.append('attachmentIds', String(aid));
+      }
     }
 
     console.log('[createBoardAPI] 요청 전송:', {
@@ -280,8 +283,11 @@ export const updateBoardAPI = async (
     if (data.tag) {
       formData.append('tag', data.tag);
     }
-    if (data.file) {
-      formData.append('file', data.file);
+    // 수정 시 생략하면 첨부 동기화 안 함. 전달 시 최종 목록으로 동기화(빈 배열 = 전부 삭제).
+    if (data.attachmentIds !== undefined) {
+      for (const aid of data.attachmentIds) {
+        formData.append('attachmentIds', String(aid));
+      }
     }
 
     const response = await fetch(`${API_BASE_URL}/${id}`, {

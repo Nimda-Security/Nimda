@@ -2,6 +2,7 @@ package com.nimda.cite.board.controller;
 
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.nimda.cite.attachment.service.AttachmentService;
 import com.nimda.cite.board.dto.BoardListResponseDTO;
 import com.nimda.cite.board.dto.BoardResponseDTO;
 import com.nimda.cite.board.dto.CategoryResponseDTO;
@@ -23,8 +24,6 @@ import org.springframework.data.web.PageableDefault;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
-import org.springframework.web.multipart.MultipartFile;
-
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
@@ -47,6 +46,9 @@ public class BoardController {
 
     @Autowired
     private BoardLikeService boardLikeService;
+
+    @Autowired
+    private AttachmentService attachmentService;
 
     @Autowired
     private ObjectMapper objectMapper;
@@ -230,7 +232,7 @@ public class BoardController {
             @RequestParam("title") String title,
             @RequestParam("content") String content,
             @RequestParam(value = "tag", required = false) String tag,
-            @RequestPart(value = "file", required = false) MultipartFile file) {
+            @RequestParam(value = "attachmentIds", required = false) List<Long> attachmentIds) {
         try {
             User author = null;
             if (authHeader != null && authHeader.startsWith("Bearer ")) {
@@ -267,9 +269,13 @@ public class BoardController {
             board.setCategory(category);
             board.setTag(tag); // 태그 설정 (null 가능)
 
-            boardService.write(board, author, file);
+            boardService.write(board, author, attachmentIds);
 
-            return ApiResponse.ok("게시글이 성공적으로 작성되었습니다.", Map.of("board", board))
+            long likeCount = boardLikeService.getLikeCount(board.getId());
+            var attachments = attachmentService.listAttachmentsForBoard(board.getId());
+            BoardResponseDTO boardDto = BoardResponseDTO.from(board, likeCount, attachments);
+
+            return ApiResponse.ok("게시글이 성공적으로 작성되었습니다.", Map.of("board", boardDto))
                     .toResponse(HttpStatus.CREATED);
 
         } catch (Exception e) {
@@ -282,7 +288,10 @@ public class BoardController {
     public ResponseEntity<?> view(@PathVariable("id") Long id) {
         try {
             Board board = boardService.boardView(id);
-            return ApiResponse.ok("게시글을 성공적으로 조회했습니다.", Map.of("board", board)).toResponse();
+            long likeCount = boardLikeService.getLikeCount(board.getId());
+            var attachments = attachmentService.listAttachmentsForBoard(board.getId());
+            BoardResponseDTO boardDto = BoardResponseDTO.from(board, likeCount, attachments);
+            return ApiResponse.ok("게시글을 성공적으로 조회했습니다.", Map.of("board", boardDto)).toResponse();
 
         } catch (RuntimeException e) {
             return ApiResponse.fail(e.getMessage()).toResponse(HttpStatus.NOT_FOUND);
@@ -301,7 +310,7 @@ public class BoardController {
             @RequestParam("title") String title,
             @RequestParam("content") String content,
             @RequestParam(value = "tag", required = false) String tag,
-            @RequestPart(value = "file", required = false) MultipartFile file) {
+            @RequestParam(value = "attachmentIds", required = false) List<Long> attachmentIds) {
         try {
             Board boardTemp = boardService.boardView(id);
 
@@ -346,9 +355,13 @@ public class BoardController {
             boardTemp.setCategory(category);
             boardTemp.setTag(tag); // 태그 설정 (null 가능)
 
-            boardService.write(boardTemp, currentUser, file);
+            boardService.write(boardTemp, currentUser, attachmentIds);
 
-            return ApiResponse.ok("게시글이 성공적으로 수정되었습니다.", Map.of("board", boardTemp)).toResponse();
+            long likeCount = boardLikeService.getLikeCount(boardTemp.getId());
+            var attachments = attachmentService.listAttachmentsForBoard(boardTemp.getId());
+            BoardResponseDTO boardDto = BoardResponseDTO.from(boardTemp, likeCount, attachments);
+
+            return ApiResponse.ok("게시글이 성공적으로 수정되었습니다.", Map.of("board", boardDto)).toResponse();
 
         } catch (RuntimeException e) {
             return ApiResponse.fail(e.getMessage()).toResponse(HttpStatus.NOT_FOUND);
