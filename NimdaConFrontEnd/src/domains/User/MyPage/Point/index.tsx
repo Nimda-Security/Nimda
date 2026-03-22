@@ -5,6 +5,10 @@ import Footer from "@/components/Layout/Footer";
 import ProfileSection from "./Components/Profile/ProfileSection";
 import PointContent from "./Components/PointContent";
 import UserInfoContent from "./Components/UserInfoContent";
+import MyCommentsContent from "./Components/MyCommentsContent";
+import MyPostsContent from "./Components/MyPostsContent";
+import CommentedPostsContent from "./Components/CommentedPostsContent";
+import LikedPostsContent from "./Components/LikedPostsContent";
 
 import { getUserBalance } from "@/api/point";
 import { getMyTotalAttendanceCount } from "@/api/attendance";
@@ -92,12 +96,12 @@ function MyPagePoint() {
   };
 
   return (
-    <div className="min-h-screen bg-[#F8F9FA] font-sans text-[#0c0c0c] flex flex-col">
+    <div className="min-h-screen bg-[#F5F5F5] font-['Pretendard',sans-serif] text-[#0c0c0c] flex flex-col">
       <Header />
       <div className="h-[56px] w-full" />
 
       <main className="flex-1 flex justify-center pt-10 pb-12 overflow-x-hidden">
-        <div className="w-full max-w-[1050px] px-6">
+        <div className="w-full max-w-[1200px] px-[120px]">
           {/* 상단 프로필 및 탭 메뉴 */}
           <ProfileSection
             userInfo={userInfo}
@@ -105,11 +109,22 @@ function MyPagePoint() {
             setActiveTab={setActiveTab}
           />
 
-          {/* ✅ 교정 포인트: 탭 메뉴와 아래 콘텐츠 사이의 간격을 모든 탭에서 24px로 통일 */}
-          <div style={{ marginTop: '24px' }}>
+          {/* 2. 💡 강제 간격 조정 (mt-6 대신 독립적인 div로 24px 확보) */}
+          <div className="h-[24px] w-full" /> 
+
+          {/* 3. 하단 콘텐츠 영역 */}
+          <div className="w-full">
             {activeTab === "profile" && (
               <UserInfoContent loading={loading} />
             )}
+
+            {activeTab === "my_posts" && <MyPostsContent />}
+
+            {activeTab === "my_comments" && <MyCommentsContent />}
+
+            {activeTab === "commented_posts" && <CommentedPostsContent />}
+
+            {activeTab === "liked_posts" && <LikedPostsContent />}
 
             {activeTab === "points" && (
               <PointContent

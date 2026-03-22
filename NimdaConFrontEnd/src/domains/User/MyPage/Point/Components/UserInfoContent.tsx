@@ -21,6 +21,7 @@ interface UserInfoContentProps {
   loading: boolean;
 }
 
+/** 날짜 포맷팅 함수: 19990101 -> 1999.01.01 */
 const formatDate = (dateStr?: string) => {
   if (!dateStr || dateStr.length !== 8) return dateStr || "-";
   const year = dateStr.substring(0, 4);
@@ -71,21 +72,21 @@ const UserInfoContent: React.FC<UserInfoContentProps> = ({ loading: parentLoadin
 
   if (loading || parentLoading) {
     return (
-      <div className="py-12 text-center text-[#a3a3a3]">
+      <div className="py-20 text-center text-[#a3a3a3] font-medium">
         정보를 불러오는 중...
       </div>
     );
   }
 
   return (
-    <div>
+    /* 💡 최상단을 Fragment(<>)로 감싸서 부모의 mt-6가 아래 테두리 박스에 직접 닿게 합니다. */
+    <>
       <div
-        className="border border-[#d4d4d4] rounded-[4px] overflow-hidden"
+        className="border border-[#d4d4d4] rounded-[4px] overflow-hidden bg-white shadow-sm"
         style={{ padding: "31px 23px" }}
       >
-        {/* 두 컬럼 사이의 간격을 24px(gap-6)로 조정 */}
         <div className="flex gap-6">
-          {/* 왼쪽 컬럼: 각 필드 사이 간격을 24px(gap-6)로 조정 */}
+          {/* 왼쪽 컬럼 */}
           <div className="flex-1 flex flex-col gap-6">
             <InfoField label="이름" value={user?.name || "-"} />
 
@@ -103,7 +104,7 @@ const UserInfoContent: React.FC<UserInfoContentProps> = ({ loading: parentLoadin
                 </span>
                 <button
                   onClick={handleToggleEmailHide}
-                  className="flex items-center gap-1 text-[12px] font-semibold text-[#d97399]"
+                  className="flex items-center gap-1 text-[12px] font-semibold text-[#d97399] hover:underline"
                 >
                   <img
                     src="/eye-on.svg"
@@ -119,7 +120,7 @@ const UserInfoContent: React.FC<UserInfoContentProps> = ({ loading: parentLoadin
             </div>
           </div>
 
-          {/* 오른쪽 컬럼: 각 필드 사이 간격을 24px(gap-6)로 조정 */}
+          {/* 오른쪽 컬럼 */}
           <div className="flex-1 flex flex-col gap-6">
             <div className="flex flex-col gap-2">
               <span className="text-[16px] font-medium text-[#0c0c0c]">
@@ -130,6 +131,7 @@ const UserInfoContent: React.FC<UserInfoContentProps> = ({ loading: parentLoadin
                   <div className="relative flex-1">
                     <input
                       type="text"
+                      autoFocus
                       value={nicknameInput}
                       onChange={(e) => {
                         if (e.target.value.length <= maxNicknameLength) {
@@ -148,7 +150,7 @@ const UserInfoContent: React.FC<UserInfoContentProps> = ({ loading: parentLoadin
                       if (user) setUser({ ...user, nickname: nicknameInput });
                       setIsEditingNickname(false);
                     }}
-                    className="text-green-500 text-lg"
+                    className="text-green-500 text-lg font-bold"
                   >
                     ✓
                   </button>
@@ -157,7 +159,7 @@ const UserInfoContent: React.FC<UserInfoContentProps> = ({ loading: parentLoadin
                       setNicknameInput(user?.nickname || "");
                       setIsEditingNickname(false);
                     }}
-                    className="text-gray-400 text-lg"
+                    className="text-gray-400 text-lg font-bold"
                   >
                     ✕
                   </button>
@@ -169,7 +171,7 @@ const UserInfoContent: React.FC<UserInfoContentProps> = ({ loading: parentLoadin
                   </span>
                   <button
                     onClick={() => setIsEditingNickname(true)}
-                    className="text-[12px] font-semibold text-[#d97399]"
+                    className="text-[12px] font-semibold text-[#d97399] hover:underline"
                   >
                     수정
                   </button>
@@ -185,7 +187,7 @@ const UserInfoContent: React.FC<UserInfoContentProps> = ({ loading: parentLoadin
                 <span className="text-[16px] font-medium text-[#0c0c0c]">
                   백준 ID
                 </span>
-                <button className="text-[12px] font-semibold text-[#d97399]">
+                <button className="text-[12px] font-semibold text-[#d97399] hover:underline">
                   수정
                 </button>
               </div>
@@ -197,14 +199,16 @@ const UserInfoContent: React.FC<UserInfoContentProps> = ({ loading: parentLoadin
         </div>
       </div>
 
-      <p className="text-center text-[14px] font-medium" style={{ marginTop: '40px', marginBottom: '100px' }}>
+      {/* 안내 문구 (테두리 박스와의 간격 40px 유지) */}
+      <p className="text-center text-[14px] font-medium mt-[40px] mb-[100px]">
         <span className="text-[#d97399]">특정 정보</span>
         <span className="text-[#8b8b8b]">는 관리자의 승인을 받아야 수정이 가능합니다.</span>
       </p>
-    </div>
+    </>
   );
 };
 
+/* 개별 정보 필드 컴포넌트 */
 interface InfoFieldProps {
   label: string;
   value: string;
@@ -217,7 +221,7 @@ const InfoField: React.FC<InfoFieldProps> = ({ label, value, editable, onEdit })
     <div className="flex items-center justify-between">
       <span className="text-[16px] font-medium text-[#0c0c0c]">{label}</span>
       {editable && (
-        <button onClick={onEdit} className="text-[12px] font-semibold text-[#d97399]">
+        <button onClick={onEdit} className="text-[12px] font-semibold text-[#d97399] hover:underline">
           수정
         </button>
       )}
