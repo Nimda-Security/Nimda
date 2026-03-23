@@ -1,13 +1,13 @@
 import { useEffect, useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
-import { Heart } from '@/components/icons/Heart';
 import { MessageBox } from '@/components/icons/MessageBox';
 import { VerticalDots } from '@/components/icons/VerticalDots';
 import Layout from '@/components/Layout';
 import { openAttachmentDownloadInNewTab } from '@/api/attachments';
-import { getBoardDetailAPI, deleteBoardAPI, getFileDownloadURL, getBoardLikeStatusAPI, toggleBoardLikeAPI } from '@/api/board';
+import { getBoardDetailAPI, deleteBoardAPI, getFileDownloadURL, getBoardLikeStatusAPI } from '@/api/board';
 import type { Board } from '../types';
 import CommentSection from '@/domains/Comment';
+import BoardLikeButton from './BoardLikeButton';
 import './BoardDetail.css';
 
 function BoardDetailPage() {
@@ -20,7 +20,6 @@ function BoardDetailPage() {
   const [isDeleting, setIsDeleting] = useState(false);
   const [likeCount, setLikeCount] = useState(0);
   const [isLiked, setIsLiked] = useState(false);
-  const [isTogglingLike, setIsTogglingLike] = useState(false);
 
   useEffect(() => { if (id) fetchBoard(parseInt(id)); }, [id]);
 
@@ -44,24 +43,9 @@ function BoardDetailPage() {
       const res = await getBoardLikeStatusAPI(boardId);
       if (res.success && 'data' in res) {
         setLikeCount(res.data.likeCount);
-        setIsLiked(res.data.isLiked);
+        setIsLiked(res.data.isLiked ?? (res.data as any).liked ?? false);
       }
     } catch { /* 비로그인 상태 */ }
-  };
-
-  const handleToggleLike = async () => {
-    if (!board || isTogglingLike) return;
-    try {
-      setIsTogglingLike(true);
-      const res = await toggleBoardLikeAPI(board.id);
-      if (res.success && 'data' in res) {
-        setLikeCount(res.data.likeCount);
-        setIsLiked(res.data.isLiked);
-      } else {
-        alert(res.message || '좋아요 처리에 실패했습니다.');
-      }
-    } catch { alert('좋아요 처리 중 오류가 발생했습니다.'); }
-    finally { setIsTogglingLike(false); }
   };
 
   const handleGoBack = () => {
@@ -147,7 +131,15 @@ function BoardDetailPage() {
                 {board.likeCount ?? 0}
               </span>
               <span className="board-detail__stat-likes">
-                <Heart filled={isLiked} />
+               <img
+                   src={isLiked ? '/like-active.svg' : '/like-inactive.svg'}
+                   alt={isLiked ? "좋아요 취소" : "좋아요 하기"}
+                   style={{
+                     width: '14px',
+                     height: '12px',
+                     cursor: 'pointer'
+                   }}
+                 />
                 {likeCount}
               </span>
             </div>
@@ -199,12 +191,15 @@ function BoardDetailPage() {
         )}
 
         {/* 좋아요 */}
-        <div className="board-detail__like-area">
-          <button type="button" onClick={handleToggleLike} disabled={isTogglingLike} className="board-detail__like-btn">
-            <Heart filled={isLiked} />
-            <span className="board-detail__like-count">{likeCount}</span>
-          </button>
-        </div>
+        <BoardLikeButton
+          boardId={board.id}
+          initialLikeCount={likeCount}
+          initialIsLiked={isLiked}
+          onLikeChange={(count, liked) => {
+            setLikeCount(count);
+            setIsLiked(liked);
+          }}
+        />
 
         {/* 댓글 */}
         <CommentSection boardId={board.id} />
