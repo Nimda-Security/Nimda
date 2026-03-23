@@ -124,7 +124,7 @@ const NotificationPanel: React.FC<NotificationPanelProps> = ({ onClose, refreshK
         </div>
         <div className="flex w-full px-4">
           {tabs.map((tab) => (
-            <button key={tab.key} className={`flex-1 pb-2.5 text-[14px] font-semibold transition-all ${activeTab === tab.key ? "text-[#d97399] border-b-[3px] border-[#d97399]" : "text-[#a3a3a3] border-b-[3px] border-transparent"}`} onClick={() => setActiveTab(tab.key)}>
+            <button key={tab.key} className={`flex-1 pb-3.5 text-[14px] font-semibold transition-all ${activeTab === tab.key ? "text-[#d97399] border-b-[3px] border-[#d97399]" : "text-[#a3a3a3] border-b-[3px] border-transparent"}`} onClick={() => setActiveTab(tab.key)}>
               {tab.label}
               {tab.key === "unread" && notifications.filter(n => !n.isRead).length > 0 && (
                 <span className="ml-1.5 px-1.5 py-0.5 bg-pink-100 text-pink-600 text-[10px] rounded-full">{notifications.filter(n => !n.isRead).length}</span>
