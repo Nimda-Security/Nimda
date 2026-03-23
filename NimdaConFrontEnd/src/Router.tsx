@@ -1,4 +1,5 @@
 import { BrowserRouter, Routes, Route } from "react-router-dom";
+import ScrollToTop from "@/components/ScrollToTop";
 
 // 기존 임포트 항목들
 import LoginPage from "@/domains/User/Login/Page";
@@ -28,6 +29,7 @@ import AdminMileage from "@/domains/admin/AdminMileage.jsx";
 const Router = () => {
   return (
     <BrowserRouter>
+      <ScrollToTop />
       <Routes>
         {/* 기본 서비스 경로 */}
         <Route path="/" element={<Home />} />
