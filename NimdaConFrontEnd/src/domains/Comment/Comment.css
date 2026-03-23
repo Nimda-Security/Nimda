@@ -227,7 +227,11 @@
 }
 
 .comment-item__like-btn {
-  color: var(--color-red);
+  color: var(--color-gray-300);
+}
+
+.comment-item__like-btn--active {
+  color: #D64454;
 }
 
 .comment-item__reply-btn {
