@@ -1,9 +1,10 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { useNavigate, useParams, useSearchParams } from 'react-router-dom';
 import Layout from '@/components/Layout';
 import { createBoardAPI } from '@/api/board';
 import { uploadBoardFileViaS3 } from '@/api/attachments';
 import { getCategoryBySlugAPI, getAllCategoriesAPI } from '@/api/category';
+import ChevronDown from '@/components/icons/ChevronDown';
 import type { Category } from '../types';
 
 function BoardWritePage() {
@@ -12,20 +13,24 @@ function BoardWritePage() {
   const [searchParams] = useSearchParams();
 
   const slug = paramBoardType?.toLowerCase() || 'news';
-  const tagFromUrl = searchParams.get('tag'); // URL 쿼리 파라미터에서 태그 가져오기
 
-  const [category, setCategory] = useState<Category | null>(null);
-  const [selectedCategoryId, setSelectedCategoryId] = useState<number | null>(null);
   const [allCategories, setAllCategories] = useState<Category[]>([]);
+  const [parentCategoryId, setParentCategoryId] = useState<number | null>(null);
+  const [subCategoryId, setSubCategoryId] = useState<number | null>(null);
+  const [showParentDropdown, setShowParentDropdown] = useState(false);
 
   const [title, setTitle] = useState('');
   const [content, setContent] = useState('');
-  const [tag, setTag] = useState<string>('');
+  const [tag, setTag] = useState<string>(''); // 기존 tag 필드는 필요시 사용 (현재는 카테고리 선택으로 대체하는 흐름이나 보존 가능)
   const [file, setFile] = useState<File | null>(null);
+  const [isDragOver, setIsDragOver] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  // 모든 카테고리 목록 가져오기
+  const fileInputRef = useRef<HTMLInputElement>(null);
+  const contentRef = useRef<HTMLTextAreaElement>(null);
+
+  // 모든 카테고리 로드
   useEffect(() => {
     const fetchAllCategories = async () => {
       try {
@@ -38,55 +43,48 @@ function BoardWritePage() {
     fetchAllCategories();
   }, []);
 
-  // URL slug로 카테고리 자동 선택
+  // URL slug에 따른 초기 게시판 설정
   useEffect(() => {
-    const fetchCategory = async () => {
-      const categoryData = await getCategoryBySlugAPI(slug);
-      if (categoryData) {
-        setCategory(categoryData);
-        setSelectedCategoryId(categoryData.id);
-      }
-    };
-    fetchCategory();
-  }, [slug]);
+    if (allCategories.length === 0) return;
 
-  // URL에서 태그 자동 선택 (카테고리가 로드된 후)
-  useEffect(() => {
-    if (tagFromUrl && category) {
-      const availableTags = getAvailableTags(category);
-      if (availableTags.includes(tagFromUrl)) {
-        setTag(tagFromUrl);
-      }
-    } else if (!tagFromUrl) {
-      // URL에 태그가 없으면 초기화
-      setTag('');
-    }
-  }, [tagFromUrl, category]);
-
-  // 선택된 카테고리 변경 시 해당 카테고리 정보 업데이트
-  useEffect(() => {
-    if (selectedCategoryId) {
-      const selectedCategory = allCategories.find(cat => cat.id === selectedCategoryId);
-      if (selectedCategory) {
-        setCategory(selectedCategory);
-        // 카테고리 변경 시 태그 초기화 (새 카테고리의 태그 목록에 없을 수 있음)
-        const availableTags = getAvailableTags(selectedCategory);
-        if (tag && !availableTags.includes(tag)) {
-          setTag('');
+    const fetchInitial = async () => {
+      const cat = allCategories.find(c => c.slug === slug);
+      if (cat) {
+        if (cat.parentId) {
+          // 만약 slug가 하위 카테고리라면 부모를 상단에, 자기자신을 하단에 설정
+          setParentCategoryId(cat.parentId);
+          setSubCategoryId(cat.id);
+        } else {
+          // slug가 상위 카테고리라면 상단에 설정, 하단은 첫 번째 자식으로 초기화 시도
+          setParentCategoryId(cat.id);
+          const children = allCategories.filter(c => c.parentId === cat.id);
+          if (children.length > 0) {
+            setSubCategoryId(children[0].id);
+          } else {
+            setSubCategoryId(cat.id);
+          }
         }
       }
-    }
-  }, [selectedCategoryId, allCategories]);
+    };
+    fetchInitial();
+  }, [allCategories, slug]);
+
+  const rootCategories = allCategories
+    .filter(c => c.parentId === null && c.isActive)
+    .filter(c => !['바로가기', '대회'].includes(c.name));
+  const currentParentCat = allCategories.find(c => c.id === parentCategoryId);
+  const subCategories = allCategories.filter(c => c.parentId === parentCategoryId && c.isActive);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+
+    const targetCategoryId = subCategoryId || parentCategoryId;
 
     if (!title.trim() || !content.trim()) {
       setError('제목과 내용을 입력해주세요.');
       return;
     }
-
-    if (!selectedCategoryId) {
+    if (!targetCategoryId) {
       setError('카테고리를 선택해주세요.');
       return;
     }
@@ -95,10 +93,9 @@ function BoardWritePage() {
       setIsSubmitting(true);
       setError(null);
 
-      // 첨부가 있으면 S3 presigned→PUT→register 후 ID만 전달. file 직접 전송 제거 이유와 동일.
       let attachmentIds: number[] | undefined;
       if (file) {
-        const uploaded = await uploadBoardFileViaS3(file, selectedCategoryId);
+        const uploaded = await uploadBoardFileViaS3(file, targetCategoryId);
         if (!uploaded.ok) {
           setError(uploaded.message);
           return;
@@ -107,7 +104,7 @@ function BoardWritePage() {
       }
 
       const response = await createBoardAPI({
-        categoryId: selectedCategoryId,
+        categoryId: targetCategoryId,
         title: title.trim(),
         content: content.trim(),
         tag: tag.trim() || undefined,
@@ -115,9 +112,7 @@ function BoardWritePage() {
       });
 
       if (response.success && 'board' in response) {
-        alert('게시글이 작성되었습니다.');
-        // 작성된 게시글의 카테고리 slug로 이동
-        const writtenCategory = allCategories.find(cat => cat.id === selectedCategoryId);
+        const writtenCategory = allCategories.find(cat => cat.id === targetCategoryId);
         const categorySlug = writtenCategory?.slug || slug;
         navigate(`/board/${categorySlug}/${response.board.id}`);
       } else {
@@ -132,7 +127,8 @@ function BoardWritePage() {
 
   const handleCancel = () => {
     if (window.confirm('작성 중인 내용이 사라집니다. 정말 나가시겠습니까?')) {
-      navigate(`/board/${slug}`);
+      const cat = allCategories.find(c => c.id === (subCategoryId || parentCategoryId));
+      navigate(`/board/${cat?.slug || slug}`);
     }
   };
 
@@ -144,168 +140,246 @@ function BoardWritePage() {
 
   const handleRemoveFile = () => {
     setFile(null);
+    if (fileInputRef.current) fileInputRef.current.value = '';
   };
 
-  // 카테고리의 availableTags를 파싱하여 배열로 변환
-  const getAvailableTags = (cat?: Category | null): string[] => {
-    const targetCategory = cat || category;
-    if (!targetCategory?.availableTags) return [];
-    try {
-      return JSON.parse(targetCategory.availableTags);
-    } catch {
-      return [];
-    }
+  const handleDragOver = (e: React.DragEvent) => {
+    e.preventDefault();
+    setIsDragOver(true);
   };
 
-  const availableTags = getAvailableTags();
+  const handleDragLeave = () => setIsDragOver(false);
+
+  const handleDrop = (e: React.DragEvent) => {
+    e.preventDefault();
+    setIsDragOver(false);
+    const droppedFile = e.dataTransfer.files[0];
+    if (droppedFile) setFile(droppedFile);
+  };
+
+  // 텍스트 포맷팅 (bold, italic, underline)
+  const applyFormat = (format: 'bold' | 'italic' | 'underline') => {
+    const textarea = contentRef.current;
+    if (!textarea) return;
+    const start = textarea.selectionStart;
+    const end = textarea.selectionEnd;
+    const selected = content.slice(start, end);
+    const wrappers: Record<string, string> = { bold: '**', italic: '_', underline: '__' };
+    const wrap = wrappers[format];
+    const newContent = content.slice(0, start) + wrap + selected + wrap + content.slice(end);
+    setContent(newContent);
+  };
 
   return (
-    <Layout>
-      <div className="min-h-screen bg-white pt-8">
-        <div className="container mx-auto px-4 py-6 max-w-4xl">
-          <header className="mb-6">
-            <button
-              onClick={handleCancel}
-              className="text-gray-600 hover:text-black text-sm mb-4"
-            >
-              ← 목록으로 돌아가기
-            </button>
-            <h1 className="text-2xl font-bold text-black">게시글 작성</h1>
-          </header>
+    <Layout hideSidebar={true}>
+      <div className="bw-page">
+        <form onSubmit={handleSubmit} className="bw-container">
 
-          <form onSubmit={handleSubmit} className="space-y-6">
-            {/* 카테고리 선택 */}
-            <div>
-              <label htmlFor="category" className="block text-sm font-medium text-gray-700 mb-2">
-                카테고리
-              </label>
-              <select
-                id="category"
-                value={selectedCategoryId || ''}
-                onChange={(e) => setSelectedCategoryId(Number(e.target.value))}
-                className="w-full px-4 py-2 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-black"
-                required
-              >
-                <option value="">카테고리를 선택하세요</option>
-                {allCategories
-                  .filter(cat => cat.isActive)
-                  .map((cat) => (
-                    <option key={cat.id} value={cat.id}>
+          {/* ── 상단: 대분류 게시판 선택 ── */}
+          <div className="bw-top-bar">
+            <span className="bw-label">게시판</span>
+            <div className="bw-category-selector" onClick={() => setShowParentDropdown(p => !p)}>
+              <span className="bw-category-selected">
+                {currentParentCat ? currentParentCat.name : '선택하세요'}
+              </span>
+              <span className={`bw-chevron ${showParentDropdown ? 'bw-chevron--open' : ''}`}>
+                <ChevronDown />
+              </span>
+              {showParentDropdown && (
+                <div className="bw-category-dropdown">
+                  {rootCategories.map(cat => (
+                    <div
+                      key={cat.id}
+                      className={`bw-category-option ${cat.id === parentCategoryId ? 'bw-category-option--active' : ''}`}
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        setParentCategoryId(cat.id);
+                        // 부모가 바뀌면 자식을 첫 번째 자식으로 초기화 거나 null
+                        const children = allCategories.filter(c => c.parentId === cat.id);
+                        setSubCategoryId(children.length > 0 ? children[0].id : cat.id);
+                        setShowParentDropdown(false);
+                      }}
+                    >
                       {cat.name}
-                    </option>
+                    </div>
                   ))}
-              </select>
-            </div>
-
-            {/* 제목 */}
-            <div>
-              <label htmlFor="title" className="block text-sm font-medium text-gray-700 mb-2">
-                제목
-              </label>
-              <input
-                id="title"
-                type="text"
-                value={title}
-                onChange={(e) => setTitle(e.target.value)}
-                placeholder="제목을 입력하세요"
-                className="w-full px-4 py-2 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-black"
-                maxLength={200}
-                required
-              />
-            </div>
-
-            {/* 내용 */}
-            <div>
-              <label htmlFor="content" className="block text-sm font-medium text-gray-700 mb-2">
-                내용
-              </label>
-              <textarea
-                id="content"
-                value={content}
-                onChange={(e) => setContent(e.target.value)}
-                placeholder="내용을 입력하세요"
-                rows={15}
-                className="w-full px-4 py-2 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-black resize-none"
-                required
-              />
-            </div>
-
-            {/* 태그 선택 (카테고리에 availableTags가 있을 때만 표시) */}
-            {availableTags.length > 0 && (
-              <div>
-                <label htmlFor="tag" className="block text-sm font-medium text-gray-700 mb-2">
-                  세부 카테고리 (선택사항)
-                </label>
-                <select
-                  id="tag"
-                  value={tag}
-                  onChange={(e) => setTag(e.target.value)}
-                  className="w-full px-4 py-2 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-black"
-                >
-                  <option value="">세부 카테고리를 선택하세요</option>
-                  {availableTags.map((tagOption) => (
-                    <option key={tagOption} value={tagOption}>
-                      {tagOption}
-                    </option>
-                  ))}
-                </select>
-              </div>
-            )}
-
-            {/* 파일 업로드 */}
-            <div>
-              <label htmlFor="file" className="block text-sm font-medium text-gray-700 mb-2">
-                첨부파일
-              </label>
-              {file ? (
-                <div className="flex items-center gap-2">
-                  <span className="text-sm text-gray-700">{file.name}</span>
-                  <button
-                    type="button"
-                    onClick={handleRemoveFile}
-                    className="text-sm text-red-600 hover:text-red-800"
-                  >
-                    삭제
-                  </button>
                 </div>
-              ) : (
-                <input
-                  id="file"
-                  type="file"
-                  onChange={handleFileChange}
-                  className="w-full px-4 py-2 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-black"
-                />
               )}
             </div>
+          </div>
 
-            {/* 에러 메시지 */}
-            {error && (
-              <div className="p-4 bg-red-50 text-red-700 rounded">{error}</div>
+          <div className="bw-divider" />
+
+          {/* ── 제목 ── */}
+          <div className="bw-title-area">
+            <input
+              id="bw-title"
+              type="text"
+              value={title}
+              onChange={(e) => setTitle(e.target.value)}
+              placeholder="제목을 입력하세요."
+              className="bw-title-input"
+              maxLength={200}
+              required
+            />
+          </div>
+
+          <div className="bw-divider" />
+
+          {/* ── 툴바 ── */}
+          <div className="bw-toolbar">
+            <button type="button" className="bw-tool-btn" title="이모지">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+                <circle cx="12" cy="12" r="10" />
+                <path d="M8 14s1.5 2 4 2 4-2 4-2" />
+                <line x1="9" y1="9" x2="9.01" y2="9" />
+                <line x1="15" y1="9" x2="15.01" y2="9" />
+              </svg>
+            </button>
+            <span className="bw-tool-dot" />
+            <button type="button" className="bw-tool-btn" title="굵게" onClick={() => applyFormat('bold')}>
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
+                <path d="M6 4h8a4 4 0 0 1 4 4 4 4 0 0 1-4 4H6z" />
+                <path d="M6 12h9a4 4 0 0 1 4 4 4 4 0 0 1-4 4H6z" />
+              </svg>
+            </button>
+            <button type="button" className="bw-tool-btn" title="기울임" onClick={() => applyFormat('italic')}>
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                <line x1="19" y1="4" x2="10" y2="4" />
+                <line x1="14" y1="20" x2="5" y2="20" />
+                <line x1="15" y1="4" x2="9" y2="20" />
+              </svg>
+            </button>
+            <button type="button" className="bw-tool-btn" title="밑줄" onClick={() => applyFormat('underline')}>
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                <path d="M6 3v7a6 6 0 0 0 6 6 6 6 0 0 0 6-6V3" />
+                <line x1="4" y1="21" x2="20" y2="21" />
+              </svg>
+            </button>
+            <span className="bw-tool-dot" />
+            <button type="button" className="bw-tool-btn" title="사진 첨부" onClick={() => fileInputRef.current?.click()}>
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+                <rect x="3" y="3" width="18" height="18" rx="2" ry="2" />
+                <circle cx="8.5" cy="8.5" r="1.5" />
+                <polyline points="21 15 16 10 5 21" />
+              </svg>
+            </button>
+            <button type="button" className="bw-tool-btn" title="파일 첨부" onClick={() => fileInputRef.current?.click()}>
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+                <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" />
+                <polyline points="14 2 14 8 20 8" />
+                <line x1="12" y1="18" x2="12" y2="12" />
+                <line x1="9" y1="15" x2="15" y2="15" />
+              </svg>
+            </button>
+            <span className="bw-tool-dot" />
+            <button type="button" className="bw-tool-btn" title="정렬">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                <line x1="17" y1="10" x2="3" y2="10" />
+                <line x1="21" y1="6" x2="3" y2="6" />
+                <line x1="21" y1="14" x2="3" y2="14" />
+                <line x1="17" y1="18" x2="3" y2="18" />
+              </svg>
+            </button>
+          </div>
+
+          <div className="bw-divider" />
+
+          {/* ── 내용 ── */}
+          <textarea
+            ref={contentRef}
+            id="bw-content"
+            value={content}
+            onChange={(e) => setContent(e.target.value)}
+            placeholder="내용을 입력하세요."
+            className="bw-content-input"
+            required
+          />
+
+          <div className="bw-divider" />
+
+          {/* ── 하위 카테고리 선택 (칩) ── */}
+          <div className="bw-section">
+            <span className="bw-section-label">세부 카테고리</span>
+            {subCategories.length > 0 ? (
+              <div className="bw-tag-list">
+                {subCategories.map((sub) => (
+                  <button
+                    key={sub.id}
+                    type="button"
+                    className={`bw-tag-chip ${subCategoryId === sub.id ? 'bw-tag-chip--active' : ''}`}
+                    onClick={() => setSubCategoryId(sub.id)}
+                  >
+                    #{sub.name}
+                  </button>
+                ))}
+              </div>
+            ) : (
+              <p className="bw-tag-hint">선택한 게시판에 세부 카테고리가 없습니다.</p>
             )}
+            {!subCategoryId && subCategories.length > 0 && (
+              <p className="bw-tag-required">게시글 분류를 위한 세부 카테고리를 선택해 주세요.</p>
+            )}
+          </div>
 
-            {/* 버튼 */}
-            <div className="flex gap-2 justify-end">
-              <button
-                type="button"
-                onClick={handleCancel}
-                className="px-6 py-2 bg-gray-200 text-gray-700 rounded hover:bg-gray-300"
+          <div className="bw-divider" />
+
+          {/* ── 첨부파일 ── */}
+          <div className="bw-section">
+            <span className="bw-section-label">첨부파일</span>
+            {file ? (
+              <div className="bw-file-selected">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                  <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" />
+                  <polyline points="14 2 14 8 20 8" />
+                </svg>
+                <span className="bw-file-name">{file.name}</span>
+                <button type="button" className="bw-file-remove" onClick={handleRemoveFile}>×</button>
+              </div>
+            ) : (
+              <div
+                className={`bw-dropzone ${isDragOver ? 'bw-dropzone--active' : ''}`}
+                onDragOver={handleDragOver}
+                onDragLeave={handleDragLeave}
+                onDrop={handleDrop}
+                onClick={() => fileInputRef.current?.click()}
               >
-                취소
-              </button>
-              <button
-                type="submit"
-                disabled={isSubmitting}
-                className="px-6 py-2 bg-black text-white rounded hover:bg-gray-800 disabled:opacity-50"
-              >
-                {isSubmitting ? '작성 중...' : '작성하기'}
-              </button>
-            </div>
-          </form>
-        </div>
+                <svg className="bw-dropzone-icon" width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+                  <polyline points="16 16 12 12 8 16" />
+                  <line x1="12" y1="12" x2="12" y2="21" />
+                  <path d="M20.39 18.39A5 5 0 0 0 18 9h-1.26A8 8 0 1 0 3 16.3" />
+                </svg>
+                <p className="bw-dropzone-text">파일을 드래그하거나 클릭하여 업로드</p>
+                <p className="bw-dropzone-hint">최대 50MB &nbsp;·&nbsp; 이미지, PDF, 문서 파일 지원</p>
+              </div>
+            )}
+            <input
+              ref={fileInputRef}
+              id="bw-file"
+              type="file"
+              onChange={handleFileChange}
+              style={{ display: 'none' }}
+            />
+          </div>
+
+          {error && <div className="bw-error">{error}</div>}
+
+          <div className="bw-divider" />
+
+          {/* ── 버튼 ── */}
+          <div className="bw-actions">
+            <button type="button" className="bw-btn bw-btn--cancel" onClick={handleCancel}>
+              취소
+            </button>
+            <button type="submit" className="bw-btn bw-btn--submit" disabled={isSubmitting}>
+              {isSubmitting ? '등록 중...' : '등록'}
+            </button>
+          </div>
+
+        </form>
       </div>
     </Layout>
   );
 }
 
 export default BoardWritePage;
-
