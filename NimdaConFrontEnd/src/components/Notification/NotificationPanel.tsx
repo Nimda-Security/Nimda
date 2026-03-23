@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback, useRef } from "react";
+import React, { useState, useEffect, useCallback } from "react";
 import { useNavigate } from "react-router-dom";
 import NotificationItem, {
   type NotificationItemProps,
@@ -59,12 +59,9 @@ const NotificationPanel: React.FC<NotificationPanelProps> = ({ onClose, refreshK
   const navigate = useNavigate();
   const [activeTab, setActiveTab] = useState<Tab>("unread");
   const [notifications, setNotifications] = useState<NotificationResponse[]>([]);
-  const [loading, setLoading] = useState(false);
-  const [menuOpen, setMenuOpen] = useState(false);
-  const menuRef = useRef<HTMLDivElement>(null);
+
 
   const fetchNotifications = useCallback(async () => {
-    setLoading(true);
     try {
       const data = activeTab === "unread"
           ? await notificationApi.getUnReadNotifications()
@@ -74,20 +71,12 @@ const NotificationPanel: React.FC<NotificationPanelProps> = ({ onClose, refreshK
     } catch (error) {
       console.error("알림 fetch 에러:", error);
       setNotifications([]);
-    } finally {
-      setLoading(false);
     }
   }, [activeTab]);
 
   useEffect(() => { fetchNotifications(); }, [fetchNotifications, refreshKey]);
 
-  useEffect(() => {
-    const handleOutside = (e: MouseEvent) => {
-      if (menuRef.current && !menuRef.current.contains(e.target as Node)) setMenuOpen(false);
-    };
-    if (menuOpen) document.addEventListener("mousedown", handleOutside);
-    return () => document.removeEventListener("mousedown", handleOutside);
-  }, [menuOpen]);
+
 
   const handleItemClick = async (id: number) => {
     const target = notifications.find((n) => n.id === id);
@@ -101,7 +90,6 @@ const NotificationPanel: React.FC<NotificationPanelProps> = ({ onClose, refreshK
   const handleMarkAllRead = async () => {
     try {
       await notificationApi.markAllAsRead();
-      setMenuOpen(false);
       setNotifications(prev => prev.map(n => ({ ...n, isRead: true })));
     } catch { /* ignore */ }
   };
@@ -125,15 +113,13 @@ const NotificationPanel: React.FC<NotificationPanelProps> = ({ onClose, refreshK
           >
             알림
           </span>
-          <div className="absolute" style={{ right: '16px', top: '12px' }} ref={menuRef}>
-            <button className="p-1.5 hover:bg-gray-100 rounded-full transition-colors" onClick={() => setMenuOpen((v) => !v)}>
-              <svg width="20" height="20" viewBox="0 0 24 24" fill="#666"><circle cx="12" cy="5" r="2" /><circle cx="12" cy="12" r="2" /><circle cx="12" cy="19" r="2" /></svg>
+          <div className="absolute flex items-center" style={{ right: '16px', top: '12px', height: '24px' }}>
+            <button 
+              className="text-[13px] font-medium text-[#888] hover:text-[#555] transition-colors" 
+              onClick={handleMarkAllRead}
+            >
+              모두 읽음
             </button>
-            {menuOpen && (
-              <div className="absolute right-0 top-10 bg-white rounded-[8px] shadow-lg z-20 py-1.5 border border-gray-100 min-w-[140px]">
-                <button className="px-4 py-2 text-[13px] text-[#333] hover:bg-pink-50 hover:text-[#d97399] w-full text-left" onClick={handleMarkAllRead}>모두 읽음 처리</button>
-              </div>
-            )}
           </div>
         </div>
         <div className="flex w-full px-4">
@@ -148,13 +134,17 @@ const NotificationPanel: React.FC<NotificationPanelProps> = ({ onClose, refreshK
         </div>
       </div>
       <div className="flex flex-col bg-white min-h-[120px] max-h-[420px] overflow-y-auto scrollbar-hide">
-        <div className="flex flex-col">
-          {filteredNotifications.map((n, index) => (
-            <div key={n.id} style={{ marginTop: index === 0 ? '16px' : '12px', marginLeft: '12px', marginBottom: index === filteredNotifications.length - 1 ? '16px' : '0px' }}>
-              <NotificationItem {...toItemProps(n)} onClick={handleItemClick} />
-            </div>
-          ))}
-        </div>
+        {filteredNotifications.length === 0 ? (
+          <div className="flex items-center justify-center flex-1 min-h-[120px]">
+            <span className="text-[14px] text-[#bcbcbc]">아직 내용이 없습니다.</span>
+          </div>
+        ) : (
+          <div className="flex flex-col items-center py-4 gap-3 w-full">
+            {filteredNotifications.map((n) => (
+              <NotificationItem key={n.id} {...toItemProps(n)} onClick={handleItemClick} />
+            ))}
+          </div>
+        )}
       </div>
     </div>
   );
