@@ -5,6 +5,7 @@ import { createBoardAPI } from '@/api/board';
 import { uploadBoardFileViaS3 } from '@/api/attachments';
 import { getCategoryBySlugAPI, getAllCategoriesAPI } from '@/api/category';
 import ChevronDown from '@/components/icons/ChevronDown';
+import { isAdmin } from '@/utils/jwt';
 import type { Category } from '../types';
 
 function BoardWritePage() {
@@ -71,7 +72,8 @@ function BoardWritePage() {
 
   const rootCategories = allCategories
     .filter(c => c.parentId === null && c.isActive)
-    .filter(c => !['바로가기', '대회'].includes(c.name));
+    .filter(c => !['바로가기', '대회'].includes(c.name))
+    .filter(c => c.name !== '새 소식' || isAdmin());
   const currentParentCat = allCategories.find(c => c.id === parentCategoryId);
   const subCategories = allCategories.filter(c => c.parentId === parentCategoryId && c.isActive);
 
