@@ -22,141 +22,107 @@ interface ContentListItemProps {
   mode?: "checkbox" | "arrow";
 }
 
-const ContentListItem: React.FC<ContentListItemProps> = ({ item, checked, onToggle, isLast, onClick, mode = "arrow" }) => {
+const ContentListItem: React.FC<ContentListItemProps> = ({
+  item,
+  checked,
+  onToggle,
+  isLast,
+  onClick,
+  mode = "arrow",
+}) => {
   return (
     <div
-      className={`relative w-full h-[80px] flex items-center transition-colors ${
+      className={`w-full h-[80px] flex items-center gap-3 px-4 transition-colors ${
         checked ? "bg-[#fdf2f4]" : "bg-[#f5f5f5]"
       } ${!isLast ? "border-b border-[#d4d4d4]" : ""}`}
       onClick={mode === "arrow" ? onClick : undefined}
-      style={mode === "arrow" ? { cursor: 'pointer' } : undefined}
+      style={mode === "arrow" ? { cursor: "pointer" } : undefined}
     >
-      {/* 1. 좌측 영역: 체크박스 또는 화살표 */}
+      {/* 1. 좌측: 체크박스 또는 화살표 */}
       {mode === "checkbox" ? (
         <div
-          style={{
-            display: 'flex',
-            width: '28px',
-            height: '28px',
-            justifyContent: 'center',
-            alignItems: 'center',
-            flexShrink: 0,
-            marginLeft: '16px',
-            marginTop: 'auto',
-            marginBottom: 'auto',
+          className="flex-shrink-0 flex items-center justify-center w-[28px] h-[28px]"
+          onClick={(e) => {
+            e.stopPropagation();
+            onToggle();
           }}
-          onClick={(e) => { e.stopPropagation(); onToggle(); }}
         >
           <CheckBox checked={checked} onChange={onToggle} />
         </div>
       ) : (
-        <div
-          style={{
-            display: 'flex',
-            width: '28px',
-            height: '28px',
-            justifyContent: 'center',
-            alignItems: 'center',
-            aspectRatio: '1/1',
-            flexShrink: 0,
-            color: '#BCBCBC',
-            marginLeft: '16px',
-            marginTop: 'auto',
-            marginBottom: 'auto',
-          }}
-        >
+        <div className="flex-shrink-0 flex items-center justify-center w-[28px] h-[28px]">
           <img
             src="/chevron-right.svg"
             alt="이동"
-            style={{
-              width: '100%',
-              height: '100%',
-              objectFit: 'contain',
-              opacity: 0.4,
-            }}
+            className="w-full h-full object-contain opacity-40"
           />
         </div>
       )}
 
-      {/* 2. 썸네일 (Left 62px 부근 배치 - 제목 Left 88px 기준 앞쪽) */}
+      {/* 2. 썸네일 */}
       {item.thumbnailUrl && (
-        <div className="absolute left-[54px] top-1/2 -translate-y-1/2 w-[24px] h-[24px] rounded overflow-hidden flex-shrink-0">
-          <img
-            src={item.thumbnailUrl}
-            alt=""
-            className="w-full h-full object-cover"
-          />
+        <div className="flex-shrink-0 w-[24px] h-[24px] rounded overflow-hidden">
+          <img src={item.thumbnailUrl} alt="" className="w-full h-full object-cover" />
         </div>
       )}
 
-      {/* 3. 게시글 제목 (checkbox 모드에서는 클릭 시 페이지 이동) */}
-      <p
-        className="absolute truncate"
-        style={{
-          left: '88px',
-          top: '9px',
-          width: '258px',
-          height: '21px',
-          color: '#0C0C0C',
-          fontFamily: 'Pretendard',
-          fontSize: '14px',
-          fontStyle: 'normal',
-          fontWeight: 500,
-          lineHeight: '150%',
-          letterSpacing: '0%',
-          display: 'flex',
-          alignItems: 'center',
-          cursor: mode === 'checkbox' && onClick ? 'pointer' : undefined,
-        }}
-        onClick={mode === 'checkbox' && onClick ? (e) => { e.stopPropagation(); onClick(); } : undefined}
-      >
-        {item.text}
-      </p>
-
-      {/* 4. 댓글 수 + 좋아요 수 (제목 아래 6px 간격: 9px + 21px + 6px = Top 36px) */}
+      {/* 3. 중앙 텍스트 영역 */}
       <div
-        className="absolute flex items-center gap-x-[12px]"
-        style={{ left: '88px', top: '36px' }}
+        className="flex-1 flex flex-col justify-center min-w-0 gap-[6px]"
+        onClick={
+          mode === "checkbox" && onClick
+            ? (e) => {
+                e.stopPropagation();
+                onClick();
+              }
+            : undefined
+        }
+        style={mode === "checkbox" && onClick ? { cursor: "pointer" } : undefined}
       >
-        {item.commentCount !== undefined && (
-          <div className="flex items-center gap-x-[4px]">
-            {/* 검은색 SVG를 파란색(#4A7FCC)으로 변경하는 필터 적용 */}
-            <div className="w-[14px] h-[14px] overflow-hidden flex items-center justify-center relative">
-              <img
-                src="/NotificationComment.svg"
-                alt="댓글"
-                className="absolute w-[14px] h-[14px] max-w-none"
-                style={{
-                  left: '-20px',
-                  filter: 'drop-shadow(#4A7FCC 20px 0)',
-                }}
-              />
+        <p
+          className="truncate text-[14px] font-[500] text-[#0C0C0C] leading-[150%]"
+          style={{ fontFamily: "Pretendard" }}
+        >
+          {item.text}
+        </p>
+        <div className="flex items-center gap-x-[12px]">
+          {item.commentCount !== undefined && (
+            <div className="flex items-center gap-x-[4px]">
+              <div className="w-[14px] h-[14px] overflow-hidden flex items-center justify-center relative">
+                <img
+                  src="/NotificationComment.svg"
+                  alt="댓글"
+                  className="absolute w-[14px] h-[14px] max-w-none"
+                  style={{ left: "-20px", filter: "drop-shadow(#4A7FCC 20px 0)" }}
+                />
+              </div>
+              <span className="text-[12px] font-bold text-[#4A7FCC] leading-none">
+                {item.commentCount}
+              </span>
             </div>
-            <span className="text-[12px] font-bold text-[#4A7FCC] leading-none">
-              {item.commentCount}
+          )}
+          <div className="flex items-center gap-x-[4px]">
+            <svg width="14" height="12" viewBox="0 0 14 12" fill="none">
+              <path
+                d="M7 11.5L1.2275 6.09C0.4375 5.3 0 4.26 0 3.15C0 0.93 1.7825 0 3.5 0C4.9525 0 6.265 0.795 7 2.0475C7.735 0.795 9.0475 0 10.5 0C12.2175 0 14 0.93 14 3.15C14 4.26 13.5625 5.3 12.7725 6.09L7 11.5Z"
+                fill="#D64454"
+              />
+            </svg>
+            <span className="text-[12px] font-bold text-[#D64454] leading-none">
+              {item.likeCount}
             </span>
           </div>
-        )}
-
-        <div className="flex items-center gap-x-[4px]">
-          <svg width="14" height="12" viewBox="0 0 14 12" fill="none">
-            <path d="M7 11.5L1.2275 6.09C0.4375 5.3 0 4.26 0 3.15C0 0.93 1.7825 0 3.5 0C4.9525 0 6.265 0.795 7 2.0475C7.735 0.795 9.0475 0 10.5 0C12.2175 0 14 0.93 14 3.15C14 4.26 13.5625 5.3 12.7725 6.09L7 11.5Z" fill="#D64454"/>
-          </svg>
-          <span className="text-[12px] font-bold text-[#D64454] leading-none">
-            {item.likeCount}
-          </span>
         </div>
       </div>
 
-      {/* 5. 작성자 정보 (프로필 + 닉네임) */}
+      {/* 4. 작성자 정보 */}
       {item.authorNickname && (
-        <div className="absolute right-[80px] top-1/2 -translate-y-1/2 flex items-center gap-[8px]">
+        <div className="flex-shrink-0 flex items-center gap-[8px]">
           <div
-            className="w-[24px] h-[24px] rounded-full flex-shrink-0"
+            className="w-[24px] h-[24px] rounded-full flex-shrink-0 overflow-hidden"
             style={{
-              border: '0.2px solid #737373',
-              overflow: 'hidden',
-              background: item.authorProfileImage ? 'transparent' : '#0C0C0C',
+              border: "0.2px solid #737373",
+              background: item.authorProfileImage ? "transparent" : "#0C0C0C",
             }}
           >
             {item.authorProfileImage && (
@@ -169,30 +135,17 @@ const ContentListItem: React.FC<ContentListItemProps> = ({ item, checked, onTogg
           </div>
           <span
             className="text-[14px] font-medium text-[#0C0C0C] whitespace-nowrap"
-            style={{ fontFamily: 'Pretendard' }}
+            style={{ fontFamily: "Pretendard" }}
           >
             {item.authorNickname}
           </span>
         </div>
       )}
 
-      {/* 6. 날짜 (우측 끝 정렬) */}
+      {/* 5. 날짜 */}
       <div
-        className="absolute"
-        style={{
-          // width: '28px', // 날짜(MM.DD)가 28px보다 길 수 있으므로 지우거나 넓히는 게 안전합니다.
-          right: '16px',     // 오른쪽에서 16px 떨어짐
-          top: '50%',        // 부모의 50% 지점으로 이동
-          transform: 'translateY(-50%)', // 본인 높이의 절반만큼 위로 올려서 완벽한 중앙 정렬
-          color: '#A3A3A3',
-          textAlign: 'right',
-          fontFamily: 'Pretendard',
-          fontSize: '12px',
-          fontStyle: 'normal',
-          fontWeight: 400,
-          lineHeight: '150%',
-          whiteSpace: 'nowrap', // 날짜가 줄바꿈되지 않도록 방지
-        }}
+        className="flex-shrink-0 text-right text-[12px] font-[400] text-[#A3A3A3] whitespace-nowrap"
+        style={{ fontFamily: "Pretendard", lineHeight: "150%" }}
       >
         {item.date}
       </div>

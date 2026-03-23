@@ -5,6 +5,7 @@ import com.nimda.cup.user.dto.LoginDTO;
 import com.nimda.cup.user.dto.LoginResponseDTO;
 import com.nimda.cup.user.dto.MyPageResponseDTO;
 import com.nimda.cup.user.dto.RegisterDTO;
+import com.nimda.cup.user.dto.UpdateProfileDTO;
 import com.nimda.cup.user.entity.User;
 import com.nimda.cup.user.exception.UserNotApprovedException;
 import com.nimda.cup.user.security.CustomUserDetails;
@@ -135,6 +136,58 @@ public class AuthController {
             Map<String, String> error = new HashMap<>();
             error.put("message", "사용자 정보 조회 실패: " + e.getMessage());
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(error);
+        }
+    }
+
+    @PutMapping("/me")
+    public ResponseEntity<?> updateProfile(
+            @AuthenticationPrincipal CustomUserDetails customUserDetails,
+            @Valid @RequestBody UpdateProfileDTO request) {
+        try {
+            if (customUserDetails == null) {
+                return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
+                        .body(Map.of("message", "인증이 필요합니다."));
+            }
+
+            User user = customUserDetails.getUser();
+            User updated = authService.updateProfile(
+                    user.getId(),
+                    request.getNickname(),
+                    request.getBojId(),
+                    request.getBirth(),
+                    request.getMajor(),
+                    request.getStudentNum()
+            );
+
+            MyPageResponseDTO response = MyPageResponseDTO.builder()
+                    .id(updated.getId())
+                    .userId(updated.getUserId())
+                    .name(updated.getName())
+                    .nickname(updated.getNickname())
+                    .email(updated.getEmail())
+                    .universityName(updated.getUniversityName())
+                    .major(updated.getMajor())
+                    .grade(updated.getGrade())
+                    .bojId(updated.getBojId())
+                    .birth(updated.getBirth())
+                    .studentNum(updated.getStudentNum())
+                    .profileImage(updated.getProfileImage())
+                    .createdAt(updated.getCreatedAt())
+                    .updatedAt(updated.getUpdatedAt())
+                    .emailHide(updated.isEmailHide())
+                    .build();
+
+            return ResponseEntity.ok(Map.of(
+                    "success", true,
+                    "message", "프로필이 성공적으로 수정되었습니다.",
+                    "data", response));
+
+        } catch (RuntimeException e) {
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST)
+                    .body(Map.of("success", false, "message", e.getMessage()));
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body(Map.of("message", "프로필 수정 실패: " + e.getMessage()));
         }
     }
 
