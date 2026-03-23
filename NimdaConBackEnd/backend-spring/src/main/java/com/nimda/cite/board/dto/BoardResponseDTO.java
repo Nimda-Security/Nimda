@@ -58,6 +58,7 @@ public class BoardResponseDTO {
         private String userId;
         private String nickname;
         private String email;
+        private String profileImage;
     }
 
     /**
@@ -87,6 +88,7 @@ public class BoardResponseDTO {
                     .userId(author.getUserId())
                     .nickname(author.getNickname())
                     .email(author.getEmail())
+                    .profileImage(author.getProfileImage())
                     .build();
         }
 
