@@ -109,26 +109,34 @@ const NotificationPanel: React.FC<NotificationPanelProps> = ({ onClose, refreshK
         <div className="relative w-full h-[60px]">
           <span
             className="absolute font-bold text-[#0c0c0c] text-[18px] flex items-center"
-            style={{ left: '16px', top: '12px', width: '40px', height: '24px', lineHeight: '24px', whiteSpace: 'nowrap' }}
+            style={{ left: '20px', top: '16px', width: '40px', height: '24px', lineHeight: '24px', whiteSpace: 'nowrap' }}
           >
             알림
           </span>
           <div className="absolute flex items-center" style={{ right: '16px', top: '12px', height: '24px' }}>
             <button 
-              className="text-[13px] font-medium text-[#888] hover:text-[#555] transition-colors" 
+              className="text-[12px] font-medium text-[#888] hover:text-[#555] transition-colors" 
               onClick={handleMarkAllRead}
             >
               모두 읽음
             </button>
           </div>
         </div>
-        <div className="flex w-full px-4">
+        <div className="flex w-full px-4 h-[32px]">
           {tabs.map((tab) => (
-            <button key={tab.key} className={`flex-1 pb-3.5 text-[14px] font-semibold transition-all ${activeTab === tab.key ? "text-[#d97399] border-b-[3px] border-[#d97399]" : "text-[#a3a3a3] border-b-[3px] border-transparent"}`} onClick={() => setActiveTab(tab.key)}>
-              {tab.label}
-              {tab.key === "unread" && notifications.filter(n => !n.isRead).length > 0 && (
-                <span className="ml-1.5 px-1.5 py-0.5 bg-pink-100 text-pink-600 text-[10px] rounded-full">{notifications.filter(n => !n.isRead).length}</span>
-              )}
+            <button 
+              key={tab.key} 
+              className={`flex-1 flex items-start justify-center font-semibold transition-all ${activeTab === tab.key ? "text-[#d97399] border-b-[3px] border-[#d97399]" : "text-[#a3a3a3] border-b-[3px] border-transparent"}`} 
+              onClick={() => setActiveTab(tab.key)}
+            >
+              <div className="flex items-center gap-1">
+                <span className="text-[14px]">{tab.label}</span>
+                {tab.key === "unread" && notifications.filter(n => !n.isRead).length > 0 && (
+                  <span className="px-1.5 py-0.5 bg-pink-100 text-pink-600 text-[10px] rounded-full">
+                    {notifications.filter(n => !n.isRead).length}
+                  </span>
+                )}
+              </div>
             </button>
           ))}
         </div>
