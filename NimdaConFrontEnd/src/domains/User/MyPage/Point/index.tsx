@@ -7,7 +7,6 @@ import PointContent from "./Components/PointContent";
 import UserInfoContent from "./Components/UserInfoContent";
 import MyCommentsContent from "./Components/MyCommentsContent";
 import MyPostsContent from "./Components/MyPostsContent";
-import CommentedPostsContent from "./Components/CommentedPostsContent";
 import LikedPostsContent from "./Components/LikedPostsContent";
 
 import { getUserBalance } from "@/api/point";
@@ -121,8 +120,6 @@ function MyPagePoint() {
             {activeTab === "my_posts" && <MyPostsContent />}
 
             {activeTab === "my_comments" && <MyCommentsContent />}
-
-            {activeTab === "commented_posts" && <CommentedPostsContent />}
 
             {activeTab === "liked_posts" && <LikedPostsContent />}
 
