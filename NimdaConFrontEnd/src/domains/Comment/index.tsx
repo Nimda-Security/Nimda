@@ -10,6 +10,7 @@ import {
   deleteCommentAPI,
   updateCommentStatusAPI,
 } from '@/api/comment';
+import { toggleCommentLike } from '@/api/commentLike';
 import type {
   CommentResponse,
   CommentCreateRequest,
@@ -203,6 +204,7 @@ interface CommentItemProps {
   onEdit: (commentId: number, currentContext: string) => void;
   onDelete: (commentId: number) => void;
   onHide: (commentId: number, status: CommentStatus) => void;
+  onToggleLike: (commentId: number) => void;
   replyTargetId: number | null;
   replyTargetName: string;
   replyContext: string;
@@ -219,6 +221,7 @@ function CommentItem({
   onEdit,
   onDelete,
   onHide,
+  onToggleLike,
   replyTargetId,
   replyTargetName,
   replyContext,
@@ -275,8 +278,8 @@ function CommentItem({
                   <span>{comment.children?.length ?? 0}</span>
                 </button>
               )}
-              <button type="button" className="comment-item__like-btn">
-                <Heart />
+              <button type="button" className={`comment-item__like-btn${comment.isLiked ? ' comment-item__like-btn--active' : ''}`} onClick={() => onToggleLike(comment.id)}>
+                <Heart filled={comment.isLiked} />
                 <span>{comment.likeCount}</span>
               </button>
             </div>
@@ -309,6 +312,7 @@ function CommentItem({
             onEdit={onEdit}
             onDelete={onDelete}
             onHide={onHide}
+            onToggleLike={onToggleLike}
             replyTargetId={replyTargetId}
             replyTargetName={replyTargetName}
             replyContext={replyContext}
@@ -413,6 +417,23 @@ function CommentSection({ boardId }: CommentSectionProps) {
     } catch { alert('댓글 상태 변경 중 오류가 발생했습니다.'); }
   };
 
+  const updateCommentLike = (list: CommentResponse[], commentId: number, likeCount: number, isLiked: boolean): CommentResponse[] =>
+    list.map(c => {
+      if (c.id === commentId) return { ...c, likeCount, isLiked };
+      if (c.children?.length) return { ...c, children: updateCommentLike(c.children, commentId, likeCount, isLiked) };
+      return c;
+    });
+
+  const handleToggleLike = async (commentId: number) => {
+    try {
+      const res = await toggleCommentLike(commentId);
+      if (res.success && res.data) {
+        const liked = res.data.isLiked ?? (res.data as any).liked ?? false;
+        setComments(prev => updateCommentLike(prev, commentId, res.data.likeCount, liked));
+      }
+    } catch { /* 비로그인 등 */ }
+  };
+
   const countAll = (list: (CommentResponse)[]): number =>
     list.reduce((n, c) => n + 1 + countAll((c.children ?? []) as (CommentResponse)[]), 0);
 
@@ -451,6 +472,7 @@ function CommentSection({ boardId }: CommentSectionProps) {
                   onEdit={handleOpenEdit}
                   onDelete={handleDelete}
                   onHide={handleHide}
+                  onToggleLike={handleToggleLike}
                   replyTargetId={replyTargetId}
                   replyTargetName={replyTargetName}
                   replyContext={replyContext}
