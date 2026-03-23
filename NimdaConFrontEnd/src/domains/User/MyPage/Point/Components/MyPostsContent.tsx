@@ -102,8 +102,29 @@ const MyPostsContent: React.FC = () => {
           ))}
         </div>
       ) : (
-        <div className="border border-[#d4d4d4] rounded-[4px] bg-[#f5f5f5] py-16 text-center text-[14px] text-[#a3a3a3]">
-          작성한 게시글이 없습니다.
+        <div
+          className="border border-[#d4d4d4] rounded-[4px] bg-[#f5f5f5]"
+          style={{
+            display: 'flex',
+            width: '100%',
+            height: '360px',
+            justifyContent: 'center',
+            alignItems: 'center',
+            boxSizing: 'border-box',
+          }}
+        >
+          <span
+            style={{
+              color: '#A3A3A3',
+              textAlign: 'center',
+              fontFamily: 'Pretendard',
+              fontSize: '16px',
+              fontWeight: 500,
+              lineHeight: '150%',
+            }}
+          >
+            작성한 게시글이 없습니다.
+          </span>
         </div>
       )}
 

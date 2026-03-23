@@ -87,7 +87,7 @@ const UserInfoContent: React.FC<UserInfoContentProps> = ({ loading: parentLoadin
     /* 💡 최상단을 Fragment(<>)로 감싸서 부모의 mt-6가 아래 테두리 박스에 직접 닿게 합니다. */
     <>
       <div
-        className="border border-[#d4d4d4] rounded-[4px] overflow-hidden bg-white shadow-sm"
+        className="border border-[#d4d4d4] rounded-[4px] overflow-hidden bg-white"
         style={{ padding: "31px 23px" }}
       >
         <div className="flex gap-6">
