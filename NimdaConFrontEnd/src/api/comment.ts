@@ -4,8 +4,7 @@ import type {
   CommentCreateRequest,
   CommentUpdateRequest,
   CommentStatusUpdateRequest,
-  CommentUserResponse,
-  CommentAdminResponse,
+  CommentResponse,
 } from '@/domains/Comment/types'; // 타입 파일 경로에 맞게 수정
 
 const API_BASE_URL = '/api';
@@ -40,19 +39,13 @@ export interface CommentErrorResponse {
 export interface CommentListResponse {
   success: true;
   message: string;
-  comments: CommentUserResponse[] | CommentAdminResponse[];
+  comments: CommentResponse[];
 }
 
 export interface CommentSingleResponse {
   success: true;
   message: string;
-  comment: CommentUserResponse;
-}
-
-export interface CommentAdminSingleResponse {
-  success: true;
-  message: string;
-  comment: CommentAdminResponse;
+  comment: CommentResponse;
 }
 
 export interface CommentDeleteResponse {
@@ -67,8 +60,8 @@ export interface CommentDeleteResponse {
  * 빈 배열의 경우 타입을 판별할 수 없으므로 false 반환
  */
 export const isAdminComments = (
-  comments: CommentUserResponse[] | CommentAdminResponse[]
-): comments is CommentAdminResponse[] => {
+  comments: CommentResponse[]
+): comments is CommentResponse[] => {
   if (comments.length === 0) return false;
   return 'authorId' in comments[0];
 };
@@ -241,7 +234,7 @@ export const updateCommentAPI = async (
 export const updateCommentStatusAPI = async (
   commentId: number,
   data: CommentStatusUpdateRequest
-): Promise<CommentAdminSingleResponse | CommentErrorResponse> => {
+): Promise<CommentSingleResponse | CommentErrorResponse> => {
   try {
     const token = getToken();
     if (!token) {

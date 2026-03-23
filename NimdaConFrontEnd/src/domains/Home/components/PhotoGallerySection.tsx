@@ -1,5 +1,5 @@
 import React from "react";
-import { HeartIcon } from "@/components/icons/Heart";
+import { Heart } from "@/components/icons/Heart";
 
 interface PhotoItem {
   id: number;
@@ -31,7 +31,7 @@ const PhotoGallerySection: React.FC = () => {
             <p className="home-gallery__card-title">{photo.title}</p>
             <div className="home-gallery__card-meta">
               <div className="home-gallery__card-likes">
-                <HeartIcon />
+                <Heart filled={false} />
                 <span>{photo.likes}</span>
               </div>
               <span className="home-gallery__card-separator">|</span>
