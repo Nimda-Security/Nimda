@@ -7,6 +7,8 @@ export interface ContentListItemData {
   commentCount?: number;
   date: string;
   thumbnailUrl?: string;
+  authorNickname?: string;
+  authorProfileImage?: string;
 }
 
 interface ContentListItemProps {
@@ -39,7 +41,6 @@ const ContentListItem: React.FC<ContentListItemProps> = ({ item, checked, onTogg
                   marginLeft: '16px',
                   marginTop: 'auto',         // 추가: 위쪽 여백 자동
                   marginBottom: 'auto'      // 추가: 아래쪽 여백 자동
-
                 }}
 
             >
@@ -124,11 +125,53 @@ const ContentListItem: React.FC<ContentListItemProps> = ({ item, checked, onTogg
         </div>
       </div>
 
-      {/* 5. 날짜 (우측 끝 정렬) */}
-      <div className="absolute right-[15px] top-[12px] flex-shrink-0">
-        <span className="text-[12px] font-normal text-[#a3a3a3] whitespace-nowrap">
-          {item.date}
-        </span>
+      {/* 5. 작성자 정보 (프로필 + 닉네임) */}
+      {item.authorNickname && (
+        <div className="absolute right-[80px] top-1/2 -translate-y-1/2 flex items-center gap-[8px]">
+          <div
+            className="w-[24px] h-[24px] rounded-full flex-shrink-0"
+            style={{
+              border: '0.2px solid #737373',
+              overflow: 'hidden',
+              background: item.authorProfileImage ? 'transparent' : '#0C0C0C',
+            }}
+          >
+            {item.authorProfileImage && (
+              <img
+                src={item.authorProfileImage}
+                alt=""
+                className="w-full h-full object-cover rounded-full"
+              />
+            )}
+          </div>
+          <span
+            className="text-[14px] font-medium text-[#0C0C0C] whitespace-nowrap"
+            style={{ fontFamily: 'Pretendard' }}
+          >
+            {item.authorNickname}
+          </span>
+        </div>
+      )}
+
+      {/* 6. 날짜 (우측 끝 정렬) */}
+      <div
+        className="absolute"
+        style={{
+          // width: '28px', // 날짜(MM.DD)가 28px보다 길 수 있으므로 지우거나 넓히는 게 안전합니다.
+          right: '16px',     // 오른쪽에서 16px 떨어짐
+          top: '50%',        // 부모의 50% 지점으로 이동
+          transform: 'translateY(-50%)', // 본인 높이의 절반만큼 위로 올려서 완벽한 중앙 정렬
+          color: '#A3A3A3',
+          textAlign: 'right',
+          fontFamily: 'Pretendard',
+          fontSize: '12px',
+          fontStyle: 'normal',
+          fontWeight: 400,
+          lineHeight: '150%',
+          whiteSpace: 'nowrap', // 날짜가 줄바꿈되지 않도록 방지
+        }}
+      >
+        {item.date}
       </div>
     </div>
   );
