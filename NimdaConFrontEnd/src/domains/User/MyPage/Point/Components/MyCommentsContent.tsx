@@ -4,6 +4,7 @@ import type { MyComment } from "@/api/comment";
 import ContentListItem from "./ContentList/ContentListItem";
 import ContentListActionBar from "./ContentList/ContentListActionBar";
 import Pagination from "./ContentList/Pagination";
+import { useNavigate } from "react-router-dom";
 
 const ITEMS_PER_PAGE = 8;
 
@@ -12,6 +13,7 @@ const MyCommentsContent: React.FC = () => {
   const [loading, setLoading] = useState(true);
   const [selectedIds, setSelectedIds] = useState<Set<number>>(new Set());
   const [currentPage, setCurrentPage] = useState(1);
+  const navigate = useNavigate();
 
   useEffect(() => {
     const fetch = async () => {
@@ -82,6 +84,8 @@ const MyCommentsContent: React.FC = () => {
               checked={selectedIds.has(comment.id)}
               onToggle={() => toggleSelect(comment.id)}
               isLast={idx === displayedComments.length - 1}
+              onClick={() => navigate(`/board/view/${comment.boardId}`)}
+              mode="checkbox"
             />
           ))}
         </div>

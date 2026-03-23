@@ -97,6 +97,7 @@ const MyPostsContent: React.FC = () => {
               onToggle={() => toggleSelect(board.id)}
               isLast={idx === displayedBoards.length - 1}
               onClick={() => navigate(`/board/view/${board.id}`)}
+              mode="checkbox"
             />
           ))}
         </div>
