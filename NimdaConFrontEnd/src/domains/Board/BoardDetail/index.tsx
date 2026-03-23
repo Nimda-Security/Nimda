@@ -1,6 +1,8 @@
 import { useEffect, useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
-import { Heart, MessageCircle, MoreVertical } from 'lucide-react';
+import { Heart } from '@/components/icons/Heart';
+import { MessageBox } from '@/components/icons/MessageBox';
+import { VerticalDots } from '@/components/icons/VerticalDots';
 import Layout from '@/components/Layout';
 import { openAttachmentDownloadInNewTab } from '@/api/attachments';
 import { getBoardDetailAPI, deleteBoardAPI, getFileDownloadURL, getBoardLikeStatusAPI, toggleBoardLikeAPI } from '@/api/board';
@@ -141,18 +143,18 @@ function BoardDetailPage() {
 
             <div className="board-detail__stats">
               <span className="board-detail__stat-comments">
-                <MessageCircle size={12} />
+                <MessageBox />
                 {board.likeCount ?? 0}
               </span>
               <span className="board-detail__stat-likes">
-                <Heart size={12} fill={isLiked ? 'currentColor' : 'none'} />
+                <Heart filled={isLiked} />
                 {likeCount}
               </span>
             </div>
 
             {/* 첨부는 본문 아래 attachments 블록으로 이동 — 메타 행은 유지(더보기만) */}
             <button type="button" className="board-detail__more-btn" aria-label="더보기">
-              <MoreVertical size={20} />
+              <VerticalDots size={24} />
             </button>
           </div>
         </header>
@@ -199,7 +201,7 @@ function BoardDetailPage() {
         {/* 좋아요 */}
         <div className="board-detail__like-area">
           <button type="button" onClick={handleToggleLike} disabled={isTogglingLike} className="board-detail__like-btn">
-            <Heart size={18} fill={isLiked ? 'currentColor' : 'none'} />
+            <Heart filled={isLiked} />
             <span className="board-detail__like-count">{likeCount}</span>
           </button>
         </div>
