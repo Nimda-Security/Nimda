@@ -9,6 +9,17 @@ const NotificationBell: React.FC = () => {
   const [refreshKey, setRefreshKey] = useState(0);
   const ref = useRef<HTMLDivElement>(null);
 
+  // 마운트 시 초기 읽지 않은 알림 상태 확인
+  useEffect(() => {
+    if (!isLoggedIn()) return;
+    notificationApi
+      .checkUnreadStatus()
+      .then((res) => {
+        setHasUnread(res.hasUnRead ?? false);
+      })
+      .catch(() => {});
+  }, []);
+
   // SSE 구독 — 로그인 상태일 때 실시간 알림 수신
   useEffect(() => {
     if (!isLoggedIn()) return;
@@ -21,9 +32,9 @@ const NotificationBell: React.FC = () => {
     return () => controller?.abort();
   }, []);
 
-  // 알림 상태 체크 (창이 열릴 때만)
+  // 패널이 닫힐 때 읽음 상태 재확인 (열람 후 빨간 점 갱신)
   useEffect(() => {
-    if (open) {
+    if (!open) {
       notificationApi
         .checkUnreadStatus()
         .then((res) => {
@@ -45,27 +56,20 @@ const NotificationBell: React.FC = () => {
       <button
         type="button"
         title="알림"
-        className={`
-          relative flex items-center justify-center p-2 rounded-full border-none cursor-pointer outline-none transition-colors
-          ${open ? 'bg-black/10' : 'bg-black/5 hover:bg-black/10'}
-        `}
+        className="relative flex items-center justify-center border-none cursor-pointer outline-none bg-transparent p-0"
       >
-        <svg
-          width="20"
-          height="20"
-          viewBox="0 0 24 24"
-          fill="none"
-          stroke="currentColor"
-          strokeWidth="2"
-          strokeLinecap="round"
-          strokeLinejoin="round"
-        >
-          <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9" />
-          <path d="M13.73 21a2 2 0 0 1-3.46 0" />
-        </svg>
+        <img
+          src="/bell.svg"
+          alt="알림"
+          className="w-10 h-10"
+        />
 
         {hasUnread && (
-          <span className="absolute top-[6px] right-[6px] w-2 h-2 bg-[#D64454] rounded-full border border-white" />
+          <img
+            src="/Ellipse-bell.svg"
+            alt="새 알림"
+            className="absolute top-0 right-0 w-4 h-4"
+          />
         )}
       </button>
 
