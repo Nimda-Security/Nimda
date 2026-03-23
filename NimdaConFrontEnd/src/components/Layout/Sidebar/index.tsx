@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from "react";
 import { Link } from "react-router-dom";
-import { getCurrentNickname } from "@/utils/jwt";
+import { getCurrentNickname, hasRole, isAdmin } from "@/utils/jwt";
 import { isLoggedIn } from "@/api/auth";
 import { getAllCategoriesAPI } from "@/api/category";
 import { getMyTotalAttendanceCount, getTodayVisitors, type AttendanceLog } from "@/api/attendance";
@@ -142,6 +142,12 @@ const Sidebar: React.FC = () => {
 
   const categoryTree = buildCategoryTree(categories);
 
+  // "카르텔" 카테고리: ROLE_CARTEL 또는 ROLE_ADMIN이 아니면 사이드바에서 숨김
+  const canAccessCartel = hasRole('ROLE_CARTEL') || isAdmin();
+  const filteredCategoryTree = canAccessCartel
+    ? categoryTree
+    : categoryTree.filter(cat => cat.name !== '카르텔');
+
   return (
     <aside className="layout__sidebar">
       {/* 유저 프로필 영역 */}
@@ -225,8 +231,8 @@ const Sidebar: React.FC = () => {
       <nav className="sidebar-nav">
         {categoriesLoading ? (
           <div style={{ padding: '16px', textAlign: 'center', color: '#999', fontSize: '14px' }}>카테고리 로딩 중...</div>
-        ) : categoryTree.length > 0 ? (
-          categoryTree.map((category) => (
+        ) : filteredCategoryTree.length > 0 ? (
+          filteredCategoryTree.map((category) => (
             <CategorySection key={category.id} category={category} />
           ))
         ) : (
