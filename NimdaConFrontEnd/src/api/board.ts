@@ -759,6 +759,8 @@ export interface MyBoard {
   commentCount: number;
   createdAt: string;
   filepath?: string;
+  authorNickname?: string;
+  authorProfileImage?: string;
 }
 
 export const getMyBoardsAPI = async (): Promise<MyBoard[]> => {
@@ -776,14 +778,19 @@ export const getMyBoardsAPI = async (): Promise<MyBoard[]> => {
 
     const result = await response.json();
     if (response.ok && result.success && Array.isArray(result.data)) {
-      return result.data.map((b: Record<string, unknown>) => ({
-        id: b.id as number,
-        title: b.title as string,
-        likeCount: (b.likeCount as number) ?? 0,
-        commentCount: (b.commentCount as number) ?? 0,
-        createdAt: b.createdAt as string,
-        filepath: b.filepath as string | undefined,
-      }));
+      return result.data.map((b: Record<string, unknown>) => {
+        const author = b.author as Record<string, unknown> | undefined;
+        return {
+          id: b.id as number,
+          title: b.title as string,
+          likeCount: (b.likeCount as number) ?? 0,
+          commentCount: (b.commentCount as number) ?? 0,
+          createdAt: b.createdAt as string,
+          filepath: b.filepath as string | undefined,
+          authorNickname: author?.nickname as string | undefined,
+          authorProfileImage: author?.profileImage as string | undefined,
+        };
+      });
     }
     return [];
   } catch (error) {
@@ -835,14 +842,19 @@ export const getMyCommentedBoardsAPI = async (): Promise<MyBoard[]> => {
 
     const result = await response.json();
     if (response.ok && result.success && Array.isArray(result.data)) {
-      return result.data.map((b: Record<string, unknown>) => ({
-        id: b.id as number,
-        title: b.title as string,
-        likeCount: (b.likeCount as number) ?? 0,
-        commentCount: (b.commentCount as number) ?? 0,
-        createdAt: b.createdAt as string,
-        filepath: b.filepath as string | undefined,
-      }));
+      return result.data.map((b: Record<string, unknown>) => {
+        const author = b.author as Record<string, unknown> | undefined;
+        return {
+          id: b.id as number,
+          title: b.title as string,
+          likeCount: (b.likeCount as number) ?? 0,
+          commentCount: (b.commentCount as number) ?? 0,
+          createdAt: b.createdAt as string,
+          filepath: b.filepath as string | undefined,
+          authorNickname: author?.nickname as string | undefined,
+          authorProfileImage: author?.profileImage as string | undefined,
+        };
+      });
     }
     return [];
   } catch (error) {

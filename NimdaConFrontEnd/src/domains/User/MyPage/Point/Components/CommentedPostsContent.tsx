@@ -64,6 +64,8 @@ const CommentedPostsContent: React.FC = () => {
               commentCount: board.commentCount,
               date: formatDate(board.createdAt),
               thumbnailUrl: board.filepath || undefined,
+              authorNickname: board.authorNickname,
+              authorProfileImage: board.authorProfileImage,
             }}
             checked={false}
             onToggle={() => {}}
