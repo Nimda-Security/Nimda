@@ -4,14 +4,11 @@ import com.nimda.cite.comment.dto.*;
 import com.nimda.cite.comment.service.CommentService;
 import com.nimda.cite.common.response.ApiResponse;
 import com.nimda.cup.common.util.JwtUtil;
-import com.nimda.cup.user.security.CustomUserDetails;
 import jakarta.validation.Valid;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
-import org.springframework.security.core.GrantedAuthority;
-import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -39,7 +36,7 @@ public class CommentController {
     ) {
         try {
             Long userId = jwtUtil.extractUserId(resolveToken(authHeader));
-            CommentUserResponse response = commentService.createComment(boardId, request, userId);
+            CommentResponse response = commentService.createComment(boardId, request, userId);
             return ApiResponse.ok("댓글이 성공적으로 작성되었습니다.",
                     Map.of("comment", response)).toResponse(HttpStatus.CREATED);
 
@@ -63,17 +60,12 @@ public class CommentController {
         try {
             String token = resolveToken(authHeader);
             List<String> authorities = jwtUtil.extractAuthorities(token);
-
-            // 어드민 댓글 조회
-            if (authorities.contains("ROLE_ADMIN")) {
-                return ApiResponse.ok("댓글을 성공적으로 조회했습니다.",
-                        Map.of("comments", commentService.getCommentsForAdmin(boardId))).toResponse();
-            }
-
-            // 유저 댓글 조회
             Long userId = jwtUtil.extractUserId(token);
+
+            boolean isAdmin = authorities.contains("ROLE_ADMIN");
+            // 댓글 조회
             return ApiResponse.ok("댓글을 성공적으로 조회했습니다.",
-                    Map.of("comments", commentService.getCommentsForUser(boardId, userId))).toResponse();
+                    Map.of("comments", commentService.getComments(boardId, userId, isAdmin))).toResponse();
 
         } catch (Exception e) {
             return ApiResponse.fail("댓글 조회 중 오류가 발생했습니다: " + e.getMessage())
@@ -113,7 +105,7 @@ public class CommentController {
     ) {
         try {
             Long userId = jwtUtil.extractUserId(resolveToken(authHeader));
-            CommentUserResponse response = commentService.updateComment(commentId, request, userId);
+            CommentResponse response = commentService.updateComment(commentId, request, userId);
             return ApiResponse.ok("댓글을 성공적으로 수정했습니다.",
                     Map.of("comment", response)).toResponse();
 
@@ -135,7 +127,7 @@ public class CommentController {
             @RequestHeader("Authorization") String authHeader
     ) {
         try {
-            CommentAdminResponse response = commentService.updateCommentStatus(commentId, request);
+            CommentResponse response = commentService.updateCommentStatus(commentId, request);
             return ApiResponse.ok("댓글을 성공적으로 숨겼습니다.",
                     Map.of("comment", response)).toResponse();
 

@@ -6,37 +6,25 @@
 export type CommentStatus = 'PUBLIC' | 'DELETED' | 'HIDDEN';
 
 /**
- * 공통 댓글 인터페이스 (CommentResponse))
+ * 댓글 응답 (CommentResponse)
  */
-interface BaseCommentResponse {
+export interface CommentResponse {
   id: number;
   parentId: number | null;
   authorName: string;
   authorProfileImage: string | null;
+  status: CommentStatus;
   context: string;
   createdAt: string;
   updatedAt: string | null;
   likeCount: number;
   isDeleted: boolean;
-}
 
-/**
- * 일반 사용자용 응답 (CommentUserResponse)
- */
-export interface CommentUserResponse extends BaseCommentResponse {
-    editable: boolean;
-    deletable: boolean;
-    children: CommentUserResponse[]; // 대댓글 재귀 구조
-}
+  deletable: boolean;
+  editable: boolean;
+  hideable: boolean;
 
-/**
- * 어드민용 응답 (CommentAdminResponse)
- */
-export interface CommentAdminResponse extends BaseCommentResponse {
-    authorId: number;
-    status: CommentStatus;
-    hideable: boolean;
-    children: CommentAdminResponse[];
+  children: CommentResponse[]; // 대댓글 재귀 구조
 }
 
 // =============== CREATE / UPDATE (Request) ===============

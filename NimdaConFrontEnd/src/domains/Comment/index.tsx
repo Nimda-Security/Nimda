@@ -1,5 +1,8 @@
 import { useEffect, useState, useRef } from 'react';
-import { Heart, MessageCircle, MoreVertical } from 'lucide-react';
+import { Heart } from '@/components/icons/Heart';
+import { MessageBox } from '@/components/icons/MessageBox';
+import { VerticalDots } from '@/components/icons/VerticalDots';
+
 import {
   getCommentsAPI,
   createCommentAPI,
@@ -8,8 +11,7 @@ import {
   updateCommentStatusAPI,
 } from '@/api/comment';
 import type {
-  CommentUserResponse,
-  CommentAdminResponse,
+  CommentResponse,
   CommentCreateRequest,
   CommentStatusUpdateRequest,
   CommentStatus,
@@ -29,7 +31,7 @@ function CommentAvatar({ src, name }: { src: string | null; name: string }) {
     <div className="comment-item__avatar-placeholder">{name.charAt(0)}</div>
   );
 }
-function CommentInput({
+function CommentInput({ 
   value,
   onChange,
   onSubmit,
@@ -75,7 +77,6 @@ function CommentInput({
 function StatusBadge({ status }: { status: CommentStatus }) {
   const map: Record<CommentStatus, { label: string; mod: string }> = {
     PUBLIC: { label: '공개', mod: '--public' },
-    PRIVATE: { label: '비공개', mod: '--private' },
     DELETED: { label: '삭제됨', mod: '--deleted' },
     HIDDEN: { label: '숨김', mod: '--hidden' },
   };
@@ -92,14 +93,116 @@ function formatCommentDate(dateStr: string) {
   return `${m}. ${day}. ${h}:${min}`;
 }
 
+interface CommentMoreDropdownProps {
+  editable: boolean;
+  deletable: boolean;
+  hideable: boolean;
+  currentStatus?: CommentStatus;
+  onEdit: () => void;
+  onDelete: () => void;
+  onHide: (status: CommentStatus) => void;
+}
+ 
+function CommentMoreDropdown({
+  editable,
+  deletable,
+  hideable,
+  currentStatus,
+  onEdit,
+  onDelete,
+  onHide,
+}: CommentMoreDropdownProps) {
+  const [open, setOpen] = useState(false);
+  const containerRef = useRef<HTMLDivElement>(null);
+ 
+  // 외부 클릭 시 닫기
+  useEffect(() => {
+    if (!open) return;
+    const handleOutsideClick = (e: MouseEvent) => {
+      if (containerRef.current && !containerRef.current.contains(e.target as Node)) {
+        setOpen(false);
+      }
+    };
+    document.addEventListener('mousedown', handleOutsideClick);
+    return () => document.removeEventListener('mousedown', handleOutsideClick);
+  }, [open]);
+ 
+  const hasAnyAction = editable || deletable || hideable;
+  if (!hasAnyAction) return null;
+ 
+  const handleEdit = () => {
+    setOpen(false);
+    onEdit();
+  };
+ 
+  const handleDelete = () => {
+    setOpen(false);
+    onDelete();
+  };
+ 
+  const handleToggleHide = () => {
+    setOpen(false);
+    const nextStatus: CommentStatus = currentStatus === 'HIDDEN' ? 'PUBLIC' : 'HIDDEN';
+    onHide(nextStatus);
+  };
+ 
+  return (
+    <div className="comment-more" ref={containerRef}>
+      <button
+        type="button"
+        className={`comment-item__more${open ? ' comment-item__more--active' : ''}`}
+        aria-label="더보기"
+        aria-haspopup="true"
+        aria-expanded={open}
+        onClick={() => setOpen((prev) => !prev)}
+      >
+        <VerticalDots size={16} />
+      </button>
+ 
+      {open && (
+        <ul className="comment-more__dropdown" role="menu">
+          {editable && (
+            <li role="menuitem">
+              <button type="button" className="comment-more__item" onClick={handleEdit}>
+                <span className="comment-more__icon">✏️</span>
+                수정
+              </button>
+            </li>
+          )}
+          {hideable && (
+            <li role="menuitem">
+              <button type="button" className="comment-more__item" onClick={handleToggleHide}>
+                <span className="comment-more__icon">
+                  {currentStatus === 'HIDDEN' ? '👁️' : '🚫'}
+                </span>
+                {currentStatus === 'HIDDEN' ? '공개' : '숨김'}
+              </button>
+            </li>
+          )}
+          {deletable && (
+            <li role="menuitem">
+              <button
+                type="button"
+                className="comment-more__item comment-more__item--danger"
+                onClick={handleDelete}
+              >
+                <span className="comment-more__icon">🗑️</span>
+                삭제
+              </button>
+            </li>
+          )}
+        </ul>
+      )}
+    </div>
+  );
+}
+
 interface CommentItemProps {
-  comment: CommentUserResponse | CommentAdminResponse;
-  isAdmin: boolean;
+  comment: CommentResponse;
   onReply: (parentId: number, authorName: string) => void;
   onEdit: (commentId: number, currentContext: string) => void;
   onDelete: (commentId: number) => void;
   onHide: (commentId: number, status: CommentStatus) => void;
-  depth?: number;
   replyTargetId: number | null;
   replyTargetName: string;
   replyContext: string;
@@ -112,12 +215,10 @@ interface CommentItemProps {
 
 function CommentItem({
   comment,
-  isAdmin,
   onReply,
   onEdit,
   onDelete,
   onHide,
-  depth = 0,
   replyTargetId,
   replyTargetName,
   replyContext,
@@ -127,23 +228,31 @@ function CommentItem({
   onCancelReply,
   replyInputRef,
 }: CommentItemProps) {
-  const adminComment = isAdmin ? (comment as CommentAdminResponse) : null;
-  const userComment = !isAdmin ? (comment as CommentUserResponse) : null;
   const isDeleted = comment.isDeleted;
-  const isHidden = adminComment?.status === 'HIDDEN';
+  const isHidden = comment.status === 'HIDDEN';
+  const isReply = comment.parentId !== null;
+  const children = comment.children ?? [];
 
-  const children = (comment.children ?? []) as (CommentUserResponse | CommentAdminResponse)[];
+  const { editable, deletable, hideable } = comment;
 
   return (
     <>
-      <div className={`comment-item${depth > 0 ? ' comment-item--reply' : ''}`}>
+      <div className={`comment-item${isReply ? ' comment-item--reply' : ''}`}>
         <CommentAvatar src={comment.authorProfileImage} name={comment.authorName} />
         <div className="comment-item__body">
           <div className="comment-item__header">
             <span className="comment-item__author">{comment.authorName}</span>
             <span className="comment-item__date">{formatCommentDate(comment.createdAt)}</span>
-            {adminComment && <span className="comment-item__edited">(ID: {adminComment.authorId})</span>}
-            {adminComment && <StatusBadge status={adminComment.status} />}
+            {hideable && <StatusBadge status={comment.status} />}
+            <CommentMoreDropdown
+              editable={editable}
+              deletable={deletable}
+              hideable={hideable}
+              currentStatus={comment.status}
+              onEdit={() => onEdit(comment.id, comment.context)}
+              onDelete={() => onDelete(comment.id)}
+              onHide={(status) => onHide(comment.id, status)}
+            />
           </div>
 
           {isDeleted ? (
@@ -156,35 +265,19 @@ function CommentItem({
 
           {!isDeleted && (
             <div className="comment-item__footer">
-              <button type="button" className="comment-item__like-btn">
-                <Heart size={12} />
-                <span>{comment.likeCount}</span>
-              </button>
-              <button
-                type="button"
-                onClick={() => onReply(comment.id, comment.authorName)}
-                className="comment-item__reply-btn"
-              >
-                <MessageCircle size={12} />
-                <span>답글</span>
-              </button>
-              {userComment?.editable && (
-                <button type="button" onClick={() => onEdit(comment.id, comment.context)} className="comment-item__action">수정</button>
-              )}
-              {userComment?.deletable && (
-                <button type="button" onClick={() => onDelete(comment.id)} className="comment-item__action comment-item__action--delete">삭제</button>
-              )}
-              {adminComment?.hideable && (
+              {!comment.parentId && (
                 <button
                   type="button"
-                  onClick={() => onHide(comment.id, adminComment.status === 'HIDDEN' ? 'PUBLIC' : 'HIDDEN')}
-                  className="comment-item__action"
+                  onClick={() => onReply(comment.id, comment.authorName)}
+                  className="comment-item__reply-btn"
                 >
-                  {adminComment.status === 'HIDDEN' ? '숨김 해제' : '숨김'}
+                  <MessageBox />
+                  <span>{comment.children?.length ?? 0}</span>
                 </button>
               )}
-              <button type="button" className="comment-item__more" aria-label="더보기">
-                <MoreVertical size={18} />
+              <button type="button" className="comment-item__like-btn">
+                <Heart />
+                <span>{comment.likeCount}</span>
               </button>
             </div>
           )}
@@ -212,12 +305,10 @@ function CommentItem({
           <CommentItem
             key={child.id}
             comment={child}
-            isAdmin={isAdmin}
             onReply={onReply}
             onEdit={onEdit}
             onDelete={onDelete}
             onHide={onHide}
-            depth={depth + 1}
             replyTargetId={replyTargetId}
             replyTargetName={replyTargetName}
             replyContext={replyContext}
@@ -232,8 +323,8 @@ function CommentItem({
   );
 }
 
-function CommentSection({ boardId, isAdmin = false }: CommentSectionProps) {
-  const [comments, setComments] = useState<(CommentUserResponse | CommentAdminResponse)[]>([]);
+function CommentSection({ boardId }: CommentSectionProps) {
+  const [comments, setComments] = useState<(CommentResponse)[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [newContext, setNewContext] = useState('');
@@ -254,7 +345,7 @@ function CommentSection({ boardId, isAdmin = false }: CommentSectionProps) {
       setLoading(true);
       setError(null);
       const res = await getCommentsAPI(boardId);
-      if (res.success) setComments(res.comments as (CommentUserResponse | CommentAdminResponse)[]);
+      if (res.success) setComments(res.comments as (CommentResponse)[]);
       else setError(res.message);
     } catch { setError('댓글을 불러오는 중 오류가 발생했습니다.'); }
     finally { setLoading(false); }
@@ -322,8 +413,8 @@ function CommentSection({ boardId, isAdmin = false }: CommentSectionProps) {
     } catch { alert('댓글 상태 변경 중 오류가 발생했습니다.'); }
   };
 
-  const countAll = (list: (CommentUserResponse | CommentAdminResponse)[]): number =>
-    list.reduce((n, c) => n + 1 + countAll((c.children ?? []) as (CommentUserResponse | CommentAdminResponse)[]), 0);
+  const countAll = (list: (CommentResponse)[]): number =>
+    list.reduce((n, c) => n + 1 + countAll((c.children ?? []) as (CommentResponse)[]), 0);
 
   const totalCount = countAll(comments);
 
@@ -356,7 +447,6 @@ function CommentSection({ boardId, isAdmin = false }: CommentSectionProps) {
               ) : (
                 <CommentItem
                   comment={c}
-                  isAdmin={isAdmin}
                   onReply={handleOpenReply}
                   onEdit={handleOpenEdit}
                   onDelete={handleDelete}
