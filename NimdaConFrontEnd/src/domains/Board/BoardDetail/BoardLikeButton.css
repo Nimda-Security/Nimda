@@ -1,0 +1,43 @@
+/* BoardLikeButton 전용 스타일 */
+.board-like-area {
+  display: flex;
+  justify-content: center;
+  margin-bottom: 32px;
+}
+
+.board-like-btn {
+  position: relative;
+  display: inline-block;
+  padding: 0;
+  border: none;
+  background: none;
+  cursor: pointer;
+  transition: opacity 0.2s;
+  line-height: 0;
+}
+
+.board-like-btn:hover:not(:disabled) {
+  opacity: 0.8;
+}
+
+.board-like-btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.board-like-count {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  margin-top: 3px;
+  font-size: 12px;
+  font-weight: 700;
+  color: var(--color-red);
+  pointer-events: none;
+  line-height: 1;
+}
+
+.board-like-btn.is-liked .board-like-count {
+  color: #F5F5F5;
+}

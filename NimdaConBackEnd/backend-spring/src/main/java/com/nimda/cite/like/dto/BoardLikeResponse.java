@@ -1,5 +1,6 @@
 package com.nimda.cite.like.dto;
 
+import com.fasterxml.jackson.annotation.JsonProperty;
 import lombok.Builder;
 import lombok.Getter;
 
@@ -8,6 +9,7 @@ import lombok.Getter;
 public class BoardLikeResponse {
     private String message;     // "좋아요 완료" 또는 "좋아요 취소 완료"
     private long likeCount;     // 변경된 후의 총 좋아요 수
+    @JsonProperty("isLiked")
     private boolean isLiked;    // 현재 로그인한 유저의 좋아요 상태 (True/False)
 
     // 정적 팩토리 메서드
