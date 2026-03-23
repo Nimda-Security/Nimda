@@ -71,13 +71,15 @@ const NotificationBell: React.FC = () => {
       <button
         type="button"
         title="알림"
-        className="relative flex items-center justify-center border-none cursor-pointer outline-none bg-transparent p-0"
+        className={`relative flex items-center justify-center border-none cursor-pointer outline-none rounded-full transition-colors p-2 ${
+          open ? "bg-[#f1f1f1]" : "bg-transparent"
+        }`}
         onClick={() => setOpen((prev) => !prev)}
       >
         <img
           src="/bell.svg"
           alt="알림"
-          className="w-10 h-10"
+          className="w-6 h-6"
         />
 
         {hasUnread && (

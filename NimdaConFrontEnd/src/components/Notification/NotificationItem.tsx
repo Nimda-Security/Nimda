@@ -68,15 +68,14 @@ const NotificationItem: React.FC<NotificationItemProps> = ({
         </div>
       )}
 
-      {/* 3. 시간 텍스트 가이드 반영: Left 291, Top 12, Width 29, Height 18 */}
+      {/* 3. 시간 텍스트 최적화: 우측 상단 정렬로 변경하여 텍스트 잘림 방지 */}
       <span
-        className="absolute text-[12px] font-normal text-[#bcbcbc] flex items-center justify-end"
+        className="absolute text-[12px] font-normal text-[#bcbcbc] text-right"
         style={{
-          left: '291px',
+          right: '16px',
           top: '12px',
-          width: '29px',
-          height: '18px',
-          lineHeight: '18px'
+          lineHeight: '18px',
+          whiteSpace: 'nowrap'
         }}
       >
         {time}
