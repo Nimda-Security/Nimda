@@ -5,9 +5,9 @@ spring:
     active: local
   
   datasource:
-    url: ${SPRING_DATASOURCE_URL:jdbc:mysql://mysql:3306/nimda_con?useSSL=false&serverTimezone=Asia/Seoul&allowPublicKeyRetrieval=true}
-    username: ${SPRING_DATASOURCE_USERNAME}
-    password: ${SPRING_DATASOURCE_PASSWORD}
+    url: ${SPRING_DATASOURCE_URL:jdbc:mysql://localhost:3306/nimda_con?useSSL=false&serverTimezone=Asia/Seoul&allowPublicKeyRetrieval=true}
+    username: ${SPRING_DATASOURCE_USERNAME:nimda}
+    password: ${SPRING_DATASOURCE_PASSWORD:nimda123}
     driver-class-name: com.mysql.cj.jdbc.Driver
     
     hikari:
@@ -77,10 +77,10 @@ nimda:
 # 미설정 시 첨부는 nimda.file.upload-dir(로컬 디스크)만 사용합니다.
 aws:
   s3:
-    bucket: nimda-bucket
-    region: ap-northeast-2
-    access-key: ${AWS_S3_ACCESS_KEY:}
-    secret-key: ${AWS_S3_SECRET_KEY:}
+    bucket: ${AWS_S3_BUCKET:nimda-server}
+    region: ${AWS_REGION:ap-northeast-2}
+    access-key: ${AWS_S3_ACCESS_KEY:AKIAQ3EGSGWFAD7ZD4H2}
+    secret-key: ${AWS_S3_SECRET_KEY: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}
 
     # 파일 저장 경로 
     profile-image-path: profiles/ # 프로필 이미지 저장
