@@ -19,6 +19,7 @@ export interface CommentResponse {
   updatedAt: string | null;
   likeCount: number;
   isDeleted: boolean;
+  isLiked: boolean;
 
   deletable: boolean;
   editable: boolean;
