@@ -10,6 +10,7 @@ import com.nimda.cite.comment.dto.*;
 import com.nimda.cite.comment.entity.Comment;
 import com.nimda.cite.comment.enums.STATUS;
 import com.nimda.cite.comment.repository.CommentRepository;
+import com.nimda.cite.like.repository.CommentLikeRepositroy;
 import com.nimda.cup.user.entity.User;
 import com.nimda.cup.user.repository.UserRepository;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -43,6 +44,9 @@ public class CommentService {
 
     @Autowired
     private ApplicationEventPublisher eventPublisher;
+
+    @Autowired
+    private CommentLikeRepositroy commentLikeRepository;
 
     // =============== CREATE ===============
 
@@ -124,6 +128,13 @@ public class CommentService {
             CommentResponse dto = isAdmin
                     ? CommentResponse.forAdmin(comment, userId)
                     : CommentResponse.forUser(comment, userId);
+
+            // 좋아요 상태 설정
+            if (userId != null) {
+                dto.setIsLiked(commentLikeRepository.existsByCommentIdAndUserId(comment.getId(), userId));
+            } else {
+                dto.setIsLiked(false);
+            }
 
             map.put(dto.getId(), dto);
 
