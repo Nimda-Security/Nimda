@@ -6,6 +6,7 @@ import { getAllCategoriesAPI } from '@/api/category';
 import type { Board, Category } from '../types';
 import { CATEGORY_LABELS } from '../constants';
 import { Heart } from '@/components/icons/Heart';
+import { isAdmin } from '@/utils/jwt';
 import './BoardList.css';
 
 interface BoardListPageProps {
@@ -46,6 +47,7 @@ function BoardListPage({ slug: propSlug }: BoardListPageProps) {
   const [noticePosts, setNoticePosts] = useState<Board[]>([]);
   const [category, setCategory] = useState<Category | null>(null);
   const [childCategories, setChildCategories] = useState<Category[]>([]);
+  const [allCategories, setAllCategories] = useState<Category[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [currentPage, setCurrentPage] = useState(0);
@@ -99,14 +101,15 @@ function BoardListPage({ slug: propSlug }: BoardListPageProps) {
 
     const loadCategoryInfo = async () => {
       try {
-        const [catInfoResponse, allCategories] = await Promise.all([
+        const [catInfoResponse, allCats] = await Promise.all([
           getBoardListAPI({ slug, page: 0, size: 1, sort: 'createdAt,desc' }),
           getAllCategoriesAPI(),
         ]);
         if (cancelled) return;
+        setAllCategories(allCats);
         if (catInfoResponse.success && catInfoResponse.category?.id) {
           setCategory(catInfoResponse.category);
-          const children = allCategories
+          const children = allCats
             .filter(c => c.parentId === catInfoResponse.category.id)
             .sort((a, b) => a.sortOrder - b.sortOrder);
           setChildCategories(children);
@@ -253,6 +256,18 @@ function BoardListPage({ slug: propSlug }: BoardListPageProps) {
 
   const categoryName = category?.name || CATEGORY_LABELS[slug] || '게시판';
 
+  // "새 소식" 카테고리(자신 또는 부모)인 경우 ADMIN만 글쓰기 가능
+  const isNewsCategoryGroup = (() => {
+    if (!category) return slug === 'news';
+    if (category.name === '새 소식') return true;
+    if (category.parentId) {
+      const parent = allCategories.find(c => c.id === category.parentId);
+      if (parent && parent.name === '새 소식') return true;
+    }
+    return false;
+  })();
+  const canWrite = !isNewsCategoryGroup || isAdmin();
+
   // 공지사항: notice 카테고리의 고정글 + 현재 카테고리의 고정글 (중복 제거)
   const allPinnedIds = new Set(pinnedPosts.map(p => p.id));
   const globalNotices = noticePosts.filter(p => !allPinnedIds.has(p.id));
@@ -281,9 +296,11 @@ function BoardListPage({ slug: propSlug }: BoardListPageProps) {
         {/* 헤더: 제목 + 글쓰기 버튼 */}
         <div className="board-list__header">
           <h1 className="board-list__title">{categoryName}</h1>
-          <button className="board-list__write-btn" onClick={handleWriteClick}>
-            글쓰기
-          </button>
+          {canWrite && (
+            <button className="board-list__write-btn" onClick={handleWriteClick}>
+              글쓰기
+            </button>
+          )}
         </div>
 
         {/* 태그 필터 - 전체는 항상 표시 */}
