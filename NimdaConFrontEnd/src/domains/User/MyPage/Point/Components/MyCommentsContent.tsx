@@ -94,7 +94,7 @@ const MyCommentsContent: React.FC = () => {
           className="border border-[#d4d4d4] rounded-[4px] bg-[#f5f5f5]"
           style={{
             display: 'flex',
-            width: '1136px',
+            width: '100%',
             height: '360px',
             padding: '156px 0 180px 0',
             justifyContent: 'center',

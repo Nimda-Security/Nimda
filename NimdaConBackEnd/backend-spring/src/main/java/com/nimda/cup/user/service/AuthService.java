@@ -162,4 +162,41 @@ public class AuthService {
 
         return newStatus;
     }
+
+    /**
+     * 프로필 정보 수정 (닉네임, 백준 ID, 생년월일, 학과, 학번)
+     * null인 필드는 수정하지 않음 (부분 업데이트)
+     */
+    @Transactional
+    public User updateProfile(Long userId, String nickname, String bojId, String birth, String major, String studentNum) {
+        User user = userRepository.findById(userId)
+                .orElseThrow(() -> new IllegalArgumentException("존재하지 않는 사용자입니다."));
+
+        // 닉네임 변경 시 중복 체크
+        if (nickname != null && !nickname.isBlank() && !nickname.equals(user.getNickname())) {
+            if (userRepository.existsByNickname(nickname)) {
+                throw new RuntimeException("이미 사용 중인 닉네임입니다.");
+            }
+            user.setNickname(nickname);
+        }
+
+        if (bojId != null) {
+            user.setBojId(bojId.isBlank() ? null : bojId);
+        }
+
+        if (birth != null && !birth.isBlank()) {
+            user.setBirth(birth);
+        }
+
+        if (major != null && !major.isBlank()) {
+            user.setMajor(major);
+        }
+
+        if (studentNum != null && !studentNum.isBlank()) {
+            user.setStudentNum(studentNum);
+        }
+
+        // Dirty Checking에 의해 자동 UPDATE
+        return user;
+    }
 }

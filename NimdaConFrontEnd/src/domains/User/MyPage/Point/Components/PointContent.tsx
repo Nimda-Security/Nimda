@@ -70,11 +70,9 @@ const PointContent: React.FC<PointContentProps> = ({
           minHeight: '834px',
           borderRadius: '4px',
           border: '1px solid #D4D4D4',
-          // ✅ [교정] UserInfoContent와 동일하게 배경색 지정을 해제하여 부모 배경색(#F8F9FA)을 따르게 합니다.
-          // background: '#F5F5F5', <- 제거
           display: 'flex',
           flexDirection: 'column',
-          margin: '0'
+          margin: '0 0 48px 0'
         }}
       >
         {/* 마일리지 정보 + 버튼 */}

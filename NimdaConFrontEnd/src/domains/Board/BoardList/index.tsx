@@ -6,7 +6,7 @@ import { getAllCategoriesAPI } from '@/api/category';
 import type { Board, Category } from '../types';
 import { CATEGORY_LABELS } from '../constants';
 import { Heart } from '@/components/icons/Heart';
-import { isAdmin } from '@/utils/jwt';
+import { isAdmin, hasRole } from '@/utils/jwt';
 import './BoardList.css';
 
 interface BoardListPageProps {
@@ -267,6 +267,24 @@ function BoardListPage({ slug: propSlug }: BoardListPageProps) {
     return false;
   })();
   const canWrite = !isNewsCategoryGroup || isAdmin();
+
+  // "카르텔" 카테고리 접근 권한 확인
+  const isCartelCategoryGroup = (() => {
+    if (!category) return false;
+    if (category.name === '카르텔') return true;
+    if (category.parentId) {
+      const parent = allCategories.find(c => c.id === category.parentId);
+      if (parent && parent.name === '카르텔') return true;
+    }
+    return false;
+  })();
+
+  useEffect(() => {
+    if (isCartelCategoryGroup && !hasRole('ROLE_CARTEL') && !isAdmin()) {
+      alert('접근 권한이 없습니다.');
+      navigate('/');
+    }
+  }, [isCartelCategoryGroup, navigate]);
 
   // 공지사항: notice 카테고리의 고정글 + 현재 카테고리의 고정글 (중복 제거)
   const allPinnedIds = new Set(pinnedPosts.map(p => p.id));

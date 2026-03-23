@@ -1,18 +1,18 @@
-import React, { useState, useEffect } from "react";
-import { getMyBoardsAPI, deleteMyBoardsAPI } from "@/api/board";
-import type { MyBoard } from "@/api/board";
-import ContentListItem from "./ContentList/ContentListItem";
-import ContentListActionBar from "./ContentList/ContentListActionBar";
-import Pagination from "./ContentList/Pagination";
-import { useNavigate } from "react-router-dom";
+import React, { useState, useEffect } from 'react';
+import { getMyBoardsAPI, deleteMyBoardsAPI } from '@/api/board';
+import type { MyBoard } from '@/api/board';
+import ContentListItem from './ContentList/ContentListItem';
+import ContentListActionBar from './ContentList/ContentListActionBar';
+import Pagination from './ContentList/Pagination';
+import { useNavigate } from 'react-router-dom';
 
 const ITEMS_PER_PAGE = 8;
 
 const formatDate = (dateStr: string): string => {
-  if (!dateStr) return "";
+  if (!dateStr) return '';
   const d = new Date(dateStr);
-  const month = String(d.getMonth() + 1).padStart(2, "0");
-  const day = String(d.getDate()).padStart(2, "0");
+  const month = String(d.getMonth() + 1).padStart(2, '0');
+  const day = String(d.getDate()).padStart(2, '0');
   return `${month}.${day}`;
 };
 
@@ -61,8 +61,11 @@ const MyPostsContent: React.FC = () => {
     if (res.success) {
       setBoards((prev) => prev.filter((b) => !selectedIds.has(b.id)));
       setSelectedIds(new Set());
-      const newTotalPages = Math.ceil((boards.length - ids.length) / ITEMS_PER_PAGE);
-      if (currentPage > newTotalPages && newTotalPages > 0) setCurrentPage(newTotalPages);
+      const newTotalPages = Math.ceil(
+        (boards.length - ids.length) / ITEMS_PER_PAGE
+      );
+      if (currentPage > newTotalPages && newTotalPages > 0)
+        setCurrentPage(newTotalPages);
     } else {
       alert(res.message);
     }
@@ -102,8 +105,31 @@ const MyPostsContent: React.FC = () => {
           ))}
         </div>
       ) : (
-        <div className="border border-[#d4d4d4] rounded-[4px] bg-[#f5f5f5] py-16 text-center text-[14px] text-[#a3a3a3]">
-          작성한 게시글이 없습니다.
+        <div
+          className="border border-[#d4d4d4] rounded-[4px] bg-[#f5f5f5]"
+          style={{
+            display: 'flex',
+            width: '100%',
+            height: '360px',
+            padding: '156px 0 180px 0',
+            justifyContent: 'center',
+            alignItems: 'center',
+            margin: '0 auto 146px auto',
+            boxSizing: 'border-box',
+          }}
+        >
+          <span
+            style={{
+              color: '#A3A3A3',
+              textAlign: 'center',
+              fontFamily: 'Pretendard',
+              fontSize: '16px',
+              fontWeight: 500,
+              lineHeight: '150%',
+            }}
+          >
+            작성한 게시글이 없습니다.
+          </span>
         </div>
       )}
 
@@ -112,7 +138,9 @@ const MyPostsContent: React.FC = () => {
       {boards.length > 0 && (
         <div className="mt-[8px]">
           <ContentListActionBar
-            allSelected={selectedIds.size === boards.length && boards.length > 0}
+            allSelected={
+              selectedIds.size === boards.length && boards.length > 0
+            }
             onToggleAll={toggleAll}
             onDelete={handleDelete}
             hasSelected={selectedIds.size > 0}
@@ -120,7 +148,11 @@ const MyPostsContent: React.FC = () => {
         </div>
       )}
 
-      <Pagination currentPage={currentPage} totalPages={totalPages} onPageChange={setCurrentPage} />
+      <Pagination
+        currentPage={currentPage}
+        totalPages={totalPages}
+        onPageChange={setCurrentPage}
+      />
     </div>
   );
 };
