@@ -192,45 +192,7 @@
   text-decoration: underline;
 }
 
-/* ===========================
-   좋아요 버튼 (본문 하단)
-   =========================== */
-.board-detail__like-area {
-  display: flex;
-  justify-content: center;
-  margin-bottom: 32px;
-}
 
-.board-detail__like-btn {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 2px;
-  width: 52px;
-  height: 52px;
-  border-radius: 50%;
-  border: 1px solid var(--color-gray-200);
-  background: none;
-  cursor: pointer;
-  color: var(--color-red);
-  justify-content: center;
-  transition: opacity 0.2s;
-}
-
-.board-detail__like-btn:hover:not(:disabled) {
-  opacity: 0.8;
-}
-
-.board-detail__like-btn:disabled {
-  opacity: 0.5;
-  cursor: not-allowed;
-}
-
-.board-detail__like-count {
-  font-size: 10px;
-  font-weight: 700;
-  color: var(--color-red);
-}
 
 /* 첨부파일 */
 .board-detail__file-btn {
