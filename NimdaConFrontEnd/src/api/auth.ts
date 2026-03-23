@@ -297,6 +297,23 @@ export const toggleEmailHide = async () => {
     };
   }
 };
+
+/** 유저 정보 수정 API */
+export const updateUserInfo = async (params: UpdateUserParams) => {
+  try {
+    // 실제 프로젝트의 axios 인스턴스나 fetch 규칙에 맞춰 수정하세요.
+    // 예: const response = await axios.patch("/user/me", params);
+    // return response.data;
+
+    // mock return (성공 가정)
+    console.log("서버로 전송될 데이터:", params);
+    return { success: true, message: "정보가 수정되었습니다." };
+  } catch (error) {
+    console.error("updateUserInfo Error:", error);
+    return { success: false, message: "서버 통신 중 오류가 발생했습니다." };
+  }
+};
+
 /**
  * 토큰 가져오기
  */

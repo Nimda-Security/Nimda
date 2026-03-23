@@ -5,6 +5,8 @@ import { VerticalDots } from '@/components/icons/VerticalDots';
 import Layout from '@/components/Layout';
 import { openAttachmentDownloadInNewTab } from '@/api/attachments';
 import { getBoardDetailAPI, deleteBoardAPI, getFileDownloadURL, getBoardLikeStatusAPI } from '@/api/board';
+import { getAllCategoriesAPI } from '@/api/category';
+import { hasRole, isAdmin } from '@/utils/jwt';
 import type { Board } from '../types';
 import CommentSection from '@/domains/Comment';
 import BoardLikeButton from './BoardLikeButton';
@@ -29,9 +31,32 @@ function BoardDetailPage() {
       setError(null);
       const res = await getBoardDetailAPI(boardId);
       if (res.success && 'board' in res) {
-        setBoard(res.board);
+        const boardData = res.board;
+
+        // "카르텔" 카테고리 접근 권한 확인
+        if (boardData.category) {
+          let isCartel = boardData.category.name === '카르텔';
+          if (!isCartel && boardData.category.parentId) {
+            const allCats = await getAllCategoriesAPI();
+            const parent = allCats.find(c => c.id === boardData.category.parentId);
+            if (parent && parent.name === '카르텔') isCartel = true;
+          }
+          if (isCartel && !hasRole('ROLE_CARTEL') && !isAdmin()) {
+            alert('접근 권한이 없습니다.');
+            navigate('/');
+            return;
+          }
+        }
+
+        setBoard(boardData);
         await fetchLikeStatus(boardId);
       } else {
+        // 백엔드에서 403 반환한 경우
+        if (res.message === '접근 권한이 없습니다.') {
+          alert('접근 권한이 없습니다.');
+          navigate('/');
+          return;
+        }
         setError(res.message);
       }
     } catch { setError('게시글을 불러오는 중 오류가 발생했습니다.'); }
