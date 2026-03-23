@@ -33,11 +33,10 @@ export const getCurrentUsername = (): string | null => {
 // 문자열로 변환한 이유 : Http Header는 문자열만 전송 가능하기 때문.
 // localStorage 또한 문자열만 저장 가능
 
-// 관리자 권한 체크 (JWT 토큰의 권한 정보에서 ROLE_ADMIN 확인)
-export const isAdmin = (): boolean => {
-
+// JWT 토큰에서 특정 권한(Role) 보유 여부 확인
+export const hasRole = (role: string): boolean => {
   const token = localStorage.getItem('authToken');
-  if (!token) { return false; }
+  if (!token) return false;
 
   try {
     const base64Url = token.split('.')[1];
@@ -52,9 +51,11 @@ export const isAdmin = (): boolean => {
     );
     const payload = JSON.parse(jsonPayload);
     const authorities = payload.authorities || [];
-    return Array.isArray(authorities) && authorities.includes('ROLE_ADMIN');
-  } catch (error) {
+    return Array.isArray(authorities) && authorities.includes(role);
+  } catch {
     return false;
   }
+};
 
-}; 
+// 관리자 권한 체크 (JWT 토큰의 권한 정보에서 ROLE_ADMIN 확인)
+export const isAdmin = (): boolean => hasRole('ROLE_ADMIN');
