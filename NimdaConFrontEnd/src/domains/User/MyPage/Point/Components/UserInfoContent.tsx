@@ -43,8 +43,13 @@ const UserInfoContent: React.FC<UserInfoContentProps> = ({ loading: parentLoadin
         setLoading(true);
         const res = await getMyPageInfo();
         if (res.success && res.data) {
-          setUser(res.data);
-          setNicknameInput(res.data.nickname || "");
+          const raw = res.data as Record<string, unknown>;
+          const normalized: UserData = {
+            ...raw,
+            emailHide: (raw.emailHide ?? raw.email_hide ?? false) as boolean,
+          };
+          setUser(normalized);
+          setNicknameInput((raw.nickname as string) || "");
         }
       } catch (error) {
         console.error("유저 정보 조회 실패:", error);
