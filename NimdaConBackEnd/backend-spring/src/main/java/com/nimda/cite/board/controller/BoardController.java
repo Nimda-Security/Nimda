@@ -260,6 +260,22 @@ public class BoardController {
             Category category = categoryRepository.findById(categoryId)
                     .orElseThrow(() -> new RuntimeException("카테고리를 찾을 수 없습니다: " + categoryId));
 
+            // "새 소식" 카테고리(자신 또는 부모)는 ADMIN만 작성 가능
+            boolean isNewsCategory = "새 소식".equals(category.getName());
+            if (!isNewsCategory && category.getParentId() != null) {
+                Category parentCategory = categoryRepository.findById(category.getParentId()).orElse(null);
+                if (parentCategory != null && "새 소식".equals(parentCategory.getName())) {
+                    isNewsCategory = true;
+                }
+            }
+            if (isNewsCategory) {
+                boolean isAdmin = author.getAuthorities().stream()
+                        .anyMatch(a -> a.getAuthorityName().equals("ROLE_ADMIN"));
+                if (!isAdmin) {
+                    return ApiResponse.fail("새 소식 게시판은 관리자만 작성할 수 있습니다.").toResponse(HttpStatus.FORBIDDEN);
+                }
+            }
+
             // validation. 태그가 존재하는 경우에만 검증을 진행한다.
             if (tag != null && !tag.trim().isEmpty()) {
                 String validationError = validateTag(category, tag);

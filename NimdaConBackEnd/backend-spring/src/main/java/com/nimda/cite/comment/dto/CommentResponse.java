@@ -1,11 +1,13 @@
 package com.nimda.cite.comment.dto;
 
+import com.fasterxml.jackson.annotation.JsonProperty;
 import com.nimda.cite.comment.entity.Comment;
 import com.nimda.cite.comment.enums.STATUS;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
+import lombok.Setter;
 
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
@@ -13,6 +15,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 @Getter
+@Setter
 @NoArgsConstructor
 @AllArgsConstructor
 @Builder
@@ -26,7 +29,10 @@ public class CommentResponse {
     private String createdAt;
     private String updatedAt;
     private Integer likeCount;
+    @JsonProperty("isDeleted")
     private Boolean isDeleted;
+    @JsonProperty("isLiked")
+    private Boolean isLiked;
 
     private Boolean editable;
     private Boolean deletable;
