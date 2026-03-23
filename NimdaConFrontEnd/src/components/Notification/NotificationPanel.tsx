@@ -36,7 +36,7 @@ function formatTime(createdAt: string): string {
 
 function parseMessage(raw: string): { message: string; preview?: string } {
   if (!raw) return { message: "" };
-  const idx = raw.indexOf("-");
+  const idx = raw.lastIndexOf("-");
   if (idx === -1) return { message: raw };
   return { message: raw.slice(0, idx), preview: raw.slice(idx + 1) };
 }
@@ -105,27 +105,38 @@ const NotificationPanel: React.FC<NotificationPanelProps> = ({ onClose, refreshK
 
   return (
     <div className="w-[360px] bg-[#f5f5f5] rounded-[12px] shadow-2xl border border-gray-200 overflow-hidden animate-in fade-in slide-in-from-top-2 duration-200">
-      <div className="bg-[#ffffff] border-b border-[#ececec] flex flex-col">
-        {/* 제목 행 */}
-        <div className="flex items-center justify-between px-5 pt-4 pb-3">
-          <span className="font-bold text-[#0c0c0c] text-[18px] leading-none">
+      <div className="relative bg-[#ffffff] border-b border-[#ececec] h-[100px] flex flex-col justify-between">
+        <div className="relative w-full h-[60px]">
+          <span
+            className="absolute font-bold text-[#0c0c0c] text-[18px] flex items-center"
+            style={{ left: '20px', top: '16px', width: '40px', height: '24px', lineHeight: '24px', whiteSpace: 'nowrap' }}
+          >
             알림
           </span>
-          <button 
-            className="text-[13px] font-medium text-[#888] hover:text-[#555] transition-colors" 
-            onClick={handleMarkAllRead}
-          >
-            모두 읽음
-          </button>
+          <div className="absolute flex items-center" style={{ right: '16px', top: '12px', height: '24px' }}>
+            <button 
+              className="text-[12px] font-medium text-[#888] hover:text-[#555] transition-colors" 
+              onClick={handleMarkAllRead}
+            >
+              모두 읽음
+            </button>
+          </div>
         </div>
-        {/* 탭 행 */}
-        <div className="flex w-full px-5">
+        <div className="flex w-full px-4 h-[32px]">
           {tabs.map((tab) => (
-            <button key={tab.key} className={`flex-1 pb-2 text-[14px] font-semibold transition-all ${activeTab === tab.key ? "text-[#d97399] border-b-[2px] border-[#d97399]" : "text-[#a3a3a3] border-b-[2px] border-transparent"}`} onClick={() => setActiveTab(tab.key)}>
-              {tab.label}
-              {tab.key === "unread" && notifications.filter(n => !n.isRead).length > 0 && (
-                <span className="ml-1.5 px-1.5 py-0.5 bg-pink-100 text-pink-600 text-[10px] rounded-full">{notifications.filter(n => !n.isRead).length}</span>
-              )}
+            <button 
+              key={tab.key} 
+              className={`flex-1 flex items-start justify-center font-semibold transition-all ${activeTab === tab.key ? "text-[#d97399] border-b-[3px] border-[#d97399]" : "text-[#a3a3a3] border-b-[3px] border-transparent"}`} 
+              onClick={() => setActiveTab(tab.key)}
+            >
+              <div className="flex items-center gap-1">
+                <span className="text-[14px]">{tab.label}</span>
+                {tab.key === "unread" && notifications.filter(n => !n.isRead).length > 0 && (
+                  <span className="px-1.5 py-0.5 bg-pink-100 text-pink-600 text-[10px] rounded-full">
+                    {notifications.filter(n => !n.isRead).length}
+                  </span>
+                )}
+              </div>
             </button>
           ))}
         </div>
