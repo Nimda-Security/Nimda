@@ -5,14 +5,16 @@
   margin-bottom: 32px;
 }
 
+/* 부모 버튼 스타일 (위치 기준점) */
 .board-like-btn {
   position: relative;
   display: inline-block;
+  width: 52px;  /* 이미지 기준 전체 버튼 너비 (예상치, 조정 가능) */
+  height: 52px; /* 이미지 기준 전체 버튼 높이 (예상치, 조정 가능) */
   padding: 0;
   border: none;
   background: none;
   cursor: pointer;
-  transition: opacity 0.2s;
   line-height: 0;
 }
 
@@ -25,18 +27,33 @@
   cursor: not-allowed;
 }
 
+/* 좋아요 개수 (숫자) 스타일 */
 .board-like-count {
   position: absolute;
-  top: 50%;
-  left: 50%;
-  transform: translate(-50%, -50%);
-  margin-top: 3px;
-  font-size: 12px;
-  font-weight: 700;
+  /* 제공된 위치 정보 반영 */
+  top: 30px; 
+  left: 21px;
+  width: 11px;  /* Fixed (11px) */
+  height: 15px; /* Fixed (15px) */
+  
+  /* 폰트 정보 반영 */
+  font-family: 'Pretendard', sans-serif;
+  font-size: 10px;      /* Size 10px */
+  font-weight: 700;     /* Weight 700 (Bold) */
+  line-height: 1.5;     /* Line height 150% */
+  letter-spacing: 0;    /* Letter spacing 0% */
+  
+  /* 중앙 정렬을 위한 추가 설정 (필요 시) */
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+
+  /* 색상 및 기타 */
   color: var(--color-red);
   pointer-events: none;
-  line-height: 1;
 }
+
 
 .board-like-btn.is-liked .board-like-count {
   color: #F5F5F5;
