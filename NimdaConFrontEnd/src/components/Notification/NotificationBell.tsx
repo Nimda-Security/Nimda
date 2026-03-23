@@ -71,22 +71,22 @@ const NotificationBell: React.FC = () => {
       <button
         type="button"
         title="알림"
-        className={`relative flex items-center justify-center border-none cursor-pointer outline-none rounded-full transition-colors p-2 ${
-          open ? "bg-[#f1f1f1]" : "bg-transparent"
+        className={`relative flex items-center justify-center border-none cursor-pointer outline-none rounded-full transition-all duration-200 p-2 ${
+          open ? "bg-[#f1f1f1]" : "bg-transparent hover:bg-black/5"
         }`}
         onClick={() => setOpen((prev) => !prev)}
       >
         <img
           src="/bell.svg"
           alt="알림"
-          className="w-6 h-6"
+          className="w-[32px] h-[32px]"
         />
 
         {hasUnread && (
           <img
             src="/Ellipse-bell.svg"
             alt="새 알림"
-            className="absolute top-0 right-0 w-4 h-4"
+            className="absolute top-[8px] right-[8px] w-4 h-4"
           />
         )}
       </button>
