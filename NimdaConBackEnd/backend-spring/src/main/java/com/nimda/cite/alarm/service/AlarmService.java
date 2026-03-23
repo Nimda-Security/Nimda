@@ -102,7 +102,7 @@ public class AlarmService {
                 .notificationType(NotificationType.PushLikeButtonAtComment)
                 .relatedEntityId(event.getCommentId())
                 // url은 수정해야함
-                .relatedUrl("/board/view/" + event.getBoardId() + "#comment-" + event.getCommentId())
+                .relatedUrl("/board/view/" + event.getBoardId())
                 .isRead(false)
                 .build();
 
