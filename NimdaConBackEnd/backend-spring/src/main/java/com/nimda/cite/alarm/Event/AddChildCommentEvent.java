@@ -16,12 +16,14 @@ public class AddChildCommentEvent extends ApplicationEvent {
     private User parentsCommentAuthor;
     private User childCommentAuthor;
     private LocalDateTime createdAt;
+    private String commentContent;
 
-    public AddChildCommentEvent(Object source, Board board, User parentsCommentAuthor, User childCommentAuthor) {
+    public AddChildCommentEvent(Object source, Board board, User parentsCommentAuthor, User childCommentAuthor, String commentContent) {
         super(source);
         this.board = board;
         this.parentsCommentAuthor = parentsCommentAuthor;
         this.childCommentAuthor = childCommentAuthor;
         this.createdAt = LocalDateTime.now();
+        this.commentContent = commentContent;
     }
 }
