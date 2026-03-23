@@ -298,21 +298,7 @@ export const toggleEmailHide = async () => {
   }
 };
 
-/** 유저 정보 수정 API */
-export const updateUserInfo = async (params: UpdateUserParams) => {
-  try {
-    // 실제 프로젝트의 axios 인스턴스나 fetch 규칙에 맞춰 수정하세요.
-    // 예: const response = await axios.patch("/user/me", params);
-    // return response.data;
 
-    // mock return (성공 가정)
-    console.log("서버로 전송될 데이터:", params);
-    return { success: true, message: "정보가 수정되었습니다." };
-  } catch (error) {
-    console.error("updateUserInfo Error:", error);
-    return { success: false, message: "서버 통신 중 오류가 발생했습니다." };
-  }
-};
 
 /**
  * 토큰 가져오기
@@ -327,4 +313,65 @@ export const getAuthToken = () => {
 export const isLoggedIn = (): boolean => {
   const token = getAuthToken();
   return !!token;
+};
+
+/**
+ * 프로필 정보 수정 API
+ * null인 필드는 수정하지 않음 (부분 업데이트)
+ */
+export interface UpdateProfileRequest {
+  nickname?: string;
+  bojId?: string;
+  birth?: string;
+  major?: string;
+  studentNum?: string;
+}
+
+export const updateProfileAPI = async (
+  data: UpdateProfileRequest
+): Promise<{ success: boolean; message: string; data?: Record<string, unknown> }> => {
+  try {
+    const token = getAuthToken();
+    if (!token) {
+      return { success: false, message: "로그인이 필요합니다." };
+    }
+
+    const response = await fetch(`${API_BASE_URL}/auth/me`, {
+      method: "PUT",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${token}`,
+      },
+      body: JSON.stringify(data),
+    });
+
+    let result;
+    try {
+      result = await response.json();
+    } catch {
+      return {
+        success: false,
+        message: `서버 오류 (${response.status}): 응답을 파싱할 수 없습니다.`,
+      };
+    }
+
+    if (response.ok && result.success) {
+      return {
+        success: true,
+        message: result.message || "프로필이 수정되었습니다.",
+        data: result.data,
+      };
+    } else {
+      return {
+        success: false,
+        message: result.message || `프로필 수정에 실패했습니다. (${response.status})`,
+      };
+    }
+  } catch (error) {
+    console.error("프로필 수정 API 오류:", error);
+    return {
+      success: false,
+      message: "서버에 연결할 수 없습니다.",
+    };
+  }
 };
