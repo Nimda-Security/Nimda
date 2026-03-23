@@ -249,4 +249,13 @@ public class CommentService {
         // 삭제된 댓글(DELETED)은 개수에서 제외합니다.
         return commentRepository.countByAuthorIdAndStatusNot(userId, STATUS.DELETED);
     }
+
+    // 내가 댓글을 단 게시글 ID 목록 조회
+    @Transactional(readOnly = true)
+    public List<Long> getCommentedBoardIds(Long userId) {
+        User user = userRepository.findById(userId)
+                .orElseThrow(() -> new IllegalArgumentException("사용자를 찾을 수 없습니다."));
+
+        return commentRepository.findDistinctBoardIdsByAuthor(user, List.of(STATUS.DELETED));
+    }
 }

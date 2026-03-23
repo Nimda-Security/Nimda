@@ -75,4 +75,12 @@ public interface CommentRepository extends JpaRepository<Comment, Long> {
 
     // 게시글별 댓글 수 조회
     long countByBoardIdAndStatusNot(Long boardId, STATUS status);
+
+    // 내가 댓글을 단 게시글 ID 목록 (중복 제거, 최신 댓글 기준 정렬)
+    @Query("SELECT DISTINCT c.board.id FROM Comment c " +
+            "WHERE c.author = :author " +
+            "AND c.status NOT IN :excludedStatuses " +
+            "ORDER BY c.board.id DESC")
+    List<Long> findDistinctBoardIdsByAuthor(@Param("author") User author,
+                                            @Param("excludedStatuses") List<STATUS> excludedStatuses);
 }

@@ -13,6 +13,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
+import java.util.Optional;
 
 @Service
 public class BoardService {
@@ -162,6 +163,11 @@ Long categoryId = board.getCategory() != null ? board.getCategory().getId() : nu
     @Transactional(readOnly = true)
     public List<Board> getMyBoards(User author) {
         return boardRepository.findByAuthorOrderByCreatedAtDesc(author);
+    }
+
+    @Transactional(readOnly = true)
+    public Optional<Board> findById(Long id) {
+        return boardRepository.findById(id);
     }
 
     @Transactional

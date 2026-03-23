@@ -3,7 +3,10 @@ import { getMyBoardsAPI, deleteMyBoardsAPI } from "@/api/board";
 import type { MyBoard } from "@/api/board";
 import ContentListItem from "./ContentList/ContentListItem";
 import ContentListActionBar from "./ContentList/ContentListActionBar";
+import Pagination from "./ContentList/Pagination";
 import { useNavigate } from "react-router-dom";
+
+const ITEMS_PER_PAGE = 8;
 
 const formatDate = (dateStr: string): string => {
   if (!dateStr) return "";
@@ -17,6 +20,7 @@ const MyPostsContent: React.FC = () => {
   const [boards, setBoards] = useState<MyBoard[]>([]);
   const [loading, setLoading] = useState(true);
   const [selectedIds, setSelectedIds] = useState<Set<number>>(new Set());
+  const [currentPage, setCurrentPage] = useState(1);
   const navigate = useNavigate();
 
   useEffect(() => {
@@ -28,6 +32,10 @@ const MyPostsContent: React.FC = () => {
     };
     fetchBoards();
   }, []);
+
+  const totalPages = Math.ceil(boards.length / ITEMS_PER_PAGE);
+  const startIdx = (currentPage - 1) * ITEMS_PER_PAGE;
+  const displayedBoards = boards.slice(startIdx, startIdx + ITEMS_PER_PAGE);
 
   const toggleSelect = (id: number) => {
     setSelectedIds((prev) => {
@@ -53,6 +61,8 @@ const MyPostsContent: React.FC = () => {
     if (res.success) {
       setBoards((prev) => prev.filter((b) => !selectedIds.has(b.id)));
       setSelectedIds(new Set());
+      const newTotalPages = Math.ceil((boards.length - ids.length) / ITEMS_PER_PAGE);
+      if (currentPage > newTotalPages && newTotalPages > 0) setCurrentPage(newTotalPages);
     } else {
       alert(res.message);
     }
@@ -70,7 +80,7 @@ const MyPostsContent: React.FC = () => {
     <div className="flex flex-col w-full">
       {boards.length > 0 ? (
         <div className="border border-[#d4d4d4] rounded-[4px] bg-transparent overflow-hidden">
-          {boards.map((board, idx) => (
+          {displayedBoards.map((board, idx) => (
             <ContentListItem
               key={board.id}
               item={{
@@ -83,7 +93,7 @@ const MyPostsContent: React.FC = () => {
               }}
               checked={selectedIds.has(board.id)}
               onToggle={() => toggleSelect(board.id)}
-              isLast={idx === boards.length - 1}
+              isLast={idx === displayedBoards.length - 1}
               onClick={() => navigate(`/board/view/${board.id}`)}
             />
           ))}
@@ -106,6 +116,8 @@ const MyPostsContent: React.FC = () => {
           />
         </div>
       )}
+
+      <Pagination currentPage={currentPage} totalPages={totalPages} onPageChange={setCurrentPage} />
     </div>
   );
 };

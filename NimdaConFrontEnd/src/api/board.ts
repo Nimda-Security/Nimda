@@ -816,3 +816,37 @@ export const deleteMyBoardsAPI = async (boardIds: number[]): Promise<{ success: 
     return { success: false, message: '게시글 삭제 중 오류가 발생했습니다.' };
   }
 };
+
+/**
+ * 내가 댓글 단 게시글 목록 조회
+ */
+export const getMyCommentedBoardsAPI = async (): Promise<MyBoard[]> => {
+  try {
+    const token = localStorage.getItem('authToken');
+    if (!token) return [];
+
+    const response = await fetch(`${API_BASE_URL}/my/commented-boards`, {
+      method: 'GET',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${token}`,
+      },
+    });
+
+    const result = await response.json();
+    if (response.ok && result.success && Array.isArray(result.data)) {
+      return result.data.map((b: Record<string, unknown>) => ({
+        id: b.id as number,
+        title: b.title as string,
+        likeCount: (b.likeCount as number) ?? 0,
+        commentCount: (b.commentCount as number) ?? 0,
+        createdAt: b.createdAt as string,
+        filepath: b.filepath as string | undefined,
+      }));
+    }
+    return [];
+  } catch (error) {
+    console.error('댓글 단 게시글 목록 조회 오류:', error);
+    return [];
+  }
+};

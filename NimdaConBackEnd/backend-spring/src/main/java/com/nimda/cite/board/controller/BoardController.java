@@ -587,6 +587,37 @@ public class BoardController {
         }
     }
 
+    /**
+     * 내가 댓글 단 게시글 목록 조회
+     */
+    @GetMapping("/my/commented-boards")
+    public ResponseEntity<?> getMyCommentedBoards(
+            @RequestHeader(value = "Authorization", required = false) String authHeader) {
+        try {
+            User currentUser = extractUser(authHeader);
+            if (currentUser == null) {
+                return ApiResponse.fail("로그인이 필요합니다.").toResponse(HttpStatus.UNAUTHORIZED);
+            }
+
+            List<Long> boardIds = commentRepository.findDistinctBoardIdsByAuthor(
+                    currentUser, List.of(STATUS.DELETED));
+
+            List<BoardResponseDTO> dtos = new ArrayList<>();
+            for (Long boardId : boardIds) {
+                boardService.findById(boardId).ifPresent(board -> {
+                    dtos.add(BoardResponseDTO.from(board,
+                            boardLikeService.getLikeCount(board.getId()),
+                            commentRepository.countByBoardIdAndStatusNot(board.getId(), STATUS.DELETED)));
+                });
+            }
+
+            return ApiResponse.ok("댓글 단 게시글 목록을 조회했습니다.", dtos).toResponse();
+        } catch (Exception e) {
+            return ApiResponse.fail("댓글 단 게시글 조회 중 오류가 발생했습니다: " + e.getMessage())
+                    .toResponse(HttpStatus.INTERNAL_SERVER_ERROR);
+        }
+    }
+
     private User extractUser(String authHeader) {
         if (authHeader != null && authHeader.startsWith("Bearer ")) {
             String token = authHeader.substring(7);

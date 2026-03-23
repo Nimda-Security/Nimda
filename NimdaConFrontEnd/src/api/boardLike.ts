@@ -125,7 +125,9 @@ export interface LikedBoard {
   id: number;
   title: string;
   likeCount: number;
+  commentCount: number;
   createdAt: string;
+  filepath?: string;
 }
 
 export const getLikedBoardsAPI = async (): Promise<LikedBoard[]> => {
@@ -145,7 +147,15 @@ export const getLikedBoardsAPI = async (): Promise<LikedBoard[]> => {
 
     const result = await response.json();
     if (result.success) {
-      return result.data?.boards || [];
+      const boards = result.data?.boards || [];
+      return boards.map((b: Record<string, unknown>) => ({
+        id: b.id as number,
+        title: b.title as string,
+        likeCount: (b.likeCount as number) ?? 0,
+        commentCount: (b.commentCount as number) ?? 0,
+        createdAt: b.createdAt as string,
+        filepath: b.filepath as string | undefined,
+      }));
     }
     return [];
   } catch (error) {
