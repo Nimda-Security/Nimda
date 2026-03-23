@@ -1,6 +1,6 @@
 import React from "react";
 
-export const CommentIcon: React.FC = () => (
+export const MessageBox: React.FC = () => (
   <svg
     width="12"
     height="12"
