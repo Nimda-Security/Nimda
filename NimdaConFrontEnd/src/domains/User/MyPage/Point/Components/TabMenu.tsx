@@ -10,7 +10,6 @@ const TabMenu: React.FC<TabMenuProps> = ({ activeTab, setActiveTab }) => {
     { key: "profile", label: "회원정보" },
     { key: "my_posts", label: "작성글" },
     { key: "my_comments", label: "작성 댓글" },
-    { key: "commented_posts", label: "댓글단 글" },
     { key: "liked_posts", label: "좋아요한 글" },
     { key: "points", label: "마일리지" },
   ];
