@@ -126,6 +126,7 @@ public class AuthController {
                     .profileImage(user.getProfileImage())
                     .createdAt(user.getCreatedAt())
                     .updatedAt(user.getUpdatedAt())
+                    .emailHide(user.isEmailHide())
                     .build();
 
             return ResponseEntity.ok(response);

@@ -34,4 +34,5 @@ public class MyPageResponseDTO {
     private String profileImage;
     private LocalDateTime createdAt;
     private LocalDateTime updatedAt;
+    private boolean emailHide;
 }

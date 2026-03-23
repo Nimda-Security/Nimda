@@ -45,8 +45,31 @@ const CommentedPostsContent: React.FC = () => {
 
   if (boards.length === 0) {
     return (
-      <div className="border border-[#d4d4d4] rounded-[4px] bg-[#f5f5f5] py-16 text-center text-[14px] text-[#a3a3a3]">
+      <div className="border border-[#d4d4d4] rounded-[4px] bg-[#f5f5f5] py-16 text-center text-[14px] text-[#a3a3a3]"
+        style={{
+                display: 'flex',
+                width: '1136px',
+                height: '360px',
+                padding: '156px 0 180px 0',
+                justifyContent: 'center',
+                alignItems: 'center',
+                margin: '0 auto 146px auto',
+                boxSizing: 'border-box',
+              }}
+          >
+          <span
+                  style={{
+                    color: '#A3A3A3',
+                    textAlign: 'center',
+                    fontFamily: 'Pretendard',
+                    fontSize: '16px',
+                    fontStyle: 'normal',
+                    fontWeight: 500,
+                    lineHeight: '150%', // 24px
+                  }}
+                >
         댓글을 작성한 게시글이 없습니다.
+      </span>
       </div>
     );
   }
