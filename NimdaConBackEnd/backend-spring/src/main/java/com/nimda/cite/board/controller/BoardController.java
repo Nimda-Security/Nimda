@@ -58,8 +58,43 @@ public class BoardController {
     @Autowired
     private CommentRepository commentRepository;
 
+    // "카르텔" 카테고리(자신 또는 부모)인지 확인
+    private boolean isCartelCategory(Category category) {
+        if ("카르텔".equals(category.getName())) return true;
+        if (category.getParentId() != null) {
+            Category parent = categoryRepository.findById(category.getParentId()).orElse(null);
+            if (parent != null && "카르텔".equals(parent.getName())) return true;
+        }
+        return false;
+    }
+
+    // Authorization 헤더에서 User 추출 (없으면 null)
+    private User extractUserFromHeader(String authHeader) {
+        if (authHeader != null && authHeader.startsWith("Bearer ")) {
+            String token = authHeader.substring(7);
+            try {
+                if (!jwtUtil.isTokenExpired(token)) {
+                    Long userId = jwtUtil.extractUserId(token);
+                    if (userId != null) {
+                        return userRepository.findById(userId).orElse(null);
+                    }
+                }
+            } catch (Exception e) {
+                // 토큰 파싱 실패
+            }
+        }
+        return null;
+    }
+
+    // 사용자가 특정 역할을 보유하는지 확인
+    private boolean hasRole(User user, String role) {
+        return user != null && user.getAuthorities().stream()
+                .anyMatch(a -> a.getAuthorityName().equals(role));
+    }
+
     @GetMapping
     public ResponseEntity<?> getPostsByCategory(
+            @RequestHeader(value = "Authorization", required = false) String authHeader,
             @RequestParam(value = "categoryId", required = false) Long categoryId,
             @RequestParam(value = "slug", required = false) String slug,
             @RequestParam(value = "searchKeyword", required = false) String searchKeyword,
@@ -75,6 +110,14 @@ public class BoardController {
                         .orElseThrow(() -> new RuntimeException("카테고리를 찾을 수 없습니다: " + slug));
             } else {
                 return ApiResponse.fail("categoryId 또는 slug 파라미터가 필요합니다.").toResponse(HttpStatus.BAD_REQUEST);
+            }
+
+            // "카르텔" 카테고리 접근 권한 확인
+            if (isCartelCategory(category)) {
+                User user = extractUserFromHeader(authHeader);
+                if (!hasRole(user, "ROLE_CARTEL") && !hasRole(user, "ROLE_ADMIN")) {
+                    return ApiResponse.fail("접근 권한이 없습니다.").toResponse(HttpStatus.FORBIDDEN);
+                }
             }
 
             Page<Board> boards;
@@ -276,6 +319,13 @@ public class BoardController {
                 }
             }
 
+            // "카르텔" 카테고리 접근 권한 확인
+            if (isCartelCategory(category)) {
+                if (!hasRole(author, "ROLE_CARTEL") && !hasRole(author, "ROLE_ADMIN")) {
+                    return ApiResponse.fail("접근 권한이 없습니다.").toResponse(HttpStatus.FORBIDDEN);
+                }
+            }
+
             // validation. 태그가 존재하는 경우에만 검증을 진행한다.
             if (tag != null && !tag.trim().isEmpty()) {
                 String validationError = validateTag(category, tag);
@@ -306,9 +356,20 @@ public class BoardController {
     }
 
     @GetMapping("/{id}")
-    public ResponseEntity<?> view(@PathVariable("id") Long id) {
+    public ResponseEntity<?> view(
+            @RequestHeader(value = "Authorization", required = false) String authHeader,
+            @PathVariable("id") Long id) {
         try {
             Board board = boardService.boardView(id);
+
+            // "카르텔" 카테고리 접근 권한 확인
+            if (board.getCategory() != null && isCartelCategory(board.getCategory())) {
+                User user = extractUserFromHeader(authHeader);
+                if (!hasRole(user, "ROLE_CARTEL") && !hasRole(user, "ROLE_ADMIN")) {
+                    return ApiResponse.fail("접근 권한이 없습니다.").toResponse(HttpStatus.FORBIDDEN);
+                }
+            }
+
             long likeCount = boardLikeService.getLikeCount(board.getId());
             var attachments = attachmentService.listAttachmentsForBoard(board.getId());
             BoardResponseDTO boardDto = BoardResponseDTO.from(board, likeCount, attachments);
@@ -362,6 +423,13 @@ public class BoardController {
 
             Category category = categoryRepository.findById(categoryId)
                     .orElseThrow(() -> new RuntimeException("카테고리를 찾을 수 없습니다: " + categoryId));
+
+            // "카르텔" 카테고리 접근 권한 확인
+            if (isCartelCategory(category)) {
+                if (!hasRole(currentUser, "ROLE_CARTEL") && !isAdmin) {
+                    return ApiResponse.fail("접근 권한이 없습니다.").toResponse(HttpStatus.FORBIDDEN);
+                }
+            }
 
             // Validation. 태그가 존재하는 경우에만 검증을 진행한다.
             if (tag != null && !tag.trim().isEmpty()) {
