@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from "react";
 import { getPointDetailsAPI } from "@/api/point";
 import type { PointHistoryItem } from "@/api/point";
+import Pagination from "./ContentList/Pagination";
 
 interface PointContentProps {
   loading?: boolean;
@@ -15,7 +16,7 @@ const PointContent: React.FC<PointContentProps> = ({
   const [loading, setLoading] = useState(initialLoading || false);
   const [activeFilter, setActiveFilter] = useState("all");
   const [currentPage, setCurrentPage] = useState(1);
-  const ITEMS_PER_PAGE = 5;
+  const ITEMS_PER_PAGE = 8;
 
   // API에서 거래 내역 가져오기
   useEffect(() => {
@@ -95,14 +96,14 @@ const PointContent: React.FC<PointContentProps> = ({
 
             <div>
               <p className="text-[14px] font-medium leading-[150%] text-[#D97399] mb-1 tracking-tight">
-                적립 예정
+
               </p>
               <div className="flex items-baseline">
                 <span className="text-[24px] font-bold leading-[120%] text-[#0C0C0C] tracking-[-0.03em]">
-                  10
+
                 </span>
                 <span className="text-[16px] font-medium leading-[150%] text-[#0C0C0C] ml-1 tracking-tight">
-                  NC
+
                 </span>
               </div>
             </div>
@@ -207,26 +208,7 @@ const PointContent: React.FC<PointContentProps> = ({
         </div>
       </div>
 
-      {/* 3. 페이지네이션 */}
-      {totalPages > 1 && (
-        <div className="mt-10 flex justify-center items-center gap-2">
-          <div className="flex gap-1.5">
-            {Array.from({ length: totalPages }, (_, i) => i + 1).map((p) => (
-              <button
-                key={p}
-                onClick={() => setCurrentPage(p)}
-                className={`w-9 h-9 rounded-lg text-[14px] font-bold transition-all flex items-center justify-center ${
-                  currentPage === p
-                    ? "bg-[#D97399] text-white"
-                    : "text-[#A3A3A3] hover:bg-white border border-transparent hover:border-[#D4D4D4]"
-                }`}
-              >
-                {p}
-              </button>
-            ))}
-          </div>
-        </div>
-      )}
+      <Pagination currentPage={currentPage} totalPages={totalPages} onPageChange={setCurrentPage} />
     </div>
   );
 };

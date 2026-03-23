@@ -1,5 +1,9 @@
 package com.nimda.cite.like.controller;
 
+import com.nimda.cite.board.dto.BoardResponseDTO;
+import com.nimda.cite.board.entity.Board;
+import com.nimda.cite.comment.enums.STATUS;
+import com.nimda.cite.comment.repository.CommentRepository;
 import com.nimda.cite.common.response.ApiResponse;
 import com.nimda.cite.like.dto.BoardLikeResponse;
 import com.nimda.cite.like.service.BoardLikeService;
@@ -9,6 +13,7 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
+import java.util.List;
 import java.util.Map;
 
 // 매핑 이름 바꿔야 함
@@ -20,6 +25,7 @@ public class BoardLikeController {
 
     private final BoardLikeService boardLikeService;
     private final JwtUtil jwtUtil;
+    private final CommentRepository commentRepository;
 
     // 게시글 내에서 표기할 좋아요 개수와 좋아요 여부
     @GetMapping("/{boardId}/likeStatus")
@@ -63,7 +69,13 @@ public class BoardLikeController {
     @GetMapping("/pushedLikes")
     public ResponseEntity<?> getLikeBoards(@RequestHeader("Authorization") String authHeader) {
         Long userId = jwtUtil.extractUserId(authHeader.substring(7));
-        return ApiResponse.ok(Map.of("boards", boardLikeService.getTotalLikeBoards(userId))).toResponse();
+        List<Board> boards = boardLikeService.getTotalLikeBoards(userId);
+        List<BoardResponseDTO> dtos = boards.stream()
+                .map(b -> BoardResponseDTO.from(b,
+                        boardLikeService.getLikeCount(b.getId()),
+                        commentRepository.countByBoardIdAndStatusNot(b.getId(), STATUS.DELETED)))
+                .toList();
+        return ApiResponse.ok(Map.of("boards", dtos)).toResponse();
     }
 
     @GetMapping("/pushedLikes/count")

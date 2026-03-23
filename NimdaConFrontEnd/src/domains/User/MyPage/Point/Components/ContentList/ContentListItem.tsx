@@ -1,5 +1,4 @@
 import React from "react";
-import CheckBox from "./CheckBox";
 
 export interface ContentListItemData {
   id: number;
@@ -21,14 +20,41 @@ interface ContentListItemProps {
 const ContentListItem: React.FC<ContentListItemProps> = ({ item, checked, onToggle, isLast, onClick }) => {
   return (
     <div
-      className={`relative w-full h-[80px] transition-colors ${
+      className={`relative w-full h-[80px] flex items-center transition-colors ${
         checked ? "bg-[#fdf2f4]" : "bg-[#f5f5f5]"
       } ${!isLast ? "border-b border-[#d4d4d4]" : ""}`}
+      onClick={onClick} // 클릭 시 이동을 위해 추가
     >
       {/* 1. 체크박스 영역 (Left 15px + 여백 반영) */}
-      <div className="absolute left-[30px] top-1/2 -translate-y-1/2 flex-shrink-0">
-        <CheckBox checked={checked} onChange={onToggle} />
-      </div>
+      <div
+              style={{
+                  display: 'flex',
+                  width: '28px',
+                  height: '28px',
+                  justifyContent: 'center',  // 가로 중앙
+                  alignItems: 'center',      // 세로 중앙
+                  aspectRatio: '1/1',
+                  flexShrink: 0,
+                  color: '#BCBCBC',
+                  marginLeft: '16px',
+                  marginTop: 'auto',         // 추가: 위쪽 여백 자동
+                  marginBottom: 'auto'      // 추가: 아래쪽 여백 자동
+
+                }}
+
+            >
+              <img
+                src="/chevron-right.svg"
+                alt="이동"
+                className="w-5 h-5 opacity-40" // 크기와 투명도는 디자인에 맞게 조절하세요
+                style={{
+                      width: '100%',
+                      height: '100%',
+                      objectFit: 'contain', // 아이콘이 잘리지 않게 비율 유지하며 꽉 채움
+                      opacity: 0.4
+                    }}
+              />
+            </div>
 
       {/* 2. 썸네일 (Left 62px 부근 배치 - 제목 Left 88px 기준 앞쪽) */}
       {item.thumbnailUrl && (
@@ -41,10 +67,9 @@ const ContentListItem: React.FC<ContentListItemProps> = ({ item, checked, onTogg
         </div>
       )}
 
-      {/* 3. 게시글 제목 (가이드 완벽 반영) */}
+      {/* 3. 게시글 제목 */}
       <p
-        className="absolute truncate cursor-pointer"
-        onClick={onClick}
+        className="absolute truncate"
         style={{
           left: '88px',
           top: '9px',

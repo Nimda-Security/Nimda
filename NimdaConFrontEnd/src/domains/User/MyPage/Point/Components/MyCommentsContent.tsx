@@ -3,11 +3,15 @@ import { getMyCommentsAPI, deleteMyCommentsAPI } from "@/api/comment";
 import type { MyComment } from "@/api/comment";
 import ContentListItem from "./ContentList/ContentListItem";
 import ContentListActionBar from "./ContentList/ContentListActionBar";
+import Pagination from "./ContentList/Pagination";
+
+const ITEMS_PER_PAGE = 8;
 
 const MyCommentsContent: React.FC = () => {
   const [comments, setComments] = useState<MyComment[]>([]);
   const [loading, setLoading] = useState(true);
   const [selectedIds, setSelectedIds] = useState<Set<number>>(new Set());
+  const [currentPage, setCurrentPage] = useState(1);
 
   useEffect(() => {
     const fetch = async () => {
@@ -18,6 +22,10 @@ const MyCommentsContent: React.FC = () => {
     };
     fetch();
   }, []);
+
+  const totalPages = Math.ceil(comments.length / ITEMS_PER_PAGE);
+  const startIdx = (currentPage - 1) * ITEMS_PER_PAGE;
+  const displayedComments = comments.slice(startIdx, startIdx + ITEMS_PER_PAGE);
 
   const toggleSelect = (id: number) => {
     setSelectedIds((prev) => {
@@ -43,6 +51,8 @@ const MyCommentsContent: React.FC = () => {
     if (res.success) {
       setComments((prev) => prev.filter((c) => !selectedIds.has(c.id)));
       setSelectedIds(new Set());
+      const newTotalPages = Math.ceil((comments.length - ids.length) / ITEMS_PER_PAGE);
+      if (currentPage > newTotalPages && newTotalPages > 0) setCurrentPage(newTotalPages);
     } else {
       alert(res.message);
     }
@@ -58,10 +68,9 @@ const MyCommentsContent: React.FC = () => {
 
   return (
     <div className="flex flex-col w-full">
-      {/* 댓글 리스트: 여백 수정을 위해 gap 대신 mt 사용 */}
       {comments.length > 0 ? (
         <div className="border border-[#d4d4d4] rounded-[4px] bg-transparent overflow-hidden">
-          {comments.map((comment, idx) => (
+          {displayedComments.map((comment, idx) => (
             <ContentListItem
               key={comment.id}
               item={{
@@ -72,7 +81,7 @@ const MyCommentsContent: React.FC = () => {
               }}
               checked={selectedIds.has(comment.id)}
               onToggle={() => toggleSelect(comment.id)}
-              isLast={idx === comments.length - 1}
+              isLast={idx === displayedComments.length - 1}
             />
           ))}
         </div>
@@ -84,7 +93,6 @@ const MyCommentsContent: React.FC = () => {
 
         <div className="h-[12px]" />
 
-      {/* 전체선택 / 삭제: 리스트 바로 아래 mt-2 간격 부여 */}
       {comments.length > 0 && (
         <div className="mt-[8px]">
           <ContentListActionBar
@@ -95,6 +103,8 @@ const MyCommentsContent: React.FC = () => {
           />
         </div>
       )}
+
+      <Pagination currentPage={currentPage} totalPages={totalPages} onPageChange={setCurrentPage} />
     </div>
   );
 };

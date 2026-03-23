@@ -2,10 +2,25 @@ import React, { useState, useEffect } from "react";
 import { getLikedBoardsAPI } from "@/api/boardLike";
 import type { LikedBoard } from "@/api/boardLike";
 import ContentListItem from "./ContentList/ContentListItem";
+import Pagination from "./ContentList/Pagination";
+import { useNavigate } from "react-router-dom";
+
+const ITEMS_PER_PAGE = 8;
+
+const formatDate = (dateString: string) => {
+  if (!dateString) return "";
+  const date = new Date(dateString);
+  const month = String(date.getMonth() + 1).padStart(2, '0');
+  const day = String(date.getDate()).padStart(2, '0');
+  return `${month}.${day}`;
+};
+
 
 const LikedPostsContent: React.FC = () => {
   const [boards, setBoards] = useState<LikedBoard[]>([]);
   const [loading, setLoading] = useState(true);
+  const [currentPage, setCurrentPage] = useState(1);
+  const navigate = useNavigate();
 
   useEffect(() => {
     const fetch = async () => {
@@ -16,6 +31,10 @@ const LikedPostsContent: React.FC = () => {
     };
     fetch();
   }, []);
+
+  const totalPages = Math.ceil(boards.length / ITEMS_PER_PAGE);
+  const startIdx = (currentPage - 1) * ITEMS_PER_PAGE;
+  const displayedBoards = boards.slice(startIdx, startIdx + ITEMS_PER_PAGE);
 
   if (loading) {
     return (
@@ -34,21 +53,28 @@ const LikedPostsContent: React.FC = () => {
   }
 
   return (
-    <div className="border border-[#d4d4d4] rounded-[4px] bg-[#f5f5f5] overflow-hidden">
-      {boards.map((board, idx) => (
-        <ContentListItem
-          key={board.id}
-          item={{
-            id: board.id,
-            text: board.title,
-            likeCount: board.likeCount ?? 0,
-            date: board.createdAt ?? "",
-          }}
-          checked={false}
-          onToggle={() => {}}
-          isLast={idx === boards.length - 1}
-        />
-      ))}
+    <div className="flex flex-col w-full">
+      <div className="border border-[#d4d4d4] rounded-[4px] bg-transparent overflow-hidden">
+        {displayedBoards.map((board, idx) => (
+          <ContentListItem
+            key={board.id}
+            item={{
+              id: board.id,
+              text: board.title,
+              likeCount: board.likeCount ?? 0,
+              commentCount: board.commentCount ?? 0,
+              date: formatDate(board.createdAt ?? ""),
+              thumbnailUrl: board.filepath || undefined,
+            }}
+            checked={false}
+            onToggle={() => {}}
+            isLast={idx === displayedBoards.length - 1}
+            onClick={() => navigate(`/board/view/${board.id}`)}
+          />
+        ))}
+      </div>
+
+      <Pagination currentPage={currentPage} totalPages={totalPages} onPageChange={setCurrentPage} />
     </div>
   );
 };
