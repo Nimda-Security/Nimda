@@ -44,24 +44,42 @@ const NotificationBell: React.FC = () => {
     }
   }, [open]);
 
+  // 클릭 시 외부 영역을 클릭하면 닫기
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (ref.current && !ref.current.contains(event.target as Node)) {
+        setOpen(false);
+      }
+    };
+
+    if (open) {
+      document.addEventListener("mousedown", handleClickOutside);
+    } else {
+      document.removeEventListener("mousedown", handleClickOutside);
+    }
+
+    return () => {
+      document.removeEventListener("mousedown", handleClickOutside);
+    };
+  }, [open]);
+
   return (
     <div
       className="relative inline-block"
       ref={ref}
-      // 마우스가 이 영역(아이콘 + 패널 전체)에 들어오면 열기
-      onMouseEnter={() => setOpen(true)}
-      // 마우스가 이 영역을 완전히 벗어나면 닫기
-      onMouseLeave={() => setOpen(false)}
     >
       <button
         type="button"
         title="알림"
-        className="relative flex items-center justify-center border-none cursor-pointer outline-none bg-transparent p-0"
+        className={`relative flex items-center justify-center border-none cursor-pointer outline-none rounded-full transition-colors p-2 ${
+          open ? "bg-[#f1f1f1]" : "bg-transparent"
+        }`}
+        onClick={() => setOpen((prev) => !prev)}
       >
         <img
           src="/bell.svg"
           alt="알림"
-          className="w-10 h-10"
+          className="w-6 h-6"
         />
 
         {hasUnread && (
