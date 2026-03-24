@@ -2,6 +2,7 @@ package com.nimda.cite.board.controller;
 
 import com.nimda.cite.board.dto.CategoryCreateDTO;
 import com.nimda.cite.board.dto.CategoryResponseDTO;
+import com.nimda.cite.board.dto.CategorySortOrderDTO;
 import com.nimda.cite.board.dto.CategoryUpdateDTO;
 import com.nimda.cite.board.entity.Category;
 import com.nimda.cite.board.service.CategoryService;
@@ -217,6 +218,36 @@ public class CategoryController {
 
             categoryService.deleteCategory(id, user);
             return ApiResponse.ok("카테고리가 삭제되었습니다.").toResponse();
+
+        } catch (RuntimeException e) {
+            if (e.getMessage() != null && (e.getMessage().contains("권한") || e.getMessage().contains("로그인"))) {
+                return ApiResponse.fail(e.getMessage()).toResponse(HttpStatus.FORBIDDEN);
+            }
+            return ApiResponse.fail(e.getMessage()).toResponse(HttpStatus.BAD_REQUEST);
+
+        } catch (Exception e) {
+            return ApiResponse.fail(e.getMessage() != null ? e.getMessage() : "서버 오류가 발생했습니다.")
+                    .toResponse(HttpStatus.INTERNAL_SERVER_ERROR);
+        }
+    }
+
+    /**
+     * API5. updateSortOrders
+     * feat. 카테고리 순서 일괄 업데이트 API
+     * - 관리자만  수 있음
+     */
+    @PutMapping("/sort-order")
+    public ResponseEntity<?> updateSortOrders(
+            @RequestHeader(value = "Authorization", required = false) String authHeader,
+            @RequestBody List<CategorySortOrderDTO> sortOrders) {
+        try {
+            User user = getUserFromToken(authHeader);
+            if (user == null) {
+                return ApiResponse.fail("로그인이 필요합니다.").toResponse(HttpStatus.UNAUTHORIZED);
+            }
+
+            categoryService.updateSortOrders(sortOrders, user);
+            return ApiResponse.ok("카테고리 순서가 업데이트되었습니다.").toResponse();
 
         } catch (RuntimeException e) {
             if (e.getMessage() != null && (e.getMessage().contains("권한") || e.getMessage().contains("로그인"))) {

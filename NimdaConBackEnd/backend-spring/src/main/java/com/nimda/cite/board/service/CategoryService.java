@@ -3,6 +3,7 @@ package com.nimda.cite.board.service;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.nimda.cite.board.dto.CategoryCreateDTO;
+import com.nimda.cite.board.dto.CategorySortOrderDTO;
 import com.nimda.cite.board.dto.CategoryUpdateDTO;
 import com.nimda.cite.board.entity.Category;
 import com.nimda.cite.board.repository.BoardRepository;
@@ -248,6 +249,24 @@ public class CategoryService {
         // 4. 소프트 삭제 (isActive = false)
         category.setIsActive(false);
         categoryRepository.save(category);
+    }
+
+    /**
+     * 카테고리 순서 일괄 업데이트
+     * - 관리자 권한 확인 후 각 카테고리의 sortOrder 업데이트
+     *
+     * @param sortOrders 카테고리 ID와 sortOrder 목록
+     * @param user       현재 사용자 (관리자 권한 확인용)
+     */
+    @Transactional
+    public void updateSortOrders(List<CategorySortOrderDTO> sortOrders, User user) {
+        checkAdminAuthority(user);
+        for (CategorySortOrderDTO dto : sortOrders) {
+            categoryRepository.findById(dto.getId()).ifPresent(category -> {
+                category.setSortOrder(dto.getSortOrder());
+                categoryRepository.save(category);
+            });
+        }
     }
 
     /**

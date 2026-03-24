@@ -4,7 +4,7 @@ import Footer from '@/components/Layout/Footer';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { getAllUsersAPI, getPendingUsersAPI, approveUserAPI, rejectUserAPI } from '@/api/admin/admin';
 import { getBoardListAPI, deleteBoardAPI, toggleBoardPinAPI } from '@/api/board';
-import { getAllCategoriesAdminAPI, updateCategoryAPI, createCategoryAPI, deleteCategoryAPI } from '@/api/category';
+import { getAllCategoriesAdminAPI, updateCategoryAPI, createCategoryAPI, deleteCategoryAPI, updateCategorySortOrderAPI } from '@/api/category';
 import UserInfo from './sections/UserInfo';
 import PendingUsers from './sections/PendingUsers';
 import PostManagement from './sections/PostManagement';
@@ -45,6 +45,13 @@ function AdminDashboard() {
   const [categoryRedirectUrl, setCategoryRedirectUrl] = useState(''); // 선택된 카테고리의 바로가기 URL
   const [newTagInput, setNewTagInput] = useState(''); // 새 태그 입력 필드
   const [savingTags, setSavingTags] = useState(false); // 태그 저장 중 상태
+
+  // 카테고리 순서 드래그앤드롭 상태
+  const [localCategoryTree, setLocalCategoryTree] = useState([]);
+  const [draggedItemId, setDraggedItemId] = useState(null);
+  const [dragOverItemId, setDragOverItemId] = useState(null);
+  const [savingOrder, setSavingOrder] = useState(false);
+  const [orderChanged, setOrderChanged] = useState(false);
 
   // 사이드바에서 넘겨준 상태 처리 (다른 페이지에서 관리자 홈으로 돌아올 때)
   useEffect(() => {
@@ -489,21 +496,125 @@ function AdminDashboard() {
 
   const allCategoriesFlat = flattenCategories(categoryTree);
 
+  // 드래그앤드롭으로 카테고리 순서 변경
+  const handleCategoryDrop = (draggedId, targetId) => {
+    const findParentId = (nodes, id, parentId = null) => {
+      for (const node of nodes) {
+        if (node.id === id) return parentId;
+        if (node.children && node.children.length > 0) {
+          const result = findParentId(node.children, id, node.id);
+          if (result !== undefined) return result;
+        }
+      }
+      return undefined;
+    };
+
+    const getSiblings = (nodes, parentId) => {
+      if (parentId === null) return nodes;
+      for (const node of nodes) {
+        if (node.id === parentId) return node.children;
+        if (node.children && node.children.length > 0) {
+          const result = getSiblings(node.children, parentId);
+          if (result) return result;
+        }
+      }
+      return null;
+    };
+
+    const newTree = JSON.parse(JSON.stringify(localCategoryTree));
+    const draggedParentId = findParentId(newTree, draggedId);
+    const targetParentId = findParentId(newTree, targetId);
+
+    // 같은 부모 레벨 내에서만 순서 변경 허용
+    if (draggedParentId !== targetParentId) return;
+
+    const siblings = getSiblings(newTree, draggedParentId);
+    if (!siblings) return;
+
+    const draggedIdx = siblings.findIndex(n => n.id === draggedId);
+    const targetIdx = siblings.findIndex(n => n.id === targetId);
+    if (draggedIdx === -1 || targetIdx === -1) return;
+
+    const [removed] = siblings.splice(draggedIdx, 1);
+    siblings.splice(targetIdx, 0, removed);
+
+    setLocalCategoryTree(newTree);
+    setOrderChanged(true);
+  };
+
+  // 카테고리 순서 저장
+  const handleSaveOrder = async () => {
+    setSavingOrder(true);
+    try {
+      const sortOrders = [];
+      const flattenForOrder = (nodes) => {
+        nodes.forEach((node, idx) => {
+          sortOrders.push({ id: node.id, sortOrder: idx });
+          if (node.children && node.children.length > 0) {
+            flattenForOrder(node.children);
+          }
+        });
+      };
+      flattenForOrder(localCategoryTree);
+
+      const result = await updateCategorySortOrderAPI(sortOrders);
+      if (result.success) {
+        alert('카테고리 순서가 저장되었습니다.');
+        setOrderChanged(false);
+        await loadCategories();
+      } else {
+        alert(result.message || '순서 저장에 실패했습니다.');
+      }
+    } catch (error) {
+      console.error('순서 저장 오류:', error);
+      alert('순서 저장 중 오류가 발생했습니다.');
+    } finally {
+      setSavingOrder(false);
+    }
+  };
+
   // 카테고리 렌더링 (재귀) - 순서 설정용
   const renderCategoryOrderItem = (category, level = 0) => {
     const isParent = category.children && category.children.length > 0;
     const isSelected = selectedCategoryId === category.id;
     const childCount = category.children ? category.children.length : 0;
     const isInactive = category.isActive === false;
+    const isDragging = draggedItemId === category.id;
+    const isDragOver = dragOverItemId === category.id;
 
     return (
       <div key={category.id}>
         <div
-          className={`admin__catorder-item ${isSelected ? 'admin__catorder-item--selected' : ''} ${level > 0 ? 'admin__catorder-item--child' : ''} ${isInactive ? 'admin__catorder-item--inactive' : ''}`}
-          style={{ paddingLeft: `${12 + level * 20}px` }}
+          className={`admin__catorder-item ${isSelected ? 'admin__catorder-item--selected' : ''} ${level > 0 ? 'admin__catorder-item--child' : ''} ${isInactive ? 'admin__catorder-item--inactive' : ''} ${isDragOver ? 'admin__catorder-item--drag-over' : ''}`}
+          style={{ paddingLeft: `${12 + level * 20}px`, opacity: isDragging ? 0.4 : 1 }}
+          draggable
+          onDragStart={(e) => {
+            setDraggedItemId(category.id);
+            e.dataTransfer.effectAllowed = 'move';
+          }}
+          onDragEnd={() => {
+            setDraggedItemId(null);
+            setDragOverItemId(null);
+          }}
+          onDragOver={(e) => {
+            e.preventDefault();
+            e.stopPropagation();
+            if (draggedItemId !== category.id) {
+              setDragOverItemId(category.id);
+            }
+          }}
+          onDrop={(e) => {
+            e.preventDefault();
+            e.stopPropagation();
+            if (draggedItemId && draggedItemId !== category.id) {
+              handleCategoryDrop(draggedItemId, category.id);
+            }
+            setDraggedItemId(null);
+            setDragOverItemId(null);
+          }}
           onClick={() => setSelectedCategoryId(category.id)}
         >
-          <span className="admin__catorder-drag">⠿</span>
+          <span className="admin__catorder-drag" style={{ cursor: 'grab' }}>⠿</span>
           {level > 0 && <span className="admin__catorder-prefix">ㄴ</span>}
           <span className={`admin__catorder-name ${isInactive ? 'admin__catorder-name--inactive' : ''}`}>
             {category.name}
@@ -571,6 +682,12 @@ function AdminDashboard() {
     setNewTagInput(''); // 새 태그 입력 필드 초기화
     setCategoryRedirectUrl(selectedCategoryData?.redirectUrl || ''); // 바로가기 URL 초기화
   }, [selectedCategoryId]);
+
+  // categoryTree가 변경되면 localCategoryTree 동기화
+  useEffect(() => {
+    setLocalCategoryTree(JSON.parse(JSON.stringify(buildCategoryTree(categories))));
+    setOrderChanged(false);
+  }, [categories]);
 
   const getUserRoles = (user) => {
     if (!user.authorities || user.authorities.length === 0) return [];
@@ -647,6 +764,10 @@ function AdminDashboard() {
             setSavingTags={setSavingTags}
             categoryRedirectUrl={categoryRedirectUrl}
             setCategoryRedirectUrl={setCategoryRedirectUrl}
+            localCategoryTree={localCategoryTree}
+            handleSaveOrder={handleSaveOrder}
+            savingOrder={savingOrder}
+            orderChanged={orderChanged}
           />
         );
       case 'pin-post':

@@ -508,6 +508,12 @@
   font-weight: 600;
 }
 
+.admin__catorder-item--drag-over {
+  background-color: #e8f0fe;
+  border-left: 3px solid #4a6cf7;
+  border-left-color: #4a6cf7;
+}
+
 .admin__catorder-item--child {
   font-size: 12.5px;
 }
