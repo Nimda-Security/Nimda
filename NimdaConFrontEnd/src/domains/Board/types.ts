@@ -12,6 +12,7 @@ export interface Category {
   sortOrder: number;
   postCount: number;
   availableTags?: string | null; // 카테고리별 사용 가능한 태그 목록 (JSON 형식의 문자열)
+  redirectUrl?: string | null;  // 바로가기 URL (외부 링크, null이면 일반 게시판)
   createdAt: string;
   updatedAt: string;
 }

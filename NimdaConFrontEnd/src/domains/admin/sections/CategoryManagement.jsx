@@ -18,6 +18,8 @@ const CategoryManagement = ({
   updateCategoryAPI,
   savingTags,
   setSavingTags,
+  categoryRedirectUrl,
+  setCategoryRedirectUrl,
 }) => {
   if (activeSection === 'category-edit') {
     return (
@@ -209,6 +211,57 @@ const CategoryManagement = ({
                       {savingTags ? '저장 중...' : '저장'}
                     </button>
                   </div>
+                </div>
+              </div>
+
+              {/* 바로가기 URL */}
+              <div className="admin__catorder-form-row">
+                <label className="admin__catorder-form-label">바로가기 URL</label>
+                <div className="admin__catorder-form-field">
+                  <div style={{ display: 'flex', gap: '8px', width: '100%' }}>
+                    <input
+                      type="url"
+                      className="admin__catorder-input"
+                      placeholder="예: https://example.com"
+                      value={categoryRedirectUrl}
+                      onChange={(e) => setCategoryRedirectUrl(e.target.value)}
+                    />
+                    <button
+                      type="button"
+                      className="admin__btn"
+                      onClick={async () => {
+                        if (!selectedCategoryId) return;
+                        setSavingTags(true);
+                        try {
+                          const result = await updateCategoryAPI(selectedCategoryId, {
+                            name: selectedCategoryData.name,
+                            slug: selectedCategoryData.slug,
+                            parentId: selectedCategoryData.parentId,
+                            sortOrder: selectedCategoryData.sortOrder,
+                            isActive: selectedCategoryData.isActive,
+                            redirectUrl: categoryRedirectUrl.trim() || null,
+                          });
+                          if (result.success) {
+                            alert('바로가기 URL이 저장되었습니다.');
+                            await loadCategories();
+                          } else {
+                            alert(result.message || 'URL 저장에 실패했습니다.');
+                          }
+                        } catch (error) {
+                          console.error('URL 저장 오류:', error);
+                          alert('URL 저장 중 오류가 발생했습니다.');
+                        } finally {
+                          setSavingTags(false);
+                        }
+                      }}
+                      disabled={savingTags}
+                    >
+                      {savingTags ? '저장 중...' : '저장'}
+                    </button>
+                  </div>
+                  <p style={{ marginTop: '4px', fontSize: '11px', color: '#999', fontFamily: 'Pretendard, sans-serif' }}>
+                    입력하면 해당 카테고리 클릭 시 외부 URL로 직접 이동합니다. 비워두면 일반 게시판으로 작동합니다.
+                  </p>
                 </div>
               </div>
 

@@ -60,4 +60,12 @@ public class CategoryUpdateDTO {
      * - 예: ["필독", "공지", "가입인사"]
      */
     private List<String> availableTags;
+
+    /**
+     * 바로가기 URL (외부 링크)
+     * - 선택적 (null이면 기존 값 유지, 빈 문자열 ""이면 URL 제거)
+     * - 값이 있으면 클릭 시 해당 URL로 새 탭 이동
+     */
+    @Size(max = 500, message = "URL은 500자를 초과할 수 없습니다")
+    private String redirectUrl;
 }

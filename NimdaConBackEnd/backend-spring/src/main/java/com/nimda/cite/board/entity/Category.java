@@ -75,6 +75,13 @@ public class Category extends BaseTimeEntity {
     private Integer postCount = 0;
 
     /**
+     * 바로가기 URL (외부 링크)
+     * null이면 일반 게시판 카테고리, 값이 있으면 클릭 시 해당 URL로 새 탭 이동
+     */
+    @Column(name = "redirect_url", nullable = true, length = 500)
+    private String redirectUrl;
+
+    /**
      * 카테고리별 사용 가능한 태그 목록 (JSON 형식)
      * 예: ["필독", "공지", "가입인사"]
      * 관리자가 카테고리별로 게시글에 사용할 수 있는 태그를 정의

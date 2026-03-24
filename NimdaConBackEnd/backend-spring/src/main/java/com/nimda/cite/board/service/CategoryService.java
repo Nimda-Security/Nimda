@@ -132,6 +132,7 @@ public class CategoryService {
                 .isActive(createDTO.getIsActive() != null ? createDTO.getIsActive() : true)
                 .postCount(0)
                 .availableTags(availableTagsJson)
+                .redirectUrl(createDTO.getRedirectUrl() != null && !createDTO.getRedirectUrl().isBlank() ? createDTO.getRedirectUrl().trim() : null)
                 .build();
 
         // 5. 저장 및 반환
@@ -207,6 +208,10 @@ public class CategoryService {
             } catch (JsonProcessingException e) {
                 throw new RuntimeException("태그 목록을 처리하는 중 오류가 발생했습니다.", e);
             }
+        }
+        if (updateDTO.getRedirectUrl() != null) {
+            // 빈 문자열이면 null로 설정 (URL 제거), 아니면 트림 후 저장
+            category.setRedirectUrl(updateDTO.getRedirectUrl().isBlank() ? null : updateDTO.getRedirectUrl().trim());
         }
 
         // 5. 저장 및 반환

@@ -60,4 +60,12 @@ public class CategoryCreateDTO {
      * - 예: ["필독", "공지", "가입인사"]
      */
     private List<String> availableTags;
+
+    /**
+     * 바로가기 URL (외부 링크)
+     * - 선택적 (null이면 일반 게시판 카테고리)
+     * - 값이 있으면 클릭 시 해당 URL로 새 탭 이동
+     */
+    @Size(max = 500, message = "URL은 500자를 초과할 수 없습니다")
+    private String redirectUrl;
 }

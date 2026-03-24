@@ -39,8 +39,10 @@ function AdminDashboard() {
   const [newCategoryName, setNewCategoryName] = useState('');
   const [newCategorySlug, setNewCategorySlug] = useState('');
   const [newCategoryParentId, setNewCategoryParentId] = useState(null);
+  const [newCategoryRedirectUrl, setNewCategoryRedirectUrl] = useState('');
   const [addingCategory, setAddingCategory] = useState(false);
   const [categoryTags, setCategoryTags] = useState([]); // 선택된 카테고리의 태그 목록
+  const [categoryRedirectUrl, setCategoryRedirectUrl] = useState(''); // 선택된 카테고리의 바로가기 URL
   const [newTagInput, setNewTagInput] = useState(''); // 새 태그 입력 필드
   const [savingTags, setSavingTags] = useState(false); // 태그 저장 중 상태
 
@@ -153,6 +155,7 @@ function AdminDashboard() {
         parentId: newCategoryParentId || null,
         sortOrder: 0,
         isActive: true,
+        redirectUrl: newCategoryRedirectUrl.trim() || null,
       });
 
       if (result.success) {
@@ -161,7 +164,7 @@ function AdminDashboard() {
         setNewCategoryName('');
         setNewCategorySlug('');
         setNewCategoryParentId(null);
-        // 약간의 지연 후 목록 새로고침 (백엔드 처리 시간 고려)
+        setNewCategoryRedirectUrl(''); // 백엔드 처리 시간 고려
         setTimeout(() => {
           loadCategories();
         }, 300);
@@ -566,6 +569,7 @@ function AdminDashboard() {
       setCategoryTags([]);
     }
     setNewTagInput(''); // 새 태그 입력 필드 초기화
+    setCategoryRedirectUrl(selectedCategoryData?.redirectUrl || ''); // 바로가기 URL 초기화
   }, [selectedCategoryId]);
 
   const getUserRoles = (user) => {
@@ -641,6 +645,8 @@ function AdminDashboard() {
             updateCategoryAPI={updateCategoryAPI}
             savingTags={savingTags}
             setSavingTags={setSavingTags}
+            categoryRedirectUrl={categoryRedirectUrl}
+            setCategoryRedirectUrl={setCategoryRedirectUrl}
           />
         );
       case 'pin-post':
@@ -721,6 +727,7 @@ function AdminDashboard() {
                   setNewCategoryName('');
                   setNewCategorySlug('');
                   setNewCategoryParentId(null);
+                  setNewCategoryRedirectUrl('');
                 }}
               >
                 ✕
@@ -826,6 +833,42 @@ function AdminDashboard() {
                 </select>
               </div>
 
+              <div style={{ marginBottom: '20px' }}>
+                <label style={{
+                  display: 'block',
+                  marginBottom: '6px',
+                  fontSize: '13px',
+                  fontWeight: 600,
+                  fontFamily: 'Pretendard, sans-serif',
+                  color: 'var(--color-black)'
+                }}>
+                  바로가기 URL (선택사항)
+                </label>
+                <input
+                  type="url"
+                  value={newCategoryRedirectUrl}
+                  onChange={(e) => setNewCategoryRedirectUrl(e.target.value)}
+                  placeholder="예: https://example.com"
+                  style={{
+                    width: '100%',
+                    padding: '8px 12px',
+                    fontSize: '14px',
+                    fontFamily: 'Pretendard, sans-serif',
+                    border: '1px solid var(--color-gray-200)',
+                    borderRadius: '4px',
+                    outline: 'none'
+                  }}
+                />
+                <p style={{
+                  marginTop: '4px',
+                  fontSize: '11px',
+                  color: 'var(--color-gray-400)',
+                  fontFamily: 'Pretendard, sans-serif'
+                }}>
+                  입력하면 클릭 시 해당 URL로 바로 이동합니다. 게시판으로 사용하려면 비워두세요.
+                </p>
+              </div>
+
               <div style={{
                 display: 'flex',
                 gap: '8px',
@@ -840,6 +883,7 @@ function AdminDashboard() {
                     setNewCategoryName('');
                     setNewCategorySlug('');
                     setNewCategoryParentId(null);
+                    setNewCategoryRedirectUrl('');
                   }}
                   disabled={addingCategory}
                 >
