@@ -1,7 +1,7 @@
-import React, { useState, useRef, useEffect } from "react";
-import NotificationPanel from "./NotificationPanel";
-import { notificationApi } from "@/api/notification";
-import { isLoggedIn } from "@/api/auth";
+import React, { useState, useRef, useEffect } from 'react';
+import NotificationPanel from './NotificationPanel';
+import { notificationApi } from '@/api/notification';
+import { isLoggedIn } from '@/api/auth';
 
 const NotificationBell: React.FC = () => {
   const [open, setOpen] = useState(false);
@@ -53,34 +53,27 @@ const NotificationBell: React.FC = () => {
     };
 
     if (open) {
-      document.addEventListener("mousedown", handleClickOutside);
+      document.addEventListener('mousedown', handleClickOutside);
     } else {
-      document.removeEventListener("mousedown", handleClickOutside);
+      document.removeEventListener('mousedown', handleClickOutside);
     }
 
     return () => {
-      document.removeEventListener("mousedown", handleClickOutside);
+      document.removeEventListener('mousedown', handleClickOutside);
     };
   }, [open]);
 
   return (
-    <div
-      className="relative inline-block"
-      ref={ref}
-    >
+    <div className="relative inline-block" ref={ref}>
       <button
         type="button"
         title="알림"
         className={`relative flex items-center justify-center border-none cursor-pointer outline-none rounded-full transition-all duration-200 p-2 ${
-          open ? "bg-[#f1f1f1]" : "bg-transparent hover:bg-black/5"
+          open ? 'bg-gray-200' : 'bg-transparent'
         }`}
         onClick={() => setOpen((prev) => !prev)}
       >
-        <img
-          src="/bell.svg"
-          alt="알림"
-          className="w-[32px] h-[32px]"
-        />
+        <img src="/bell.svg" alt="알림" className="w-[32px] h-[32px]" />
 
         {hasUnread && (
           <img
@@ -97,7 +90,10 @@ const NotificationBell: React.FC = () => {
       */}
       {open && (
         <div className="absolute right-0 top-full pt-2 z-50">
-          <NotificationPanel onClose={() => setOpen(false)} refreshKey={refreshKey} />
+          <NotificationPanel
+            onClose={() => setOpen(false)}
+            refreshKey={refreshKey}
+          />
         </div>
       )}
     </div>
