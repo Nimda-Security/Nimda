@@ -152,7 +152,7 @@ body {
 /* 프로필 영역 */
 .sidebar-profile {
   text-align: center;
-  padding-bottom: 24px;
+  padding-bottom: 0;
 }
 
 .sidebar-profile__avatar {
@@ -255,14 +255,14 @@ body {
   text-align: right;
   margin-left: auto;
   display: flex;
-  gap: 2px;
+  gap: 6px;
 }
 
 /* 구분선 */
 .sidebar-divider {
   height: 1px;
   background-color: var(--color-gray-200);
-  margin: 16px -16px;
+  margin: 24px -16px;
 }
 
 /* 네비게이션 */

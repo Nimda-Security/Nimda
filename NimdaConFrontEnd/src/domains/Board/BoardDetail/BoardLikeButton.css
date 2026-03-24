@@ -31,19 +31,17 @@
 .board-like-count {
   position: absolute;
   /* 제공된 위치 정보 반영 */
-  top: 30px; 
-  left: 21px;
-  width: 11px;  /* Fixed (11px) */
-  height: 15px; /* Fixed (15px) */
+  top: 32px; 
+  left: 0;
+  width: 100%;  /* Center horizontally */
   
   /* 폰트 정보 반영 */
   font-family: 'Pretendard', sans-serif;
   font-size: 10px;      /* Size 10px */
   font-weight: 700;     /* Weight 700 (Bold) */
-  line-height: 1.5;     /* Line height 150% */
+  line-height: 1;
   letter-spacing: 0;    /* Letter spacing 0% */
   
-  /* 중앙 정렬을 위한 추가 설정 (필요 시) */
   display: flex;
   align-items: center;
   justify-content: center;
@@ -54,6 +52,32 @@
   pointer-events: none;
 }
 
+/* 원형 하트 배경 스타일 */
+.board-like-circle {
+  width: 52px;
+  height: 52px;
+  border-radius: 50%;
+  border: 1.5px solid var(--color-red);
+  background-color: #F5F5F5;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--color-red);
+  transition: all 0.2s ease-in-out;
+  padding-bottom: 12px; /* Move heart up for count space */
+}
+
+/* Heart scaled up */
+.board-like-circle svg {
+  width: 24px;
+  height: 20px;
+}
+
+.board-like-btn.is-liked .board-like-circle {
+  background-color: var(--color-red);
+  border-color: var(--color-red);
+  color: #F5F5F5;
+}
 
 .board-like-btn.is-liked .board-like-count {
   color: #F5F5F5;

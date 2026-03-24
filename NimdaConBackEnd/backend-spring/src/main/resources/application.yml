@@ -5,7 +5,7 @@ spring:
     active: local
   
   datasource:
-    url: ${SPRING_DATASOURCE_URL:jdbc:mysql://mysql:3306/nimda_con?useSSL=false&serverTimezone=Asia/Seoul&allowPublicKeyRetrieval=true}
+    url: ${SPRING_DATASOURCE_URL:jdbc:mysql://localhost:3306/nimda_con?useSSL=false&serverTimezone=Asia/Seoul&allowPublicKeyRetrieval=true}
     username: ${SPRING_DATASOURCE_USERNAME}
     password: ${SPRING_DATASOURCE_PASSWORD}
     driver-class-name: com.mysql.cj.jdbc.Driver
@@ -47,8 +47,8 @@ spring:
   
   security:
     user:
-      name: admin
-      password: 1234
+      name: ${SPRING_SECURITY_USER_NAME}
+      password: ${SPRING_SECURITY_USER_PASSWORD}
   
   # 파일 업로드 설정 (Multipart)
   servlet:
@@ -65,7 +65,7 @@ server:
 # JWT 설정
 jwt:
   header: Authorization # JWT Token을 Request Header에서 탐색할 때 사용할 헤더 이름 
-  secret: bmltZGEtY29uLXNlY3JldC1rZXktMjAyNC12ZXJ5LWxvbmctc2VjcmV0LWtleS1mb3Itand0LXNlY3VyaXR5 # JWT 토큰 서명 검증키 (Base64 인코딩됨)
+  secret: ${JWT_SECRET} # JWT 토큰 서명 검증키 (Base64 인코딩됨)
   token-validity-in-seconds: 86400 # JWT 토큰 만료 시간 24시간 (초)
 
 # 첨부파일 로컬 저장 (cite attachment)
@@ -77,10 +77,10 @@ nimda:
 # 미설정 시 첨부는 nimda.file.upload-dir(로컬 디스크)만 사용합니다.
 aws:
   s3:
-    bucket: nimda-bucket
-    region: ap-northeast-2
-    access-key: ${AWS_S3_ACCESS_KEY:}
-    secret-key: ${AWS_S3_SECRET_KEY:}
+    bucket: ${AWS_S3_BUCKET:nimda-server}
+    region: ${AWS_REGION:ap-northeast-2}
+    access-key: ${AWS_S3_ACCESS_KEY}
+    secret-key: ${AWS_S3_SECRET_KEY}
 
     # 파일 저장 경로 
     profile-image-path: profiles/ # 프로필 이미지 저장

@@ -97,7 +97,7 @@ public class CommentService {
             // 게시글 작성자와 댓글 작성자가 다를 때만 알림
             if(!board.getAuthor().getId().equals(userId)) {
                 eventPublisher.publishEvent(
-                        new AddCommentEvent(this, board.getAuthor(), comment.getAuthor(), board.getTitle(), boardId, comment.getContext())
+                        new AddCommentEvent(this, board.getAuthor(), comment.getAuthor(), board.getTitle(), boardId)
                 );
             }
         }
@@ -105,7 +105,7 @@ public class CommentService {
         else {
             if (!parent.getAuthor().getId().equals(userId)) {
                 eventPublisher.publishEvent(
-                        new AddChildCommentEvent(this, board, comment.getAuthor(), parent.getAuthor(), comment.getContext())
+                        new AddChildCommentEvent(this, board, comment.getAuthor(), parent.getAuthor())
                 );
             }
         }

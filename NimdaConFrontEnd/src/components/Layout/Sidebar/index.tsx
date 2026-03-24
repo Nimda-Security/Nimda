@@ -30,15 +30,6 @@ const Sidebar: React.FC = () => {
   const [coinBalance, setCoinBalance] = useState(0);
   const [activeVisitorTab, setActiveVisitorTab] = useState<'today' | 'weekly'>('today');
 
-  /* 주간랭킹 더미 데이터 */
-  const weeklyRanking = [
-    { rank: 1, name: "blue1", score: 2450, avatar: "https://api.dicebear.com/7.x/avataaars/svg?seed=blue1" },
-    { rank: 2, name: "햄스터", score: 2380, avatar: "https://api.dicebear.com/7.x/avataaars/svg?seed=hamster" },
-    { rank: 3, name: "NIMDA", score: 2100, avatar: "https://api.dicebear.com/7.x/avataaars/svg?seed=nimda" },
-    { rank: 4, name: "체스하실분", score: 1890, avatar: "https://api.dicebear.com/7.x/avataaars/svg?seed=chess" },
-    { rank: 5, name: "코딩천재", score: 1750, avatar: "https://api.dicebear.com/7.x/avataaars/svg?seed=smart" },
-  ];
-
   // 카테고리를 트리 구조로 변환
   type CategoryWithChildren = Category & { children: CategoryWithChildren[] };
 
@@ -172,8 +163,9 @@ const Sidebar: React.FC = () => {
           <div className="sidebar-profile__stats">
             <div className="sidebar-profile__stat-item">
               <div className="sidebar-profile__stat-icon">
-                <svg width="12" height="12" viewBox="0 0 13 14" fill="none" xmlns="http://www.w3.org/2000/svg">
-                  <path d="M6.5 0C2.91 0 0 2.91 0 6.5C0 10.09 2.91 13 6.5 13C10.09 13 13 10.09 13 6.5C13 2.91 10.09 0 6.5 0ZM6.5 11.5C4.29 11.5 2.5 9.71 2.5 7.5C2.5 5.29 4.29 3.5 6.5 3.5C8.71 3.5 10.5 5.29 10.5 7.5C10.5 9.71 8.71 11.5 6.5 11.5Z" fill="#0C0C0C" />
+                <svg width="12" height="12" viewBox="0 0 14 14" fill="none" xmlns="http://www.w3.org/2000/svg">
+                  <circle cx="7" cy="4.5" r="2.5" stroke="#0C0C0C" strokeWidth="1.5" />
+                  <path d="M2.5 12.5C2.5 10.3 4.5 9 7 9s4.5 1.3 4.5 3.5" stroke="#0C0C0C" strokeWidth="1.5" strokeLinecap="round" />
                 </svg>
               </div>
               <span className="sidebar-profile__stat-label">방문</span>
@@ -181,8 +173,9 @@ const Sidebar: React.FC = () => {
             </div>
             <div className="sidebar-profile__stat-item">
               <div className="sidebar-profile__stat-icon">
-                <svg width="12" height="12" viewBox="0 0 13 14" fill="none" xmlns="http://www.w3.org/2000/svg">
-                  <path d="M0 0H13V14H0V0Z" fill="#0C0C0C" />
+                <svg width="12" height="12" viewBox="0 0 14 14" fill="none" xmlns="http://www.w3.org/2000/svg">
+                  <path d="M11.5 2.5h-9a1 1 0 0 0-1 1v9a1 1 0 0 0 1 1h9a1 1 0 0 0 1-1v-9a1 1 0 0 0-1-1z" stroke="#0C0C0C" strokeWidth="1.5" />
+                  <path d="M4.5 5.5h5M4.5 8h5M4.5 10.5h3" stroke="#0C0C0C" strokeWidth="1.5" strokeLinecap="round" />
                 </svg>
               </div>
               <span className="sidebar-profile__stat-label">작성 게시글</span>
@@ -191,7 +184,7 @@ const Sidebar: React.FC = () => {
             <div className="sidebar-profile__stat-item">
               <div className="sidebar-profile__stat-icon">
                 <svg width="12" height="12" viewBox="0 0 14 14" fill="none" xmlns="http://www.w3.org/2000/svg">
-                  <path d="M7 0C3.13 0 0 3.13 0 7C0 10.87 3.13 14 7 14C10.87 14 14 10.87 14 7C14 3.13 10.87 0 7 0ZM7 12C4.24 12 2 9.76 2 7C2 4.24 4.24 2 7 2C9.76 2 12 4.24 12 7C12 9.76 9.76 12 7 12Z" fill="#0C0C0C" />
+                  <path d="M12.5 2.5h-11v8h4l3 2.5v-2.5h4v-8z" stroke="#0C0C0C" strokeWidth="1.5" strokeLinejoin="round" />
                 </svg>
               </div>
               <span className="sidebar-profile__stat-label">작성 댓글</span>
@@ -199,8 +192,8 @@ const Sidebar: React.FC = () => {
             </div>
             <div className="sidebar-profile__stat-item">
               <div className="sidebar-profile__stat-icon">
-                <svg width="12" height="12" viewBox="0 0 16 14" fill="none" xmlns="http://www.w3.org/2000/svg">
-                  <path d="M8 14L6.5 12.5C2.5 8.5 0 6.5 0 4C0 1.5 2 0 4 0C5.5 0 6.5 0.5 8 2C9.5 0.5 10.5 0 12 0C14 0 16 1.5 16 4C16 6.5 13.5 8.5 9.5 12.5L8 14Z" fill="#0C0C0C" />
+                <svg width="12" height="12" viewBox="0 0 14 14" fill="none" xmlns="http://www.w3.org/2000/svg">
+                  <path d="M7 12.5l-1-.9C3.4 9 1.5 7.3 1.5 5.2a2.8 2.8 0 0 1 2.8-2.8c1.6 0 2.6 1 3.2 1.6.6-.6 1.6-1.6 3.2-1.6a2.8 2.8 0 0 1 2.8 2.8c0 2.1-1.9 3.8-4.5 6.4l-1 .9z" stroke="#0C0C0C" strokeWidth="1.5" strokeLinejoin="round" />
                 </svg>
               </div>
               <span className="sidebar-profile__stat-label">누른 좋아요</span>
@@ -209,7 +202,8 @@ const Sidebar: React.FC = () => {
             <div className="sidebar-profile__stat-item">
               <div className="sidebar-profile__stat-icon">
                 <svg width="12" height="12" viewBox="0 0 14 14" fill="none" xmlns="http://www.w3.org/2000/svg">
-                  <path d="M7 0C3.13 0 0 3.13 0 7C0 10.87 3.13 14 7 14C10.87 14 14 10.87 14 7C14 3.13 10.87 0 7 0ZM7 12C4.24 12 2 9.76 2 7C2 4.24 4.24 2 7 2C9.76 2 12 4.24 12 7C12 9.76 9.76 12 7 12Z" fill="#0C0C0C" />
+                  <circle cx="7" cy="7" r="6" stroke="#0C0C0C" strokeWidth="1.5" />
+                  <path d="M7 4.5v5M4.5 7h5" stroke="#0C0C0C" strokeWidth="1.5" strokeLinecap="round" />
                 </svg>
               </div>
               <span className="sidebar-profile__stat-label">보유 코인</span>
@@ -258,7 +252,7 @@ const Sidebar: React.FC = () => {
             className={`sidebar-visitors__tab${activeVisitorTab === 'weekly' ? ' sidebar-visitors__tab--active' : ''}`}
             onClick={() => setActiveVisitorTab('weekly')}
           >
-            주간랭킹
+            일간랭킹
           </button>
         </div>
         {/* 목록 영역 */}
@@ -282,18 +276,7 @@ const Sidebar: React.FC = () => {
             <p className="sidebar-visitors__empty">아직 방문자가 없습니다.</p>
             )
           ) : (
-            weeklyRanking.map((item) => (
-              <div key={item.rank} className="sidebar-visitors__item sidebar-visitors__item--ranking">
-                <span className={`sidebar-visitors__rank sidebar-visitors__rank--${item.rank}`}>
-                  {item.rank}
-                </span>
-                <div className="sidebar-visitors__avatar">
-                  <img src={item.avatar} alt="avatar" />
-                </div>
-                <span className="sidebar-visitors__name">{item.name}</span>
-                <span className="sidebar-visitors__score">{item.score}</span>
-              </div>
-            ))
+            <p className="sidebar-visitors__empty">추후 업데이트 예정입니다.</p>
           )}
         </div>
       </div>

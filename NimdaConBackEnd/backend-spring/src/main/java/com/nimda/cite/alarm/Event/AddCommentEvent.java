@@ -10,14 +10,12 @@ public class AddCommentEvent extends ApplicationEvent {
     private User commentAuthor;
     private String boardTitle;
     private Long boardId;
-    private String commentContent;
 
-    public AddCommentEvent(Object source, User boardAuthor, User commentAuthor, String boardTitle, Long boardId, String commentContent) {
+    public AddCommentEvent(Object source, User boardAuthor, User commentAuthor, String boardTitle, Long boardId) {
         super(source);
         this.boardAuthor = boardAuthor;
         this.commentAuthor = commentAuthor;
         this.boardTitle = boardTitle;
         this.boardId = boardId;
-        this.commentContent = commentContent;
     }
 }

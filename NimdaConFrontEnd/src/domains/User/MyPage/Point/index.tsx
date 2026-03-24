@@ -16,7 +16,6 @@ import { getCurrentUser, getMyPageInfo } from "@/api/auth";
 import { getMyBoardCountAPI } from '@/api/board';
 import { getMyCommentCountAPI } from '@/api/comment';
 
-type FilterType = "all" | "earn" | "use" | "expire";
 
 function MyPagePoint() {
   const [activeTab, setActiveTab] = useState("points");
@@ -75,7 +74,7 @@ function MyPagePoint() {
         }
 
         if (balanceRes && balanceRes.success) {
-          const amount = balanceRes.data?.totalAmount ?? balanceRes.currentBalance ?? 0;
+          const amount = (balanceRes as any).data?.totalAmount ?? balanceRes.currentBalance ?? 0;
           setUserBalance(amount);
         }
 
@@ -115,10 +114,10 @@ function MyPagePoint() {
   return (
     <div className="min-h-screen bg-[#F5F5F5] font-['Pretendard',sans-serif] text-[#0c0c0c] flex flex-col">
       <Header />
-      <div className="h-[56px] w-full" />
+      <div className="h-[88px] w-full" />
 
-      <main className="flex-1 flex justify-center pt-10 pb-12 overflow-x-hidden">
-        <div className="w-full max-w-[1200px] px-[120px]">
+      <main className="flex-1 flex justify-center pb-20 overflow-x-hidden">
+        <div className="w-full max-w-[960px]">
           {/* 상단 프로필 및 탭 메뉴 */}
           <ProfileSection
             userInfo={userInfo}
