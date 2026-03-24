@@ -24,6 +24,7 @@ export interface BoardAuthor {
   userId?: string;
   nickname: string;
   email?: string;
+  profileImage?: string;
 }
 
 /**
@@ -133,4 +134,3 @@ export interface BoardErrorResponse {
   success: false;
   message: string;
 }
-

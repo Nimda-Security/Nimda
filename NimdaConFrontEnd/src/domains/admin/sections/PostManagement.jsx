@@ -31,10 +31,18 @@ const PostManagement = ({
         >
           <span className="admin__post-category-name">
             {category.name}
-            {isParent && <span className="admin__post-category-count"> ({childCount})</span>}
+            {isParent && (
+              <span className="admin__post-category-count">
+                {' '}
+                ({childCount})
+              </span>
+            )}
           </span>
         </div>
-        {isParent && category.children?.map(child => renderPostCategoryItem(child, level + 1))}
+        {isParent &&
+          category.children?.map((child) =>
+            renderPostCategoryItem(child, level + 1)
+          )}
       </div>
     );
   };
@@ -52,13 +60,25 @@ const PostManagement = ({
           </div>
           <div className="admin__post-category-list">
             {categoriesLoading ? (
-              <div className="admin__empty" style={{ border: 'none', padding: '24px' }}>로딩 중...</div>
+              <div
+                className="admin__empty"
+                style={{ border: 'none', padding: '24px' }}
+              >
+                로딩 중...
+              </div>
             ) : activeCategoryTree.length > 0 ? (
-              activeCategoryTree.map(category => renderPostCategoryItem(category, 0))
+              activeCategoryTree.map((category) =>
+                renderPostCategoryItem(category, 0)
+              )
             ) : (
-              <div className="admin__empty" style={{ border: 'none', padding: '24px' }}>
+              <div
+                className="admin__empty"
+                style={{ border: 'none', padding: '24px' }}
+              >
                 <p style={{ marginBottom: 16 }}>카테고리가 없습니다.</p>
-                <button onClick={loadCategories} className="admin__btn">불러오기</button>
+                <button onClick={loadCategories} className="admin__btn">
+                  불러오기
+                </button>
               </div>
             )}
           </div>
@@ -69,13 +89,17 @@ const PostManagement = ({
           <div className="admin__header-row" style={{ marginBottom: '16px' }}>
             <h3 style={{ margin: 0 }}>
               {selectedPostCategoryId
-                ? findCategoryById(activeCategoryTree, selectedPostCategoryId)?.name || '게시글 목록'
+                ? findCategoryById(activeCategoryTree, selectedPostCategoryId)
+                    ?.name || '게시글 목록'
                 : '카테고리를 선택하세요'}
             </h3>
             {selectedPostCategoryId && (
               <button
                 onClick={() => {
-                  const selectedCategory = findCategoryById(activeCategoryTree, selectedPostCategoryId);
+                  const selectedCategory = findCategoryById(
+                    activeCategoryTree,
+                    selectedPostCategoryId
+                  );
                   if (selectedCategory) {
                     loadPosts(selectedCategory.slug);
                   }
@@ -90,7 +114,9 @@ const PostManagement = ({
 
           {selectedPostCategoryId ? (
             postsLoading ? (
-              <div className="admin__empty" style={{ border: 'none' }}>로딩 중...</div>
+              <div className="admin__empty" style={{ border: 'none' }}>
+                로딩 중...
+              </div>
             ) : posts.length > 0 ? (
               <div className="admin__table-wrap">
                 <table className="admin__table">
@@ -108,11 +134,35 @@ const PostManagement = ({
                       <tr key={post.id}>
                         <td>{post.id}</td>
                         <td style={{ textAlign: 'left' }}>{post.title}</td>
-                        <td>{post.author?.nickname || '-'}</td>
-                        <td>{post.createdAt ? new Date(post.createdAt).toLocaleDateString() : '-'}</td>
+                        <td>
+                          <div className="admin__author-cell">
+                            <img
+                              src={
+                                post.author?.profileImage ||
+                                '/default_user_profile.png'
+                              }
+                              alt=""
+                              className="admin__author-avatar"
+                            />
+                            <span>{post.author?.nickname || '-'}</span>
+                          </div>
+                        </td>
+                        <td>
+                          {post.createdAt
+                            ? new Date(post.createdAt).toLocaleDateString()
+                            : '-'}
+                        </td>
                         <td>
                           <div className="admin__actions">
-                            <button onClick={(e) => { e.stopPropagation(); handleDeletePost(post.id); }} className="admin__btn--reject">삭제</button>
+                            <button
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                handleDeletePost(post.id);
+                              }}
+                              className="admin__btn--reject"
+                            >
+                              삭제
+                            </button>
                           </div>
                         </td>
                       </tr>
@@ -127,7 +177,10 @@ const PostManagement = ({
             )
           ) : (
             <div className="admin__empty">
-              <p>왼쪽에서 카테고리를 선택하면 해당 카테고리의 게시글 목록이 표시됩니다.</p>
+              <p>
+                왼쪽에서 카테고리를 선택하면 해당 카테고리의 게시글 목록이
+                표시됩니다.
+              </p>
             </div>
           )}
         </div>

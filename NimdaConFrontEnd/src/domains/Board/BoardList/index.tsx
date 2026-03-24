@@ -85,7 +85,9 @@ function BoardListPage({ slug: propSlug }: BoardListPageProps) {
       }
     };
     fetchNotice();
-    return () => { cancelled = true; };
+    return () => {
+      cancelled = true;
+    };
   }, []);
 
   // slug 변경 시: 카테고리 정보 + 하위 카테고리 로딩, 상태 초기화
@@ -110,7 +112,7 @@ function BoardListPage({ slug: propSlug }: BoardListPageProps) {
         if (catInfoResponse.success && catInfoResponse.category?.id) {
           setCategory(catInfoResponse.category);
           const children = allCats
-            .filter(c => c.parentId === catInfoResponse.category.id)
+            .filter((c) => c.parentId === catInfoResponse.category.id)
             .sort((a, b) => a.sortOrder - b.sortOrder);
           setChildCategories(children);
         }
@@ -119,10 +121,12 @@ function BoardListPage({ slug: propSlug }: BoardListPageProps) {
       }
     };
     loadCategoryInfo();
-    return () => { cancelled = true; };
+    return () => {
+      cancelled = true;
+    };
   }, [slug, tabFromUrl]);
 
-  // 태그 목록 수집: 
+  // 태그 목록 수집:
   // - 0단 카테고리인 경우: 하위 1단 카테고리들의 태그 수집
   // - 1단 카테고리인 경우: 해당 카테고리의 태그 수집
   useEffect(() => {
@@ -131,7 +135,7 @@ function BoardListPage({ slug: propSlug }: BoardListPageProps) {
 
       // 0단 카테고리인 경우 (하위 카테고리가 있는 경우): 하위 카테고리들의 태그만 수집
       if (childCategories.length > 0) {
-        childCategories.forEach(cat => {
+        childCategories.forEach((cat) => {
           if (cat.availableTags) {
             try {
               const tags = JSON.parse(cat.availableTags);
@@ -192,11 +196,11 @@ function BoardListPage({ slug: propSlug }: BoardListPageProps) {
           if (selectedTag !== null) {
             // selectedTag가 null이 아니면 해당 태그만 필터링
             // selectedTag가 null이면 전체 (필터링 안 함)
-            filteredPosts = response.posts.filter(p => p.tag === selectedTag);
+            filteredPosts = response.posts.filter((p) => p.tag === selectedTag);
           }
 
-          const pinned = filteredPosts.filter(p => p.pinned);
-          const regular = filteredPosts.filter(p => !p.pinned);
+          const pinned = filteredPosts.filter((p) => p.pinned);
+          const regular = filteredPosts.filter((p) => !p.pinned);
           setPinnedPosts(pinned);
           setBoards(regular);
           setTotalPages(response.totalPages);
@@ -220,7 +224,9 @@ function BoardListPage({ slug: propSlug }: BoardListPageProps) {
     };
 
     fetchPosts();
-    return () => { cancelled = true; };
+    return () => {
+      cancelled = true;
+    };
   }, [slug, activeTab, currentPage, searchTrigger, selectedTag]);
 
   const handleBoardClick = (id: number) => {
@@ -229,7 +235,9 @@ function BoardListPage({ slug: propSlug }: BoardListPageProps) {
 
   const handleWriteClick = () => {
     // 선택된 태그가 있으면 쿼리 파라미터로 전달
-    const tagParam = selectedTag ? `?tag=${encodeURIComponent(selectedTag)}` : '';
+    const tagParam = selectedTag
+      ? `?tag=${encodeURIComponent(selectedTag)}`
+      : '';
     navigate(`/board/${slug}/write${tagParam}`);
   };
 
@@ -246,7 +254,7 @@ function BoardListPage({ slug: propSlug }: BoardListPageProps) {
   const handleSearch = (e: React.FormEvent) => {
     e.preventDefault();
     setCurrentPage(0);
-    setSearchTrigger(prev => prev + 1);
+    setSearchTrigger((prev) => prev + 1);
   };
 
   const handleTagClick = (tag: string | null) => {
@@ -261,7 +269,7 @@ function BoardListPage({ slug: propSlug }: BoardListPageProps) {
     if (!category) return slug === 'news';
     if (category.name === '새 소식') return true;
     if (category.parentId) {
-      const parent = allCategories.find(c => c.id === category.parentId);
+      const parent = allCategories.find((c) => c.id === category.parentId);
       if (parent && parent.name === '새 소식') return true;
     }
     return false;
@@ -273,7 +281,7 @@ function BoardListPage({ slug: propSlug }: BoardListPageProps) {
     if (!category) return false;
     if (category.name === '카르텔') return true;
     if (category.parentId) {
-      const parent = allCategories.find(c => c.id === category.parentId);
+      const parent = allCategories.find((c) => c.id === category.parentId);
       if (parent && parent.name === '카르텔') return true;
     }
     return false;
@@ -287,8 +295,8 @@ function BoardListPage({ slug: propSlug }: BoardListPageProps) {
   }, [isCartelCategoryGroup, navigate]);
 
   // 공지사항: notice 카테고리의 고정글 + 현재 카테고리의 고정글 (중복 제거)
-  const allPinnedIds = new Set(pinnedPosts.map(p => p.id));
-  const globalNotices = noticePosts.filter(p => !allPinnedIds.has(p.id));
+  const allPinnedIds = new Set(pinnedPosts.map((p) => p.id));
+  const globalNotices = noticePosts.filter((p) => !allPinnedIds.has(p.id));
   // 현재 카테고리가 notice 자체라면 globalNotices 비우기
   const isNoticeCategory = slug === 'notice';
   const displayGlobalNotices = isNoticeCategory ? [] : globalNotices;
@@ -316,7 +324,16 @@ function BoardListPage({ slug: propSlug }: BoardListPageProps) {
           <h1 className="board-list__title">{categoryName}</h1>
           <button className="board-list__write-btn" onClick={handleWriteClick}>
             <div className="board-list__write-icon-box">
-              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+              <svg
+                width="16"
+                height="16"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="2.5"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+              >
                 <path d="M12 20h9"></path>
                 <path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"></path>
               </svg>
@@ -332,7 +349,7 @@ function BoardListPage({ slug: propSlug }: BoardListPageProps) {
           >
             전체
           </button>
-          {availableTags.map(tag => (
+          {availableTags.map((tag) => (
             <button
               key={tag}
               className={`board-list__tag-filter-item ${selectedTag === tag ? 'board-list__tag-filter-item--active' : ''}`}
@@ -352,7 +369,7 @@ function BoardListPage({ slug: propSlug }: BoardListPageProps) {
             >
               전체
             </button>
-            {childCategories.map(child => (
+            {childCategories.map((child) => (
               <button
                 key={child.id}
                 className={`board-list__tab ${activeTab === child.slug ? 'board-list__tab--active' : ''}`}
@@ -371,62 +388,100 @@ function BoardListPage({ slug: propSlug }: BoardListPageProps) {
         {loading && <div className="board-list__status">로딩 중...</div>}
 
         {/* 에러 */}
-        {error && <div className="board-list__status board-list__status--error">{error}</div>}
+        {error && (
+          <div className="board-list__status board-list__status--error">
+            {error}
+          </div>
+        )}
 
         {!loading && !error && (
           <>
             {/* ===== 글로벌 공지 (notice 카테고리 고정글) - "필독", 핑크 배경 ===== */}
-            {displayGlobalNotices.map(post => (
+            {displayGlobalNotices.map((post) => (
               <div
                 key={`notice-${post.id}`}
                 className="board-list__row board-list__row--pinned"
                 onClick={() => navigate(`/board/notice/${post.id}`)}
               >
                 {post.tag && (
-                  <span className="board-list__tag board-list__tag--red">{post.tag}</span>
+                  <span className="board-list__tag board-list__tag--red">
+                    {post.tag}
+                  </span>
                 )}
                 {!post.tag && (
-                  <span className="board-list__tag board-list__tag--red">필독</span>
+                  <span className="board-list__tag board-list__tag--red">
+                    필독
+                  </span>
                 )}
                 <span className="board-list__post-title board-list__post-title--bold">
                   {post.title}
                 </span>
                 <div className="board-list__meta">
-                  <span className="board-list__author">{post.author?.nickname || '익명'}</span>
+                  <img
+                    src={
+                      post.author?.profileImage || '/default_user_profile.png'
+                    }
+                    alt=""
+                    className="board-list__avatar"
+                  />
+                  <span className="board-list__author">
+                    {post.author?.nickname || '익명'}
+                  </span>
                   {post.likeCount !== undefined && post.likeCount > 0 && (
-                    <span className="board-list__likes"><Heart filled /> {post.likeCount}</span>
+                    <span className="board-list__likes">
+                      <Heart filled /> {post.likeCount}
+                    </span>
                   )}
-                  <span className="board-list__date">{formatDate(post.createdAt)}</span>
+                  <span className="board-list__date">
+                    {formatDate(post.createdAt)}
+                  </span>
                 </div>
                 <div className="board-list__row-divider" />
               </div>
             ))}
 
             {/* ===== 현재 카테고리 고정글 - "고정", 회색 배경 ===== */}
-            {pinnedPosts.map(post => (
+            {pinnedPosts.map((post) => (
               <div
                 key={`pinned-${post.id}`}
                 className="board-list__row board-list__row--notice"
                 onClick={() => handleBoardClick(post.id)}
               >
                 {post.tag && (
-                  <span className="board-list__tag board-list__tag--notice">{post.tag}</span>
+                  <span className="board-list__tag board-list__tag--notice">
+                    {post.tag}
+                  </span>
                 )}
                 {!post.tag && (
-                  <span className="board-list__tag board-list__tag--notice">고정</span>
+                  <span className="board-list__tag board-list__tag--notice">
+                    고정
+                  </span>
                 )}
                 <span className="board-list__post-title board-list__post-title--bold">
                   {post.title}
                 </span>
                 <div className="board-list__meta">
-                  <span className="board-list__author">{post.author?.nickname || '익명'}</span>
+                  <img
+                    src={
+                      post.author?.profileImage || '/default_user_profile.png'
+                    }
+                    alt=""
+                    className="board-list__avatar"
+                  />
+                  <span className="board-list__author">
+                    {post.author?.nickname || '익명'}
+                  </span>
                   {post.views > 0 && (
                     <span className="board-list__views">조회 {post.views}</span>
                   )}
                   {post.likeCount !== undefined && post.likeCount > 0 && (
-                    <span className="board-list__likes"><Heart filled /> {post.likeCount}</span>
+                    <span className="board-list__likes">
+                      <Heart filled /> {post.likeCount}
+                    </span>
                   )}
-                  <span className="board-list__date">{formatDate(post.createdAt)}</span>
+                  <span className="board-list__date">
+                    {formatDate(post.createdAt)}
+                  </span>
                 </div>
                 <div className="board-list__row-divider" />
               </div>
@@ -435,10 +490,12 @@ function BoardListPage({ slug: propSlug }: BoardListPageProps) {
             {/* 고정글과 일반글 사이 구분 */}
 
             {/* ===== 일반 게시글 ===== */}
-            {boards.length === 0 && pinnedPosts.length === 0 && displayGlobalNotices.length === 0 ? (
+            {boards.length === 0 &&
+            pinnedPosts.length === 0 &&
+            displayGlobalNotices.length === 0 ? (
               <div className="board-list__status">게시글이 없습니다.</div>
             ) : (
-              boards.map(post => (
+              boards.map((post) => (
                 <div
                   key={post.id}
                   className="board-list__row"
@@ -446,9 +503,14 @@ function BoardListPage({ slug: propSlug }: BoardListPageProps) {
                 >
                   {/* 게시글 태그 또는 카테고리 태그 표시 */}
                   {post.tag ? (
-                    <span className="board-list__tag board-list__tag--gray">{post.tag}</span>
+                    <span className="board-list__tag board-list__tag--gray">
+                      {post.tag}
+                    </span>
                   ) : (
-                    post.category && post.category.name && activeTab === 'all' && childCategories.length > 0 && (
+                    post.category &&
+                    post.category.name &&
+                    activeTab === 'all' &&
+                    childCategories.length > 0 && (
                       <span className="board-list__tag board-list__tag--gray">
                         {post.category.name.length > 4
                           ? post.category.name.slice(0, 4)
@@ -458,14 +520,29 @@ function BoardListPage({ slug: propSlug }: BoardListPageProps) {
                   )}
                   <span className="board-list__post-title">{post.title}</span>
                   <div className="board-list__meta">
-                    <span className="board-list__author">{post.author?.nickname || '익명'}</span>
+                    <img
+                      src={
+                        post.author?.profileImage || '/default_user_profile.png'
+                      }
+                      alt=""
+                      className="board-list__avatar"
+                    />
+                    <span className="board-list__author">
+                      {post.author?.nickname || '익명'}
+                    </span>
                     {post.views > 0 && (
-                      <span className="board-list__views">조회 {post.views}</span>
+                      <span className="board-list__views">
+                        조회 {post.views}
+                      </span>
                     )}
                     {post.likeCount !== undefined && post.likeCount > 0 && (
-                      <span className="board-list__likes"><Heart filled /> {post.likeCount}</span>
+                      <span className="board-list__likes">
+                        <Heart filled /> {post.likeCount}
+                      </span>
                     )}
-                    <span className="board-list__date">{formatDate(post.createdAt)}</span>
+                    <span className="board-list__date">
+                      {formatDate(post.createdAt)}
+                    </span>
                   </div>
                   <div className="board-list__row-divider" />
                 </div>
@@ -491,7 +568,7 @@ function BoardListPage({ slug: propSlug }: BoardListPageProps) {
                 >
                   ‹
                 </button>
-                {renderPageNumbers().map(page => (
+                {renderPageNumbers().map((page) => (
                   <button
                     key={page}
                     className={`board-list__page-num ${page === currentPage ? 'board-list__page-num--active' : ''}`}
@@ -502,7 +579,9 @@ function BoardListPage({ slug: propSlug }: BoardListPageProps) {
                 ))}
                 <button
                   className="board-list__page-btn"
-                  onClick={() => handlePageChange(Math.min(totalPages - 1, currentPage + 1))}
+                  onClick={() =>
+                    handlePageChange(Math.min(totalPages - 1, currentPage + 1))
+                  }
                   disabled={currentPage >= totalPages - 1}
                   title="다음 페이지"
                 >
