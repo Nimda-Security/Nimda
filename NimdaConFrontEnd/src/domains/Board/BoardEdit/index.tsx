@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useRef } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import Layout from '@/components/Layout';
 import { getBoardDetailAPI, updateBoardAPI } from '@/api/board';
@@ -26,6 +26,41 @@ function BoardEditPage() {
   const [loading, setLoading] = useState(true);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [showFontSize, setShowFontSize] = useState(false);
+  const [showColorPicker, setShowColorPicker] = useState(false);
+  const contentRef = useRef<HTMLDivElement>(null);
+  const colorInputRef = useRef<HTMLInputElement>(null);
+
+  const getEditorContent = () => {
+    return contentRef.current?.innerHTML || '';
+  };
+
+  const applyFormat = (format: 'bold' | 'italic' | 'underline' | 'strikeThrough') => {
+    contentRef.current?.focus();
+    document.execCommand(format, false);
+  };
+
+  const applyFontSize = (size: string) => {
+    contentRef.current?.focus();
+    document.execCommand('fontSize', false, '7');
+    const editor = contentRef.current;
+    if (editor) {
+      const fonts = editor.querySelectorAll('font[size="7"]');
+      fonts.forEach((font) => {
+        const span = document.createElement('span');
+        span.style.fontSize = size;
+        span.innerHTML = font.innerHTML;
+        font.parentNode?.replaceChild(span, font);
+      });
+    }
+    setShowFontSize(false);
+  };
+
+  const applyColor = (color: string) => {
+    contentRef.current?.focus();
+    document.execCommand('foreColor', false, color);
+    setShowColorPicker(false);
+  };
 
   useEffect(() => {
     if (id) {
@@ -64,7 +99,7 @@ function BoardEditPage() {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
-    if (!board || !title.trim() || !content.trim()) {
+    if (!board || !title.trim() || !getEditorContent().replace(/<[^>]*>/g, '').trim()) {
       setError('제목과 내용을 입력해주세요.');
       return;
     }
@@ -96,7 +131,7 @@ function BoardEditPage() {
       const response = await updateBoardAPI(board.id, {
         categoryId: board.category.id,
         title: title.trim(),
-        content: content.trim(),
+        content: getEditorContent(),
         tag: tag.trim() || undefined,
         attachmentIds,
       });
@@ -220,14 +255,52 @@ function BoardEditPage() {
               <label htmlFor="content" className="block text-sm font-medium text-gray-700 mb-2">
                 내용
               </label>
-              <textarea
+              {/* 포맷팅 툴바 */}
+              <div className="flex items-center gap-1 mb-2 p-1 border border-gray-300 rounded-t bg-gray-50">
+                <button type="button" onClick={() => applyFormat('bold')} className="px-2 py-1 text-sm font-bold hover:bg-gray-200 rounded" title="굵게">B</button>
+                <button type="button" onClick={() => applyFormat('italic')} className="px-2 py-1 text-sm italic hover:bg-gray-200 rounded" title="기울임">I</button>
+                <button type="button" onClick={() => applyFormat('underline')} className="px-2 py-1 text-sm underline hover:bg-gray-200 rounded" title="밑줄">U</button>
+                <button type="button" onClick={() => applyFormat('strikeThrough')} className="px-2 py-1 text-sm line-through hover:bg-gray-200 rounded" title="취소선">S</button>
+                <span className="w-px h-5 bg-gray-300 mx-1" />
+                {/* 폰트 크기 */}
+                <div className="relative">
+                  <button type="button" onClick={() => { setShowFontSize(p => !p); setShowColorPicker(false); }} className="px-2 py-1 text-sm hover:bg-gray-200 rounded" title="글자 크기">
+                    <span style={{ fontSize: 11 }}>A</span><span style={{ fontSize: 15 }}>A</span>
+                  </button>
+                  {showFontSize && (
+                    <div className="bw-tool-dropdown" style={{ left: 0 }}>
+                      {[{ label: '작게', value: '12px' }, { label: '보통', value: '16px' }, { label: '크게', value: '20px' }, { label: '아주 크게', value: '28px' }].map(opt => (
+                        <button key={opt.value} type="button" className="bw-tool-dropdown-item" style={{ fontSize: opt.value }} onClick={() => applyFontSize(opt.value)}>
+                          {opt.label}
+                        </button>
+                      ))}
+                    </div>
+                  )}
+                </div>
+                {/* 글자 색상 */}
+                <div className="relative">
+                  <button type="button" onClick={() => { setShowColorPicker(p => !p); setShowFontSize(false); }} className="px-2 py-1 text-sm hover:bg-gray-200 rounded" title="글자 색상">
+                    <span style={{ borderBottom: '3px solid #DC2626', paddingBottom: 1 }}>A</span>
+                  </button>
+                  {showColorPicker && (
+                    <div className="bw-tool-dropdown bw-color-grid" style={{ left: 0 }}>
+                      {['#0C0C0C','#DC2626','#EA580C','#CA8A04','#16A34A','#2563EB','#7C3AED','#DB2777','#525252','#A3A3A3'].map(c => (
+                        <button key={c} type="button" className="bw-color-swatch" style={{ background: c }} onClick={() => applyColor(c)} title={c} />
+                      ))}
+                      <button type="button" className="bw-color-custom" onClick={() => colorInputRef.current?.click()}>직접 선택</button>
+                      <input ref={colorInputRef} type="color" className="bw-hidden-input" onChange={(e) => applyColor(e.target.value)} />
+                    </div>
+                  )}
+                </div>
+              </div>
+              <div
+                ref={contentRef}
                 id="content"
-                value={content}
-                onChange={(e) => setContent(e.target.value)}
-                placeholder="내용을 입력하세요"
-                rows={15}
-                className="w-full px-4 py-2 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-black resize-none"
-                required
+                contentEditable
+                className="w-full px-4 py-2 border border-gray-300 rounded-b focus:outline-none focus:ring-2 focus:ring-black min-h-[360px] whitespace-pre-wrap"
+                data-placeholder="내용을 입력하세요"
+                dangerouslySetInnerHTML={{ __html: content }}
+                onInput={() => setContent(getEditorContent())}
               />
             </div>
 

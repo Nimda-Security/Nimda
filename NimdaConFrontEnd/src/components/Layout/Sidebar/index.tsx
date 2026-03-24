@@ -263,7 +263,7 @@ const Sidebar: React.FC = () => {
                 <div key={visitor.id} className="sidebar-visitors__item">
                   <div className="sidebar-visitors__avatar">
                     <img 
-                      src={visitor.profileImageUrl || "/default_user_profile.png"} 
+                      src="/default_user_profile.png" 
                       alt="avatar" 
                     />
                   </div>

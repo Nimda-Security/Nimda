@@ -120,18 +120,13 @@ const ContentListItem: React.FC<ContentListItemProps> = ({
         <div className="flex-shrink-0 flex items-center gap-[8px]">
           <div
             className="w-[24px] h-[24px] rounded-full flex-shrink-0 overflow-hidden"
-            style={{
-              border: "0.2px solid #737373",
-              background: item.authorProfileImage ? "transparent" : "#0C0C0C",
-            }}
+            style={{ border: "0.2px solid #737373" }}
           >
-            {item.authorProfileImage && (
-              <img
-                src={item.authorProfileImage}
-                alt=""
-                className="w-full h-full object-cover rounded-full"
-              />
-            )}
+            <img
+              src="/default_user_profile.png"
+              alt=""
+              className="w-full h-full object-cover rounded-full"
+            />
           </div>
           <span
             className="text-[14px] font-medium text-[#0C0C0C] whitespace-nowrap"

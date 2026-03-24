@@ -33,6 +33,7 @@ package com.nimda.cite.board.entity;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.nimda.cite.board.entity.Category;
+import com.nimda.cite.board.enums.BoardStatus;
 import com.nimda.cup.common.entity.BaseTimeEntity;
 import com.nimda.cup.user.entity.User;
 import jakarta.persistence.*;
@@ -116,4 +117,11 @@ public class Board extends BaseTimeEntity {
     // [기존] 파일 경로 - 변경 없음 (파일 업로드 기능 유지)
     @Column(length = 500)
     private String filepath;
+
+    // ========== [Soft Delete 지원] ==========
+    // [신규] 게시글 상태 필드 추가
+    // [이유] 삭제 시 실제 DB 삭제 대신 상태를 DELETED로 변경 (soft delete)
+    @Enumerated(EnumType.STRING)
+    @Column(nullable = false)
+    private BoardStatus status = BoardStatus.ACTIVE;
 }

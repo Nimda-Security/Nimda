@@ -150,6 +150,15 @@ export const getBoardDetailAPI = async (
 
     if (response.ok && result?.success) {
       const data = result.data || result;
+
+      // 삭제된 게시글인 경우
+      if (data.deleted) {
+        return {
+          success: false,
+          message: '삭제된 게시글입니다.',
+        };
+      }
+
       return {
         success: true,
         message: result.message || '게시글을 성공적으로 조회했습니다.',

@@ -27,9 +27,17 @@ function BoardWritePage() {
   const [isDragOver, setIsDragOver] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [showFontSize, setShowFontSize] = useState(false);
+  const [showColorPicker, setShowColorPicker] = useState(false);
+  const colorInputRef = useRef<HTMLInputElement>(null);
 
   const fileInputRef = useRef<HTMLInputElement>(null);
-  const contentRef = useRef<HTMLTextAreaElement>(null);
+  const contentRef = useRef<HTMLDivElement>(null);
+
+  // contentEditable에서 HTML 추출
+  const getEditorContent = () => {
+    return contentRef.current?.innerHTML || '';
+  };
 
   // 모든 카테고리 로드
   useEffect(() => {
@@ -83,7 +91,7 @@ function BoardWritePage() {
 
     const targetCategoryId = subCategoryId || parentCategoryId;
 
-    if (!title.trim() || !content.trim()) {
+    if (!title.trim() || !getEditorContent().replace(/<[^>]*>/g, '').trim()) {
       setError('제목과 내용을 입력해주세요.');
       return;
     }
@@ -109,7 +117,7 @@ function BoardWritePage() {
       const response = await createBoardAPI({
         categoryId: targetCategoryId,
         title: title.trim(),
-        content: content.trim(),
+        content: getEditorContent(),
         tag: tag.trim() || undefined,
         attachmentIds,
       });
@@ -160,17 +168,34 @@ function BoardWritePage() {
     if (droppedFile) setFile(droppedFile);
   };
 
-  // 텍스트 포맷팅 (bold, italic, underline)
-  const applyFormat = (format: 'bold' | 'italic' | 'underline') => {
-    const textarea = contentRef.current;
-    if (!textarea) return;
-    const start = textarea.selectionStart;
-    const end = textarea.selectionEnd;
-    const selected = content.slice(start, end);
-    const wrappers: Record<string, string> = { bold: '**', italic: '_', underline: '__' };
-    const wrap = wrappers[format];
-    const newContent = content.slice(0, start) + wrap + selected + wrap + content.slice(end);
-    setContent(newContent);
+  // 텍스트 포맷팅 (bold, italic, underline, strikeThrough)
+  const applyFormat = (format: 'bold' | 'italic' | 'underline' | 'strikeThrough') => {
+    contentRef.current?.focus();
+    document.execCommand(format, false);
+  };
+
+  const applyFontSize = (size: string) => {
+    contentRef.current?.focus();
+    // execCommand fontSize uses 1-7 scale, so we use formatBlock + span approach
+    document.execCommand('fontSize', false, '7');
+    // Replace the generated <font size="7"> with a span that has the actual px size
+    const editor = contentRef.current;
+    if (editor) {
+      const fonts = editor.querySelectorAll('font[size="7"]');
+      fonts.forEach((font) => {
+        const span = document.createElement('span');
+        span.style.fontSize = size;
+        span.innerHTML = font.innerHTML;
+        font.parentNode?.replaceChild(span, font);
+      });
+    }
+    setShowFontSize(false);
+  };
+
+  const applyColor = (color: string) => {
+    contentRef.current?.focus();
+    document.execCommand('foreColor', false, color);
+    setShowColorPicker(false);
   };
 
   return (
@@ -259,6 +284,51 @@ function BoardWritePage() {
                 <line x1="4" y1="21" x2="20" y2="21" />
               </svg>
             </button>
+            <button type="button" className="bw-tool-btn" title="취소선" onClick={() => applyFormat('strikeThrough')}>
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                <line x1="4" y1="12" x2="20" y2="12" />
+                <path d="M17.5 7.5C17.5 5.01 15.49 3 13 3H11C8.51 3 6.5 5.01 6.5 7.5c0 1.38.62 2.61 1.6 3.43" />
+                <path d="M6.5 16.5C6.5 18.99 8.51 21 11 21h2c2.49 0 4.5-2.01 4.5-4.5 0-1.38-.62-2.61-1.6-3.43" />
+              </svg>
+            </button>
+            <span className="bw-tool-dot" />
+            {/* 폰트 크기 */}
+            <div className="bw-tool-dropdown-wrap">
+              <button type="button" className="bw-tool-btn" title="글자 크기" onClick={() => { setShowFontSize(p => !p); setShowColorPicker(false); }}>
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                  <polyline points="4 7 4 4 20 4 20 7" />
+                  <line x1="9" y1="20" x2="15" y2="20" />
+                  <line x1="12" y1="4" x2="12" y2="20" />
+                </svg>
+              </button>
+              {showFontSize && (
+                <div className="bw-tool-dropdown">
+                  {[{ label: '작게', value: '12px' }, { label: '보통', value: '16px' }, { label: '크게', value: '20px' }, { label: '아주 크게', value: '28px' }].map(opt => (
+                    <button key={opt.value} type="button" className="bw-tool-dropdown-item" style={{ fontSize: opt.value }} onClick={() => applyFontSize(opt.value)}>
+                      {opt.label}
+                    </button>
+                  ))}
+                </div>
+              )}
+            </div>
+            {/* 글자 색상 */}
+            <div className="bw-tool-dropdown-wrap">
+              <button type="button" className="bw-tool-btn" title="글자 색상" onClick={() => { setShowColorPicker(p => !p); setShowFontSize(false); }}>
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                  <path d="M12 3L4 21h16L12 3z" />
+                  <line x1="8" y1="15" x2="16" y2="15" />
+                </svg>
+              </button>
+              {showColorPicker && (
+                <div className="bw-tool-dropdown bw-color-grid">
+                  {['#0C0C0C','#DC2626','#EA580C','#CA8A04','#16A34A','#2563EB','#7C3AED','#DB2777','#525252','#A3A3A3'].map(c => (
+                    <button key={c} type="button" className="bw-color-swatch" style={{ background: c }} onClick={() => applyColor(c)} title={c} />
+                  ))}
+                  <button type="button" className="bw-color-custom" onClick={() => colorInputRef.current?.click()}>직접 선택</button>
+                  <input ref={colorInputRef} type="color" className="bw-hidden-input" onChange={(e) => applyColor(e.target.value)} />
+                </div>
+              )}
+            </div>
             <span className="bw-tool-dot" />
             <button type="button" className="bw-tool-btn" title="사진 첨부" onClick={() => fileInputRef.current?.click()}>
               <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
@@ -289,14 +359,13 @@ function BoardWritePage() {
           <div className="bw-divider" />
 
           {/* ── 내용 ── */}
-          <textarea
+          <div
             ref={contentRef}
             id="bw-content"
-            value={content}
-            onChange={(e) => setContent(e.target.value)}
-            placeholder="내용을 입력하세요."
+            contentEditable
             className="bw-content-input"
-            required
+            data-placeholder="내용을 입력하세요."
+            onInput={() => setContent(getEditorContent())}
           />
 
           <div className="bw-divider" />
