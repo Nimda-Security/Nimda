@@ -440,6 +440,7 @@ body {
 /* 오늘 방문자 */
 .sidebar-visitors {
   padding: 0; /* 세그먼트 버튼이 꽉 차도록 패딩 제거 */
+  margin-top: -12px;
 }
 
 /* 오늘 방문자 / 주간랭킹 탭 (세그먼트 스타일) */
