@@ -297,40 +297,28 @@ const CategorySection: React.FC<CategorySectionProps> = ({ category }) => {
   const [searchParams] = useSearchParams();
   const currentTab = searchParams.get('tab');
 
-  const externalLinks: Record<string, string> = {
-    '동아리 소개': 'https://app.nimda.kr',
-    'NIMDA BOJ': 'https://www.acmicpc.net/group/25046',
-    'BOJ': 'https://www.acmicpc.net/group/25046',
-    'solved.ac': 'https://solved.ac/',
-  };
-
   const renderCategoryItems = (items: any[]) => {
     return items.map((item) => {
       const itemHasChildren = item.children && item.children.length > 0;
       const isParentActive = location.pathname === `/board/${item.slug}` && !currentTab;
-      
-      const displayName = item.name === 'BOJ' ? 'NIMDA BOJ' : item.name;
-      const extUrl = externalLinks[item.name] || externalLinks[displayName];
 
       return (
         <React.Fragment key={item.id}>
           <li className={`sidebar-section__item ${isParentActive ? 'sidebar-section__item--active' : ''}`}>
-            {extUrl ? (
-              <a href={extUrl} target="_blank" rel="noopener noreferrer" className="sidebar-section__link">{displayName}</a>
+            {item.redirectUrl ? (
+              <a href={item.redirectUrl} target="_blank" rel="noopener noreferrer" className="sidebar-section__link">{item.name}</a>
             ) : (
-              <Link to={`/board/${item.slug}`} className="sidebar-section__link">{displayName}</Link>
+              <Link to={`/board/${item.slug}`} className="sidebar-section__link">{item.name}</Link>
             )}
           </li>
           {itemHasChildren && item.children.map((child: any) => {
             const isChildActive = location.pathname === `/board/${item.slug}` && currentTab === child.slug;
-            const childDisplayName = child.name === 'BOJ' ? 'NIMDA BOJ' : child.name;
-            const extChildUrl = externalLinks[child.name] || externalLinks[childDisplayName];
             return (
               <li key={child.id} className={`sidebar-section__item sidebar-section__item--depth ${isChildActive ? 'sidebar-section__item--active' : ''}`} style={{ paddingLeft: '48px' }}>
-                {extChildUrl ? (
-                  <a href={extChildUrl} target="_blank" rel="noopener noreferrer" className="sidebar-section__link">{childDisplayName}</a>
+                {child.redirectUrl ? (
+                  <a href={child.redirectUrl} target="_blank" rel="noopener noreferrer" className="sidebar-section__link">{child.name}</a>
                 ) : (
-                  <Link to={`/board/${item.slug}?tab=${child.slug}`} className="sidebar-section__link">{childDisplayName}</Link>
+                  <Link to={`/board/${item.slug}?tab=${child.slug}`} className="sidebar-section__link">{child.name}</Link>
                 )}
               </li>
             );
@@ -350,6 +338,8 @@ const CategorySection: React.FC<CategorySectionProps> = ({ category }) => {
               <ChevronDown />
             </span>
           </>
+        ) : category.redirectUrl ? (
+          <a href={category.redirectUrl} target="_blank" rel="noopener noreferrer" className="sidebar-section__title sidebar-section__title--link">{category.name}</a>
         ) : (
           <Link to={`/board/${category.slug}`} className="sidebar-section__title sidebar-section__title--link">{category.name}</Link>
         )}
