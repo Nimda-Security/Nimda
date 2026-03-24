@@ -20,6 +20,10 @@ const CategoryManagement = ({
   setSavingTags,
   categoryRedirectUrl,
   setCategoryRedirectUrl,
+  localCategoryTree,
+  handleSaveOrder,
+  savingOrder,
+  orderChanged,
 }) => {
   if (activeSection === 'category-edit') {
     return (
@@ -41,7 +45,14 @@ const CategoryManagement = ({
 
   return (
     <div>
-      <h2 className="admin__section-title">순서 설정</h2>
+      <h2 className="admin__section-title">
+        순서 설정
+        {orderChanged && (
+          <span style={{ marginLeft: '10px', fontSize: '12px', color: '#e53e3e', fontWeight: 'normal' }}>
+            • 미저장 변경사항이 있습니다
+          </span>
+        )}
+      </h2>
 
       {/* 상단 액션 버튼 */}
       <div className="admin__catorder-toolbar">
@@ -66,13 +77,13 @@ const CategoryManagement = ({
         {/* 왼쪽: 카테고리 트리 */}
         <div className="admin__catorder-left">
           <div className="admin__catorder-left-header">
-            <span>카테고리 전체보기 ({getTotalCategoryCount(categoryTree)})</span>
+            <span>카테고리 전체보기 ({getTotalCategoryCount(localCategoryTree)})</span>
           </div>
           <div className="admin__catorder-tree">
             {categoriesLoading ? (
               <div className="admin__empty" style={{ border: 'none' }}>로딩 중...</div>
-            ) : categoryTree.length > 0 ? (
-              categoryTree.map(category => renderCategoryOrderItem(category, 0))
+            ) : localCategoryTree.length > 0 ? (
+              localCategoryTree.map(category => renderCategoryOrderItem(category, 0))
             ) : (
               <div className="admin__empty" style={{ border: 'none' }}>
                 <p style={{ marginBottom: 16 }}>카테고리가 없습니다.</p>
@@ -350,7 +361,14 @@ const CategoryManagement = ({
           <p>· 글이 많은 카테고리는 설정이 반영되는데 시간이 소요됩니다. (예. 공개설정 변경, 카테고리 상위/하위 정렬변경)</p>
         </div>
         <div className="admin__catorder-footer-actions">
-          <button className="admin__catorder-confirm-btn">확인</button>
+          <button
+            className="admin__catorder-confirm-btn"
+            onClick={handleSaveOrder}
+            disabled={savingOrder || !orderChanged}
+            style={{ opacity: !orderChanged ? 0.5 : 1 }}
+          >
+            {savingOrder ? '저장 중...' : '순서 저장'}
+          </button>
         </div>
       </div>
     </div>

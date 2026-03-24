@@ -346,6 +346,40 @@ export const updateCategoryAPI = async (
  * @param id 카테고리 ID
  * @returns 삭제 결과
  */
+/**
+ * 카테고리 순서 일괄 업데이트
+ * - 관리자 권한 필요
+ */
+export const updateCategorySortOrderAPI = async (
+  sortOrders: Array<{ id: number; sortOrder: number }>
+): Promise<{ success: boolean; message?: string }> => {
+  try {
+    const response = await fetch(`${API_BASE_URL}/sort-order`, {
+      method: 'PUT',
+      headers: getAuthHeaders(),
+      body: JSON.stringify(sortOrders),
+    });
+
+    const result = await parseJsonSafe(response);
+    if (response.ok) {
+      return { success: true };
+    }
+
+    const errorMessage =
+      result?.message ||
+      (response.status === 401
+        ? '로그인이 필요합니다.'
+        : response.status === 403
+          ? '관리자 권한이 필요합니다.'
+          : '순서 저장에 실패했습니다.');
+
+    return { success: false, message: errorMessage };
+  } catch (error) {
+    console.error('카테고리 순서 저장 API 오류:', error);
+    return { success: false, message: '순서 저장 중 오류가 발생했습니다.' };
+  }
+};
+
 export const deleteCategoryAPI = async (
   id: number
 ): Promise<CategoryDeleteResponse> => {
