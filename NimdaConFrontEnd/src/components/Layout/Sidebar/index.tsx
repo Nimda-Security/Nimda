@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from "react";
-import { Link } from "react-router-dom";
+import { Link, useLocation, useSearchParams } from "react-router-dom";
 import { getCurrentNickname, hasRole, isAdmin } from "@/utils/jwt";
 import { isLoggedIn } from "@/api/auth";
 import { getAllCategoriesAPI } from "@/api/category";
@@ -293,19 +293,48 @@ const CategorySection: React.FC<CategorySectionProps> = ({ category }) => {
   const [isOpen, setIsOpen] = useState(true);
   const hasChildren = category.children && category.children.length > 0;
 
+  const location = useLocation();
+  const [searchParams] = useSearchParams();
+  const currentTab = searchParams.get('tab');
+
+  const externalLinks: Record<string, string> = {
+    '동아리 소개': 'https://app.nimda.kr',
+    'NIMDA BOJ': 'https://www.acmicpc.net/group/25046',
+    'BOJ': 'https://www.acmicpc.net/group/25046',
+    'solved.ac': 'https://solved.ac/',
+  };
+
   const renderCategoryItems = (items: any[]) => {
     return items.map((item) => {
       const itemHasChildren = item.children && item.children.length > 0;
+      const isParentActive = location.pathname === `/board/${item.slug}` && !currentTab;
+      
+      const displayName = item.name === 'BOJ' ? 'NIMDA BOJ' : item.name;
+      const extUrl = externalLinks[item.name] || externalLinks[displayName];
+
       return (
         <React.Fragment key={item.id}>
-          <li className="sidebar-section__item">
-            <Link to={`/board/${item.slug}`} className="sidebar-section__link">{item.name}</Link>
+          <li className={`sidebar-section__item ${isParentActive ? 'sidebar-section__item--active' : ''}`}>
+            {extUrl ? (
+              <a href={extUrl} target="_blank" rel="noopener noreferrer" className="sidebar-section__link">{displayName}</a>
+            ) : (
+              <Link to={`/board/${item.slug}`} className="sidebar-section__link">{displayName}</Link>
+            )}
           </li>
-          {itemHasChildren && item.children.map((child: any) => (
-            <li key={child.id} className="sidebar-section__item sidebar-section__item--depth" style={{ paddingLeft: '48px' }}>
-              <Link to={`/board/${item.slug}?tab=${child.slug}`} className="sidebar-section__link">{child.name}</Link>
-            </li>
-          ))}
+          {itemHasChildren && item.children.map((child: any) => {
+            const isChildActive = location.pathname === `/board/${item.slug}` && currentTab === child.slug;
+            const childDisplayName = child.name === 'BOJ' ? 'NIMDA BOJ' : child.name;
+            const extChildUrl = externalLinks[child.name] || externalLinks[childDisplayName];
+            return (
+              <li key={child.id} className={`sidebar-section__item sidebar-section__item--depth ${isChildActive ? 'sidebar-section__item--active' : ''}`} style={{ paddingLeft: '48px' }}>
+                {extChildUrl ? (
+                  <a href={extChildUrl} target="_blank" rel="noopener noreferrer" className="sidebar-section__link">{childDisplayName}</a>
+                ) : (
+                  <Link to={`/board/${item.slug}?tab=${child.slug}`} className="sidebar-section__link">{childDisplayName}</Link>
+                )}
+              </li>
+            );
+          })}
         </React.Fragment>
       );
     });
