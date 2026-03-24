@@ -334,7 +334,11 @@ body {
 }
 
 .sidebar-section__item:hover {
-  background-color: var(--color-gray-100);
+  color: var(--color-pink);
+}
+.sidebar-section__item--active {
+  color: var(--color-pink);
+  font-weight: 700;
 }
 
 .sidebar-section__link {
