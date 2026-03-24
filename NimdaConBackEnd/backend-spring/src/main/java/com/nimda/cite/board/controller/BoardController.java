@@ -173,7 +173,8 @@ public class BoardController {
             List<BoardResponseDTO> postsDTO = boards.getContent().stream()
                     .map(board -> {
                         long likeCount = boardLikeService.getLikeCount(board.getId());
-                        return BoardResponseDTO.from(board, likeCount);
+                        long commentCount = commentRepository.countByBoardIdAndStatusNot(board.getId(), STATUS.DELETED);
+                        return BoardResponseDTO.from(board, likeCount, commentCount);
                     })
                     .collect(java.util.stream.Collectors.toList());
             resolveProfileImages(postsDTO);
@@ -217,7 +218,8 @@ public class BoardController {
             List<BoardResponseDTO> postsDTO = boards.getContent().stream()
                     .map(board -> {
                         long likeCount = boardLikeService.getLikeCount(board.getId());
-                        return BoardResponseDTO.from(board, likeCount);
+                        long commentCount = commentRepository.countByBoardIdAndStatusNot(board.getId(), STATUS.DELETED);
+                        return BoardResponseDTO.from(board, likeCount, commentCount);
                     })
                     .collect(java.util.stream.Collectors.toList());
             resolveProfileImages(postsDTO);
@@ -274,7 +276,8 @@ public class BoardController {
             List<BoardResponseDTO> postsDTO = boards.getContent().stream()
                     .map(board -> {
                         long likeCount = boardLikeService.getLikeCount(board.getId());
-                        return BoardResponseDTO.from(board, likeCount);
+                        long commentCount = commentRepository.countByBoardIdAndStatusNot(board.getId(), STATUS.DELETED);
+                        return BoardResponseDTO.from(board, likeCount, commentCount);
                     })
                     .collect(java.util.stream.Collectors.toList());
             resolveProfileImages(postsDTO);
