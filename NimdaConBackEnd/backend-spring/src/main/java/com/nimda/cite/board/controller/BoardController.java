@@ -13,6 +13,7 @@ import com.nimda.cite.board.service.BoardService;
 import com.nimda.cite.comment.enums.STATUS;
 import com.nimda.cite.comment.repository.CommentRepository;
 import com.nimda.cite.common.response.ApiResponse;
+import com.nimda.cite.common.s3.S3Service;
 import com.nimda.cite.like.service.BoardLikeService;
 import com.nimda.cup.common.util.JwtUtil;
 import com.nimda.cup.user.entity.User;
@@ -57,6 +58,22 @@ public class BoardController {
 
     @Autowired
     private CommentRepository commentRepository;
+
+    @Autowired(required = false)
+    private S3Service s3Service;
+
+    /** author.profileImage가 S3 키인 경우 Presigned URL로 변환 */
+    private void resolveProfileImage(BoardResponseDTO dto) {
+        if (s3Service == null || dto == null || dto.getAuthor() == null) return;
+        String img = dto.getAuthor().getProfileImage();
+        if (img != null && !img.isBlank() && !img.startsWith("http")) {
+            dto.getAuthor().setProfileImage(s3Service.createPresignedGetUrl(img, 60));
+        }
+    }
+
+    private void resolveProfileImages(List<BoardResponseDTO> dtos) {
+        if (dtos != null) dtos.forEach(this::resolveProfileImage);
+    }
 
     // "카르텔" 카테고리(자신 또는 부모)인지 확인
     private boolean isCartelCategory(Category category) {
@@ -157,6 +174,7 @@ public class BoardController {
                         return BoardResponseDTO.from(board, likeCount);
                     })
                     .collect(java.util.stream.Collectors.toList());
+            resolveProfileImages(postsDTO);
 
             BoardListResponseDTO responseDTO = BoardListResponseDTO.builder()
                     .posts(postsDTO)
@@ -200,6 +218,7 @@ public class BoardController {
                         return BoardResponseDTO.from(board, likeCount);
                     })
                     .collect(java.util.stream.Collectors.toList());
+            resolveProfileImages(postsDTO);
 
             BoardListResponseDTO responseDTO = BoardListResponseDTO.builder()
                     .posts(postsDTO)
@@ -256,6 +275,7 @@ public class BoardController {
                         return BoardResponseDTO.from(board, likeCount);
                     })
                     .collect(java.util.stream.Collectors.toList());
+            resolveProfileImages(postsDTO);
 
             BoardListResponseDTO responseDTO = BoardListResponseDTO.builder()
                     .posts(postsDTO)
@@ -345,6 +365,7 @@ public class BoardController {
             long likeCount = boardLikeService.getLikeCount(board.getId());
             var attachments = attachmentService.listAttachmentsForBoard(board.getId());
             BoardResponseDTO boardDto = BoardResponseDTO.from(board, likeCount, attachments);
+            resolveProfileImage(boardDto);
 
             return ApiResponse.ok("게시글이 성공적으로 작성되었습니다.", Map.of("board", boardDto))
                     .toResponse(HttpStatus.CREATED);
@@ -373,6 +394,7 @@ public class BoardController {
             long likeCount = boardLikeService.getLikeCount(board.getId());
             var attachments = attachmentService.listAttachmentsForBoard(board.getId());
             BoardResponseDTO boardDto = BoardResponseDTO.from(board, likeCount, attachments);
+            resolveProfileImage(boardDto);
             return ApiResponse.ok("게시글을 성공적으로 조회했습니다.", Map.of("board", boardDto)).toResponse();
 
         } catch (RuntimeException e) {
@@ -449,6 +471,7 @@ public class BoardController {
             long likeCount = boardLikeService.getLikeCount(boardTemp.getId());
             var attachments = attachmentService.listAttachmentsForBoard(boardTemp.getId());
             BoardResponseDTO boardDto = BoardResponseDTO.from(boardTemp, likeCount, attachments);
+            resolveProfileImage(boardDto);
 
             return ApiResponse.ok("게시글이 성공적으로 수정되었습니다.", Map.of("board", boardDto)).toResponse();
 
@@ -637,6 +660,7 @@ public class BoardController {
                             boardLikeService.getLikeCount(b.getId()),
                             commentRepository.countByBoardIdAndStatusNot(b.getId(), STATUS.DELETED)))
                     .toList();
+            resolveProfileImages(new java.util.ArrayList<>(dtos));
 
             return ApiResponse.ok("내 게시글 목록을 조회했습니다.", dtos).toResponse();
         } catch (Exception e) {
@@ -695,6 +719,7 @@ public class BoardController {
                 });
             }
 
+            resolveProfileImages(dtos);
             return ApiResponse.ok("댓글 단 게시글 목록을 조회했습니다.", dtos).toResponse();
         } catch (Exception e) {
             return ApiResponse.fail("댓글 단 게시글 조회 중 오류가 발생했습니다: " + e.getMessage())

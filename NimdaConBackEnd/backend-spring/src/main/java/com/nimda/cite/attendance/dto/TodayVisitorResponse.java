@@ -10,9 +10,9 @@ import lombok.Setter;
 @Setter
 @Builder
 public class TodayVisitorResponse {
-    // 여기에 유저 프로필 사진까지 추가해야함
     private Long id;
     private String userName;
+    private String profileImageUrl;
 
     public static TodayVisitorResponse from(AttendanceLog log) {
         if (log == null || log.getUser() == null) {
@@ -23,7 +23,8 @@ public class TodayVisitorResponse {
 
         return TodayVisitorResponse.builder()
                 .id(log.getId())
-                .userName(user.getNickname()) // 또는 user.getUserName()
+                .userName(user.getNickname())
+                .profileImageUrl(user.getProfileImage())
                 .build();
     }
 
