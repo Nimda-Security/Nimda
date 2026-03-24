@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { toggleBoardLikeAPI } from '@/api/board';
+import { Heart } from '@/components/icons/Heart';
 import './BoardLikeButton.css';
 
 interface BoardLikeButtonProps {
@@ -42,11 +43,9 @@ function BoardLikeButton({ boardId, initialLikeCount, initialIsLiked, onLikeChan
         disabled={isToggling}
         className={`board-like-btn ${isLiked ? 'is-liked' : ''}`}
       >
-        {isLiked ? (
-          <img src="/like-active.svg" alt="좋아요 취소" width={52} height={52} />
-        ) : (
-          <img src="/like-inactive.svg" alt="좋아요" width={52} height={52} />
-        )}
+        <div className="board-like-circle">
+          <Heart filled={isLiked} />
+        </div>
         <span className="board-like-count">{likeCount}</span>
       </button>
     </div>

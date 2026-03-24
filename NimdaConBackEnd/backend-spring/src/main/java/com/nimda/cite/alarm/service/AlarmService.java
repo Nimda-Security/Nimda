@@ -79,7 +79,7 @@ public class AlarmService {
                 .recipient(event.getBoardAuthor()) // 게시글 작성자
                 .sender(event.getCommentAuthor()) // 댓글 작성자
                 .message(event.getCommentAuthor().getName()+"님이 댓글을 남겼습니다.-"+
-                        event.getCommentContent())
+                        event.getBoardTitle())
                 .notificationType(NotificationType.AddCommentAtBoard)
                 .relatedEntityId(event.getBoardId())
                 // 게시글 url
@@ -114,7 +114,7 @@ public class AlarmService {
     @Async
     public void handleAddChildCommentEvent(AddChildCommentEvent event) {
         String message = event.getChildCommentAuthor().getNickname() +
-                "님이 회원님의 댓글에 답글을 남겼습니다.-" + event.getCommentContent();
+                "님이 회원님의 댓글에 답글을 남겼습니다.";
 
         Notification notification = Notification.builder()
                 .recipient(event.getParentsCommentAuthor())

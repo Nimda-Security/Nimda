@@ -10,6 +10,7 @@ import { hasRole, isAdmin } from '@/utils/jwt';
 import type { Board } from '../types';
 import CommentSection from '@/domains/Comment';
 import BoardLikeButton from './BoardLikeButton';
+import { Heart } from '@/components/icons/Heart';
 import './BoardDetail.css';
 
 function BoardDetailPage() {
@@ -153,18 +154,10 @@ function BoardDetailPage() {
             <div className="board-detail__stats">
               <span className="board-detail__stat-comments">
                 <MessageBox />
-                {board.likeCount ?? 0}
+                {board.commentCount ?? 0}
               </span>
               <span className="board-detail__stat-likes">
-               <img
-                   src={isLiked ? '/like-active.svg' : '/like-inactive.svg'}
-                   alt={isLiked ? "좋아요 취소" : "좋아요 하기"}
-                   style={{
-                     width: '14px',
-                     height: '12px',
-                     cursor: 'pointer'
-                   }}
-                 />
+                <Heart filled={isLiked} />
                 {likeCount}
               </span>
             </div>
