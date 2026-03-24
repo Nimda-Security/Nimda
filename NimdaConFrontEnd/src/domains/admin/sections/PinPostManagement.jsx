@@ -31,10 +31,18 @@ const PinPostManagement = ({
         >
           <span className="admin__post-category-name">
             {category.name}
-            {isParent && <span className="admin__post-category-count"> ({childCount})</span>}
+            {isParent && (
+              <span className="admin__post-category-count">
+                {' '}
+                ({childCount})
+              </span>
+            )}
           </span>
         </div>
-        {isParent && category.children?.map(child => renderPinPostCategoryItem(child, level + 1))}
+        {isParent &&
+          category.children?.map((child) =>
+            renderPinPostCategoryItem(child, level + 1)
+          )}
       </div>
     );
   };
@@ -52,13 +60,25 @@ const PinPostManagement = ({
           </div>
           <div className="admin__post-category-list">
             {categoriesLoading ? (
-              <div className="admin__empty" style={{ border: 'none', padding: '24px' }}>로딩 중...</div>
+              <div
+                className="admin__empty"
+                style={{ border: 'none', padding: '24px' }}
+              >
+                로딩 중...
+              </div>
             ) : activeCategoryTree.length > 0 ? (
-              activeCategoryTree.map(category => renderPinPostCategoryItem(category, 0))
+              activeCategoryTree.map((category) =>
+                renderPinPostCategoryItem(category, 0)
+              )
             ) : (
-              <div className="admin__empty" style={{ border: 'none', padding: '24px' }}>
+              <div
+                className="admin__empty"
+                style={{ border: 'none', padding: '24px' }}
+              >
                 <p style={{ marginBottom: 16 }}>카테고리가 없습니다.</p>
-                <button onClick={loadCategories} className="admin__btn">불러오기</button>
+                <button onClick={loadCategories} className="admin__btn">
+                  불러오기
+                </button>
               </div>
             )}
           </div>
@@ -69,13 +89,19 @@ const PinPostManagement = ({
           <div className="admin__header-row" style={{ marginBottom: '16px' }}>
             <h3 style={{ margin: 0 }}>
               {selectedPinPostCategoryId
-                ? findCategoryById(activeCategoryTree, selectedPinPostCategoryId)?.name || '게시글 목록'
+                ? findCategoryById(
+                    activeCategoryTree,
+                    selectedPinPostCategoryId
+                  )?.name || '게시글 목록'
                 : '카테고리를 선택하세요'}
             </h3>
             {selectedPinPostCategoryId && (
               <button
                 onClick={() => {
-                  const selectedCategory = findCategoryById(activeCategoryTree, selectedPinPostCategoryId);
+                  const selectedCategory = findCategoryById(
+                    activeCategoryTree,
+                    selectedPinPostCategoryId
+                  );
                   if (selectedCategory) {
                     loadPinPosts(selectedCategory.slug);
                   }
@@ -90,7 +116,9 @@ const PinPostManagement = ({
 
           {selectedPinPostCategoryId ? (
             pinPostsLoading ? (
-              <div className="admin__empty" style={{ border: 'none' }}>로딩 중...</div>
+              <div className="admin__empty" style={{ border: 'none' }}>
+                로딩 중...
+              </div>
             ) : pinPosts.length > 0 ? (
               <div className="admin__table-wrap">
                 <table className="admin__table">
@@ -109,16 +137,34 @@ const PinPostManagement = ({
                       <tr key={post.id}>
                         <td>{post.id}</td>
                         <td style={{ textAlign: 'left' }}>{post.title}</td>
-                        <td>{post.author?.nickname || '-'}</td>
                         <td>
-                          <span style={{
-                            color: post.pinned ? '#4CAF50' : '#999',
-                            fontWeight: post.pinned ? 'bold' : 'normal'
-                          }}>
+                          <div className="admin__author-cell">
+                            <img
+                              src={
+                                post.author?.profileImage ||
+                                '/default_user_profile.png'
+                              }
+                              alt=""
+                              className="admin__author-avatar"
+                            />
+                            <span>{post.author?.nickname || '-'}</span>
+                          </div>
+                        </td>
+                        <td>
+                          <span
+                            style={{
+                              color: post.pinned ? '#4CAF50' : '#999',
+                              fontWeight: post.pinned ? 'bold' : 'normal',
+                            }}
+                          >
                             {post.pinned ? '✓ 고정됨' : '고정 안됨'}
                           </span>
                         </td>
-                        <td>{post.createdAt ? new Date(post.createdAt).toLocaleDateString() : '-'}</td>
+                        <td>
+                          {post.createdAt
+                            ? new Date(post.createdAt).toLocaleDateString()
+                            : '-'}
+                        </td>
                         <td>
                           <div className="admin__actions">
                             <button
@@ -126,7 +172,11 @@ const PinPostManagement = ({
                                 e.stopPropagation();
                                 handleTogglePin(post.id);
                               }}
-                              className={post.pinned ? "admin__btn--reject" : "admin__btn--approve"}
+                              className={
+                                post.pinned
+                                  ? 'admin__btn--reject'
+                                  : 'admin__btn--approve'
+                              }
                             >
                               {post.pinned ? '고정 해제' : '고정'}
                             </button>
@@ -144,7 +194,10 @@ const PinPostManagement = ({
             )
           ) : (
             <div className="admin__empty">
-              <p>왼쪽에서 카테고리를 선택하면 해당 카테고리의 게시글 목록이 표시됩니다.</p>
+              <p>
+                왼쪽에서 카테고리를 선택하면 해당 카테고리의 게시글 목록이
+                표시됩니다.
+              </p>
             </div>
           )}
         </div>
