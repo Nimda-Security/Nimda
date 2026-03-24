@@ -101,7 +101,7 @@ const PopularPostsSection: React.FC = () => {
               <p className="home-popular__title">{post.title}</p>
               <div className="home-popular__comments">
                 <MessageBox />
-                <span className="home-popular__comments-count">{0}</span>
+                <span className="home-popular__comments-count">{post.commentCount ?? 0}</span>
               </div>
               <div className="home-popular__likes">
                 <Heart filled={true} />
