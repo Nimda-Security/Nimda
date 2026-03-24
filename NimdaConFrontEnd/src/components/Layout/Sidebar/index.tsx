@@ -263,7 +263,7 @@ const Sidebar: React.FC = () => {
                 <div key={visitor.id} className="sidebar-visitors__item">
                   <div className="sidebar-visitors__avatar">
                     <img 
-                      src={`https://api.dicebear.com/7.x/avataaars/svg?seed=${visitor.userName || 'guest'}`} 
+                      src={visitor.profileImageUrl || "/default_user_profile.png"} 
                       alt="avatar" 
                     />
                   </div>

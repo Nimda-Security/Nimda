@@ -3,6 +3,7 @@ package com.nimda.cite.comment.controller;
 import com.nimda.cite.comment.dto.*;
 import com.nimda.cite.comment.service.CommentService;
 import com.nimda.cite.common.response.ApiResponse;
+import com.nimda.cite.common.s3.S3Service;
 import com.nimda.cup.common.util.JwtUtil;
 import jakarta.validation.Valid;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -24,6 +25,29 @@ public class CommentController {
     @Autowired
     private JwtUtil jwtUtil;
 
+    @Autowired(required = false)
+    private S3Service s3Service;
+
+    private void resolveCommentProfileImages(List<CommentResponse> comments) {
+        if (s3Service == null || comments == null) return;
+        for (CommentResponse c : comments) {
+            String img = c.getAuthorProfileImage();
+            if (img != null && !img.isBlank() && !img.startsWith("http")) {
+                c.setAuthorProfileImage(s3Service.createPresignedGetUrl(img, 60));
+            }
+            resolveCommentProfileImages(c.getChildren());
+        }
+    }
+
+    private void resolveCommentProfileImage(CommentResponse c) {
+        if (s3Service == null || c == null) return;
+        String img = c.getAuthorProfileImage();
+        if (img != null && !img.isBlank() && !img.startsWith("http")) {
+            c.setAuthorProfileImage(s3Service.createPresignedGetUrl(img, 60));
+        }
+        resolveCommentProfileImages(c.getChildren());
+    }
+
     /**
      * 특정 게시글 댓글 생성
      * POST /api/board/{boardId}/comments
@@ -37,6 +61,7 @@ public class CommentController {
         try {
             Long userId = jwtUtil.extractUserId(resolveToken(authHeader));
             CommentResponse response = commentService.createComment(boardId, request, userId);
+            resolveCommentProfileImage(response);
             return ApiResponse.ok("댓글이 성공적으로 작성되었습니다.",
                     Map.of("comment", response)).toResponse(HttpStatus.CREATED);
 
@@ -64,8 +89,10 @@ public class CommentController {
 
             boolean isAdmin = authorities.contains("ROLE_ADMIN");
             // 댓글 조회
+            List<CommentResponse> comments = commentService.getComments(boardId, userId, isAdmin);
+            resolveCommentProfileImages(comments);
             return ApiResponse.ok("댓글을 성공적으로 조회했습니다.",
-                    Map.of("comments", commentService.getComments(boardId, userId, isAdmin))).toResponse();
+                    Map.of("comments", comments)).toResponse();
 
         } catch (Exception e) {
             return ApiResponse.fail("댓글 조회 중 오류가 발생했습니다: " + e.getMessage())
@@ -106,6 +133,7 @@ public class CommentController {
         try {
             Long userId = jwtUtil.extractUserId(resolveToken(authHeader));
             CommentResponse response = commentService.updateComment(commentId, request, userId);
+            resolveCommentProfileImage(response);
             return ApiResponse.ok("댓글을 성공적으로 수정했습니다.",
                     Map.of("comment", response)).toResponse();
 
@@ -128,6 +156,7 @@ public class CommentController {
     ) {
         try {
             CommentResponse response = commentService.updateCommentStatus(commentId, request);
+            resolveCommentProfileImage(response);
             return ApiResponse.ok("댓글을 성공적으로 숨겼습니다.",
                     Map.of("comment", response)).toResponse();
 

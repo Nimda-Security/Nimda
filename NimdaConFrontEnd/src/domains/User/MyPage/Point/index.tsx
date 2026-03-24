@@ -97,7 +97,7 @@ function MyPagePoint() {
   const userInfo = {
     name: userProfile.nickname,
     id: userProfile.userId,
-    profileImage: userProfile.profileImage || `https://api.dicebear.com/7.x/avataaars/svg?seed=${userProfile.nickname}`,
+    profileImage: userProfile.profileImage || "/default_user_profile.png",
     stats: [
       { label: "방문", value: String(stats.visitCount) },
       { label: "작성글", value: String(stats.postCount) },

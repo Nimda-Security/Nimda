@@ -5,8 +5,10 @@ import com.nimda.cite.attendance.entity.Attendance;
 import com.nimda.cite.attendance.entity.AttendanceLog;
 import com.nimda.cite.attendance.service.AttendanceService;
 import com.nimda.cite.common.response.ApiResponse;
+import com.nimda.cite.common.s3.S3Service;
 import com.nimda.cup.common.util.JwtUtil;
 import lombok.RequiredArgsConstructor;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -22,6 +24,9 @@ public class AttendanceController {
 
     private final AttendanceService attendanceService;
     private final JwtUtil jwtUtil;
+
+    @Autowired(required = false)
+    private S3Service s3Service;
     /**
      * [POST] 출석 체크 실행
      */
@@ -45,6 +50,17 @@ public class AttendanceController {
         List<TodayVisitorResponse> dto = visitors.stream()
                 .map(TodayVisitorResponse::from)
                 .toList();
+
+        // S3 키 → Presigned URL 변환
+        if (s3Service != null) {
+            for (TodayVisitorResponse v : dto) {
+                String img = v.getProfileImageUrl();
+                if (img != null && !img.isBlank() && !img.startsWith("http")) {
+                    v.setProfileImageUrl(s3Service.createPresignedGetUrl(img, 60));
+                }
+            }
+        }
+
         return ApiResponse.ok("출석자 조회에 성공했습니다", dto).toResponse();
     }
 

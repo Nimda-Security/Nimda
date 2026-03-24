@@ -144,9 +144,12 @@ function BoardDetailPage() {
           <h1 className="board-detail__title">{board.title}</h1>
 
           <div className="board-detail__meta">
-            <div className="board-detail__avatar-placeholder">
-              {board.author?.nickname?.charAt(0) ?? '?'}
-            </div>
+            <img
+              src={board.author?.profileImage || "/default_user_profile.png"}
+              alt=""
+              className="board-detail__avatar"
+              style={{ width: 32, height: 32, borderRadius: '50%', objectFit: 'cover' }}
+            />
             <span className="board-detail__author">{board.author?.nickname ?? '알 수 없음'}</span>
             <span className="board-detail__date">{fmtDate(board.createdAt)}</span>
             <span className="board-detail__date">{fmtTime(board.createdAt)}</span>

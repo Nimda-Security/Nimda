@@ -24,12 +24,13 @@ interface CommentSectionProps {
   isAdmin?: boolean;
 }
 
-function CommentAvatar({ src, name }: { src: string | null; name: string }) {
-  if (src) {
-    return <img src={src} alt="" className="comment-item__avatar" />;
-  }
+function CommentAvatar({ src }: { src: string | null; name: string }) {
   return (
-    <div className="comment-item__avatar-placeholder">{name.charAt(0)}</div>
+    <img
+      src={src || "/default_user_profile.png"}
+      alt=""
+      className="comment-item__avatar"
+    />
   );
 }
 function CommentInput({ 
