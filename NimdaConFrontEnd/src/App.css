@@ -334,7 +334,11 @@ body {
 }
 
 .sidebar-section__item:hover {
-  background-color: var(--color-gray-100);
+  color: var(--color-pink);
+}
+.sidebar-section__item--active {
+  color: var(--color-pink);
+  font-weight: 700;
 }
 
 .sidebar-section__link {
@@ -440,6 +444,7 @@ body {
 /* 오늘 방문자 */
 .sidebar-visitors {
   padding: 0; /* 세그먼트 버튼이 꽉 차도록 패딩 제거 */
+  margin-top: -12px;
 }
 
 /* 오늘 방문자 / 주간랭킹 탭 (세그먼트 스타일) */
