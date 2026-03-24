@@ -46,6 +46,7 @@ export interface Board {
   author: BoardAuthor;
   views: number;
   likeCount?: number; // 좋아요 개수 (선택적)
+  commentCount?: number; // 댓글 개수 (선택적)
   pinned: boolean;
   tag?: string | null; // 게시글 태그 (예: "필독", "공지", "가입인사")
   filename?: string | null;
