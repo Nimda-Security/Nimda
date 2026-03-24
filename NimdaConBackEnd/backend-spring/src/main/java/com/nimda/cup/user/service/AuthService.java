@@ -164,6 +164,17 @@ public class AuthService {
     }
 
     /**
+     * 프로필 이미지 변경 (S3 키 저장)
+     */
+    @Transactional
+    public User updateProfileImage(Long userId, String profileImageKey) {
+        User user = userRepository.findById(userId)
+                .orElseThrow(() -> new IllegalArgumentException("존재하지 않는 사용자입니다."));
+        user.setProfileImage(profileImageKey);
+        return user;
+    }
+
+    /**
      * 프로필 정보 수정 (닉네임, 백준 ID, 생년월일, 학과, 학번)
      * null인 필드는 수정하지 않음 (부분 업데이트)
      */

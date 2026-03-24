@@ -12,7 +12,7 @@ import LikedPostsContent from "./Components/LikedPostsContent";
 import { getUserBalance } from "@/api/point";
 import { getMyTotalAttendanceCount } from "@/api/attendance";
 import { getPushedBoardLikesCount } from "@/api/boardLike";
-import { getCurrentUser } from "@/api/auth";
+import { getCurrentUser, getMyPageInfo } from "@/api/auth";
 import { getMyBoardCountAPI } from '@/api/board';
 import { getMyCommentCountAPI } from '@/api/comment';
 
@@ -42,6 +42,8 @@ function MyPagePoint() {
     const fetchAllData = async () => {
       try {
         setLoading(true);
+
+        // localStorage에서 기본값 설정
         const currentUser = getCurrentUser();
         if (currentUser) {
           setUserProfile({
@@ -52,13 +54,25 @@ function MyPagePoint() {
           });
         }
 
-        const [balanceRes, attendanceCount, boardLikeCount, myPostCount, myCommentCount] = await Promise.all([
+        const [balanceRes, attendanceCount, boardLikeCount, myPostCount, myCommentCount, myPageRes] = await Promise.all([
           getUserBalance(),
           getMyTotalAttendanceCount(),
           getPushedBoardLikesCount(),
           getMyBoardCountAPI(),
           getMyCommentCountAPI(),
+          getMyPageInfo(),
         ]);
+
+        // 서버에서 받은 프로필 정보로 갱신 (S3 Presigned URL 포함)
+        if (myPageRes.success && myPageRes.data) {
+          const d = myPageRes.data as Record<string, unknown>;
+          setUserProfile({
+            nickname: (d.nickname as string) || currentUser?.nickname || "User",
+            userId: (d.userId as string) || currentUser?.userId || "",
+            email: (d.email as string) || currentUser?.email || "",
+            profileImage: (d.profileImage as string) || "",
+          });
+        }
 
         if (balanceRes && balanceRes.success) {
           const amount = balanceRes.data?.totalAmount ?? balanceRes.currentBalance ?? 0;
@@ -94,6 +108,10 @@ function MyPagePoint() {
     ],
   };
 
+  const handleProfileImageChange = (newUrl: string) => {
+    setUserProfile((prev) => ({ ...prev, profileImage: newUrl }));
+  };
+
   return (
     <div className="min-h-screen bg-[#F5F5F5] font-['Pretendard',sans-serif] text-[#0c0c0c] flex flex-col">
       <Header />
@@ -106,6 +124,7 @@ function MyPagePoint() {
             userInfo={userInfo}
             activeTab={activeTab}
             setActiveTab={setActiveTab}
+            onProfileImageChange={handleProfileImageChange}
           />
 
           {/* 2. 💡 강제 간격 조정 (mt-6 대신 독립적인 div로 24px 확보) */}

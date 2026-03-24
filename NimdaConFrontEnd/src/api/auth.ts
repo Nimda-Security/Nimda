@@ -375,3 +375,55 @@ export const updateProfileAPI = async (
     };
   }
 };
+
+/**
+ * 프로필 이미지 변경 API (S3 키 전달)
+ */
+export const updateProfileImageAPI = async (
+  profileImageKey: string
+): Promise<{ success: boolean; message: string; profileImageUrl?: string }> => {
+  try {
+    const token = getAuthToken();
+    if (!token) {
+      return { success: false, message: "로그인이 필요합니다." };
+    }
+
+    const response = await fetch(`${API_BASE_URL}/auth/profile-image`, {
+      method: "PUT",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${token}`,
+      },
+      body: JSON.stringify({ profileImageKey }),
+    });
+
+    let result;
+    try {
+      result = await response.json();
+    } catch {
+      return {
+        success: false,
+        message: `서버 오류 (${response.status})`,
+      };
+    }
+
+    if (response.ok && result.success) {
+      return {
+        success: true,
+        message: result.message || "프로필 이미지가 변경되었습니다.",
+        profileImageUrl: result.profileImageUrl,
+      };
+    } else {
+      return {
+        success: false,
+        message: result.message || "프로필 이미지 변경에 실패했습니다.",
+      };
+    }
+  } catch (error) {
+    console.error("프로필 이미지 변경 API 오류:", error);
+    return {
+      success: false,
+      message: "서버에 연결할 수 없습니다.",
+    };
+  }
+};

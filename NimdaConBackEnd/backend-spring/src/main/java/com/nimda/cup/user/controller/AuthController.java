@@ -10,6 +10,7 @@ import com.nimda.cup.user.entity.User;
 import com.nimda.cup.user.exception.UserNotApprovedException;
 import com.nimda.cup.user.security.CustomUserDetails;
 import com.nimda.cup.user.service.AuthService;
+import com.nimda.cite.common.s3.S3Service;
 import jakarta.validation.Valid;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
@@ -27,6 +28,9 @@ public class AuthController {
 
     @Autowired
     private AuthService authService;
+
+    @Autowired(required = false)
+    private S3Service s3Service;
 
     /**
      * 로그인
@@ -111,6 +115,13 @@ public class AuthController {
             // CustomUserDetails에서 User 엔터티 추출
             User user = customUserDetails.getUser();
 
+            // profileImage가 S3 키라면 Presigned GET URL로 변환
+            String profileImageUrl = user.getProfileImage();
+            if (s3Service != null && profileImageUrl != null && !profileImageUrl.isBlank()
+                    && !profileImageUrl.startsWith("http")) {
+                profileImageUrl = s3Service.createPresignedGetUrl(profileImageUrl, 60);
+            }
+
             // DTO로 변환 (민감 정보 제외)
             MyPageResponseDTO response = MyPageResponseDTO.builder()
                     .id(user.getId())
@@ -124,7 +135,7 @@ public class AuthController {
                     .bojId(user.getBojId())
                     .birth(user.getBirth())
                     .studentNum(user.getStudentNum())
-                    .profileImage(user.getProfileImage())
+                    .profileImage(profileImageUrl)
                     .createdAt(user.getCreatedAt())
                     .updatedAt(user.getUpdatedAt())
                     .emailHide(user.isEmailHide())
@@ -188,6 +199,47 @@ public class AuthController {
         } catch (Exception e) {
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
                     .body(Map.of("message", "프로필 수정 실패: " + e.getMessage()));
+        }
+    }
+
+    /**
+     * 프로필 이미지 변경
+     * 클라이언트가 S3에 업로드 완료 후 S3 키를 전달하면 User.profileImage에 저장
+     */
+    @PutMapping("/profile-image")
+    public ResponseEntity<?> updateProfileImage(
+            @AuthenticationPrincipal CustomUserDetails customUserDetails,
+            @RequestBody Map<String, String> request) {
+        try {
+            if (customUserDetails == null) {
+                return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
+                        .body(Map.of("message", "인증이 필요합니다."));
+            }
+
+            String s3Key = request.get("profileImageKey");
+            if (s3Key == null || s3Key.isBlank()) {
+                return ResponseEntity.status(HttpStatus.BAD_REQUEST)
+                        .body(Map.of("success", false, "message", "프로필 이미지 키가 필요합니다."));
+            }
+
+            User user = customUserDetails.getUser();
+            User updated = authService.updateProfileImage(user.getId(), s3Key);
+
+            // Presigned GET URL 생성 (60분 유효)
+            String imageUrl = null;
+            if (s3Service != null && updated.getProfileImage() != null) {
+                imageUrl = s3Service.createPresignedGetUrl(updated.getProfileImage(), 60);
+            }
+
+            return ResponseEntity.ok(Map.of(
+                    "success", true,
+                    "message", "프로필 이미지가 변경되었습니다.",
+                    "profileImageUrl", imageUrl != null ? imageUrl : "",
+                    "profileImageKey", updated.getProfileImage()));
+
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body(Map.of("success", false, "message", "프로필 이미지 변경 실패: " + e.getMessage()));
         }
     }
 
