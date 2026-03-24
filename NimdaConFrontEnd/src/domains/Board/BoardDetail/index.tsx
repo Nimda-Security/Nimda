@@ -145,7 +145,7 @@ function BoardDetailPage() {
 
           <div className="board-detail__meta">
             <img
-              src={board.author?.profileImage || "/default_user_profile.png"}
+              src="/default_user_profile.png"
               alt=""
               className="board-detail__avatar"
               style={{ width: 32, height: 32, borderRadius: '50%', objectFit: 'cover' }}
@@ -175,7 +175,7 @@ function BoardDetailPage() {
         <hr className="board-detail__divider" />
 
         {/* Body */}
-        <div className="board-detail__body">{board.content}</div>
+        <div className="board-detail__body" dangerouslySetInnerHTML={{ __html: board.content }} />
 
         {/* S3·Attachment 연동 첨부 목록 (상세 API board.attachments) */}
         {board.attachments && board.attachments.length > 0 && (

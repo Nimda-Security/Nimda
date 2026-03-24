@@ -3,11 +3,13 @@ package com.nimda.cite.board.controller;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.nimda.cite.attachment.service.AttachmentService;
+import com.nimda.cite.board.dto.BoardDeleteRequest;
 import com.nimda.cite.board.dto.BoardListResponseDTO;
 import com.nimda.cite.board.dto.BoardResponseDTO;
 import com.nimda.cite.board.dto.CategoryResponseDTO;
 import com.nimda.cite.board.entity.Board;
 import com.nimda.cite.board.entity.Category;
+import com.nimda.cite.board.enums.BoardStatus;
 import com.nimda.cite.board.repository.CategoryRepository;
 import com.nimda.cite.board.service.BoardService;
 import com.nimda.cite.comment.enums.STATUS;
@@ -383,6 +385,11 @@ public class BoardController {
         try {
             Board board = boardService.boardView(id);
 
+            // 삭제된 게시글인 경우
+            if (board.getStatus() == BoardStatus.DELETED) {
+                return ApiResponse.ok("삭제된 게시글입니다.", Map.of("deleted", true)).toResponse();
+            }
+
             // "카르텔" 카테고리 접근 권한 확인
             if (board.getCategory() != null && isCartelCategory(board.getCategory())) {
                 User user = extractUserFromHeader(authHeader);
@@ -675,14 +682,14 @@ public class BoardController {
     @DeleteMapping("/my/boards")
     public ResponseEntity<?> deleteMyBoards(
             @RequestHeader(value = "Authorization", required = false) String authHeader,
-            @RequestBody Map<String, List<Long>> body) {
+            @RequestBody BoardDeleteRequest request) {
         try {
             User currentUser = extractUser(authHeader);
             if (currentUser == null) {
                 return ApiResponse.fail("로그인이 필요합니다.").toResponse(HttpStatus.UNAUTHORIZED);
             }
 
-            List<Long> boardIds = body.get("boardIds");
+            List<Long> boardIds = request.getBoardIds();
             if (boardIds == null || boardIds.isEmpty()) {
                 return ApiResponse.fail("삭제할 게시글을 선택해주세요.").toResponse(HttpStatus.BAD_REQUEST);
             }

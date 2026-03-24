@@ -1162,6 +1162,92 @@ body {
   flex-shrink: 0;
 }
 
+/* ── 툴바 드롭다운 ── */
+.bw-tool-dropdown-wrap {
+  position: relative;
+}
+
+.bw-tool-dropdown {
+  position: absolute;
+  top: 100%;
+  left: 0;
+  margin-top: 6px;
+  background: #fff;
+  border: 1px solid #e5e5e5;
+  border-radius: 8px;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.1);
+  z-index: 20;
+  min-width: 120px;
+  overflow: hidden;
+}
+
+.bw-tool-dropdown-item {
+  display: block;
+  width: 100%;
+  padding: 8px 14px;
+  background: none;
+  border: none;
+  text-align: left;
+  cursor: pointer;
+  color: #0c0c0c;
+  font-family: "Pretendard", sans-serif;
+  white-space: nowrap;
+  transition: background 0.12s;
+}
+
+.bw-tool-dropdown-item:hover {
+  background: #f5f5f5;
+}
+
+/* ── 색상 팔레트 ── */
+.bw-color-grid {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  padding: 10px;
+  min-width: 160px;
+}
+
+.bw-color-swatch {
+  width: 24px;
+  height: 24px;
+  border-radius: 50%;
+  border: 2px solid #e5e5e5;
+  cursor: pointer;
+  transition: transform 0.12s, border-color 0.12s;
+  padding: 0;
+}
+
+.bw-color-swatch:hover {
+  transform: scale(1.15);
+  border-color: #0c0c0c;
+}
+
+.bw-color-custom {
+  width: 100%;
+  padding: 6px 0;
+  margin-top: 4px;
+  background: none;
+  border: none;
+  border-top: 1px solid #e5e5e5;
+  font-size: 12px;
+  color: #525252;
+  cursor: pointer;
+  font-family: "Pretendard", sans-serif;
+}
+
+.bw-color-custom:hover {
+  color: #0c0c0c;
+}
+
+.bw-hidden-input {
+  position: absolute;
+  width: 0;
+  height: 0;
+  opacity: 0;
+  pointer-events: none;
+}
+
 /* ── 내용 ── */
 .bw-content-input {
   width: 100%;
@@ -1181,6 +1267,12 @@ body {
 
 .bw-content-input::placeholder {
   color: #bcbcbc;
+}
+
+.bw-content-input:empty::before {
+  content: attr(data-placeholder);
+  color: #bcbcbc;
+  pointer-events: none;
 }
 
 /* ── 카테고리(태그) 섹션 ── */
