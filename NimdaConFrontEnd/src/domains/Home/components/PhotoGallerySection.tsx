@@ -2,27 +2,26 @@ import React, { useState, useEffect } from "react";
 import { Link } from "react-router-dom";
 import { Heart } from "@/components/icons/Heart";
 import { getBoardListAPI, getBoardDetailAPI } from "@/api/board";
+import { getAttachmentPresignedUrl } from "@/api/attachments";
 import type { Board } from "@/domains/Board/types";
 
 const IMAGE_EXTENSIONS = ["jpg", "jpeg", "png", "gif", "webp", "bmp", "svg"];
 
 /**
- * 첨부파일에서 첫 번째 이미지의 download URL 추출
+ * 첨부파일에서 첫 번째 이미지 첨부의 ID 추출
  */
-const getFirstImageAttachmentUrl = (board: Board): string | null => {
+const getFirstImageAttachmentId = (board: Board): number | null => {
   if (!board.attachments || board.attachments.length === 0) return null;
   
   for (const att of board.attachments) {
     if (att.originFilename) {
       const ext = att.originFilename.split(".").pop()?.toLowerCase() || "";
       if (IMAGE_EXTENSIONS.includes(ext)) {
-        return att.downloadUrl || `/api/cite/attachments/${att.id}/download?disposition=inline`;
+        return att.id;
       }
     }
-    // originFilename이 없으면 downloadUrl이 있으면 일단 사용
-    if (att.downloadUrl) {
-      return att.downloadUrl;
-    }
+    // originFilename이 없으면 첫 번째 첨부 사용
+    return att.id;
   }
   return null;
 };
@@ -72,15 +71,19 @@ const PhotoGallerySection: React.FC = () => {
             setCategorySlug(result.category.slug);
           }
 
-          // 각 게시글의 상세를 병렬로 조회하여 첨부 이미지 URL 확보
+          // 각 게시글의 상세를 병렬로 조회하여 첨부 이미지의 presigned URL 확보
           const thumbMap: Record<number, string | null> = {};
           await Promise.all(
             result.posts.map(async (post) => {
               try {
                 const detail = await getBoardDetailAPI(post.id);
                 if (detail.success && "board" in detail) {
-                  const attUrl = getFirstImageAttachmentUrl(detail.board);
-                  thumbMap[post.id] = attUrl;
+                  const attId = getFirstImageAttachmentId(detail.board);
+                  if (attId) {
+                    thumbMap[post.id] = await getAttachmentPresignedUrl(attId);
+                  } else {
+                    thumbMap[post.id] = null;
+                  }
                 } else {
                   thumbMap[post.id] = null;
                 }
