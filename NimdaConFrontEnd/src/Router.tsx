@@ -22,6 +22,7 @@ import BoardListPage from "@/domains/Board/BoardList";
 import BoardDetailPage from "@/domains/Board/BoardDetail";
 import BoardWritePage from "@/domains/Board/BoardWrite";
 import BoardEditPage from "@/domains/Board/BoardEdit";
+import PhotoGalleryBoard from "@/domains/Board/PhotoGalleryBoard";
 
 // [추가] 관리자 마일리지 지급 페이지 컴포넌트 임포트
 import AdminMileage from "@/domains/admin/AdminMileage.jsx";
@@ -70,6 +71,8 @@ const Router = () => {
         />
 
         {/* 게시판 관련 경로 */}
+        {/* 사진첩은 갤러리 뷰 전용 컴포넌트 사용 */}
+        <Route path="/board/picture-board" element={<PhotoGalleryBoard />} />
         <Route path="/board/:boardType" element={<BoardListPage />} />
         <Route path="/board/:boardType/:id" element={<BoardDetailPage />} />
         <Route path="/board/:boardType/write" element={<BoardWritePage />} />
