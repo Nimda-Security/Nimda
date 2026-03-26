@@ -323,6 +323,7 @@ function BoardListPage({ slug: propSlug }: BoardListPageProps) {
         {/* 헤더: 제목 + 글쓰기 버튼 */}
         <div className="board-list__header">
           <h1 className="board-list__title">{categoryName}</h1>
+          {canWrite && (
           <button className="board-list__write-btn" onClick={handleWriteClick}>
             <div className="board-list__write-icon-box">
               <svg
@@ -340,6 +341,7 @@ function BoardListPage({ slug: propSlug }: BoardListPageProps) {
               </svg>
             </div>
           </button>
+          )}
         </div>
 
         {/* 태그 필터 - 전체는 항상 표시 */}
