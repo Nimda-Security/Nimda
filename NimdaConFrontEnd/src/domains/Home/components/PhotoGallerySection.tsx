@@ -7,14 +7,6 @@ import type { Board } from "@/domains/Board/types";
 const IMAGE_EXTENSIONS = ["jpg", "jpeg", "png", "gif", "webp", "bmp", "svg"];
 
 /**
- * 게시글 content(HTML)에서 첫 번째 <img> src를 추출
- */
-const extractFirstImage = (html: string): string | null => {
-  const match = html.match(/<img[^>]+src=["']([^"']+)["']/i);
-  return match ? match[1] : null;
-};
-
-/**
  * 첨부파일에서 첫 번째 이미지의 download URL 추출
  */
 const getFirstImageAttachmentUrl = (board: Board): string | null => {
@@ -84,14 +76,6 @@ const PhotoGallerySection: React.FC = () => {
           const thumbMap: Record<number, string | null> = {};
           await Promise.all(
             result.posts.map(async (post) => {
-              // 1순위: content HTML 내 인라인 이미지
-              const inlineImg = extractFirstImage(post.content);
-              if (inlineImg) {
-                thumbMap[post.id] = inlineImg;
-                return;
-              }
-
-              // 2순위: 상세 API에서 첨부파일 이미지 가져오기
               try {
                 const detail = await getBoardDetailAPI(post.id);
                 if (detail.success && "board" in detail) {
