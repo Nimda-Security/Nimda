@@ -1,45 +1,122 @@
-import React from "react";
+import React, { useState, useEffect } from "react";
+import { Link } from "react-router-dom";
 import { Heart } from "@/components/icons/Heart";
+import { getBoardListAPI } from "@/api/board";
+import type { Board } from "@/domains/Board/types";
 
-interface PhotoItem {
-  id: number;
-  title: string;
-  likes: number;
-  date: string;
-  bgColor: string;
-}
+/**
+ * 게시글 content(HTML)에서 첫 번째 <img> src를 추출
+ */
+const extractFirstImage = (html: string): string | null => {
+  const match = html.match(/<img[^>]+src=["']([^"']+)["']/i);
+  return match ? match[1] : null;
+};
 
-const photoData: PhotoItem[] = [
-  { id: 1, title: "제 친필 사인을 뿌립니다", likes: 7, date: "07:01", bgColor: "#e8d5c4" },
-  { id: 2, title: "오늘 두쫀쿠 먹엇어요", likes: 11, date: "02.07", bgColor: "#c4d4e8" },
-  { id: 3, title: "소프트 2-2 시간표 평가점여 ㅎ", likes: 1, date: "25.08.25", bgColor: "#d4e8c4" },
-  { id: 4, title: "25년 MT 사진입니당", likes: 30, date: "25.06.30", bgColor: "#e8c4d4" },
-];
+/**
+ * 날짜 포맷 (오늘이면 HH:MM, 올해면 MM.DD, 아니면 YY.MM.DD)
+ */
+const formatDate = (dateStr: string): string => {
+  const date = new Date(dateStr);
+  const now = new Date();
+
+  const isToday =
+    date.getFullYear() === now.getFullYear() &&
+    date.getMonth() === now.getMonth() &&
+    date.getDate() === now.getDate();
+
+  if (isToday) {
+    return `${String(date.getHours()).padStart(2, "0")}:${String(date.getMinutes()).padStart(2, "0")}`;
+  }
+
+  if (date.getFullYear() === now.getFullYear()) {
+    return `${String(date.getMonth() + 1).padStart(2, "0")}.${String(date.getDate()).padStart(2, "0")}`;
+  }
+
+  return `${String(date.getFullYear()).slice(2)}.${String(date.getMonth() + 1).padStart(2, "0")}.${String(date.getDate()).padStart(2, "0")}`;
+};
 
 const PhotoGallerySection: React.FC = () => {
+  const [posts, setPosts] = useState<Board[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [categorySlug, setCategorySlug] = useState("사진첩");
+
+  useEffect(() => {
+    const loadPhotoPosts = async () => {
+      try {
+        const result = await getBoardListAPI({
+          slug: "사진첩",
+          page: 0,
+          size: 4,
+          sort: "createdAt,desc",
+        });
+
+        if (result.success) {
+          setPosts(result.posts);
+          if (result.category?.slug) {
+            setCategorySlug(result.category.slug);
+          }
+        }
+      } catch (error) {
+        console.error("사진첩 게시글 로드 실패:", error);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    loadPhotoPosts();
+  }, []);
+
   return (
     <section className="home-gallery">
       <h2 className="home-section-title">사진첩</h2>
       <div className="home-gallery__divider" />
-      <div className="home-gallery__grid">
-        {photoData.map((photo) => (
-          <div key={photo.id} className="home-gallery__card">
-            <div
-              className="home-gallery__image"
-              style={{ backgroundColor: photo.bgColor }}
-            />
-            <p className="home-gallery__card-title">{photo.title}</p>
-            <div className="home-gallery__card-meta">
-              <div className="home-gallery__card-likes">
-                <Heart filled={false} />
-                <span>{photo.likes}</span>
-              </div>
-              <span className="home-gallery__card-separator">|</span>
-              <span className="home-gallery__card-date">{photo.date}</span>
-            </div>
-          </div>
-        ))}
-      </div>
+      {loading ? (
+        <div style={{ padding: "16px", textAlign: "center", color: "#999", fontSize: "14px" }}>
+          로딩 중...
+        </div>
+      ) : posts.length > 0 ? (
+        <div className="home-gallery__grid">
+          {posts.map((post) => {
+            const thumbnail = extractFirstImage(post.content);
+            return (
+              <Link
+                key={post.id}
+                to={`/board/${categorySlug}/${post.id}`}
+                className="home-gallery__card"
+                style={{ textDecoration: "none", color: "inherit" }}
+              >
+                {thumbnail ? (
+                  <img
+                    src={thumbnail}
+                    alt={post.title}
+                    className="home-gallery__image"
+                  />
+                ) : (
+                  <div
+                    className="home-gallery__image"
+                    style={{ backgroundColor: "#e8e8e8" }}
+                  />
+                )}
+                <p className="home-gallery__card-title">{post.title}</p>
+                <div className="home-gallery__card-meta">
+                  <div className="home-gallery__card-likes">
+                    <Heart filled={false} />
+                    <span>{post.likeCount ?? 0}</span>
+                  </div>
+                  <span className="home-gallery__card-separator">|</span>
+                  <span className="home-gallery__card-date">
+                    {formatDate(post.createdAt)}
+                  </span>
+                </div>
+              </Link>
+            );
+          })}
+        </div>
+      ) : (
+        <div style={{ padding: "16px", textAlign: "center", color: "#999", fontSize: "14px" }}>
+          사진첩 게시글이 없습니다.
+        </div>
+      )}
     </section>
   );
 };
