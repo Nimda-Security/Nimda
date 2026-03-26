@@ -96,6 +96,8 @@ public class SecurityConfig {
                         .requestMatchers(HttpMethod.GET, "/api/cite/point/user/**").permitAll()
                         .requestMatchers("/api/like/board/**").authenticated()
                         .requestMatchers("/api/cite/attendance/**").authenticated()
+                        // 배너용 이미지 presigned URL은 비로그인도 접근 가능
+                        .requestMatchers(HttpMethod.GET, "/api/cite/attachments/*/download-url").permitAll()
                         .requestMatchers("/api/cite/attachments/**").authenticated()
                         .requestMatchers("/api/cite/point/**").authenticated()
 

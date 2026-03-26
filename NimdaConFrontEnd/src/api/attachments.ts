@@ -171,11 +171,13 @@ export const getAttachmentPresignedUrl = async (
   attachmentId: number
 ): Promise<string | null> => {
   const token = localStorage.getItem('authToken');
-  if (!token) return null;
 
   try {
+    const headers: Record<string, string> = {};
+    if (token) headers['Authorization'] = `Bearer ${token}`;
+
     const response = await fetch(`${ATTACHMENTS_BASE}/${attachmentId}/download-url`, {
-      headers: { Authorization: `Bearer ${token}` },
+      headers,
     });
     const result = await parseJsonSafe(response);
     if (!response.ok || !result?.success) return null;
