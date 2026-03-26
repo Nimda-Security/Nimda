@@ -446,7 +446,7 @@ function BoardListPage({ slug: propSlug }: BoardListPageProps) {
               </div>
             ))}
 
-            {/* ===== 현재 카테고리 고정글 - "고정", 회색 배경 ===== */}
+            {/* ===== 현재 카테고리 고정글 - 공지사항이면 "필독", 그 외 "고정", 회색 배경 ===== */}
             {pinnedPosts.map((post) => (
               <div
                 key={`pinned-${post.id}`}
@@ -459,8 +459,8 @@ function BoardListPage({ slug: propSlug }: BoardListPageProps) {
                   </span>
                 )}
                 {!post.tag && (
-                  <span className="board-list__tag board-list__tag--notice">
-                    고정
+                  <span className={`board-list__tag ${isNoticeCategory ? 'board-list__tag--red' : 'board-list__tag--notice'}`}>
+                    {isNoticeCategory ? '필독' : '고정'}
                   </span>
                 )}
                 <span className="board-list__post-title board-list__post-title--bold">
