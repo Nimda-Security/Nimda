@@ -238,6 +238,9 @@
 }
 
 .board-list__comments {
+  display: flex;
+  align-items: center;
+  gap: 2px;
   font-size: 12px;
   font-weight: 700;
   color: var(--color-blue);

@@ -6,6 +6,7 @@ import { getAllCategoriesAPI } from '@/api/category';
 import type { Board, Category } from '../types';
 import { CATEGORY_LABELS } from '../constants';
 import { Heart } from '@/components/icons/Heart';
+import { MessageBox } from '@/components/icons/MessageBox';
 import { isAdmin, hasRole } from '@/utils/jwt';
 import './BoardList.css';
 
@@ -427,6 +428,11 @@ function BoardListPage({ slug: propSlug }: BoardListPageProps) {
                   <span className="board-list__author">
                     {post.author?.nickname || '익명'}
                   </span>
+                  {post.commentCount !== undefined && post.commentCount > 0 && (
+                    <span className="board-list__comments">
+                      <MessageBox /> {post.commentCount}
+                    </span>
+                  )}
                   {post.likeCount !== undefined && post.likeCount > 0 && (
                     <span className="board-list__likes">
                       <Heart filled /> {post.likeCount}
@@ -473,6 +479,11 @@ function BoardListPage({ slug: propSlug }: BoardListPageProps) {
                   </span>
                   {post.views > 0 && (
                     <span className="board-list__views">조회 {post.views}</span>
+                  )}
+                  {post.commentCount !== undefined && post.commentCount > 0 && (
+                    <span className="board-list__comments">
+                      <MessageBox /> {post.commentCount}
+                    </span>
                   )}
                   {post.likeCount !== undefined && post.likeCount > 0 && (
                     <span className="board-list__likes">
@@ -533,6 +544,11 @@ function BoardListPage({ slug: propSlug }: BoardListPageProps) {
                     {post.views > 0 && (
                       <span className="board-list__views">
                         조회 {post.views}
+                      </span>
+                    )}
+                    {post.commentCount !== undefined && post.commentCount > 0 && (
+                      <span className="board-list__comments">
+                        <MessageBox /> {post.commentCount}
                       </span>
                     )}
                     {post.likeCount !== undefined && post.likeCount > 0 && (
