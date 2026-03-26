@@ -152,7 +152,7 @@ const Sidebar: React.FC = () => {
           <img
             src={profileImage || "/default_user_profile.png"}
             alt="프로필"
-            style={{ width: '42px', height: '42px', borderRadius: '50%', objectFit: 'cover' }}
+            style={{ width: '100%', height: '100%', objectFit: 'cover' }}
           />
         </div>
         <p className="sidebar-profile__name">
