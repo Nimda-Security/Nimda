@@ -27,7 +27,7 @@ interface CommentSectionProps {
 function CommentAvatar({ src }: { src: string | null; name: string }) {
   return (
     <img
-      src="/default_user_profile.png"
+      src={src || "/default_user_profile.png"}
       alt=""
       className="comment-item__avatar"
     />

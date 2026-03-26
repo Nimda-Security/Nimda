@@ -145,7 +145,7 @@ function BoardDetailPage() {
 
           <div className="board-detail__meta">
             <img
-              src="/default_user_profile.png"
+              src={board.author?.profileImage || "/default_user_profile.png"}
               alt=""
               className="board-detail__avatar"
               style={{ width: 32, height: 32, borderRadius: '50%', objectFit: 'cover' }}
