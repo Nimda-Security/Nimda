@@ -102,13 +102,13 @@ const Banner: React.FC = () => {
             className="home-banner__btn home-banner__btn--prev"
             onClick={() => go((current - 1 + images.length) % images.length)}
           >
-            ?
+            &lsaquo;
           </button>
           <button
             className="home-banner__btn home-banner__btn--next"
             onClick={() => go((current + 1) % images.length)}
           >
-            ?
+            &rsaquo;
           </button>
           <div className="home-banner__dots">
             {images.map((_, idx) => (
@@ -118,7 +118,7 @@ const Banner: React.FC = () => {
                   idx === current ? " home-banner__dot--active" : ""
                 }`}
                 onClick={() => go(idx)}
-                aria-label={`½½¶óÀÌµå ${idx + 1}`}
+                aria-label={`ìŠ¬ë¼ì´ë“œ ${idx + 1}`}
               />
             ))}
           </div>

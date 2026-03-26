@@ -608,9 +608,8 @@ body {
   pointer-events: none;
 }
 
-/* 단일 이미지 배너: 높이를 100%로 채우고 이미지를 cover로 맞춤 */
+/* 이미지 슬라이드: absolute 위치는 .home-banner__slide에서 이미 설정 */
 .home-banner__slide--img {
-  position: relative;
   height: 100%;
 }
 
