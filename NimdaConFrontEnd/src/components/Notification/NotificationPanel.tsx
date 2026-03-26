@@ -49,6 +49,7 @@ function toItemProps(n: NotificationResponse): NotificationItemProps {
     message,
     preview,
     senderNickName: n.senderNickName ?? undefined,
+    senderProfileImage: n.senderProfileImage ?? undefined,
     url: n.url ?? undefined,
     isRead: n.isRead,
     time: formatTime(n.createdAt),
