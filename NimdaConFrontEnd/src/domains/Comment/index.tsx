@@ -21,6 +21,8 @@ import type {
   CommentStatus,
 } from '@/domains/Comment/types';
 import './Comment.css';
+import { formatDate } from '@/utils/formatDate';
+
 
 interface CommentSectionProps {
   boardId: number;
@@ -107,14 +109,6 @@ function StatusBadge({ status }: { status: CommentStatus }) {
   return <span className={`comment-status-badge comment-status-badge${mod}`}>{label}</span>;
 }
 
-function formatCommentDate(dateStr: string) {
-  const d = new Date(dateStr);
-  const m = String(d.getMonth() + 1).padStart(2, '0');
-  const day = String(d.getDate()).padStart(2, '0');
-  const h = String(d.getHours()).padStart(2, '0');
-  const min = String(d.getMinutes()).padStart(2, '0');
-  return `${m}. ${day}. ${h}:${min}`;
-}
 
 interface CommentMoreDropdownProps {
   editable: boolean;
@@ -266,7 +260,7 @@ function CommentItem({
             >
               {comment.authorName}
             </Link>
-            <span className="comment-item__date">{formatCommentDate(comment.createdAt)}</span>
+            <span className="comment-item__date">{formatDate(comment.createdAt)}</span>
             {comment.updatedAt && comment.updatedAt !== comment.createdAt && (
               <span className="comment-item__edited">(수정됨)</span>
             )}
