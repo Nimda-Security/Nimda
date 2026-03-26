@@ -212,8 +212,10 @@ const PhotoGalleryBoard: React.FC = () => {
                       </div>
                       <p className="photo-gallery-board__title">{post.title}</p>
                       <div className="photo-gallery-board__meta">
-                        <Heart filled />
-                        <span>{post.likeCount ?? 0}</span>
+                        <span className="photo-gallery-board__meta-likes">
+                          <Heart filled />
+                          <span>{post.likeCount ?? 0}</span>
+                        </span>
                         <span className="photo-gallery-board__meta-sep">|</span>
                         <span>{formatDate(post.createdAt)}</span>
                       </div>

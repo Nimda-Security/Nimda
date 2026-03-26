@@ -96,6 +96,15 @@
   line-height: 1.5;
 }
 
+.photo-gallery-board__meta-likes {
+  display: flex;
+  align-items: center;
+  gap: 2px;
+  font-size: 12px;
+  font-weight: 700;
+  color: var(--color-red);
+}
+
 .photo-gallery-board__meta-sep {
   color: #d4d4d4;
 }
