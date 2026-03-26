@@ -38,13 +38,13 @@ const formatDate = (dateStr: string): string => {
 const PhotoGallerySection: React.FC = () => {
   const [posts, setPosts] = useState<Board[]>([]);
   const [loading, setLoading] = useState(true);
-  const [categorySlug, setCategorySlug] = useState("사진첩");
+  const [categorySlug, setCategorySlug] = useState("picture-board");
 
   useEffect(() => {
     const loadPhotoPosts = async () => {
       try {
         const result = await getBoardListAPI({
-          slug: "사진첩",
+          slug: "picture-board",
           page: 0,
           size: 4,
           sort: "createdAt,desc",
@@ -77,7 +77,7 @@ const PhotoGallerySection: React.FC = () => {
       ) : posts.length > 0 ? (
         <div className="home-gallery__grid">
           {posts.map((post) => {
-            const thumbnail = extractFirstImage(post.content);
+            const thumbnail = extractFirstImage(post.content) || post.filepath || null;
             return (
               <Link
                 key={post.id}
