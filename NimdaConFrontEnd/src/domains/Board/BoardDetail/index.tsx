@@ -159,11 +159,11 @@ function BoardDetailPage() {
   return (
     <Layout>
       <div>
-        <button type="button" onClick={handleGoBack} className="board-detail__back">← 목록으로 돌아가기</button>
-
         {/* Head */}
         <header className="board-detail__head">
-          <p className="board-detail__category">{board.category?.name ?? boardType ?? '게시판'}</p>
+          <button type="button" onClick={handleGoBack} className="board-detail__back">
+            ← {board.category?.name ?? boardType ?? '게시판'}
+          </button>
           <h1 className="board-detail__title">{board.title}</h1>
 
           <div className="board-detail__meta">
