@@ -90,7 +90,7 @@ const NotificationPanel: React.FC<NotificationPanelProps> = ({ onClose, refreshK
   const handleMarkAllRead = async () => {
     try {
       await notificationApi.markAllAsRead();
-      setNotifications(prev => prev.map(n => ({ ...n, isRead: true })));
+      await fetchNotifications();
     } catch { /* ignore */ }
   };
 
