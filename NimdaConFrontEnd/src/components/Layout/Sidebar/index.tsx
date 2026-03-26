@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from "react";
 import { Link, useLocation, useSearchParams } from "react-router-dom";
 import { getCurrentNickname, hasRole, isAdmin } from "@/utils/jwt";
-import { isLoggedIn } from "@/api/auth";
+import { isLoggedIn, getMyPageInfo } from "@/api/auth";
 import { getAllCategoriesAPI } from "@/api/category";
 import { getMyTotalAttendanceCount, getTodayVisitors, type AttendanceLog } from "@/api/attendance";
 import { getMyBoardCountAPI } from "@/api/board";
@@ -16,6 +16,7 @@ import ChevronDown from "@/components/icons/ChevronDown";
 const Sidebar: React.FC = () => {
   const [nickname, setNickname] = useState<string | null>(null);
   const [isLoggedInState, setIsLoggedInState] = useState(false);
+  const [profileImage, setProfileImage] = useState<string | null>(null);
   const [categories, setCategories] = useState<Category[]>([]);
   const [categoriesLoading, setCategoriesLoading] = useState(false);
 
@@ -92,12 +93,13 @@ const Sidebar: React.FC = () => {
 
     const loadProfileStats = async () => {
       try {
-        const [visits, boards, comments, likes, balance] = await Promise.all([
+        const [visits, boards, comments, likes, balance, myPageResult] = await Promise.all([
           getMyTotalAttendanceCount(),
           getMyBoardCountAPI(),
           getMyCommentCountAPI(),
           getPushedBoardLikesCount(),
           getUserBalance(),
+          getMyPageInfo(),
         ]);
 
         setVisitCount(visits);
@@ -106,6 +108,9 @@ const Sidebar: React.FC = () => {
         setLikeCount(likes);
         if (balance.success) {
           setCoinBalance(balance.currentBalance || 0);
+        }
+        if (myPageResult.success && myPageResult.data?.profileImage) {
+          setProfileImage(myPageResult.data.profileImage);
         }
       } catch (error) {
         console.error('프로필 통계 로드 오류:', error);
@@ -144,17 +149,11 @@ const Sidebar: React.FC = () => {
       {/* 유저 프로필 영역 */}
       <div className="sidebar-profile">
         <div className="sidebar-profile__avatar">
-          <svg
-            width="42"
-            height="46"
-            viewBox="0 0 52 56"
-            fill="none"
-            stroke="#a3a3a3"
-            strokeWidth="2"
-          >
-            <path d="M44 48v-4a8 8 0 0 0-8-8H16a8 8 0 0 0-8 8v4" />
-            <circle cx="26" cy="16" r="8" />
-          </svg>
+          <img
+            src={profileImage || "/default_user_profile.png"}
+            alt="프로필"
+            style={{ width: '42px', height: '42px', borderRadius: '50%', objectFit: 'cover' }}
+          />
         </div>
         <p className="sidebar-profile__name">
           {isLoggedInState && nickname ? nickname : "게스트"}

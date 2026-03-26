@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import Logo from '@/components/icons/Logo';
 import { getCurrentNickname, isAdmin } from '@/utils/jwt';
-import { isLoggedIn, logoutAPI } from '@/api/auth';
+import { isLoggedIn, logoutAPI, getMyPageInfo } from '@/api/auth';
 import Logout from '@/components/icons/Logout.svg';
 import NotificationBell from '@/components/Notification/NotificationBell';
 
@@ -11,6 +11,7 @@ const Navbar: React.FC = () => {
   const [nickname, setNickname] = useState<string | null>(null);
   const [adminStatus, setAdminStatus] = useState(false);
   const [isLoggedInState, setIsLoggedInState] = useState(false);
+  const [profileImage, setProfileImage] = useState<string | null>(null);
 
   useEffect(() => {
     const currentNickname = getCurrentNickname();
@@ -19,6 +20,14 @@ const Navbar: React.FC = () => {
     setNickname(currentNickname);
     setAdminStatus(adminCheck);
     setIsLoggedInState(loggedIn);
+
+    if (loggedIn) {
+      getMyPageInfo().then((result) => {
+        if (result.success && result.data?.profileImage) {
+          setProfileImage(result.data.profileImage);
+        }
+      });
+    }
   }, []);
 
   const handleLogout = () => {
@@ -70,26 +79,26 @@ const Navbar: React.FC = () => {
                 </Link>
               )}
 
-              {/* 프로필: 검정색 원 */}
+              {/* 프로필 이미지 */}
               <button
                 onClick={handleProfileClick}
                 style={{
                   width: '32px',
                   height: '32px',
                   borderRadius: '50%',
-                  backgroundColor: '#0c0c0c',
                   border: 'none',
                   cursor: 'pointer',
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'center',
+                  padding: 0,
+                  overflow: 'hidden',
                   boxShadow: '0px 0px 2px rgba(0, 0, 0, 0.25)',
                 }}
                 title="마이페이지"
               >
-                <span style={{ color: 'white', fontSize: '14px', fontWeight: 'bold' }}>
-                  {displayNickname ? displayNickname[0].toUpperCase() : 'U'}
-                </span>
+                <img
+                  src={profileImage || '/default_user_profile.png'}
+                  alt="프로필"
+                  style={{ width: '100%', height: '100%', objectFit: 'cover' }}
+                />
               </button>
 
               {/* 로그아웃 버튼 */}
