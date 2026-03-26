@@ -10,6 +10,7 @@ import { MessageBox } from '@/components/icons/MessageBox';
 import { isAdmin, hasRole } from '@/utils/jwt';
 import { formatDate } from '@/utils/formatDate';
 import './BoardList.css';
+import { useLikeStatuses } from "@/domains/Board/useLikeStatuses";
 
 interface BoardListPageProps {
   slug?: string;
@@ -39,6 +40,8 @@ function BoardListPage({ slug: propSlug }: BoardListPageProps) {
   const [searchTrigger, setSearchTrigger] = useState(0);
   const [selectedTag, setSelectedTag] = useState<string | null>(null); // 선택된 태그 (null = 전체)
   const [availableTags, setAvailableTags] = useState<string[]>([]); // 사용 가능한 태그 목록
+
+  const likeStatuses = useLikeStatuses([...boards, ...pinnedPosts, ...noticePosts]);
 
   // 공지사항(필독) 가져오기 - notice 카테고리의 글 (컴포넌트 마운트 시 1회)
   useEffect(() => {
@@ -421,7 +424,7 @@ function BoardListPage({ slug: propSlug }: BoardListPageProps) {
                   )}
                   {post.likeCount !== undefined && post.likeCount > 0 && (
                     <span className="board-list__likes">
-                      <Heart filled /> {post.likeCount}
+                      <Heart filled={likeStatuses[post.id] ?? false} />
                     </span>
                   )}
                   <span className="board-list__date">
@@ -477,7 +480,7 @@ function BoardListPage({ slug: propSlug }: BoardListPageProps) {
                   )}
                   {post.likeCount !== undefined && post.likeCount > 0 && (
                     <span className="board-list__likes">
-                      <Heart filled /> {post.likeCount}
+                      <Heart filled={likeStatuses[post.id] ?? false} />
                     </span>
                   )}
                   <span className="board-list__date">
@@ -519,7 +522,14 @@ function BoardListPage({ slug: propSlug }: BoardListPageProps) {
                       </span>
                     )
                   )}
-                  <span className="board-list__post-title">{post.title}</span>
+                  <span className="board-list__post-title">
+                    {post.title}
+                    <span className="board-list__title-counts">
+                      <span className="board-list__comments"><MessageBox />{post.commentCount ?? 0}</span>
+                      <span className="board-list__likes"><Heart filled={likeStatuses[post.id] ?? false} />{post.likeCount ?? 0}</span>
+                      </span>
+                  </span>
+                  
                   <div className="board-list__meta">
                     <img
                       src={
@@ -535,21 +545,6 @@ function BoardListPage({ slug: propSlug }: BoardListPageProps) {
                     >
                       {post.author?.nickname || '익명'}
                     </Link>
-                    {post.views > 0 && (
-                      <span className="board-list__views">
-                        조회 {post.views}
-                      </span>
-                    )}
-                    {post.commentCount !== undefined && post.commentCount > 0 && (
-                      <span className="board-list__comments">
-                        <MessageBox /> {post.commentCount}
-                      </span>
-                    )}
-                    {post.likeCount !== undefined && post.likeCount > 0 && (
-                      <span className="board-list__likes">
-                        <Heart filled /> {post.likeCount}
-                      </span>
-                    )}
                     <span className="board-list__date">
                       {formatDate(post.createdAt)}
                     </span>

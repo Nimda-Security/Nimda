@@ -460,3 +460,20 @@
   text-transform: uppercase;
   letter-spacing: 0.5px;
 }
+
+.board-list__title-counts {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  margin-left: 8px;
+  font-size: 0.75rem;
+  color: var(--color-gray-500);
+  vertical-align: middle;
+}
+
+.board-list__title-counts .board-list__comments,
+.board-list__title-counts .board-list__likes {
+  display: inline-flex;
+  align-items: center;
+  gap: 2px;
+}
