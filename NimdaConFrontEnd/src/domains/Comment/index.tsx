@@ -1,4 +1,5 @@
 import { useEffect, useState, useRef } from 'react';
+import { Link } from 'react-router-dom';
 import { Heart } from '@/components/icons/Heart';
 import { MessageBox } from '@/components/icons/MessageBox';
 import { VerticalDots } from '@/components/icons/VerticalDots';
@@ -266,7 +267,12 @@ function CommentItem({
         <CommentAvatar src={comment.authorProfileImage} name={comment.authorName} />
         <div className="comment-item__body">
           <div className="comment-item__header">
-            <span className="comment-item__author">{comment.authorName}</span>
+            <Link
+              to={comment.authorName ? `/user/${comment.authorName}` : '#'}
+              className="comment-item__author"
+            >
+              {comment.authorName}
+            </Link>
             <span className="comment-item__date">{formatCommentDate(comment.createdAt)}</span>
             {hideable && <StatusBadge status={comment.status} />}
             <CommentMoreDropdown

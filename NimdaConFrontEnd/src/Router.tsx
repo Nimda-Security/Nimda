@@ -23,6 +23,7 @@ import BoardDetailPage from "@/domains/Board/BoardDetail";
 import BoardWritePage from "@/domains/Board/BoardWrite";
 import BoardEditPage from "@/domains/Board/BoardEdit";
 import PhotoGalleryBoard from "@/domains/Board/PhotoGalleryBoard";
+import UserProfilePage from "@/domains/User/UserProfile";
 
 // [추가] 관리자 마일리지 지급 페이지 컴포넌트 임포트
 import AdminMileage from "@/domains/admin/AdminMileage.jsx";
@@ -69,6 +70,9 @@ const Router = () => {
             </ProtectedRoute>
           }
         />
+
+        {/* 유저 공개 프로필 */}
+        <Route path="/user/:nickname" element={<UserProfilePage />} />
 
         {/* 게시판 관련 경로 */}
         {/* 사진첩은 갤러리 뷰 전용 컴포넌트 사용 */}

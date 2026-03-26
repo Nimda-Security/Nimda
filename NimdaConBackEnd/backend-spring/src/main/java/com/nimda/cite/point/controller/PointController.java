@@ -9,8 +9,11 @@ import com.nimda.cite.point.service.PointService;
 import com.nimda.cup.common.util.JwtUtil;
 import com.nimda.cup.user.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.server.ResponseStatusException;
+
 import java.util.List;
 
 @RestController
@@ -66,6 +69,52 @@ public class PointController {
                 pointService.updateBalanceManual(userId, req.getDescription(),req.getAmount())
                 );
         return ApiResponse.ok("마일리지 지급이 완료되었습니다.",dto).toResponse();
+    }
+
+    /**
+     * 닉네임으로 특정 유저 마일리지 잔액 조회 (공개 프로필용, 인증 불필요)
+     * GET /api/cite/point/user/{nickname}
+     */
+    @GetMapping("/user/{nickname}")
+    public ResponseEntity<?> getBalanceByNickname(@PathVariable String nickname) {
+        try {
+            return userRepository.findByNickname(nickname)
+                    .map(user -> {
+                        UserBalance balance = pointService.findUserBalance(user.getId());
+                        BalanceResponse dto = BalanceResponse.builder()
+                                .totalAmount(balance.getTotalAmount())
+                                .updatedAt(balance.getUpdatedAt())
+                                .build();
+                        return ApiResponse.ok("계좌 조회에 성공했습니다.", dto).toResponse();
+                    })
+                    .orElseThrow(
+                        () -> new IllegalArgumentException("사용자를 찾을 수 없습니다.")
+                    );
+        } catch (Exception e) {
+            return ApiResponse.fail("조회 중 오류가 발생했습니다: " + e.getMessage())
+                    .toResponse(HttpStatus.INTERNAL_SERVER_ERROR);
+        }
+    }
+
+    /**
+     * 닉네임으로 특정 유저 마일리지 내역 조회 (공개 프로필용, 인증 불필요)
+     * GET /api/cite/point/user/{nickname}/details
+     */
+    @GetMapping("/user/{nickname}/details")
+    public ResponseEntity<?> getPointDetailsByNickname(@PathVariable String nickname) {
+        try {
+            return userRepository.findByNickname(nickname)
+                    .map(user -> {
+                        List<PointDetailResponse> dto = pointService.findPointDetail(user.getId()).stream()
+                                .map(PointDetailResponse::from).toList();
+                        return ApiResponse.ok("포인트 내역 조회에 성공했습니다.", dto).toResponse();
+                    })
+                    .orElseThrow(() ->
+                            new ResponseStatusException(HttpStatus.NOT_FOUND));
+        } catch (Exception e) {
+            return ApiResponse.fail("조회 중 오류가 발생했습니다: " + e.getMessage())
+                    .toResponse(HttpStatus.INTERNAL_SERVER_ERROR);
+        }
     }
 
     protected String resolveToken(String authHeader) {

@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { useNavigate, useParams } from 'react-router-dom';
+import { useNavigate, useParams, Link } from 'react-router-dom';
 import { MessageBox } from '@/components/icons/MessageBox';
 import { VerticalDots } from '@/components/icons/VerticalDots';
 import Layout from '@/components/Layout';
@@ -173,7 +173,12 @@ function BoardDetailPage() {
               className="board-detail__avatar"
               style={{ width: 32, height: 32, borderRadius: '50%', objectFit: 'cover' }}
             />
-            <span className="board-detail__author">{board.author?.nickname ?? '알 수 없음'}</span>
+            <Link
+              to={board.author?.nickname ? `/user/${board.author.nickname}` : '#'}
+              className="board-detail__author"
+            >
+              {board.author?.nickname ?? '알 수 없음'}
+            </Link>
             <span className="board-detail__date">{fmtDate(board.createdAt)}</span>
             <span className="board-detail__date">{fmtTime(board.createdAt)}</span>
 

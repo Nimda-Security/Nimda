@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { useNavigate, useParams, useSearchParams } from 'react-router-dom';
+import { useNavigate, useParams, useSearchParams, Link } from 'react-router-dom';
 import Layout from '@/components/Layout';
 import { getBoardListAPI, getPinnedPostsAPI } from '@/api/board';
 import { getAllCategoriesAPI } from '@/api/category';
@@ -427,9 +427,13 @@ function BoardListPage({ slug: propSlug }: BoardListPageProps) {
                     alt=""
                     className="board-list__avatar"
                   />
-                  <span className="board-list__author">
+                  <Link
+                    to={post.author?.nickname ? `/user/${post.author.nickname}` : '#'}
+                    className="board-list__author"
+                    onClick={(e) => e.stopPropagation()}
+                  >
                     {post.author?.nickname || '익명'}
-                  </span>
+                  </Link>
                   {post.commentCount !== undefined && post.commentCount > 0 && (
                     <span className="board-list__comments">
                       <MessageBox /> {post.commentCount}
@@ -476,9 +480,13 @@ function BoardListPage({ slug: propSlug }: BoardListPageProps) {
                     alt=""
                     className="board-list__avatar"
                   />
-                  <span className="board-list__author">
+                  <Link
+                    to={post.author?.nickname ? `/user/${post.author.nickname}` : '#'}
+                    className="board-list__author"
+                    onClick={(e) => e.stopPropagation()}
+                  >
                     {post.author?.nickname || '익명'}
-                  </span>
+                  </Link>
                   {post.views > 0 && (
                     <span className="board-list__views">조회 {post.views}</span>
                   )}
@@ -540,9 +548,13 @@ function BoardListPage({ slug: propSlug }: BoardListPageProps) {
                       alt=""
                       className="board-list__avatar"
                     />
-                    <span className="board-list__author">
+                    <Link
+                      to={post.author?.nickname ? `/user/${post.author.nickname}` : '#'}
+                      className="board-list__author"
+                      onClick={(e) => e.stopPropagation()}
+                    >
                       {post.author?.nickname || '익명'}
-                    </span>
+                    </Link>
                     {post.views > 0 && (
                       <span className="board-list__views">
                         조회 {post.views}

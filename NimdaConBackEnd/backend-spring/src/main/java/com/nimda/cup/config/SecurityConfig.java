@@ -91,6 +91,9 @@ public class SecurityConfig {
                         // 다른 permitAll 규칙에 먹히지 않도록 위로 격상
                         // 메인 페이지 방문자 정보는 누구나 볼 수 있음
                         .requestMatchers("/api/cite/attendance/today").permitAll()
+                        // 공개 유저 프로필: 좋아요/포인트 조회 (authenticated 보다 먼저 선언해야 함)
+                        .requestMatchers(HttpMethod.GET, "/api/like/board/user/**").permitAll()
+                        .requestMatchers(HttpMethod.GET, "/api/cite/point/user/**").permitAll()
                         .requestMatchers("/api/like/board/**").authenticated()
                         .requestMatchers("/api/cite/attendance/**").authenticated()
                         .requestMatchers("/api/cite/attachments/**").authenticated()
@@ -118,6 +121,10 @@ public class SecurityConfig {
                         .requestMatchers(HttpMethod.GET, "/api/scoreboard/**").permitAll()
                         .requestMatchers(HttpMethod.GET, "/api/cite/board/**").permitAll()
                         .requestMatchers(HttpMethod.GET, "/api/cite/category/**").permitAll()
+                        // 유저 공개 프로필 조회 (닉네임으로 조회, 인증 불필요)
+                        .requestMatchers(HttpMethod.GET, "/api/users/nickname/**").permitAll()
+                        // 유저 공개 댓글 조회
+                        .requestMatchers(HttpMethod.GET, "/api/comments/user/**").permitAll()
 
                         // [우선순위 6] 게시판 쓰기/수정/삭제 (위의 GET 제외 나머지 메서드 보호)
                         .requestMatchers("/api/cite/board/**").authenticated()

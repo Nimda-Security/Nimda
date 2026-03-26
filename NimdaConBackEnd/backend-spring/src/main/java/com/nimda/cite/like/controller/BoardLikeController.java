@@ -8,10 +8,12 @@ import com.nimda.cite.common.response.ApiResponse;
 import com.nimda.cite.like.dto.BoardLikeResponse;
 import com.nimda.cite.like.service.BoardLikeService;
 import com.nimda.cup.common.util.JwtUtil;
+import com.nimda.cup.user.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.server.ResponseStatusException;
 
 import java.util.List;
 import java.util.Map;
@@ -26,6 +28,32 @@ public class BoardLikeController {
     private final BoardLikeService boardLikeService;
     private final JwtUtil jwtUtil;
     private final CommentRepository commentRepository;
+    private final UserRepository userRepository;
+
+    /**
+     * 타인의 좋아요한 게시글 목록 조회 (공개 프로필용, 인증 불필요)
+     * GET /api/like/board/user/{nickname}/liked
+     */
+    @GetMapping("/user/{nickname}/liked")
+    public ResponseEntity<?> getLikedBoardsByNickname(@PathVariable String nickname) {
+        try {
+            return userRepository.findByNickname(nickname)
+                    .map(user -> {
+                        List<Board> boards = boardLikeService.getTotalLikeBoards(user.getId());
+                        List<BoardResponseDTO> dtos = boards.stream()
+                                .map(b -> BoardResponseDTO.from(b,
+                                        boardLikeService.getLikeCount(b.getId()),
+                                        commentRepository.countByBoardIdAndStatusNot(b.getId(), STATUS.DELETED)))
+                                .toList();
+                        return ApiResponse.ok(Map.of("boards", dtos)).toResponse();
+                    })
+                    .orElseThrow(() ->
+                            new ResponseStatusException(HttpStatus.NOT_FOUND));
+        } catch (Exception e) {
+            return ApiResponse.fail("조회 중 오류가 발생했습니다: " + e.getMessage())
+                    .toResponse(HttpStatus.INTERNAL_SERVER_ERROR);
+        }
+    }
 
     // 게시글 내에서 표기할 좋아요 개수와 좋아요 여부
     @GetMapping("/{boardId}/likeStatus")

@@ -266,9 +266,12 @@ const Sidebar: React.FC = () => {
                       alt="avatar" 
                     />
                   </div>
-                  <span className="sidebar-visitors__name">
+                  <Link
+                    to={visitor.userName ? `/user/${visitor.userName}` : '#'}
+                    className="sidebar-visitors__name"
+                  >
                     {visitor.userName || "익명"}
-                  </span>
+                  </Link>
                 </div>
               ))
             ) : (
