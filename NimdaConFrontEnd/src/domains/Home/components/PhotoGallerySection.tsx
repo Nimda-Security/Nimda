@@ -1,8 +1,10 @@
 import React, { useState, useEffect } from "react";
 import { Link } from "react-router-dom";
 import { Heart } from "@/components/icons/Heart";
-import { getBoardListAPI } from "@/api/board";
+import { getBoardListAPI, getBoardDetailAPI } from "@/api/board";
 import type { Board } from "@/domains/Board/types";
+
+const IMAGE_EXTENSIONS = ["jpg", "jpeg", "png", "gif", "webp", "bmp", "svg"];
 
 /**
  * 게시글 content(HTML)에서 첫 번째 <img> src를 추출
@@ -10,6 +12,27 @@ import type { Board } from "@/domains/Board/types";
 const extractFirstImage = (html: string): string | null => {
   const match = html.match(/<img[^>]+src=["']([^"']+)["']/i);
   return match ? match[1] : null;
+};
+
+/**
+ * 첨부파일에서 첫 번째 이미지의 download URL 추출
+ */
+const getFirstImageAttachmentUrl = (board: Board): string | null => {
+  if (!board.attachments || board.attachments.length === 0) return null;
+  
+  for (const att of board.attachments) {
+    if (att.originFilename) {
+      const ext = att.originFilename.split(".").pop()?.toLowerCase() || "";
+      if (IMAGE_EXTENSIONS.includes(ext)) {
+        return att.downloadUrl || `/api/cite/attachments/${att.id}/download?disposition=inline`;
+      }
+    }
+    // originFilename이 없으면 downloadUrl이 있으면 일단 사용
+    if (att.downloadUrl) {
+      return att.downloadUrl;
+    }
+  }
+  return null;
 };
 
 /**
@@ -37,6 +60,7 @@ const formatDate = (dateStr: string): string => {
 
 const PhotoGallerySection: React.FC = () => {
   const [posts, setPosts] = useState<Board[]>([]);
+  const [thumbnails, setThumbnails] = useState<Record<number, string | null>>({});
   const [loading, setLoading] = useState(true);
   const [categorySlug, setCategorySlug] = useState("picture-board");
 
@@ -55,6 +79,33 @@ const PhotoGallerySection: React.FC = () => {
           if (result.category?.slug) {
             setCategorySlug(result.category.slug);
           }
+
+          // 각 게시글의 상세를 병렬로 조회하여 첨부 이미지 URL 확보
+          const thumbMap: Record<number, string | null> = {};
+          await Promise.all(
+            result.posts.map(async (post) => {
+              // 1순위: content HTML 내 인라인 이미지
+              const inlineImg = extractFirstImage(post.content);
+              if (inlineImg) {
+                thumbMap[post.id] = inlineImg;
+                return;
+              }
+
+              // 2순위: 상세 API에서 첨부파일 이미지 가져오기
+              try {
+                const detail = await getBoardDetailAPI(post.id);
+                if (detail.success && "board" in detail) {
+                  const attUrl = getFirstImageAttachmentUrl(detail.board);
+                  thumbMap[post.id] = attUrl;
+                } else {
+                  thumbMap[post.id] = null;
+                }
+              } catch {
+                thumbMap[post.id] = null;
+              }
+            })
+          );
+          setThumbnails(thumbMap);
         }
       } catch (error) {
         console.error("사진첩 게시글 로드 실패:", error);
@@ -77,7 +128,7 @@ const PhotoGallerySection: React.FC = () => {
       ) : posts.length > 0 ? (
         <div className="home-gallery__grid">
           {posts.map((post) => {
-            const thumbnail = extractFirstImage(post.content) || post.filepath || null;
+            const thumbnail = thumbnails[post.id] || null;
             return (
               <Link
                 key={post.id}

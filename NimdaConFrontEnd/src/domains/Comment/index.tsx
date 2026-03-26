@@ -39,6 +39,7 @@ function CommentInput({
   onSubmit,
   placeholder,
   isSubmitting,
+  profileImage,
   buttonLabel = '작성',
   showAvatar = true,
 }: {
@@ -47,12 +48,22 @@ function CommentInput({
   onSubmit: () => void;
   placeholder?: string;
   isSubmitting: boolean;
+  profileImage?: string | null;
   buttonLabel?: string;
   showAvatar?: boolean;
 }) {
-  return (
+return (
     <div className="comment-input">
-      {showAvatar && <div className="comment-input__avatar">?</div>}
+      {showAvatar && (
+        <div className="comment-input__avatar">
+          {/* 하드코딩된 '?'를 지우고 이미지를 넣었습니다. */}
+          <img
+            src={profileImage || "/default_user_profile.png"}
+            alt=""
+            style={{ width: '100%', height: '100%', borderRadius: '50%', objectFit: 'cover' }}
+          />
+        </div>
+      )}
       <div className="comment-input__body">
         <textarea
           value={value}
