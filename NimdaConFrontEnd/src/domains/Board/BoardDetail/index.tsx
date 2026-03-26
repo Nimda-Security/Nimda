@@ -6,7 +6,7 @@ import Layout from '@/components/Layout';
 import { openAttachmentDownloadInNewTab, getAttachmentPresignedUrl } from '@/api/attachments';
 import { getBoardDetailAPI, deleteBoardAPI, getFileDownloadURL, getBoardLikeStatusAPI } from '@/api/board';
 import { getAllCategoriesAPI } from '@/api/category';
-import { hasRole, isAdmin } from '@/utils/jwt';
+import { hasRole, isAdmin, getCurrentNickname } from '@/utils/jwt';
 import type { Board } from '../types';
 import type { BoardAttachmentMeta } from '../types';
 import CommentSection from '@/domains/Comment';
@@ -33,6 +33,7 @@ function BoardDetailPage() {
   const [likeCount, setLikeCount] = useState(0);
   const [isLiked, setIsLiked] = useState(false);
   const [imageUrls, setImageUrls] = useState<Record<number, string>>({});
+  const [menuOpen, setMenuOpen] = useState(false);
 
   useEffect(() => { if (id) fetchBoard(parseInt(id)); }, [id]);
 
@@ -125,7 +126,7 @@ function BoardDetailPage() {
     }
   };
 
-  const isAuthor = () => !board ? false : false;
+  const isAuthor = () => !!board && !!board.author?.nickname && board.author.nickname === getCurrentNickname();
 
   const fmtDate = (s: string) => {
     const d = new Date(s);
@@ -187,10 +188,35 @@ function BoardDetailPage() {
               </span>
             </div>
 
-            {/* 첨부는 본문 아래 attachments 블록으로 이동 — 메타 행은 유지(더보기만) */}
-            <button type="button" className="board-detail__more-btn" aria-label="더보기">
-              <VerticalDots size={24} />
-            </button>
+            {/* 작성자 또는 어드민만 점 세 개 버튼 표시 */}
+            {(isAuthor() || isAdmin()) && (
+              <div className="board-detail__menu-wrap">
+                <button
+                  type="button"
+                  className="board-detail__more-btn"
+                  aria-label="더보기"
+                  onClick={() => setMenuOpen(prev => !prev)}
+                >
+                  <VerticalDots size={24} />
+                </button>
+                {menuOpen && (
+                  <ul className="board-detail__menu">
+                    {isAuthor() && (
+                      <li>
+                        <button type="button" onClick={() => { setMenuOpen(false); handleEdit(); }}>
+                          수정
+                        </button>
+                      </li>
+                    )}
+                    <li>
+                      <button type="button" onClick={() => { setMenuOpen(false); void handleDelete(); }} disabled={isDeleting}>
+                        {isDeleting ? '삭제 중...' : '삭제'}
+                      </button>
+                    </li>
+                  </ul>
+                )}
+              </div>
+            )}
           </div>
         </header>
 
@@ -269,15 +295,7 @@ function BoardDetailPage() {
         {/* 댓글 */}
         <CommentSection boardId={board.id} />
 
-        {/* 수정/삭제 */}
-        {isAuthor() && (
-          <footer className="board-detail__actions">
-            <button type="button" onClick={handleEdit} className="board-detail__btn board-detail__btn--edit">수정</button>
-            <button type="button" onClick={handleDelete} disabled={isDeleting} className="board-detail__btn board-detail__btn--delete">
-              {isDeleting ? '삭제 중...' : '삭제'}
-            </button>
-          </footer>
-        )}
+
       </div>
     </Layout>
   );

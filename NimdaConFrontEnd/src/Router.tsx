@@ -73,7 +73,7 @@ const Router = () => {
         <Route path="/board/:boardType" element={<BoardListPage />} />
         <Route path="/board/:boardType/:id" element={<BoardDetailPage />} />
         <Route path="/board/:boardType/write" element={<BoardWritePage />} />
-        <Route path="/board/:boardType/edit/:id" element={<BoardEditPage />} />
+        <Route path="/board/:boardType/edit/:id" element={<BoardWritePage />} />
       </Routes>
     </BrowserRouter>
   );
