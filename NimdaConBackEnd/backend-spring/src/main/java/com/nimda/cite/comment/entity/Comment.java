@@ -2,14 +2,13 @@ package com.nimda.cite.comment.entity;
 
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.nimda.cite.board.entity.Board;
-import com.nimda.cite.board.entity.Category;
 import com.nimda.cite.comment.enums.STATUS;
 import com.nimda.cite.like.entity.CommentLike;
-import com.nimda.cup.common.entity.BaseTimeEntity;
 import com.nimda.cup.user.entity.User;
 import jakarta.persistence.*;
 import lombok.*;
 
+import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -20,7 +19,7 @@ import java.util.List;
 @Builder
 @NoArgsConstructor
 @AllArgsConstructor
-public class Comment extends BaseTimeEntity {
+public class Comment extends BaseTime {
 
     // id
     @Id
@@ -62,6 +61,7 @@ public class Comment extends BaseTimeEntity {
     // 댓글 수정 메서드
     public void updateContext(String context) {
         this.context = context;
+        this.updatedAt = LocalDateTime.now();
     }
 
     // 상태 변경 메서드

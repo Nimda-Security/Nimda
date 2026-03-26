@@ -186,7 +186,6 @@ function CommentMoreDropdown({
           {editable && (
             <li role="menuitem">
               <button type="button" className="comment-more__item" onClick={handleEdit}>
-                <span className="comment-more__icon">✏️</span>
                 수정
               </button>
             </li>
@@ -194,9 +193,6 @@ function CommentMoreDropdown({
           {hideable && (
             <li role="menuitem">
               <button type="button" className="comment-more__item" onClick={handleToggleHide}>
-                <span className="comment-more__icon">
-                  {currentStatus === 'HIDDEN' ? '👁️' : '🚫'}
-                </span>
                 {currentStatus === 'HIDDEN' ? '공개' : '숨김'}
               </button>
             </li>
@@ -208,7 +204,6 @@ function CommentMoreDropdown({
                 className="comment-more__item comment-more__item--danger"
                 onClick={handleDelete}
               >
-                <span className="comment-more__icon">🗑️</span>
                 삭제
               </button>
             </li>
@@ -254,8 +249,6 @@ function CommentItem({
   replyInputRef,
   myProfileImage // [추가]
 }: CommentItemProps) {
-  const isDeleted = comment.isDeleted;
-  const isHidden = comment.status === 'HIDDEN';
   const isReply = comment.parentId !== null;
   const children = comment.children ?? [];
 
@@ -274,6 +267,9 @@ function CommentItem({
               {comment.authorName}
             </Link>
             <span className="comment-item__date">{formatCommentDate(comment.createdAt)}</span>
+            {comment.updatedAt && comment.updatedAt !== comment.createdAt && (
+              <span className="comment-item__edited">(수정됨)</span>
+            )}
             {hideable && <StatusBadge status={comment.status} />}
             <CommentMoreDropdown
               editable={editable}
@@ -286,32 +282,31 @@ function CommentItem({
             />
           </div>
 
-          {isDeleted ? (
-            <p className="comment-item__content comment-item__content--deleted">삭제된 댓글입니다.</p>
-          ) : isHidden ? (
-            <p className="comment-item__content comment-item__content--hidden">숨겨진 댓글입니다.</p>
-          ) : (
-            <p className="comment-item__content">{comment.context}</p>
-          )}
+          <p className={`comment-item__content${
+            comment.isDeleted || comment.status === 'HIDDEN'
+              ? ' comment-item__content--muted'
+              : ''
+          }`}>
+            {comment.context}
+          </p>
 
-          {!isDeleted && (
-            <div className="comment-item__footer">
-              {!comment.parentId && (
-                <button
-                  type="button"
-                  onClick={() => onReply(comment.id, comment.authorName)}
-                  className="comment-item__reply-btn"
-                >
-                  <MessageBox />
-                  <span>{comment.children?.length ?? 0}</span>
-                </button>
-              )}
-              <button type="button" className={`comment-item__like-btn${comment.isLiked ? ' comment-item__like-btn--active' : ''}`} onClick={() => onToggleLike(comment.id)}>
-                <Heart filled={comment.isLiked} />
-                <span>{comment.likeCount}</span>
+
+          <div className="comment-item__footer">
+            {!comment.parentId && (
+              <button
+                type="button"
+                onClick={() => onReply(comment.id, comment.authorName)}
+                className="comment-item__reply-btn"
+              >
+                <MessageBox />
+                <span>{comment.children?.length ?? 0}</span>
               </button>
-            </div>
-          )}
+            )}
+            <button type="button" className={`comment-item__like-btn${comment.isLiked ? ' comment-item__like-btn--active' : ''}`} onClick={() => onToggleLike(comment.id)}>
+              <Heart filled={comment.isLiked} />
+              <span>{comment.likeCount}</span>
+            </button>
+          </div>
         </div>
       </div>
 
