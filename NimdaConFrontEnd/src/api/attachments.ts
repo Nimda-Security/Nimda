@@ -27,11 +27,6 @@ export const requestPresignedUpload = async (
   type: 'board' | 'file' | 'profile',
   fileName: string
 ): Promise<{ ok: true; data: PresignedBoardUploadResult } | { ok: false; message: string }> => {
-  const token = localStorage.getItem('authToken');
-  if (!token) {
-    return { ok: false, message: '로그인이 필요합니다.' };
-  }
-
   const params = new URLSearchParams();
   params.set('type', type);
   params.set('fileName', fileName);
@@ -39,9 +34,9 @@ export const requestPresignedUpload = async (
   const response = await fetch(`${ATTACHMENTS_BASE}/presigned`, {
     method: 'POST',
     headers: {
-      Authorization: `Bearer ${token}`,
       'Content-Type': 'application/x-www-form-urlencoded',
     },
+    credentials: 'include',
     body: params.toString(),
   });
 
@@ -99,17 +94,12 @@ export type RegisterAttachmentBody = {
 export const registerAttachmentAfterS3 = async (
   body: RegisterAttachmentBody
 ): Promise<{ ok: true; attachmentId: number } | { ok: false; message: string }> => {
-  const token = localStorage.getItem('authToken');
-  if (!token) {
-    return { ok: false, message: '로그인이 필요합니다.' };
-  }
-
   const response = await fetch(`${ATTACHMENTS_BASE}/register`, {
     method: 'POST',
     headers: {
-      Authorization: `Bearer ${token}`,
       'Content-Type': 'application/json',
     },
+    credentials: 'include',
     body: JSON.stringify({
       key: body.key,
       originFilename: body.originFilename,
@@ -170,15 +160,8 @@ export const uploadBoardFileViaS3 = async (
 export const getAttachmentPresignedUrl = async (
   attachmentId: number
 ): Promise<string | null> => {
-  const token = localStorage.getItem('authToken');
-
   try {
-    const headers: Record<string, string> = {};
-    if (token) headers['Authorization'] = `Bearer ${token}`;
-
-    const response = await fetch(`${ATTACHMENTS_BASE}/${attachmentId}/download-url`, {
-      headers,
-    });
+    const response = await fetch(`${ATTACHMENTS_BASE}/${attachmentId}/download-url`, { credentials: 'include' });
     const result = await parseJsonSafe(response);
     if (!response.ok || !result?.success) return null;
     const data = result.data ?? result;
@@ -195,14 +178,7 @@ export const getAttachmentPresignedUrl = async (
 export const openAttachmentDownloadInNewTab = async (
   attachmentId: number
 ): Promise<{ ok: true } | { ok: false; message: string }> => {
-  const token = localStorage.getItem('authToken');
-  if (!token) {
-    return { ok: false, message: '로그인이 필요합니다.' };
-  }
-
-  const response = await fetch(`${ATTACHMENTS_BASE}/${attachmentId}/download-url`, {
-    headers: { Authorization: `Bearer ${token}` },
-  });
+  const response = await fetch(`${ATTACHMENTS_BASE}/${attachmentId}/download-url`, { credentials: 'include' });
   const result = await parseJsonSafe(response);
   if (!response.ok || !result?.success) {
     return {

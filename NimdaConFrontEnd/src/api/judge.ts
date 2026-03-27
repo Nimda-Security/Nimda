@@ -36,22 +36,12 @@ export const submitCodeAPI = async (
   submissionData: SubmissionRequest
 ): Promise<JudgeResponse> => {
   try {
-    // localStorage에서 토큰 가져오기
-    const token = localStorage.getItem("authToken");
-
-    // 헤더 구성
-    const headers: Record<string, string> = {
-      "Content-Type": "application/json",
-    };
-
-    // 토큰이 있으면 Authorization 헤더 추가
-    if (token) {
-      headers["Authorization"] = `Bearer ${token}`;
-    }
-
     const response = await fetch(`${API_BASE_URL}/judge/submit`, {
       method: "POST",
-      headers,
+      headers: {
+        "Content-Type": "application/json",
+      },
+      credentials: "include",
       body: JSON.stringify(submissionData),
     });
 
@@ -99,7 +89,9 @@ export const getSupportedLanguagesAPI = async () => {
  */
 export const getAllSubmissionsAPI = async () => {
   try {
-    const response = await fetch(`${API_BASE_URL}/judge/submissions`);
+    const response = await fetch(`${API_BASE_URL}/judge/submissions`, {
+      credentials: "include",
+    });
     const result = await response.json();
 
     if (response.ok) {

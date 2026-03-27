@@ -15,17 +15,12 @@ export interface CommentLikeResponse {
  */
 export const toggleCommentLike = async (commentId: number): Promise<CommentLikeResponse> => {
   try {
-    const authToken = localStorage.getItem("authToken");
-    if (!authToken) {
-      throw new Error("인증 토큰이 없습니다.");
-    }
-
     const response = await fetch(`${API_BASE_URL}/${commentId}`, {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
-        "Authorization": `Bearer ${authToken}`,
       },
+      credentials: "include",
     });
 
     if (!response.ok) {

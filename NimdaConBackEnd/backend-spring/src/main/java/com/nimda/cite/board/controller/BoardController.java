@@ -17,9 +17,10 @@ import com.nimda.cite.comment.repository.CommentRepository;
 import com.nimda.cite.common.response.ApiResponse;
 import com.nimda.cite.common.s3.S3Service;
 import com.nimda.cite.like.service.BoardLikeService;
-import com.nimda.cup.common.util.JwtUtil;
 import com.nimda.cup.user.entity.User;
 import com.nimda.cup.user.repository.UserRepository;
+import com.nimda.cup.user.security.CustomUserDetails;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
@@ -42,9 +43,6 @@ public class BoardController {
 
     @Autowired
     private CategoryRepository categoryRepository;
-
-    @Autowired
-    private JwtUtil jwtUtil;
 
     @Autowired
     private UserRepository userRepository;
@@ -87,24 +85,6 @@ public class BoardController {
         return false;
     }
 
-    // Authorization 헤더에서 User 추출 (없으면 null)
-    private User extractUserFromHeader(String authHeader) {
-        if (authHeader != null && authHeader.startsWith("Bearer ")) {
-            String token = authHeader.substring(7);
-            try {
-                if (!jwtUtil.isTokenExpired(token)) {
-                    Long userId = jwtUtil.extractUserId(token);
-                    if (userId != null) {
-                        return userRepository.findById(userId).orElse(null);
-                    }
-                }
-            } catch (Exception e) {
-                // 토큰 파싱 실패
-            }
-        }
-        return null;
-    }
-
     // 사용자가 특정 역할을 보유하는지 확인
     private boolean hasRole(User user, String role) {
         return user != null && user.getAuthorities().stream()
@@ -118,7 +98,7 @@ public class BoardController {
 
     @GetMapping
     public ResponseEntity<?> getPostsByCategory(
-            @RequestHeader(value = "Authorization", required = false) String authHeader,
+            @AuthenticationPrincipal CustomUserDetails userDetails,
             @RequestParam(value = "categoryId", required = false) Long categoryId,
             @RequestParam(value = "slug", required = false) String slug,
             @RequestParam(value = "searchKeyword", required = false) String searchKeyword,
@@ -136,7 +116,7 @@ public class BoardController {
                 return ApiResponse.fail("categoryId 또는 slug 파라미터가 필요합니다.").toResponse(HttpStatus.BAD_REQUEST);
             }
 
-            User user = extractUserFromHeader(authHeader);
+            User user = userDetails != null ? userDetails.getUser() : null;
 
             // "카르텔" 카테고리 접근 권한 확인
             if (isCartelCategory(category)) {
@@ -203,7 +183,7 @@ public class BoardController {
 
     @GetMapping("/pinned")
     public ResponseEntity<?> getPinnedPosts(
-            @RequestHeader(value = "Authorization", required = false) String authHeader,
+            @AuthenticationPrincipal CustomUserDetails userDetails,
             @RequestParam(value = "categoryId", required = false) Long categoryId,
             @RequestParam(value = "slug", required = false) String slug,
             @PageableDefault(size = 4, sort = "createdAt", direction = Sort.Direction.DESC) Pageable pageable) {
@@ -219,7 +199,7 @@ public class BoardController {
                 return ApiResponse.fail("categoryId 또는 slug 파라미터가 필요합니다.").toResponse(HttpStatus.BAD_REQUEST);
             }
 
-            User user = extractUserFromHeader(authHeader);
+            User user = userDetails != null ? userDetails.getUser() : null;
             Page<Board> boards = boardService.boardListByCategoryWithPinned(category, pageable);
 
             // 고정글 목록에 좋아요 개수 추가하여 DTO로 변환
@@ -250,7 +230,7 @@ public class BoardController {
 
     @GetMapping("/popular")
     public ResponseEntity<?> getPopularPosts(
-            @RequestHeader(value = "Authorization", required = false) String authHeader,
+            @AuthenticationPrincipal CustomUserDetails userDetails,
             @RequestParam(value = "categoryId", required = false) Long categoryId,
             @RequestParam(value = "slug", required = false) String slug,
             @PageableDefault(size = 10, sort = "createdAt", direction = Sort.Direction.DESC) Pageable pageable) {
@@ -262,7 +242,7 @@ public class BoardController {
                     maxSize,
                     pageable.getSort());
 
-            User user = extractUserFromHeader(authHeader);
+            User user = userDetails != null ? userDetails.getUser() : null;
             Page<Board> boards;
             Category category = null;
 
@@ -311,30 +291,17 @@ public class BoardController {
 
     @PostMapping
     public ResponseEntity<?> write(
-            @RequestHeader(value = "Authorization", required = false) String authHeader,
+            @AuthenticationPrincipal CustomUserDetails userDetails,
             @RequestParam("categoryId") Long categoryId,
             @RequestParam("title") String title,
             @RequestParam("content") String content,
             @RequestParam(value = "tag", required = false) String tag,
             @RequestParam(value = "attachmentIds", required = false) List<Long> attachmentIds) {
         try {
-            User author = null;
-            if (authHeader != null && authHeader.startsWith("Bearer ")) {
-                String token = authHeader.substring(7);
-                if (jwtUtil.isTokenExpired(token)) {
-                    return ApiResponse.fail("토큰이 만료되었습니다. 다시 로그인해주세요.").toResponse(HttpStatus.UNAUTHORIZED);
-                }
-
-                Long userId = jwtUtil.extractUserId(token);
-                if (userId != null) {
-                    author = userRepository.findById(userId)
-                            .orElseThrow(() -> new RuntimeException("사용자를 찾을 수 없습니다: " + userId));
-                }
-            }
-
-            if (author == null) {
+            if (userDetails == null) {
                 return ApiResponse.fail("로그인이 필요합니다.").toResponse(HttpStatus.UNAUTHORIZED);
             }
+            User author = userDetails.getUser();
 
             Category category = categoryRepository.findById(categoryId)
                     .orElseThrow(() -> new RuntimeException("카테고리를 찾을 수 없습니다: " + categoryId));
@@ -394,7 +361,7 @@ public class BoardController {
 
     @GetMapping("/{id}")
     public ResponseEntity<?> view(
-            @RequestHeader(value = "Authorization", required = false) String authHeader,
+            @AuthenticationPrincipal CustomUserDetails userDetails,
             @PathVariable("id") Long id) {
         try {
             Board board = boardService.boardView(id);
@@ -404,7 +371,7 @@ public class BoardController {
                 return ApiResponse.ok("삭제된 게시글입니다.", Map.of("deleted", true)).toResponse();
             }
 
-            User user = extractUserFromHeader(authHeader);
+            User user = userDetails != null ? userDetails.getUser() : null;
 
             // "카르텔" 카테고리 접근 권한 확인
             if (board.getCategory() != null && isCartelCategory(board.getCategory())) {
@@ -431,7 +398,7 @@ public class BoardController {
 
     @PutMapping("/{id}")
     public ResponseEntity<?> update(
-            @RequestHeader(value = "Authorization", required = false) String authHeader,
+            @AuthenticationPrincipal CustomUserDetails userDetails,
             @PathVariable("id") Long id,
             @RequestParam("categoryId") Long categoryId,
             @RequestParam("title") String title,
@@ -441,23 +408,10 @@ public class BoardController {
         try {
             Board boardTemp = boardService.boardView(id);
 
-            User currentUser = null;
-            if (authHeader != null && authHeader.startsWith("Bearer ")) {
-                String token = authHeader.substring(7);
-                try {
-                    Long userId = jwtUtil.extractUserId(token);
-                    if (userId != null && !jwtUtil.isTokenExpired(token)) {
-                        currentUser = userRepository.findById(userId)
-                                .orElseThrow(() -> new RuntimeException("사용자를 찾을 수 없습니다: " + userId));
-                    }
-                } catch (Exception e) {
-                    // 토큰이 유효하지 않으면 에러 반환
-                }
-            }
-
-            if (currentUser == null) {
+            if (userDetails == null) {
                 return ApiResponse.fail("로그인이 필요합니다.").toResponse(HttpStatus.UNAUTHORIZED);
             }
+            User currentUser = userDetails.getUser();
 
             boolean isAdmin = currentUser.getAuthorities().stream()
                     .anyMatch(authority -> authority.getAuthorityName().equals("ROLE_ADMIN"));
@@ -510,28 +464,15 @@ public class BoardController {
 
     @DeleteMapping("/{id}")
     public ResponseEntity<?> delete(
-            @RequestHeader(value = "Authorization", required = false) String authHeader,
+            @AuthenticationPrincipal CustomUserDetails userDetails,
             @PathVariable("id") Long id) {
         try {
             Board board = boardService.boardView(id);
 
-            User currentUser = null;
-            if (authHeader != null && authHeader.startsWith("Bearer ")) {
-                String token = authHeader.substring(7);
-                try {
-                    Long userId = jwtUtil.extractUserId(token);
-                    if (userId != null && !jwtUtil.isTokenExpired(token)) {
-                        currentUser = userRepository.findById(userId)
-                                .orElseThrow(() -> new RuntimeException("사용자를 찾을 수 없습니다: " + userId));
-                    }
-                } catch (Exception e) {
-                    // 토큰이 유효하지 않으면 에러 반환
-                }
-            }
-
-            if (currentUser == null) {
+            if (userDetails == null) {
                 return ApiResponse.fail("로그인이 필요합니다.").toResponse(HttpStatus.UNAUTHORIZED);
             }
+            User currentUser = userDetails.getUser();
 
             boolean isAdmin = currentUser.getAuthorities().stream()
                     .anyMatch(authority -> authority.getAuthorityName().equals("ROLE_ADMIN"));
@@ -555,26 +496,13 @@ public class BoardController {
 
     @PatchMapping("/{id}/pin")
     public ResponseEntity<?> togglePin(
-            @RequestHeader(value = "Authorization", required = false) String authHeader,
+            @AuthenticationPrincipal CustomUserDetails userDetails,
             @PathVariable("id") Long id) {
         try {
-            User currentUser = null;
-            if (authHeader != null && authHeader.startsWith("Bearer ")) {
-                String token = authHeader.substring(7);
-                try {
-                    Long userId = jwtUtil.extractUserId(token);
-                    if (userId != null && !jwtUtil.isTokenExpired(token)) {
-                        currentUser = userRepository.findById(userId)
-                                .orElseThrow(() -> new RuntimeException("사용자를 찾을 수 없습니다: " + userId));
-                    }
-                } catch (Exception e) {
-                    // 토큰이 유효하지 않으면 에러 반환
-                }
-            }
-
-            if (currentUser == null) {
+            if (userDetails == null) {
                 return ApiResponse.fail("로그인이 필요합니다.").toResponse(HttpStatus.UNAUTHORIZED);
             }
+            User currentUser = userDetails.getUser();
 
             // 관리자만 고정/해제 가능
             boolean isAdmin = currentUser.getAuthorities().stream()
@@ -639,20 +567,12 @@ public class BoardController {
 
     @GetMapping("/my/board-count")
     public ResponseEntity<?> getMyStats(
-            @RequestHeader(value = "Authorization", required = false) String authHeader) {
+            @AuthenticationPrincipal CustomUserDetails userDetails) {
         try {
-            User currentUser = null;
-            if (authHeader != null && authHeader.startsWith("Bearer ")) {
-                String token = authHeader.substring(7);
-                Long userId = jwtUtil.extractUserId(token);
-                if (userId != null && !jwtUtil.isTokenExpired(token)) {
-                    currentUser = userRepository.findById(userId).orElse(null);
-                }
-            }
-
-            if (currentUser == null) {
+            if (userDetails == null) {
                 return ApiResponse.fail("로그인이 필요합니다.").toResponse(HttpStatus.UNAUTHORIZED);
             }
+            User currentUser = userDetails.getUser();
 
             long postCount = boardService.countByAuthor(currentUser);
 
@@ -671,7 +591,7 @@ public class BoardController {
      */
     @GetMapping("/user/{nickname}")
     public ResponseEntity<?> getBoardsByNickname(
-            @RequestHeader(value = "Authorization", required = false) String authHeader,
+            @AuthenticationPrincipal CustomUserDetails userDetails,
             @PathVariable String nickname) {
         try {
             User targetUser = userRepository.findByNickname(nickname).orElse(null);
@@ -679,7 +599,7 @@ public class BoardController {
                 return ApiResponse.fail("사용자를 찾을 수 없습니다.").toResponse(HttpStatus.NOT_FOUND);
             }
 
-            User user = extractUserFromHeader(authHeader);
+            User user = userDetails != null ? userDetails.getUser() : null;
             List<Board> boards = boardService.getMyBoards(targetUser);
             List<BoardResponseDTO> dtos = boards.stream()
                     .map(b -> BoardResponseDTO.from(b,
@@ -701,9 +621,9 @@ public class BoardController {
      */
     @GetMapping("/my/boards")
     public ResponseEntity<?> getMyBoards(
-            @RequestHeader(value = "Authorization", required = false) String authHeader) {
+            @AuthenticationPrincipal CustomUserDetails userDetails) {
         try {
-            User currentUser = extractUser(authHeader);
+            User currentUser = userDetails != null ? userDetails.getUser() : null;
             if (currentUser == null) {
                 return ApiResponse.fail("로그인이 필요합니다.").toResponse(HttpStatus.UNAUTHORIZED);
             }
@@ -729,10 +649,10 @@ public class BoardController {
      */
     @DeleteMapping("/my/boards")
     public ResponseEntity<?> deleteMyBoards(
-            @RequestHeader(value = "Authorization", required = false) String authHeader,
+            @AuthenticationPrincipal CustomUserDetails userDetails,
             @RequestBody BoardDeleteRequest request) {
         try {
-            User currentUser = extractUser(authHeader);
+            User currentUser = userDetails != null ? userDetails.getUser() : null;
             if (currentUser == null) {
                 return ApiResponse.fail("로그인이 필요합니다.").toResponse(HttpStatus.UNAUTHORIZED);
             }
@@ -755,9 +675,9 @@ public class BoardController {
      */
     @GetMapping("/my/commented-boards")
     public ResponseEntity<?> getMyCommentedBoards(
-            @RequestHeader(value = "Authorization", required = false) String authHeader) {
+            @AuthenticationPrincipal CustomUserDetails userDetails) {
         try {
-            User currentUser = extractUser(authHeader);
+            User currentUser = userDetails != null ? userDetails.getUser() : null;
             if (currentUser == null) {
                 return ApiResponse.fail("로그인이 필요합니다.").toResponse(HttpStatus.UNAUTHORIZED);
             }
@@ -783,14 +703,4 @@ public class BoardController {
         }
     }
 
-    private User extractUser(String authHeader) {
-        if (authHeader != null && authHeader.startsWith("Bearer ")) {
-            String token = authHeader.substring(7);
-            Long userId = jwtUtil.extractUserId(token);
-            if (userId != null && !jwtUtil.isTokenExpired(token)) {
-                return userRepository.findById(userId).orElse(null);
-            }
-        }
-        return null;
-    }
 }

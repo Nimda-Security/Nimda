@@ -21,6 +21,7 @@ function BoardWritePage() {
   const [subCategoryId, setSubCategoryId] = useState<number | null>(null);
   const [showParentDropdown, setShowParentDropdown] = useState(false);
   const [showSubDropdown, setShowSubDropdown] = useState(false);
+  const [showTagDropdown, setShowTagDropdown] = useState(false);
 
   const [title, setTitle] = useState('');
   const [content, setContent] = useState('');
@@ -281,7 +282,7 @@ function BoardWritePage() {
           <div className="bw-top-bar">
             {/* 대분류 */}
             <span className="bw-label">게시판</span>
-            <div className="bw-category-selector" onClick={() => { setShowParentDropdown(p => !p); setShowSubDropdown(false); }}>
+            <div className="bw-category-selector" onClick={() => { setShowParentDropdown(p => !p); setShowSubDropdown(false); setShowTagDropdown(false); }}>
               <span className="bw-category-selected">
                 {currentParentCat ? currentParentCat.name : '선택하세요'}
               </span>
@@ -318,7 +319,7 @@ function BoardWritePage() {
             {subCategories.length > 0 && (
               <>
                 <span className="bw-label" style={{ marginLeft: '16px' }}>소분류</span>
-                <div className="bw-category-selector" onClick={() => { setShowSubDropdown(p => !p); setShowParentDropdown(false); }}>
+                <div className="bw-category-selector" onClick={() => { setShowSubDropdown(p => !p); setShowParentDropdown(false); setShowTagDropdown(false); }}>
                   <span className="bw-category-selected">
                     {currentSubCat ? currentSubCat.name : '선택하세요'}
                   </span>
@@ -350,7 +351,42 @@ function BoardWritePage() {
 
           <div className="bw-divider" />
 
-          {/* ── 제목 ── */}
+          {/* 태그 드롭다운 (available tags가 있을 때만) */}
+          {currentTagList.length > 0 && (
+            <div className="bw-top-bar" style={{ paddingTop: '12px', paddingBottom: '12px' }}>
+              <span className="bw-label">태그</span>
+              <div
+                className="bw-category-selector"
+                onClick={() => { setShowTagDropdown(p => !p); setShowParentDropdown(false); setShowSubDropdown(false); }}
+              >
+                <span className="bw-category-selected" style={{ color: tag ? '#d97399' : undefined }}>
+                  {tag ? `# ${tag}` : '선택 안 함'}
+                </span>
+                <span className={`bw-chevron ${showTagDropdown ? 'bw-chevron--open' : ''}`}>
+                  <ChevronDown />
+                </span>
+                {showTagDropdown && (
+                  <div className="bw-category-dropdown">
+                    <div
+                      className={`bw-category-option ${tag === '' ? 'bw-category-option--active' : ''}`}
+                      onClick={(e) => { e.stopPropagation(); setTag(''); setShowTagDropdown(false); }}
+                    >
+                      선택 안 함
+                    </div>
+                    {currentTagList.map((t) => (
+                      <div
+                        key={t}
+                        className={`bw-category-option ${tag === t ? 'bw-category-option--active' : ''}`}
+                        onClick={(e) => { e.stopPropagation(); setTag(t); setShowTagDropdown(false); }}
+                      >
+                        # {t}
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
+            </div>
+          )}
           <div className="bw-title-area">
             <input
               id="bw-title"

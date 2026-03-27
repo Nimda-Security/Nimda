@@ -4,13 +4,14 @@ import com.nimda.cite.comment.dto.*;
 import com.nimda.cite.comment.service.CommentService;
 import com.nimda.cite.common.response.ApiResponse;
 import com.nimda.cite.common.s3.S3Service;
-import com.nimda.cup.common.util.JwtUtil;
 import com.nimda.cup.user.repository.UserRepository;
+import com.nimda.cup.user.security.CustomUserDetails;
 import jakarta.validation.Valid;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.server.ResponseStatusException;
 
@@ -23,9 +24,6 @@ public class CommentController {
 
     @Autowired
     private CommentService commentService;
-
-    @Autowired
-    private JwtUtil jwtUtil;
 
     @Autowired(required = false)
     private S3Service s3Service;
@@ -61,10 +59,10 @@ public class CommentController {
     public ResponseEntity<?> createComment(
             @PathVariable Long boardId,
             @Valid @RequestBody CommentCreateRequest request,
-            @RequestHeader("Authorization") String authHeader
+            @AuthenticationPrincipal CustomUserDetails userDetails
     ) {
         try {
-            Long userId = jwtUtil.extractUserId(resolveToken(authHeader));
+            Long userId = userDetails.getUser().getId();
             CommentResponse response = commentService.createComment(boardId, request, userId);
             resolveCommentProfileImage(response);
             return ApiResponse.ok("댓글이 성공적으로 작성되었습니다.",
@@ -85,14 +83,12 @@ public class CommentController {
     @GetMapping("/board/{boardId}/comments")
     public ResponseEntity<?> getComments(
             @PathVariable Long boardId,
-            @RequestHeader("Authorization") String authHeader
+            @AuthenticationPrincipal CustomUserDetails userDetails
     ) {
         try {
-            String token = resolveToken(authHeader);
-            List<String> authorities = jwtUtil.extractAuthorities(token);
-            Long userId = jwtUtil.extractUserId(token);
-
-            boolean isAdmin = authorities.contains("ROLE_ADMIN");
+            Long userId = userDetails.getUser().getId();
+            boolean isAdmin = userDetails.getAuthorities().stream()
+                    .anyMatch(a -> a.getAuthority().equals("ROLE_ADMIN"));
             // 댓글 조회
             List<CommentResponse> comments = commentService.getComments(boardId, userId, isAdmin);
             resolveCommentProfileImages(comments);
@@ -111,10 +107,10 @@ public class CommentController {
      */
     @GetMapping("/my-page/comments")
     public ResponseEntity<?> getMyComments(
-            @RequestHeader("Authorization") String authHeader
+            @AuthenticationPrincipal CustomUserDetails userDetails
     ) {
         try {
-            Long userId = jwtUtil.extractUserId(resolveToken(authHeader));
+            Long userId = userDetails.getUser().getId();
             return ApiResponse.ok("댓글을 성공적으로 조회했습니다.",
                     Map.of("comments", commentService.getMyComments(userId))).toResponse();
 
@@ -133,10 +129,10 @@ public class CommentController {
     public ResponseEntity<?> updateComment(
             @PathVariable Long commentId,
             @Valid @RequestBody CommentUpdateRequest request,
-            @RequestHeader("Authorization") String authHeader
+            @AuthenticationPrincipal CustomUserDetails userDetails
     ) {
         try {
-            Long userId = jwtUtil.extractUserId(resolveToken(authHeader));
+            Long userId = userDetails.getUser().getId();
             CommentResponse response = commentService.updateComment(commentId, request, userId);
             resolveCommentProfileImage(response);
             return ApiResponse.ok("댓글을 성공적으로 수정했습니다.",
@@ -157,7 +153,7 @@ public class CommentController {
     public ResponseEntity<?> hideComment(
             @PathVariable Long commentId,
             @Valid @RequestBody CommentStatusUpdateRequest request,
-            @RequestHeader("Authorization") String authHeader
+            @AuthenticationPrincipal CustomUserDetails userDetails
     ) {
         try {
             CommentResponse response = commentService.updateCommentStatus(commentId, request);
@@ -180,10 +176,10 @@ public class CommentController {
     @DeleteMapping("/comments/{commentId}")
     public ResponseEntity<?> deleteComment(
             @PathVariable Long commentId,
-            @RequestHeader("Authorization") String authHeader
+            @AuthenticationPrincipal CustomUserDetails userDetails
     ) {
         try {
-            Long userId = jwtUtil.extractUserId(resolveToken(authHeader));
+            Long userId = userDetails.getUser().getId();
             commentService.deleteComment(commentId, userId);
             return ApiResponse.ok("댓글이 성공적으로 삭제되었습니다.").toResponse();
 
@@ -200,11 +196,10 @@ public class CommentController {
      */
     @GetMapping("/comments/my/count")
     public ResponseEntity<?> getMyCommentCount(
-            @RequestHeader("Authorization") String authHeader
+            @AuthenticationPrincipal CustomUserDetails userDetails
     ) {
         try {
-            // 토큰에서 유저 ID 추출
-            Long userId = jwtUtil.extractUserId(resolveToken(authHeader));
+            Long userId = userDetails.getUser().getId();
 
             // Service에서 해당 유저의 댓글 개수 조회
             // commentService에 countByUserId(userId) 메서드가 구현되어 있어야 합니다.
@@ -225,11 +220,11 @@ public class CommentController {
      */
     @DeleteMapping("/my-page/comments")
     public ResponseEntity<?> deleteMyComments(
-            @RequestHeader("Authorization") String authHeader,
+            @AuthenticationPrincipal CustomUserDetails userDetails,
             @RequestBody MyCommentsDeleteRequest request
     ) {
         try {
-            Long userId = jwtUtil.extractUserId(resolveToken(authHeader));
+            Long userId = userDetails.getUser().getId();
             commentService.deleteMyComments(request.getCommentIds(), userId);
             return ApiResponse.ok("선택한 댓글이 성공적으로 삭제되었습니다.").toResponse();
 
@@ -261,12 +256,6 @@ public class CommentController {
         }
     }
 
-    // Bearer 토큰 추출 공통 로직
-    private String resolveToken(String authHeader) {
-        if (authHeader != null && authHeader.startsWith("Bearer ")) {
-            return authHeader.substring(7);
-        }
-        throw new IllegalArgumentException("유효하지 않은 인증 헤더입니다.");
-    }
-
+    // Bearer 토큰 추출 공통 로직 (deprecated - 사용 안 함)
 }
+
