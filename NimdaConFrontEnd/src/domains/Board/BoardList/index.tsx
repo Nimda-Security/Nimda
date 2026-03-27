@@ -218,11 +218,10 @@ function BoardListPage({ slug: propSlug }: BoardListPageProps) {
 
   // 렌더링용 변수들
   const categoryName = category?.name || CATEGORY_LABELS[slug] || '게시판';
-  const getCategoryTagLabel = (post: Board, fallbackLabel?: string) => {
+  const getCategoryTagLabel = (post: Board, fallbackLabel?: string): string | null => {
     if (post.tag) return `# ${post.tag}`;
     if (fallbackLabel) return `# ${fallbackLabel}`;
-    if (post.category?.name) return `# ${post.category.name}`;
-    return '# 게시물';
+    return null;
   };
 
   const isNewsCategoryGroup = useMemo(() => {
@@ -317,7 +316,7 @@ function BoardListPage({ slug: propSlug }: BoardListPageProps) {
             {displayGlobalNotices.map((post) => (
               <div key={`notice-${post.id}`} className="board-list__row board-list__row--pinned" onClick={() => navigate(`/board/notice/${post.id}`)}>
                 <div className="board-list__row-content">
-                  <span className="board-list__category-tag">{getCategoryTagLabel(post, '필독')}</span>
+                  {getCategoryTagLabel(post, '필독') && <span className="board-list__category-tag">{getCategoryTagLabel(post, '필독')}</span>}
                   <div className="board-list__title-line">
                     <span className="board-list__post-title board-list__post-title--bold">{post.title}</span>
                     <span className="board-list__comments"><MessageBox /> {post.commentCount ?? 0}</span>
@@ -339,7 +338,7 @@ function BoardListPage({ slug: propSlug }: BoardListPageProps) {
             {pinnedPosts.map((post) => (
               <div key={`pinned-${post.id}`} className="board-list__row board-list__row--notice" onClick={() => handleBoardClick(post.id)}>
                 <div className="board-list__row-content">
-                  <span className="board-list__category-tag">{getCategoryTagLabel(post, isNoticeCategory ? '필독' : '고정')}</span>
+                  {getCategoryTagLabel(post, isNoticeCategory ? '필독' : '고정') && <span className="board-list__category-tag">{getCategoryTagLabel(post, isNoticeCategory ? '필독' : '고정')}</span>}
                   <div className="board-list__title-line">
                     <span className="board-list__post-title board-list__post-title--bold">{post.title}</span>
                     <span className="board-list__comments"><MessageBox /> {post.commentCount ?? 0}</span>
@@ -364,7 +363,7 @@ function BoardListPage({ slug: propSlug }: BoardListPageProps) {
               boards.map((post) => (
                 <div key={post.id} className="board-list__row" onClick={() => handleBoardClick(post.id)}>
                   <div className="board-list__row-content">
-                    <span className="board-list__category-tag">{getCategoryTagLabel(post)}</span>
+                    {getCategoryTagLabel(post) && <span className="board-list__category-tag">{getCategoryTagLabel(post)}</span>}
                     <div className="board-list__title-line">
                       <span className="board-list__post-title">{post.title}</span>
                       <span className="board-list__comments"><MessageBox /> {post.commentCount ?? 0}</span>
