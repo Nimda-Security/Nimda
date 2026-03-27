@@ -165,34 +165,9 @@ function BoardDetailPage() {
           <button type="button" onClick={handleGoBack} className="board-detail__back">
             ← {board.category?.name ?? boardType ?? '게시판'}
           </button>
-          <h1 className="board-detail__title">{board.title}</h1>
 
-          <div className="board-detail__meta">
-            <Avatar
-              src={board.author?.profileImage}
-              size={32}
-              className="board-detail__avatar"
-            />
-            <Link
-              to={board.author?.nickname ? `/user/${board.author.nickname}` : '#'}
-              className="board-detail__author"
-            >
-              {board.author?.nickname ?? '알 수 없음'}
-            </Link>
-            <span className="board-detail__date">{fmtDate(board.createdAt)}</span>
-            <span className="board-detail__date">{fmtTime(board.createdAt)}</span>
-
-            <div className="board-detail__stats">
-              <span className="board-detail__stat-comments">
-                <MessageBox />
-                {board.commentCount ?? 0}
-              </span>
-              <span className="board-detail__stat-likes">
-                <Heart filled={isLiked} />
-                {likeCount}
-              </span>
-            </div>
-
+          <div className="board-detail__title-row">
+            <h1 className="board-detail__title">{board.title}</h1>
             {/* 작성자 또는 어드민만 점 세 개 버튼 표시 */}
             {(isAuthor() || isAdmin()) && (
               <div className="board-detail__menu-wrap">
@@ -222,6 +197,35 @@ function BoardDetailPage() {
                 )}
               </div>
             )}
+          </div>
+          
+          <div className="board-detail__meta">
+            <Avatar
+              src={board.author?.profileImage}
+              size={40}
+              className="board-detail__avatar"
+            />
+            <div className="board-detail__meta-info">
+              <Link
+                to={board.author?.nickname ? `/user/${board.author.nickname}` : '#'}
+                className="board-detail__author"
+              >
+                {board.author?.nickname ?? '알 수 없음'}
+              </Link>
+              <div className="board-detail__meta-sub">
+                <span className="board-detail__date">
+                  {fmtDate(board.createdAt)} {fmtTime(board.createdAt)}
+                </span>
+                <span className="board-detail__stat-comments">
+                  <MessageBox />
+                  {board.commentCount ?? 0}
+                </span>
+                <span className="board-detail__stat-likes">
+                  <Heart filled={isLiked} />
+                  {likeCount}
+                </span>
+              </div>
+            </div>
           </div>
         </header>
 
