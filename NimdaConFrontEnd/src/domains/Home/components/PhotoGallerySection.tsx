@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from "react";
 import { Link } from "react-router-dom";
 import { Heart } from "@/components/icons/Heart";
+import { MessageBox } from "@/components/icons/MessageBox";
 import { getBoardListAPI, getBoardDetailAPI } from "@/api/board";
 import { getAttachmentPresignedUrl } from "@/api/attachments";
 import type { Board } from "@/domains/Board/types";
@@ -116,9 +117,15 @@ const PhotoGallerySection: React.FC = () => {
                 )}
                 <p className="home-gallery__card-title">{post.title}</p>
                 <div className="home-gallery__card-meta">
-                  <div className="home-gallery__card-likes">
-                    <Heart filled={post.isLiked} />
-                    <span>{post.likeCount ?? 0}</span>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                    <div className="home-gallery__card-comments">
+                      <MessageBox />
+                      <span>{post.commentCount ?? 0}</span>
+                    </div>
+                    <div className="home-gallery__card-likes">
+                      <Heart filled={post.isLiked} />
+                      <span>{post.likeCount ?? 0}</span>
+                    </div>
                   </div>
                   <span className="home-gallery__card-separator">|</span>
                   <span className="home-gallery__card-date">
