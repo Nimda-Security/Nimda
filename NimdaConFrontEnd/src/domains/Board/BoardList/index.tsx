@@ -338,7 +338,6 @@ function BoardListPage({ slug: propSlug }: BoardListPageProps) {
             {pinnedPosts.map((post) => (
               <div key={`pinned-${post.id}`} className="board-list__row board-list__row--notice" onClick={() => handleBoardClick(post.id)}>
                 <div className="board-list__row-content">
-<<<<<<< HEAD
                   <span className="board-list__category-tag">{getCategoryTagLabel(post, isNoticeCategory ? '필독' : '고정')}</span>
                   <div className="board-list__title-line">
                     <span className="board-list__post-title board-list__post-title--bold">{post.title}</span>
