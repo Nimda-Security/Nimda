@@ -6,7 +6,6 @@
 .comment-section {
   margin-top: 32px;
   padding-top: 24px;
-  border-top: 1px solid var(--color-gray-200);
 }
 
 .comment-section__title {

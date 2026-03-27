@@ -29,19 +29,45 @@
   margin-bottom: 16px;
 }
 
+.board-detail__title-row {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 8px;
+  margin-bottom: 16px;
+}
+
 .board-detail__title {
   font-size: 24px;
   font-weight: 700;
   color: var(--color-black);
   line-height: 1.2;
-  margin-bottom: 16px;
+  margin-bottom: 0; /* 기존 16px → 0 (title-row가 margin 담당) */
+  flex: 1;
+}
+
+.board-detail__meta {
+  display: flex;
+  align-items: center; /* 아바타와 meta-info를 세로 중앙 정렬 */
+  gap: 8px;
 }
 
 /* 작성자 행 */
-.board-detail__meta {
+.board-detail__meta-info {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.board-detail__meta-sub {
   display: flex;
   align-items: center;
   gap: 8px;
+  margin-left: 0;
+  font-size: 12px;
+  font-weight: 700;
+  line-height: 1.5;
+
 }
 
 .board-detail__avatar {
@@ -80,16 +106,6 @@
   color: var(--color-gray-500);
   line-height: 1.5;
   white-space: nowrap;
-}
-
-.board-detail__stats {
-  display: flex;
-  align-items: center;
-  gap: 6px;
-  margin-left: auto;
-  font-size: 12px;
-  font-weight: 700;
-  line-height: 1.5;
 }
 
 .board-detail__stat-comments {
