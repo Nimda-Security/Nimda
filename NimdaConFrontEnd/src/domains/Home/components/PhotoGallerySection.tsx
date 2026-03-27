@@ -138,7 +138,7 @@ const PhotoGallerySection: React.FC = () => {
                 <p className="home-gallery__card-title">{post.title}</p>
                 <div className="home-gallery__card-meta">
                   <div className="home-gallery__card-likes">
-                    <Heart filled={false} />
+                    <Heart filled={true} />
                     <span>{post.likeCount ?? 0}</span>
                   </div>
                   <span className="home-gallery__card-separator">|</span>
