@@ -199,17 +199,13 @@ const PhotoGalleryBoard: React.FC = () => {
                       <div className="photo-gallery-board__title-line">
                         <p className="photo-gallery-board__title">{post.title}</p>
                         <div className="photo-gallery-board__counts">
-                          {post.commentCount !== undefined && post.commentCount > 0 && (
-                            <span className="photo-gallery-board__count photo-gallery-board__count--comments">
-                              [{post.commentCount}]
-                            </span>
-                          )}
-                          {post.likeCount !== undefined && post.likeCount > 0 && (
-                            <span className="photo-gallery-board__count photo-gallery-board__count--likes">
-                              <Heart filled={likeStatuses[post.id] ?? false} />
-                              <span>{post.likeCount}</span>
-                            </span>
-                          )}
+                          <span className="photo-gallery-board__count photo-gallery-board__count--comments">
+                            [{post.commentCount ?? 0}]
+                          </span>
+                          <span className="photo-gallery-board__count photo-gallery-board__count--likes">
+                            <Heart filled={likeStatuses[post.id] ?? false} />
+                            <span>{post.likeCount ?? 0}</span>
+                          </span>
                         </div>
                       </div>
                       <div className="photo-gallery-board__meta">

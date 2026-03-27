@@ -120,12 +120,10 @@ const PhotoGallerySection: React.FC = () => {
                 <p className="home-gallery__card-title">{post.title}</p>
                 <div className="home-gallery__card-meta">
                   <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                    {post.commentCount !== undefined && post.commentCount > 0 && (
-                      <div className="home-gallery__card-comments">
-                        <MessageBox />
-                        <span>{post.commentCount}</span>
-                      </div>
-                    )}
+                    <div className="home-gallery__card-comments">
+                      <MessageBox />
+                      <span>{post.commentCount ?? 0}</span>
+                    </div>
                     <div className="home-gallery__card-likes">
                       <Heart filled={likeStatuses[post.id] ?? false} />
                       <span>{post.likeCount ?? 0}</span>
