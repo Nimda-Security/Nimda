@@ -11,6 +11,7 @@ import { isAdmin, hasRole } from '@/utils/jwt';
 import { formatDate } from '@/utils/formatDate';
 import './BoardList.css';
 import { useLikeStatuses } from "@/domains/Board/useLikeStatuses";
+import Avatar from '@/components/Avatar/Avatar';
 
 interface BoardListPageProps {
   slug?: string;
@@ -327,7 +328,7 @@ function BoardListPage({ slug: propSlug }: BoardListPageProps) {
                     <Link to={post.author?.nickname ? `/user/${post.author.nickname}` : '#'} className="board-list__author" onClick={(e) => e.stopPropagation()}>{post.author?.nickname || '익명'}</Link>
                     <span className="board-list__date">{formatDate(post.createdAt)}</span>
                   </div>
-                  <img src={post.author?.profileImage || '/default_user_profile.png'} alt="" className="board-list__avatar" />
+                  <Avatar src={post.author?.profileImage} size={28} className="board-list__avatar" />
                 </div>
                 <div className="board-list__row-divider" />
               </div>
@@ -349,7 +350,7 @@ function BoardListPage({ slug: propSlug }: BoardListPageProps) {
                     <Link to={post.author?.nickname ? `/user/${post.author.nickname}` : '#'} className="board-list__author" onClick={(e) => e.stopPropagation()}>{post.author?.nickname || '익명'}</Link>
                     <span className="board-list__date">{formatDate(post.createdAt)}</span>
                   </div>
-                  <img src={post.author?.profileImage || '/default_user_profile.png'} alt="" className="board-list__avatar" />
+                  <Avatar src={post.author?.profileImage} size={28} className="board-list__avatar" />
                 </div>
                 <div className="board-list__row-divider" />
               </div>
@@ -374,7 +375,7 @@ function BoardListPage({ slug: propSlug }: BoardListPageProps) {
                       <Link to={post.author?.nickname ? `/user/${post.author.nickname}` : '#'} className="board-list__author" onClick={(e) => e.stopPropagation()}>{post.author?.nickname || '익명'}</Link>
                       <span className="board-list__date">{formatDate(post.createdAt)}</span>
                     </div>
-                    <img src={post.author?.profileImage || '/default_user_profile.png'} alt="" className="board-list__avatar" />
+                    <Avatar src={post.author?.profileImage} size={28} className="board-list__avatar" />
                   </div>
                   <div className="board-list__row-divider" />
                 </div>

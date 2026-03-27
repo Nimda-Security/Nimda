@@ -190,7 +190,7 @@ const PhotoGalleryBoard: React.FC = () => {
                       <div className="photo-gallery-board__author">
                         <Avatar
                           src={post.author?.profileImage}
-                          size={20}
+                          size={24}
                           className="photo-gallery-board__avatar"
                         />
                         <span className="photo-gallery-board__nickname">
