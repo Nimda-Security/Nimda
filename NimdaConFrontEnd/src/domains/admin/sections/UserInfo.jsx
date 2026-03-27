@@ -11,8 +11,19 @@ const UserInfo = ({
   getUserRoles,
   uploadingImage,
   handleImageUpload,
+  availableRoles,
+  grantingRole,
+  handleGrantRole,
+  removingRole,
+  handleRemoveRole,
 }) => {
   const navigate = useNavigate();
+  const [selectedRoleToGrant, setSelectedRoleToGrant] = React.useState('');
+
+  React.useEffect(() => {
+    setSelectedRoleToGrant('');
+  }, [selectedUser?.id]);
+
   return (
     <div>
       <div className="admin__header-row">
@@ -142,6 +153,39 @@ const UserInfo = ({
                       {role}
                     </span>
                   ))}
+                </div>
+
+                <div style={{ marginTop: 12, display: 'flex', gap: 8, alignItems: 'center' }}>
+                  <select
+                    className="admin__btn"
+                    value={selectedRoleToGrant}
+                    onChange={(e) => setSelectedRoleToGrant(e.target.value)}
+                    disabled={grantingRole}
+                    style={{ minWidth: 180, backgroundColor: '#fff', border: '1px solid #ddd' }}
+                  >
+                    <option value="">권한 선택</option>
+                    {availableRoles.map((role) => (
+                      <option key={role} value={role}>
+                        {role}
+                      </option>
+                    ))}
+                  </select>
+                  <button
+                    type="button"
+                    className="admin__btn"
+                    disabled={grantingRole || !selectedRoleToGrant}
+                    onClick={() => handleGrantRole(selectedUser.id, selectedRoleToGrant)}
+                  >
+                    {grantingRole ? '부여 중...' : '권한 부여'}
+                  </button>
+                  <button
+                    type="button"
+                    className="admin__btn"
+                    disabled={removingRole || !selectedRoleToGrant}
+                    onClick={() => handleRemoveRole(selectedUser.id, selectedRoleToGrant)}
+                  >
+                    {removingRole ? '제거 중...' : '권한 제거'}
+                  </button>
                 </div>
               </div>
               <div style={{ gridColumn: 'span 2', marginTop: '10px' }}>

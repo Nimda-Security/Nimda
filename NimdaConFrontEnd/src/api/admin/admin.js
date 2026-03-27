@@ -83,7 +83,7 @@ export const deleteUserAPI = async (userId) => {
  */
 export const updateUserRoleAPI = async (userId, role) => {
   try {
-    const response = await fetch(`${API_BASE_URL}/users/${userId}/role`, {
+    const response = await fetch(`${API_BASE_URL}/admin/users/${userId}/role`, {
       method: "PUT",
       headers: {
         "Content-Type": "application/json",
@@ -111,6 +111,79 @@ export const updateUserRoleAPI = async (userId, role) => {
       success: false,
       message: "사용자 권한 변경 중 오류가 발생했습니다.",
     };
+  }
+};
+
+/**
+ * 사용자 권한 제거 API
+ */
+export const removeUserRoleAPI = async (userId, role) => {
+  try {
+    const response = await fetch(`${API_BASE_URL}/admin/users/${userId}/role/remove`, {
+      method: "PUT",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      credentials: "include",
+      body: JSON.stringify({ role }),
+    });
+
+    const result = await parseJsonSafe(response);
+    if (response.ok) {
+      return result ?? { success: true };
+    }
+    return {
+      success: false,
+      status: response.status,
+      message:
+        (result && result.message) ||
+        (response.status === 403
+          ? "권한이 없습니다. 관리자 계정으로 로그인하세요."
+          : "사용자 권한 제거 중 오류가 발생했습니다."),
+    };
+  } catch (error) {
+    console.error("사용자 권한 제거 API 오류:", error);
+    return {
+      success: false,
+      message: "사용자 권한 제거 중 오류가 발생했습니다.",
+    };
+  }
+};
+
+/**
+ * 서버에 등록된 권한 목록 조회 API
+ */
+export const getAvailableRolesAPI = async () => {
+  try {
+    const response = await fetch(`${API_BASE_URL}/admin/users/roles`, {
+      method: "GET",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      credentials: "include",
+    });
+
+    const result = await parseJsonSafe(response);
+
+    if (response.ok) {
+      return {
+        success: true,
+        roles: result?.roles || [],
+      };
+    }
+
+    return {
+      success: false,
+      status: response.status,
+      message:
+        (result && result.message) ||
+        (response.status === 403
+          ? "권한이 없습니다. 관리자 계정으로 로그인하세요."
+          : "권한 목록을 불러올 수 없습니다."),
+    };
+  } catch (error) {
+    console.error("권한 목록 조회 API 오류:", error);
+    return { success: false, message: "권한 목록을 불러올 수 없습니다." };
   }
 };
 
