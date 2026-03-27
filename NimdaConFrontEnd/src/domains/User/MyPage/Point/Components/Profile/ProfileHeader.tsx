@@ -1,5 +1,6 @@
 import React, { useRef, useState } from "react";
 import ProfileSummary from "./ProfileSummary";
+import Avatar from "@/components/Avatar/Avatar";
 import TabMenu from "@/domains/User/MyPage/Point/Components/TabMenu";
 import { requestPresignedUpload, putFileToPresignedUrl } from "@/api/attachments";
 import { updateProfileImageAPI } from "@/api/auth";
@@ -76,10 +77,10 @@ const ProfileHeader: React.FC<ProfileHeaderProps> = ({ userInfo, activeTab, setA
       {/* 프로필 섹션: 유저 이미지 160px + 정보 */}
       <div className="inline-flex pl-8 pr-[510px] items-start gap-6">
         <div className="relative cursor-pointer group" onClick={handleAvatarClick}>
-          <img
-            src={userInfo?.profileImage || "/default_user_profile.png"}
-            alt="Profile"
-            className={`w-[96px] h-[96px] rounded-full object-cover border border-gray-100 transition-opacity ${
+          <Avatar
+            src={userInfo?.profileImage}
+            size={96}
+            className={`transition-opacity ${
               uploading ? "opacity-50" : "group-hover:opacity-80"
             }`}
           />
