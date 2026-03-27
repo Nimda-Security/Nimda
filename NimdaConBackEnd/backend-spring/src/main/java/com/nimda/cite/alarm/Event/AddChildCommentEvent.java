@@ -1,9 +1,7 @@
 package com.nimda.cite.alarm.Event;
 
 import com.nimda.cite.board.entity.Board;
-import com.nimda.cite.comment.entity.Comment;
 import com.nimda.cup.user.entity.User;
-import lombok.Builder;
 import lombok.Getter;
 import org.springframework.context.ApplicationEvent;
 

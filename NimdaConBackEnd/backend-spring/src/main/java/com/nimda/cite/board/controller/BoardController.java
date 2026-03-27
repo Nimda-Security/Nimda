@@ -116,11 +116,10 @@ public class BoardController {
                 return ApiResponse.fail("categoryId 또는 slug 파라미터가 필요합니다.").toResponse(HttpStatus.BAD_REQUEST);
             }
 
-            User user = extractUserFromHeader(authHeader);
+            User user = userDetails != null ? userDetails.getUser() : null;
 
             // "카르텔" 카테고리 접근 권한 확인
             if (isCartelCategory(category)) {
-                User user = userDetails != null ? userDetails.getUser() : null;
                 if (!hasRole(user, "ROLE_CARTEL") && !hasRole(user, "ROLE_ADMIN")) {
                     return ApiResponse.fail("접근 권한이 없습니다.").toResponse(HttpStatus.FORBIDDEN);
                 }
@@ -184,7 +183,7 @@ public class BoardController {
 
     @GetMapping("/pinned")
     public ResponseEntity<?> getPinnedPosts(
-            @RequestHeader(value = "Authorization", required = false) String authHeader,
+            @AuthenticationPrincipal CustomUserDetails userDetails,
             @RequestParam(value = "categoryId", required = false) Long categoryId,
             @RequestParam(value = "slug", required = false) String slug,
             @PageableDefault(size = 4, sort = "createdAt", direction = Sort.Direction.DESC) Pageable pageable) {
@@ -200,7 +199,7 @@ public class BoardController {
                 return ApiResponse.fail("categoryId 또는 slug 파라미터가 필요합니다.").toResponse(HttpStatus.BAD_REQUEST);
             }
 
-            User user = extractUserFromHeader(authHeader);
+            User user = userDetails != null ? userDetails.getUser() : null;
             Page<Board> boards = boardService.boardListByCategoryWithPinned(category, pageable);
 
             // 고정글 목록에 좋아요 개수 추가하여 DTO로 변환
@@ -231,7 +230,7 @@ public class BoardController {
 
     @GetMapping("/popular")
     public ResponseEntity<?> getPopularPosts(
-            @RequestHeader(value = "Authorization", required = false) String authHeader,
+            @AuthenticationPrincipal CustomUserDetails userDetails,
             @RequestParam(value = "categoryId", required = false) Long categoryId,
             @RequestParam(value = "slug", required = false) String slug,
             @PageableDefault(size = 10, sort = "createdAt", direction = Sort.Direction.DESC) Pageable pageable) {
@@ -243,7 +242,7 @@ public class BoardController {
                     maxSize,
                     pageable.getSort());
 
-            User user = extractUserFromHeader(authHeader);
+            User user = userDetails != null ? userDetails.getUser() : null;
             Page<Board> boards;
             Category category = null;
 
@@ -372,11 +371,10 @@ public class BoardController {
                 return ApiResponse.ok("삭제된 게시글입니다.", Map.of("deleted", true)).toResponse();
             }
 
-            User user = extractUserFromHeader(authHeader);
+            User user = userDetails != null ? userDetails.getUser() : null;
 
             // "카르텔" 카테고리 접근 권한 확인
             if (board.getCategory() != null && isCartelCategory(board.getCategory())) {
-                User user = userDetails != null ? userDetails.getUser() : null;
                 if (!hasRole(user, "ROLE_CARTEL") && !hasRole(user, "ROLE_ADMIN")) {
                     return ApiResponse.fail("접근 권한이 없습니다.").toResponse(HttpStatus.FORBIDDEN);
                 }
@@ -593,7 +591,7 @@ public class BoardController {
      */
     @GetMapping("/user/{nickname}")
     public ResponseEntity<?> getBoardsByNickname(
-            @RequestHeader(value = "Authorization", required = false) String authHeader,
+            @AuthenticationPrincipal CustomUserDetails userDetails,
             @PathVariable String nickname) {
         try {
             User targetUser = userRepository.findByNickname(nickname).orElse(null);
@@ -601,7 +599,7 @@ public class BoardController {
                 return ApiResponse.fail("사용자를 찾을 수 없습니다.").toResponse(HttpStatus.NOT_FOUND);
             }
 
-            User user = extractUserFromHeader(authHeader);
+            User user = userDetails != null ? userDetails.getUser() : null;
             List<Board> boards = boardService.getMyBoards(targetUser);
             List<BoardResponseDTO> dtos = boards.stream()
                     .map(b -> BoardResponseDTO.from(b,
