@@ -182,14 +182,6 @@
   flex-shrink: 0;
 }
 
-.board-list__notice-label {
-  font-size: 14px;
-  font-weight: 600;
-  color: var(--color-pink);
-  margin-right: 12px;
-  flex-shrink: 0;
-}
-
 /* 제목 + 댓글/좋아요 가로 배치 */
 .board-list__title-line {
   display: flex;
