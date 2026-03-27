@@ -3,13 +3,14 @@ package com.nimda.cup.judge.controller;
 import com.nimda.cup.judge.dto.JudgeResultDTO;
 import com.nimda.cup.judge.dto.SubmissionDTO;
 import com.nimda.cup.judge.service.JudgeService;
-import com.nimda.cup.common.util.JwtUtil;
+import com.nimda.cup.user.security.CustomUserDetails;
 import jakarta.validation.Valid;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.HashMap;
@@ -26,9 +27,6 @@ public class JudgeController {
     @Autowired
     private JudgeService judgeService;
 
-    @Autowired
-    private JwtUtil jwtUtil;
-
     /**
      * 코드 제출 및 채점
      * 
@@ -37,27 +35,10 @@ public class JudgeController {
      */
     @PostMapping("/submit")
     public ResponseEntity<?> submitCode(
-            @RequestHeader(value = "Authorization", required = false) String authHeader,
+            @AuthenticationPrincipal CustomUserDetails userDetails,
             @Valid @RequestBody SubmissionDTO submission) {
         try {
-            String nickname = "익명"; // 기본값
-
-            // Authorization 헤더가 있으면 토큰에서 사용자 추출
-            if (authHeader != null && authHeader.startsWith("Bearer ")) {
-                String token = authHeader.substring(7); // "Bearer " 제거
-
-                try {
-                    // JwtUtil로 닉네임 추출
-                    String tokenNickname = jwtUtil.extractNickname(token);
-                    if (tokenNickname != null && !jwtUtil.isTokenExpired(token)) {
-                        nickname = tokenNickname;
-                    } else {
-                        logger.warn("만료된 토큰으로 제출 시도");
-                    }
-                } catch (Exception e) {
-                    logger.warn("유효하지 않은 토큰으로 제출 시도: {}", e.getMessage());
-                }
-            }
+            String nickname = userDetails != null ? userDetails.getUser().getNickname() : "익명";
 
             logger.info("코드 제출 요청 - 사용자: {}, 언어: {}, 제목: {}", nickname, submission.getLanguage(),
                     submission.getTitle());

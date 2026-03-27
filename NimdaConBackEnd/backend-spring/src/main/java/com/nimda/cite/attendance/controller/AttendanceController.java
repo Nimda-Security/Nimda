@@ -6,11 +6,12 @@ import com.nimda.cite.attendance.entity.AttendanceLog;
 import com.nimda.cite.attendance.service.AttendanceService;
 import com.nimda.cite.common.response.ApiResponse;
 import com.nimda.cite.common.s3.S3Service;
-import com.nimda.cup.common.util.JwtUtil;
+import com.nimda.cup.user.security.CustomUserDetails;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -23,7 +24,6 @@ import java.util.stream.Collectors;
 public class AttendanceController {
 
     private final AttendanceService attendanceService;
-    private final JwtUtil jwtUtil;
 
     @Autowired(required = false)
     private S3Service s3Service;
@@ -31,9 +31,9 @@ public class AttendanceController {
      * [POST] 출석 체크 실행
      */
     @PostMapping("/checkIn")
-    public ResponseEntity<?> checkIn(@RequestHeader("Authorization") String authHeader) {
+    public ResponseEntity<?> checkIn(@AuthenticationPrincipal CustomUserDetails userDetails) {
         try {
-            Long userId = jwtUtil.extractUserId(authHeader.substring(7));
+            Long userId = userDetails.getUser().getId();
             attendanceService.markAttendance(userId);
             return ApiResponse.ok("오늘의 출석이 완료되었습니다!").toResponse();
         } catch (IllegalStateException e) {
@@ -86,9 +86,8 @@ public class AttendanceController {
      * [GET] 내 출석부 상태 조회
      */
     @GetMapping("/me")
-    public ResponseEntity<ApiResponse<Attendance>> getMyAttendance(@RequestHeader("Authorization") String authHeader)
-     {
-         Long userId = jwtUtil.extractUserId(authHeader.substring(7));
+    public ResponseEntity<ApiResponse<Attendance>> getMyAttendance(@AuthenticationPrincipal CustomUserDetails userDetails) {
+         Long userId = userDetails.getUser().getId();
          Attendance attendance = attendanceService.getUserAttendance(userId);
          return ApiResponse.ok(attendance).toResponse();
     }
@@ -97,15 +96,15 @@ public class AttendanceController {
      * [GET] 내 상세 출석 로그 조회
      */
     @GetMapping("/me/logs")
-    public ResponseEntity<ApiResponse<List<AttendanceLog>>> getMyLogs(@RequestHeader("Authorization") String authHeader) {
-        Long userId = jwtUtil.extractUserId(authHeader.substring(7));
+    public ResponseEntity<ApiResponse<List<AttendanceLog>>> getMyLogs(@AuthenticationPrincipal CustomUserDetails userDetails) {
+        Long userId = userDetails.getUser().getId();
         List<AttendanceLog> logs = attendanceService.getUserLogs(userId);
         return ApiResponse.ok(logs).toResponse();
     }
 
     @GetMapping
-    public ResponseEntity<?> getMyTotalAttendanceCount(@RequestHeader("Authorization") String authHeader) {
-        Long userId = jwtUtil.extractUserId(authHeader.substring(7));
+    public ResponseEntity<?> getMyTotalAttendanceCount(@AuthenticationPrincipal CustomUserDetails userDetails) {
+        Long userId = userDetails.getUser().getId();
         Long dto = attendanceService.getMyTotalAttendanceCount(userId);
 
         // 누적 출석 횟수(totalCount)만 추출하여 반환

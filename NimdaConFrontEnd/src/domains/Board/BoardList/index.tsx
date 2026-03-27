@@ -276,6 +276,27 @@ function BoardListPage({ slug: propSlug }: BoardListPageProps) {
       <div className="board-list">
         <div className="board-list__header">
           <h1 className="board-list__title">{categoryName}</h1>
+        </div>
+
+        {childCategories.length > 0 && (
+          <div className="board-list__tabs" style={{ marginBottom: '16px' }}>
+            <button className={`board-list__tab ${activeTab === 'all' ? 'board-list__tab--active' : ''}`} onClick={() => handleTabClick('all')}>전체</button>
+            {childCategories.map((child) => (
+              <button key={child.id} className={`board-list__tab ${activeTab === child.slug ? 'board-list__tab--active' : ''}`} onClick={() => handleTabClick(child.slug)}>{child.name}</button>
+            ))}
+          </div>
+        )}
+
+        <div className="board-list__tag-filter">
+          <button className={`board-list__tag-filter-item ${selectedTag === null ? 'board-list__tag-filter-item--active' : ''}`} onClick={() => handleTagClick(null)}>전체</button>
+          {availableTags.map((tag) => (
+            <button key={tag} className={`board-list__tag-filter-item ${selectedTag === tag ? 'board-list__tag-filter-item--active' : ''}`} onClick={() => handleTagClick(tag)}>{tag}</button>
+          ))}
+        </div>
+
+        <div className="board-list__divider" />
+
+        <div style={{ display: 'flex', justifyContent: 'flex-end', marginTop: '16px', marginBottom: '8px' }}>
           {canWrite && (
             <button className="board-list__write-btn" onClick={handleWriteClick}>
               <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
@@ -285,24 +306,6 @@ function BoardListPage({ slug: propSlug }: BoardListPageProps) {
             </button>
           )}
         </div>
-
-        <div className="board-list__tag-filter">
-          <button className={`board-list__tag-filter-item ${selectedTag === null ? 'board-list__tag-filter-item--active' : ''}`} onClick={() => handleTagClick(null)}>전체</button>
-          {availableTags.map((tag) => (
-            <button key={tag} className={`board-list__tag-filter-item ${selectedTag === tag ? 'board-list__tag-filter-item--active' : ''}`} onClick={() => handleTagClick(tag)}>{tag}</button>
-          ))}
-        </div>
-
-        {childCategories.length > 0 && (
-          <div className="board-list__tabs">
-            <button className={`board-list__tab ${activeTab === 'all' ? 'board-list__tab--active' : ''}`} onClick={() => handleTabClick('all')}>전체</button>
-            {childCategories.map((child) => (
-              <button key={child.id} className={`board-list__tab ${activeTab === child.slug ? 'board-list__tab--active' : ''}`} onClick={() => handleTabClick(child.slug)}>{child.name}</button>
-            ))}
-          </div>
-        )}
-
-        <div className="board-list__divider" />
         {loading && <div className="board-list__status">로딩 중...</div>}
         {error && <div className="board-list__status board-list__status--error">{error}</div>}
 

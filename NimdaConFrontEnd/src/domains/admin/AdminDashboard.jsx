@@ -386,16 +386,14 @@ function AdminDashboard() {
 
     setUploadingImage(true);
     try {
-      const token = localStorage.getItem('authToken');
-
       const presignedResponse = await fetch(
         `/api/users/me/profile-image/presigned-url`,
         {
           method: 'POST',
           headers: {
-            Authorization: `Bearer ${token}`,
             'Content-Type': 'application/json',
           },
+          credentials: 'include',
           body: JSON.stringify({
             fileName: file.name,
             contentType: file.type,
@@ -426,9 +424,9 @@ function AdminDashboard() {
       const dbUpdateResponse = await fetch(`/api/users/me/profile-image`, {
         method: 'PUT',
         headers: {
-          Authorization: `Bearer ${token}`,
           'Content-Type': 'application/json',
         },
+        credentials: 'include',
         body: JSON.stringify({
           imageUrl: presignedResult.imageUrl,
         }),

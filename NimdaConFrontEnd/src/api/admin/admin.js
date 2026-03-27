@@ -1,4 +1,4 @@
-// 관리자 관련 API 함수들
+﻿// 관리자 관련 API 함수들
 
 const API_BASE_URL = "/api";
 
@@ -21,8 +21,8 @@ export const getAllUsersAPI = async () => {
       method: "GET",
       headers: {
         "Content-Type": "application/json",
-        Authorization: `Bearer ${localStorage.getItem("authToken")}`,
       },
+      credentials: "include",
     });
 
     const result = await parseJsonSafe(response);
@@ -55,8 +55,8 @@ export const deleteUserAPI = async (userId) => {
       method: "DELETE",
       headers: {
         "Content-Type": "application/json",
-        Authorization: `Bearer ${localStorage.getItem("authToken")}`,
       },
+      credentials: "include",
     });
 
     const result = await parseJsonSafe(response);
@@ -87,8 +87,8 @@ export const updateUserRoleAPI = async (userId, role) => {
       method: "PUT",
       headers: {
         "Content-Type": "application/json",
-        Authorization: `Bearer ${localStorage.getItem("authToken")}`,
       },
+      credentials: "include",
       body: JSON.stringify({ role }),
     });
 
@@ -123,8 +123,8 @@ export const getPendingUsersAPI = async () => {
       method: "GET",
       headers: {
         "Content-Type": "application/json",
-        Authorization: `Bearer ${localStorage.getItem("authToken")}`,
       },
+      credentials: "include",
     });
 
     const result = await parseJsonSafe(response);
@@ -157,8 +157,8 @@ export const approveUserAPI = async (userId) => {
       method: "PUT",
       headers: {
         "Content-Type": "application/json",
-        Authorization: `Bearer ${localStorage.getItem("authToken")}`,
       },
+      credentials: "include",
     });
 
     const result = await parseJsonSafe(response);
@@ -191,8 +191,8 @@ export const rejectUserAPI = async (userId) => {
       method: "PUT",
       headers: {
         "Content-Type": "application/json",
-        Authorization: `Bearer ${localStorage.getItem("authToken")}`,
       },
+      credentials: "include",
     });
 
     const result = await parseJsonSafe(response);
@@ -225,8 +225,8 @@ export const getAllGroupsAPI = async () => {
       method: "GET",
       headers: {
         "Content-Type": "application/json",
-        Authorization: `Bearer ${localStorage.getItem("authToken")}`,
       },
+      credentials: "include",
     });
 
     const result = await parseJsonSafe(response);
@@ -263,8 +263,8 @@ export const createGroupAPI = async (groupData) => {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
-        Authorization: `Bearer ${localStorage.getItem("authToken")}`,
       },
+      credentials: "include",
       body: JSON.stringify(groupData),
     });
 

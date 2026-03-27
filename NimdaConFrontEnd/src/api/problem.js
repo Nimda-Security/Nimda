@@ -1,4 +1,4 @@
-// 문제 관련 API 함수들 (JavaScript)
+﻿// 문제 관련 API 함수들 (JavaScript)
 
 const API_BASE_URL = "/api";
 
@@ -6,11 +6,6 @@ const API_BASE_URL = "/api";
  * 문제 출제 API 호출
  * URL : /api/problems
  * method: POST
- *
- * * Header 정보 *
- * - Content-Type : applicaton
- * - Authorization : Http Header 이름.
- * localStorage.getItem('authToken') : 로컬스토리지에 저장된 JWT 토큰 가져오기
  *
  */
 const parseJsonSafe = async (response) => {
@@ -29,8 +24,8 @@ export const createProblemAPI = async (problemData) => {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
-        Authorization: `Bearer ${localStorage.getItem("authToken")}`,
       },
+      credentials: "include",
       body: JSON.stringify(problemData),
     });
 
@@ -72,8 +67,8 @@ export const getAllProblemsAPI = async () => {
       method: "GET",
       headers: {
         "Content-Type": "application/json",
-        Authorization: `Bearer ${localStorage.getItem("authToken")}`,
       },
+      credentials: "include",
     });
 
     const result = await parseJsonSafe(response);
@@ -106,8 +101,8 @@ export const getProblemByIdAPI = async (id) => {
       method: "GET",
       headers: {
         "Content-Type": "application/json",
-        Authorization: `Bearer ${localStorage.getItem("authToken")}`,
       },
+      credentials: "include",
     });
 
     const result = await parseJsonSafe(response);
@@ -138,8 +133,8 @@ export const getProblemByIdForAdminAPI = async (id) => {
       method: "GET",
       headers: {
         "Content-Type": "application/json",
-        Authorization: `Bearer ${localStorage.getItem("authToken")}`,
       },
+      credentials: "include",
     });
 
     const result = await parseJsonSafe(response);
@@ -172,8 +167,8 @@ export const updateProblemAPI = async (id, problemData) => {
       method: "PUT",
       headers: {
         "Content-Type": "application/json",
-        Authorization: `Bearer ${localStorage.getItem("authToken")}`,
       },
+      credentials: "include",
       body: JSON.stringify(problemData),
     });
 

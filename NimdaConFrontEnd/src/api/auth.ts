@@ -1,4 +1,4 @@
-// 인증 관련 API 함수들
+﻿// 인증 관련 API 함수들
 
 const API_BASE_URL = "/api";
 
@@ -50,6 +50,7 @@ export const loginAPI = async (
       headers: {
         "Content-Type": "application/json",
       },
+      credentials: "include",
       body: JSON.stringify(loginData),
     });
 
@@ -69,11 +70,11 @@ export const loginAPI = async (
     const userInfo = result.user;
 
     if (response.ok) {
-      // 로그인 성공 시 토큰 저장 (access_token 키로 받음)
-      if (accessToken) {
-        localStorage.setItem("authToken", accessToken);
-        if (userInfo) {
-          localStorage.setItem("user", JSON.stringify(userInfo));
+      // 쿠키 기반 인증: 토큰은 HttpOnly 쿠키로 관리, 사용자 정보만 localStorage에 저장
+      if (userInfo) {
+        localStorage.setItem("user", JSON.stringify(userInfo));
+        if (userInfo.roles) {
+          localStorage.setItem("roles", JSON.stringify(userInfo.roles));
         }
       }
 
@@ -144,6 +145,7 @@ export const registerAPI = async (
       headers: {
         "Content-Type": "application/json",
       },
+      credentials: "include",
       body: JSON.stringify(cleanedData),
     });
 
@@ -192,9 +194,14 @@ export const registerAPI = async (
 /**
  * 로그아웃
  */
-export const logoutAPI = () => {
-  localStorage.removeItem("authToken");
+export const logoutAPI = async () => {
+  try {
+    await fetch(`${API_BASE_URL}/auth/logout`, { method: "POST", credentials: "include" });
+  } catch {
+    // 서버 응답 실패 시도 로컬 정리 진행
+  }
   localStorage.removeItem("user");
+  localStorage.removeItem("roles");
 };
 
 /**
@@ -210,17 +217,12 @@ export const getCurrentUser = () => {
  */
 export const getMyPageInfo = async () => {
   try {
-    const token = getAuthToken();
-    if (!token) {
-      return { success: false, message: "로그인이 필요합니다.", data: null };
-    }
-
     const response = await fetch(`${API_BASE_URL}/auth/me`, {
       method: "GET",
       headers: {
         "Content-Type": "application/json",
-        Authorization: `Bearer ${token}`,
       },
+      credentials: "include",
     });
 
     const result = await response.json();
@@ -248,19 +250,12 @@ export const getMyPageInfo = async () => {
  */
 export const toggleEmailHide = async () => {
   try {
-    const token = getAuthToken();
-    if (!token) {
-      return { success: false, message: "로그인이 필요합니다." };
-    }
-
-    // axios 대신 fetch 사용
     const response = await fetch(`${API_BASE_URL}/auth/email-hide`, {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
-        "Authorization": `Bearer ${token}`, // 인증 헤더 추가
       },
-      // POST 요청이지만 보낼 데이터(Body)가 없으므로 빈 객체 전달
+      credentials: "include",
       body: JSON.stringify({}),
     });
 
@@ -302,17 +297,18 @@ export const toggleEmailHide = async () => {
 
 /**
  * 토큰 가져오기
+ * 쿠키 기반 인증으로 전환 — HttpOnly 쿠키는 JS에서 직접 읽을 수 없으므로 null 반환
  */
 export const getAuthToken = () => {
-  return localStorage.getItem("authToken");
+  return null;
 };
 
 /**
  * 로그인 상태 확인
+ * localStorage의 user 정보 존재 여부로 판단
  */
 export const isLoggedIn = (): boolean => {
-  const token = getAuthToken();
-  return !!token;
+  return !!localStorage.getItem("user");
 };
 
 /**
@@ -331,17 +327,12 @@ export const updateProfileAPI = async (
   data: UpdateProfileRequest
 ): Promise<{ success: boolean; message: string; data?: Record<string, unknown> }> => {
   try {
-    const token = getAuthToken();
-    if (!token) {
-      return { success: false, message: "로그인이 필요합니다." };
-    }
-
     const response = await fetch(`${API_BASE_URL}/auth/me`, {
       method: "PUT",
       headers: {
         "Content-Type": "application/json",
-        Authorization: `Bearer ${token}`,
       },
+      credentials: "include",
       body: JSON.stringify(data),
     });
 
@@ -383,17 +374,12 @@ export const updateProfileImageAPI = async (
   profileImageKey: string
 ): Promise<{ success: boolean; message: string; profileImageUrl?: string }> => {
   try {
-    const token = getAuthToken();
-    if (!token) {
-      return { success: false, message: "로그인이 필요합니다." };
-    }
-
     const response = await fetch(`${API_BASE_URL}/auth/profile-image`, {
       method: "PUT",
       headers: {
         "Content-Type": "application/json",
-        Authorization: `Bearer ${token}`,
       },
+      credentials: "include",
       body: JSON.stringify({ profileImageKey }),
     });
 
