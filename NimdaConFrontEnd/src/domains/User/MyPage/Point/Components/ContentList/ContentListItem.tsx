@@ -123,7 +123,7 @@ const ContentListItem: React.FC<ContentListItemProps> = ({
             style={{ border: "0.2px solid #737373" }}
           >
             <img
-              src="/default_user_profile.png"
+              src={item.authorProfileImage || "/default_user_profile.png"}
               alt=""
               className="w-full h-full object-cover rounded-full"
             />

@@ -1,8 +1,11 @@
 import { useEffect, useState, useRef } from 'react';
+import { Link } from 'react-router-dom';
 import { Heart } from '@/components/icons/Heart';
 import { MessageBox } from '@/components/icons/MessageBox';
 import { VerticalDots } from '@/components/icons/VerticalDots';
 
+// [수정] 내 정보를 가져오기 위한 auth API 추가
+import { isLoggedIn, getMyPageInfo } from "@/api/auth";
 import {
   getCommentsAPI,
   createCommentAPI,
@@ -24,21 +27,29 @@ interface CommentSectionProps {
   isAdmin?: boolean;
 }
 
+/**
+ * 댓글 리스트의 각 아이템 아바타
+ */
 function CommentAvatar({ src }: { src: string | null; name: string }) {
   return (
     <img
-      src="/default_user_profile.png"
+      src={src || "/default_user_profile.png"}
       alt=""
       className="comment-item__avatar"
     />
   );
 }
-function CommentInput({ 
+
+/**
+ * 댓글/답글 입력 컴포넌트
+ */
+function CommentInput({
   value,
   onChange,
   onSubmit,
   placeholder,
   isSubmitting,
+  profileImage, // [추가] 내 프로필 이미지 URL
   buttonLabel = '작성',
   showAvatar = true,
 }: {
@@ -47,12 +58,22 @@ function CommentInput({
   onSubmit: () => void;
   placeholder?: string;
   isSubmitting: boolean;
+  profileImage?: string | null; // [추가]
   buttonLabel?: string;
   showAvatar?: boolean;
 }) {
   return (
     <div className="comment-input">
-      {showAvatar && <div className="comment-input__avatar">?</div>}
+      {/* [수정] 하드코딩된 '?'를 지우고 내 프로필 이미지를 렌더링하도록 변경 */}
+      {showAvatar && (
+        <div className="comment-input__avatar">
+          <img
+            src={profileImage || "/default_user_profile.png"}
+            alt="내 프로필"
+            style={{ width: '100%', height: '100%', borderRadius: '50%', objectFit: 'cover' }}
+          />
+        </div>
+      )}
       <div className="comment-input__body">
         <textarea
           value={value}
@@ -104,7 +125,7 @@ interface CommentMoreDropdownProps {
   onDelete: () => void;
   onHide: (status: CommentStatus) => void;
 }
- 
+
 function CommentMoreDropdown({
   editable,
   deletable,
@@ -116,8 +137,7 @@ function CommentMoreDropdown({
 }: CommentMoreDropdownProps) {
   const [open, setOpen] = useState(false);
   const containerRef = useRef<HTMLDivElement>(null);
- 
-  // 외부 클릭 시 닫기
+
   useEffect(() => {
     if (!open) return;
     const handleOutsideClick = (e: MouseEvent) => {
@@ -128,26 +148,26 @@ function CommentMoreDropdown({
     document.addEventListener('mousedown', handleOutsideClick);
     return () => document.removeEventListener('mousedown', handleOutsideClick);
   }, [open]);
- 
+
   const hasAnyAction = editable || deletable || hideable;
   if (!hasAnyAction) return null;
- 
+
   const handleEdit = () => {
     setOpen(false);
     onEdit();
   };
- 
+
   const handleDelete = () => {
     setOpen(false);
     onDelete();
   };
- 
+
   const handleToggleHide = () => {
     setOpen(false);
     const nextStatus: CommentStatus = currentStatus === 'HIDDEN' ? 'PUBLIC' : 'HIDDEN';
     onHide(nextStatus);
   };
- 
+
   return (
     <div className="comment-more" ref={containerRef}>
       <button
@@ -160,7 +180,7 @@ function CommentMoreDropdown({
       >
         <VerticalDots size={16} />
       </button>
- 
+
       {open && (
         <ul className="comment-more__dropdown" role="menu">
           {editable && (
@@ -214,6 +234,7 @@ interface CommentItemProps {
   isReplySubmitting: boolean;
   onCancelReply: () => void;
   replyInputRef: React.RefObject<HTMLDivElement | null>;
+  myProfileImage: string | null; // [추가] 답글창에 쓰기 위함
 }
 
 function CommentItem({
@@ -231,6 +252,7 @@ function CommentItem({
   isReplySubmitting,
   onCancelReply,
   replyInputRef,
+  myProfileImage // [추가]
 }: CommentItemProps) {
   const isDeleted = comment.isDeleted;
   const isHidden = comment.status === 'HIDDEN';
@@ -245,7 +267,12 @@ function CommentItem({
         <CommentAvatar src={comment.authorProfileImage} name={comment.authorName} />
         <div className="comment-item__body">
           <div className="comment-item__header">
-            <span className="comment-item__author">{comment.authorName}</span>
+            <Link
+              to={comment.authorName ? `/user/${comment.authorName}` : '#'}
+              className="comment-item__author"
+            >
+              {comment.authorName}
+            </Link>
             <span className="comment-item__date">{formatCommentDate(comment.createdAt)}</span>
             {hideable && <StatusBadge status={comment.status} />}
             <CommentMoreDropdown
@@ -298,7 +325,8 @@ function CommentItem({
             placeholder={`@${replyTargetName}에게 답글을 남기세요.`}
             isSubmitting={isReplySubmitting}
             buttonLabel="답글 등록"
-            showAvatar={false}
+            showAvatar={true} // [수정] 답글창에도 아바타를 보여주려면 true
+            profileImage={myProfileImage} // [추가] 내 사진 전달
           />
           <button type="button" onClick={onCancelReply} className="comment-reply-input__cancel">취소</button>
         </div>
@@ -322,6 +350,7 @@ function CommentItem({
             isReplySubmitting={isReplySubmitting}
             onCancelReply={onCancelReply}
             replyInputRef={replyInputRef}
+            myProfileImage={myProfileImage} // [추가]
           />
         ))}
     </>
@@ -343,7 +372,27 @@ function CommentSection({ boardId }: CommentSectionProps) {
   const [isEditSubmitting, setIsEditSubmitting] = useState(false);
   const replyInputRef = useRef<HTMLDivElement | null>(null);
 
+  // [추가] 내 프로필 이미지 상태
+  const [myProfileImage, setMyProfileImage] = useState<string | null>(null);
+
   useEffect(() => { fetchComments(); }, [boardId]);
+
+  // [추가] 내 프로필 정보를 가져오는 이펙트 (MyPagePoint 방식)
+  useEffect(() => {
+    const fetchMyInfo = async () => {
+      try {
+        if (isLoggedIn()) {
+          const res = await getMyPageInfo();
+          if (res.success && res.data?.profileImage) {
+            setMyProfileImage(res.data.profileImage);
+          }
+        }
+      } catch (error) {
+        console.error("내 프로필 정보 로드 실패:", error);
+      }
+    };
+    fetchMyInfo();
+  }, []);
 
   const fetchComments = async () => {
     try {
@@ -482,6 +531,7 @@ function CommentSection({ boardId }: CommentSectionProps) {
                   isReplySubmitting={isReplySubmitting}
                   onCancelReply={() => setReplyTargetId(null)}
                   replyInputRef={replyInputRef}
+                  myProfileImage={myProfileImage} // [추가]
                 />
               )}
             </div>
@@ -489,11 +539,13 @@ function CommentSection({ boardId }: CommentSectionProps) {
         </div>
       )}
 
+      {/* 메인 댓글 입력창 */}
       <CommentInput
         value={newContext}
         onChange={setNewContext}
         onSubmit={handleSubmitComment}
         isSubmitting={isSubmitting}
+        profileImage={myProfileImage} // [추가] 내 프로필 이미지 전달
       />
     </section>
   );

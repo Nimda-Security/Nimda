@@ -8,6 +8,7 @@ export interface NotificationResponse {
   id: number;
   unReadCount?: number;
   senderNickName?: string;
+  senderProfileImage?: string;
   message: string;
   url?: string;
   hasUnRead?: boolean;

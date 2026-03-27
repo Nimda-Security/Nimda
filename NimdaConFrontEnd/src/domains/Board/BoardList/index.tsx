@@ -1,11 +1,12 @@
 import { useEffect, useState } from 'react';
-import { useNavigate, useParams, useSearchParams } from 'react-router-dom';
+import { useNavigate, useParams, useSearchParams, Link } from 'react-router-dom';
 import Layout from '@/components/Layout';
 import { getBoardListAPI, getPinnedPostsAPI } from '@/api/board';
 import { getAllCategoriesAPI } from '@/api/category';
 import type { Board, Category } from '../types';
 import { CATEGORY_LABELS } from '../constants';
 import { Heart } from '@/components/icons/Heart';
+import { MessageBox } from '@/components/icons/MessageBox';
 import { isAdmin, hasRole } from '@/utils/jwt';
 import './BoardList.css';
 
@@ -322,6 +323,7 @@ function BoardListPage({ slug: propSlug }: BoardListPageProps) {
         {/* 헤더: 제목 + 글쓰기 버튼 */}
         <div className="board-list__header">
           <h1 className="board-list__title">{categoryName}</h1>
+          {canWrite && (
           <button className="board-list__write-btn" onClick={handleWriteClick}>
             <div className="board-list__write-icon-box">
               <svg
@@ -339,6 +341,7 @@ function BoardListPage({ slug: propSlug }: BoardListPageProps) {
               </svg>
             </div>
           </button>
+          )}
         </div>
 
         {/* 태그 필터 - 전체는 항상 표시 */}
@@ -424,9 +427,18 @@ function BoardListPage({ slug: propSlug }: BoardListPageProps) {
                     alt=""
                     className="board-list__avatar"
                   />
-                  <span className="board-list__author">
+                  <Link
+                    to={post.author?.nickname ? `/user/${post.author.nickname}` : '#'}
+                    className="board-list__author"
+                    onClick={(e) => e.stopPropagation()}
+                  >
                     {post.author?.nickname || '익명'}
-                  </span>
+                  </Link>
+                  {post.commentCount !== undefined && post.commentCount > 0 && (
+                    <span className="board-list__comments">
+                      <MessageBox /> {post.commentCount}
+                    </span>
+                  )}
                   {post.likeCount !== undefined && post.likeCount > 0 && (
                     <span className="board-list__likes">
                       <Heart filled /> {post.likeCount}
@@ -440,7 +452,7 @@ function BoardListPage({ slug: propSlug }: BoardListPageProps) {
               </div>
             ))}
 
-            {/* ===== 현재 카테고리 고정글 - "고정", 회색 배경 ===== */}
+            {/* ===== 현재 카테고리 고정글 - 공지사항이면 "필독", 그 외 "고정", 회색 배경 ===== */}
             {pinnedPosts.map((post) => (
               <div
                 key={`pinned-${post.id}`}
@@ -453,8 +465,8 @@ function BoardListPage({ slug: propSlug }: BoardListPageProps) {
                   </span>
                 )}
                 {!post.tag && (
-                  <span className="board-list__tag board-list__tag--notice">
-                    고정
+                  <span className={`board-list__tag ${isNoticeCategory ? 'board-list__tag--red' : 'board-list__tag--notice'}`}>
+                    {isNoticeCategory ? '필독' : '고정'}
                   </span>
                 )}
                 <span className="board-list__post-title board-list__post-title--bold">
@@ -468,11 +480,20 @@ function BoardListPage({ slug: propSlug }: BoardListPageProps) {
                     alt=""
                     className="board-list__avatar"
                   />
-                  <span className="board-list__author">
+                  <Link
+                    to={post.author?.nickname ? `/user/${post.author.nickname}` : '#'}
+                    className="board-list__author"
+                    onClick={(e) => e.stopPropagation()}
+                  >
                     {post.author?.nickname || '익명'}
-                  </span>
+                  </Link>
                   {post.views > 0 && (
                     <span className="board-list__views">조회 {post.views}</span>
+                  )}
+                  {post.commentCount !== undefined && post.commentCount > 0 && (
+                    <span className="board-list__comments">
+                      <MessageBox /> {post.commentCount}
+                    </span>
                   )}
                   {post.likeCount !== undefined && post.likeCount > 0 && (
                     <span className="board-list__likes">
@@ -527,12 +548,21 @@ function BoardListPage({ slug: propSlug }: BoardListPageProps) {
                       alt=""
                       className="board-list__avatar"
                     />
-                    <span className="board-list__author">
+                    <Link
+                      to={post.author?.nickname ? `/user/${post.author.nickname}` : '#'}
+                      className="board-list__author"
+                      onClick={(e) => e.stopPropagation()}
+                    >
                       {post.author?.nickname || '익명'}
-                    </span>
+                    </Link>
                     {post.views > 0 && (
                       <span className="board-list__views">
                         조회 {post.views}
+                      </span>
+                    )}
+                    {post.commentCount !== undefined && post.commentCount > 0 && (
+                      <span className="board-list__comments">
+                        <MessageBox /> {post.commentCount}
                       </span>
                     )}
                     {post.likeCount !== undefined && post.likeCount > 0 && (

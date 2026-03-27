@@ -653,6 +653,32 @@ public class BoardController {
     }
 
     /**
+     * 특정 유저가 작성한 게시글 목록 조회 (공개 프로필용)
+     */
+    @GetMapping("/user/{nickname}")
+    public ResponseEntity<?> getBoardsByNickname(@PathVariable String nickname) {
+        try {
+            User targetUser = userRepository.findByNickname(nickname).orElse(null);
+            if (targetUser == null) {
+                return ApiResponse.fail("사용자를 찾을 수 없습니다.").toResponse(HttpStatus.NOT_FOUND);
+            }
+
+            List<Board> boards = boardService.getMyBoards(targetUser);
+            List<BoardResponseDTO> dtos = boards.stream()
+                    .map(b -> BoardResponseDTO.from(b,
+                            boardLikeService.getLikeCount(b.getId()),
+                            commentRepository.countByBoardIdAndStatusNot(b.getId(), STATUS.DELETED)))
+                    .toList();
+            resolveProfileImages(new java.util.ArrayList<>(dtos));
+
+            return ApiResponse.ok("게시글 목록을 조회했습니다.", dtos).toResponse();
+        } catch (Exception e) {
+            return ApiResponse.fail("게시글 조회 중 오류가 발생했습니다: " + e.getMessage())
+                    .toResponse(HttpStatus.INTERNAL_SERVER_ERROR);
+        }
+    }
+
+    /**
      * 내가 작성한 게시글 목록 조회
      */
     @GetMapping("/my/boards")

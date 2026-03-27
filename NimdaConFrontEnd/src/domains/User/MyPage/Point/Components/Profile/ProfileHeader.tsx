@@ -77,7 +77,7 @@ const ProfileHeader: React.FC<ProfileHeaderProps> = ({ userInfo, activeTab, setA
       <div className="inline-flex pl-8 pr-[510px] items-start gap-6">
         <div className="relative cursor-pointer group" onClick={handleAvatarClick}>
           <img
-            src="/default_user_profile.png"
+            src={userInfo?.profileImage || "/default_user_profile.png"}
             alt="Profile"
             className={`w-[96px] h-[96px] rounded-full object-cover border border-gray-100 transition-opacity ${
               uploading ? "opacity-50" : "group-hover:opacity-80"

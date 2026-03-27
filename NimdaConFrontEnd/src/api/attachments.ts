@@ -164,6 +164,31 @@ export const uploadBoardFileViaS3 = async (
 };
 
 /**
+ * 첨부의 presigned S3 URL을 가져온다.
+ * <img src>에 직접 사용 가능한 URL을 반환.
+ */
+export const getAttachmentPresignedUrl = async (
+  attachmentId: number
+): Promise<string | null> => {
+  const token = localStorage.getItem('authToken');
+
+  try {
+    const headers: Record<string, string> = {};
+    if (token) headers['Authorization'] = `Bearer ${token}`;
+
+    const response = await fetch(`${ATTACHMENTS_BASE}/${attachmentId}/download-url`, {
+      headers,
+    });
+    const result = await parseJsonSafe(response);
+    if (!response.ok || !result?.success) return null;
+    const data = result.data ?? result;
+    return (data.downloadUrl as string | undefined)?.trim() || null;
+  } catch {
+    return null;
+  }
+};
+
+/**
  * 첨부 다운로드: 일반 링크로 API를 열면 Authorization이 없어 403.
  * Spring Security가 /attachments/** 를 막으므로 Bearer로 GET download-url만 호출한 뒤 새 탭에서 연다.
  */

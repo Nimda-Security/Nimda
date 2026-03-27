@@ -1,6 +1,7 @@
 package com.nimda.cite.notification.controller;
 
 import com.nimda.cite.common.response.ApiResponse;
+import com.nimda.cite.common.s3.S3Service;
 import com.nimda.cite.notification.dto.NotificationResponse;
 import com.nimda.cite.notification.entity.Notification;
 import com.nimda.cite.notification.repositroy.NotificationRepositroy;
@@ -24,13 +25,14 @@ public class NotificationController {
     private final UserRepository userRepository;
     private final NotificationService notificationService;
     private final JwtUtil jwtUtil;
+    private final S3Service s3Service;
 
     // 도착한 알림 최신순으로 조회
     @GetMapping
     public ResponseEntity<?> getNotifications(@RequestHeader("Authorization") String authHeader) {
         User user = getUserFromToken(authHeader);
         List<Notification> notifications = notificationRepository.findAllByRecipient(user);
-        List<NotificationResponse> dto = notifications.stream().map(NotificationResponse::from).toList();
+        List<NotificationResponse> dto = notifications.stream().map(n -> toResponse(n)).toList();
         return ApiResponse.ok(dto).toResponse();
     }
 
@@ -41,8 +43,25 @@ public class NotificationController {
     ) {
         User user = getUserFromToken(authHeader);
         List<Notification> notifications = notificationRepository.findAllByRecipientAndIsReadFalse(user);
-        List<NotificationResponse> dto = notifications.stream().map(NotificationResponse::from).toList();
+        List<NotificationResponse> dto = notifications.stream().map(n -> toResponse(n)).toList();
         return ApiResponse.ok(dto).toResponse();
+    }
+
+    private NotificationResponse toResponse(Notification n) {
+        NotificationResponse base = NotificationResponse.from(n);
+        String profileImage = base.getSenderProfileImage();
+        if (profileImage != null && !profileImage.isBlank() && !profileImage.startsWith("http")) {
+            profileImage = s3Service.createPresignedGetUrl(profileImage, 60);
+        }
+        return NotificationResponse.builder()
+                .id(base.getId())
+                .senderNickName(base.getSenderNickName())
+                .senderProfileImage(profileImage)
+                .message(base.getMessage())
+                .url(base.getUrl())
+                .createdAt(base.getCreatedAt())
+                .isRead(base.getIsRead())
+                .build();
     }
 
     // 알림 읽기 처리

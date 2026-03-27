@@ -13,6 +13,7 @@ public class NotificationResponse {
     private Long id;
     private Long unReadCount;
     private String senderNickName;
+    private String senderProfileImage;
     private String message;
     private String url;
     private Boolean hasUnRead;
@@ -24,6 +25,7 @@ public class NotificationResponse {
                 .id(n.getId())
                 // Sender가 null인 경우를 대비한 방어
                 .senderNickName(n.getSender() != null ? n.getSender().getNickname() : "시스템")
+                .senderProfileImage(n.getSender() != null ? n.getSender().getProfileImage() : null)
                 .message(n.getMessage())
                 .url(n.getRelatedUrl())
                 .createdAt(n.getCreatedAt())
