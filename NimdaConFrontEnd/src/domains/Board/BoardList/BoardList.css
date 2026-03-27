@@ -237,10 +237,9 @@
    프로필 이미지
    =========================== */
 .board-list__avatar {
-  width: 22px;
-  height: 22px;
+  width: 28px;
+  height: 28px;
   border-radius: 50%;
-  border: 0.2px solid var(--color-gray-600);
   object-fit: cover;
   flex-shrink: 0;
   margin-left: 0;
