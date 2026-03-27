@@ -6,6 +6,7 @@ import { Heart } from "@/components/icons/Heart";
 import { getBoardListAPI, getBoardDetailAPI } from "@/api/board";
 import { getAttachmentPresignedUrl } from "@/api/attachments";
 import type { Board } from "@/domains/Board/types";
+import { isAdmin } from "@/utils/jwt";
 import "./PhotoGalleryBoard.css";
 import { formatDate } from '@/utils/formatDate';
 
@@ -25,7 +26,17 @@ const getFirstImageAttachmentId = (board: Board): number | null => {
 
 const PAGE_SIZE = 8;
 
-const PhotoGalleryBoard: React.FC = () => {
+interface PhotoGalleryBoardProps {
+  boardSlug?: string;
+  boardTitle?: string;
+  adminOnlyWrite?: boolean;
+}
+
+const PhotoGalleryBoard: React.FC<PhotoGalleryBoardProps> = ({
+  boardSlug = "picture-board",
+  boardTitle = "사진첩",
+  adminOnlyWrite = false,
+}) => {
   const navigate = useNavigate();
   const [posts, setPosts] = useState<Board[]>([]);
   const [thumbnails, setThumbnails] = useState<Record<number, string | null>>({});
@@ -35,12 +46,13 @@ const PhotoGalleryBoard: React.FC = () => {
   const [selectedYear, setSelectedYear] = useState<number | null>(null);
   // 모든 페이지에서 누적한 연도 목록
   const [availableYears, setAvailableYears] = useState<number[]>([]);
+  const canWrite = !adminOnlyWrite || isAdmin();
 
   const loadPosts = useCallback(async (page: number) => {
     setLoading(true);
     try {
       const result = await getBoardListAPI({
-        slug: "picture-board",
+        slug: boardSlug,
         page,
         size: PAGE_SIZE,
         sort: "createdAt,desc",
@@ -81,7 +93,7 @@ const PhotoGalleryBoard: React.FC = () => {
     } finally {
       setLoading(false);
     }
-  }, []);
+  }, [boardSlug]);
 
   useEffect(() => {
     loadPosts(currentPage);
@@ -111,26 +123,28 @@ const PhotoGalleryBoard: React.FC = () => {
       <div className="board-list photo-gallery-board">
         {/* 헤더: 제목 + 글쓰기 버튼 */}
         <div className="board-list__header">
-          <h1 className="board-list__title">사진첩</h1>
-          <button
-            className="board-list__write-btn"
-            onClick={() => navigate("/board/picture-board/write")}
-          >
-            <svg
-              width="16"
-              height="16"
-              viewBox="0 0 24 24"
-              fill="none"
-              stroke="currentColor"
-              strokeWidth="2.5"
-              strokeLinecap="round"
-              strokeLinejoin="round"
+          <h1 className="board-list__title">{boardTitle}</h1>
+          {canWrite && (
+            <button
+              className="board-list__write-btn"
+              onClick={() => navigate(`/board/${boardSlug}/write`)}
             >
-              <path d="M12 20h9" />
-              <path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z" />
-            </svg>
-            <span style={{ fontWeight: 600, fontSize: '15px' }}>글쓰기</span>
-          </button>
+              <svg
+                width="16"
+                height="16"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="2.5"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+              >
+                <path d="M12 20h9" />
+                <path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z" />
+              </svg>
+              <span style={{ fontWeight: 600, fontSize: '15px' }}>글쓰기</span>
+            </button>
+          )}
         </div>
 
         {/* 연도 필터 탭 */}
@@ -171,7 +185,7 @@ const PhotoGalleryBoard: React.FC = () => {
                 return (
                   <Link
                     key={post.id}
-                    to={`/board/picture-board/${post.id}`}
+                    to={`/board/${boardSlug}/${post.id}`}
                     className="photo-gallery-board__card"
                   >
                     {thumbnail ? (

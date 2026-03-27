@@ -241,7 +241,17 @@ function BoardListPage({ slug: propSlug }: BoardListPageProps) {
     return false;
   }, [category, slug, allCategories]);
 
-  const canWrite = !isNewsCategoryGroup || isAdmin();
+  const isBannerCategoryGroup = useMemo(() => {
+    if (!category) return slug === 'banner';
+    if (category.slug === 'banner') return true;
+    if (category.parentId) {
+      const parent = allCategories.find((c) => c.id === category.parentId);
+      return parent?.slug === 'banner';
+    }
+    return false;
+  }, [category, slug, allCategories]);
+
+  const canWrite = (!isNewsCategoryGroup && !isBannerCategoryGroup) || isAdmin();
 
   const isCartelCategoryGroup = useMemo(() => {
     if (!category) return false;

@@ -76,7 +76,8 @@ const Router = () => {
 
         {/* 게시판 관련 경로 */}
         {/* 사진첩은 갤러리 뷰 전용 컴포넌트 사용 */}
-        <Route path="/board/picture-board" element={<PhotoGalleryBoard />} />
+        <Route path="/board/picture-board" element={<PhotoGalleryBoard boardSlug="picture-board" boardTitle="사진첩" />} />
+        <Route path="/board/banner" element={<PhotoGalleryBoard boardSlug="banner" boardTitle="배너" adminOnlyWrite={true} />} />
         <Route path="/board/:boardType" element={<BoardListPage />} />
         <Route path="/board/:boardType/:id" element={<BoardDetailPage />} />
         <Route path="/board/:boardType/write" element={<BoardWritePage />} />

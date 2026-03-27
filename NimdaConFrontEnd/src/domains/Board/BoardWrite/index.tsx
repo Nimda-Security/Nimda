@@ -34,6 +34,7 @@ function BoardWritePage() {
   const [error, setError] = useState<string | null>(null);
   const [showFontSize, setShowFontSize] = useState(false);
   const [showColorPicker, setShowColorPicker] = useState(false);
+  const [isPinned, setIsPinned] = useState(false);
   const colorInputRef = useRef<HTMLInputElement>(null);
 
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -62,6 +63,17 @@ function BoardWritePage() {
   useEffect(() => {
     if (allCategories.length === 0) return;
 
+    const matchedCategory = allCategories.find(c => c.slug === slug);
+    const isBannerCategory = matchedCategory
+      ? (matchedCategory.slug === 'banner' || (matchedCategory.parentId != null && allCategories.find(c => c.id === matchedCategory.parentId)?.slug === 'banner'))
+      : slug === 'banner';
+
+    if (isBannerCategory && !isAdmin()) {
+      alert('배너 게시판은 관리자만 작성할 수 있습니다.');
+      navigate('/board/banner');
+      return;
+    }
+
     // 수정 모드: 게시글 데이터 로드
     if (isEditMode && editId) {
       const loadBoard = async () => {
@@ -72,6 +84,7 @@ function BoardWritePage() {
             setEditBoardId(b.id);
             setTitle(b.title);
             setTag(b.tag || '');
+            setIsPinned(b.pinned || false);
             if (b.attachments && b.attachments.length > 0) {
               setAttachedFiles(b.attachments.map(a => ({
                 id: a.id,
@@ -174,6 +187,7 @@ function BoardWritePage() {
           content: getEditorContent(),
           tag: tag.trim() || undefined,
           attachmentIds,
+          ...(isAdmin() && { pinned: isPinned }),
         });
         if (response.success && 'board' in response) {
           const boardSlug = response.board.category?.slug || slug;
@@ -191,6 +205,7 @@ function BoardWritePage() {
         content: getEditorContent(),
         tag: tag.trim() || undefined,
         attachmentIds,
+        ...(isAdmin() && { pinned: isPinned }),
       });
 
       if (response.success && 'board' in response) {
@@ -607,6 +622,24 @@ function BoardWritePage() {
           </div>
 
           <div className="bw-divider" />
+
+          {/* ── 고정 여부 (관리자만) ── */}
+          {isAdmin() && (
+            <>
+              <div className="bw-section">
+                <label className="bw-checkbox-label">
+                  <input
+                    type="checkbox"
+                    checked={isPinned}
+                    onChange={(e) => setIsPinned(e.target.checked)}
+                    className="bw-checkbox-input"
+                  />
+                  <span className="bw-checkbox-text">이 게시글을 고정합니다</span>
+                </label>
+              </div>
+              <div className="bw-divider" />
+            </>
+          )}
 
           {/* ── 첨부파일 ── */}
           <div className="bw-section">

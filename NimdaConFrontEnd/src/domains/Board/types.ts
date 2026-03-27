@@ -111,6 +111,7 @@ export interface BoardWriteRequest {
    * - 수정: 생략 시 첨부 동기화 안 함(제목·내용만 변경). 전달 시 최종 ID 목록으로 동기화.
    */
   attachmentIds?: number[];
+  pinned?: boolean; // 게시글 고정 여부 (관리자만 설정 가능)
   // 제거됨: file?: File — 백엔드가 multipart `file`을 제거하고 `attachmentIds`만 받음 (이유: S3 직접 업로드).
 }
 
