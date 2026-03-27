@@ -6,7 +6,6 @@ import { getBoardListAPI, getBoardDetailAPI } from "@/api/board";
 import { getAttachmentPresignedUrl } from "@/api/attachments";
 import type { Board } from "@/domains/Board/types";
 import { formatDate } from '@/utils/formatDate';
-import { useLikeStatuses } from "@/domains/Board/useLikeStatuses";
 
 const IMAGE_EXTENSIONS = ["jpg", "jpeg", "png", "gif", "webp", "bmp", "svg"];
 
@@ -35,7 +34,6 @@ const PhotoGallerySection: React.FC = () => {
   const [thumbnails, setThumbnails] = useState<Record<number, string | null>>({});
   const [loading, setLoading] = useState(true);
   const [categorySlug, setCategorySlug] = useState("picture-board");
-  const likeStatuses = useLikeStatuses(posts);  
 
   useEffect(() => {
     const loadPhotoPosts = async () => {
@@ -125,7 +123,7 @@ const PhotoGallerySection: React.FC = () => {
                       <span>{post.commentCount ?? 0}</span>
                     </div>
                     <div className="home-gallery__card-likes">
-                      <Heart filled={likeStatuses[post.id] ?? false} />
+                      <Heart filled={post.isLiked} />
                       <span>{post.likeCount ?? 0}</span>
                     </div>
                   </div>

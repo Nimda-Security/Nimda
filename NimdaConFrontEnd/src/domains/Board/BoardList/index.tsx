@@ -10,7 +10,6 @@ import { MessageBox } from '@/components/icons/MessageBox';
 import { isAdmin, hasRole } from '@/utils/jwt';
 import { formatDate } from '@/utils/formatDate';
 import './BoardList.css';
-import { useLikeStatuses } from "@/domains/Board/useLikeStatuses";
 import Avatar from '@/components/Avatar/Avatar';
 
 interface BoardListPageProps {
@@ -46,8 +45,6 @@ function BoardListPage({ slug: propSlug }: BoardListPageProps) {
   const allPostsForLikes = useMemo(() => {
     return [...noticePosts, ...pinnedPosts, ...boards];
   }, [noticePosts, pinnedPosts, boards]);
-
-  const likeStatuses = useLikeStatuses(allPostsForLikes);
 
   // 공지사항 로딩 (최초 1회)
   useEffect(() => {
@@ -319,7 +316,7 @@ function BoardListPage({ slug: propSlug }: BoardListPageProps) {
                   <div className="board-list__title-line">
                     <span className="board-list__post-title board-list__post-title--bold">{post.title}</span>
                     <span className="board-list__comments"><MessageBox /> {post.commentCount ?? 0}</span>
-                    <span className="board-list__likes"><Heart filled={likeStatuses[post.id]} /> {post.likeCount ?? 0}</span>
+                    <span className="board-list__likes"><Heart filled={post.isLiked} /> {post.likeCount ?? 0}</span>
                   </div>
                 </div>
                 <div className="board-list__meta">
@@ -341,7 +338,7 @@ function BoardListPage({ slug: propSlug }: BoardListPageProps) {
                   <div className="board-list__title-line">
                     <span className="board-list__post-title board-list__post-title--bold">{post.title}</span>
                     <span className="board-list__comments"><MessageBox /> {post.commentCount ?? 0}</span>
-                    <span className="board-list__likes"><Heart filled={likeStatuses[post.id]} /> {post.likeCount ?? 0}</span>
+                    <span className="board-list__likes"><Heart filled={post.isLiked} /> {post.likeCount ?? 0}</span>
                   </div>
                 </div>
                 <div className="board-list__meta">
@@ -366,7 +363,7 @@ function BoardListPage({ slug: propSlug }: BoardListPageProps) {
                     <div className="board-list__title-line">
                       <span className="board-list__post-title">{post.title}</span>
                       <span className="board-list__comments"><MessageBox /> {post.commentCount ?? 0}</span>
-                      <span className="board-list__likes"><Heart filled={likeStatuses[post.id]} /> {post.likeCount ?? 0}</span>
+                      <span className="board-list__likes"><Heart filled={post.isLiked} /> {post.likeCount ?? 0}</span>
                     </div>
                   </div>
                   <div className="board-list__meta">

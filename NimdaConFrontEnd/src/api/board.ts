@@ -27,6 +27,16 @@ const parseJsonSafe = async (response: Response) => {
 };
 
 /**
+ * 토큰 파싱
+ */
+const getAuthHeaders = (): Record<string, string> => {
+  const token = localStorage.getItem('authToken');
+  const headers: Record<string, string> = { 'Content-Type': 'application/json' };
+  if (token) headers['Authorization'] = `Bearer ${token}`;
+  return headers;
+};
+
+/**
  * 게시글 목록 조회 API
  * 
  * @param params 게시글 목록 조회 파라미터
@@ -80,7 +90,7 @@ export const getBoardListAPI = async (
 
     const response = await fetch(`${API_BASE_URL}?${queryParams.toString()}`, {
       method: 'GET',
-      headers,
+      headers: getAuthHeaders(), 
     });
 
     const result = await parseJsonSafe(response);
@@ -423,7 +433,7 @@ export const getPinnedPostsAPI = async (
 
     const response = await fetch(`${API_BASE_URL}/pinned?${queryParams.toString()}`, {
       method: 'GET',
-      headers,
+      headers: getAuthHeaders(), 
     });
 
     const result = await parseJsonSafe(response);
@@ -487,9 +497,7 @@ export const getPopularPostsAPI = async (
 
     const response = await fetch(`${API_BASE_URL}/popular?${queryParams.toString()}`, {
       method: 'GET',
-      headers: {
-        'Content-Type': 'application/json',
-      },
+      headers: getAuthHeaders(),
     });
 
     const result = await parseJsonSafe(response);
