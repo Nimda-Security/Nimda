@@ -316,8 +316,14 @@ const UserInfoContent: React.FC<UserInfoContentProps> = ({
                   {user?.emailHide ? '보이기' : '숨기기'}
                 </button>
               </div>
-              <span className="text-[16px] font-semibold text-[#525252]">
-                {user?.emailHide ? '-' : user?.email || '-'}
+              <span
+                className={
+                  user?.emailHide
+                    ? 'text-[13px] font-medium text-[#a3a3a3]'
+                    : 'text-[16px] font-semibold text-[#525252]'
+                }
+              >
+                {user?.emailHide ? '숨김 상태입니다.' : user?.email || '-'}
               </span>
             </div>
           </div>
