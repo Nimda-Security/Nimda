@@ -1,6 +1,5 @@
 package com.nimda.cite.comment.dto;
 
-import com.nimda.cite.comment.enums.STATUS;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.Size;
 import lombok.AllArgsConstructor;

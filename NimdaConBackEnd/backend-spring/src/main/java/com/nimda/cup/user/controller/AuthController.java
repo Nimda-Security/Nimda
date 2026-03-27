@@ -55,7 +55,7 @@ public class AuthController {
                 // 1. 쿠키 생성 (이름을 Authorization으로 설정)
                 ResponseCookie cookie = ResponseCookie.from("Authorization", token)
                         .httpOnly(true)    // 자바스크립트 접근 차단 (보안 핵심)
-                        .secure(false)      // HTTPS 환경에서만 전송 (로컬 테스트 시 주의*)
+                        .secure(true)      // HTTPS 환경에서만 전송 (로컬 테스트 시 주의*)
                         .path("/")         // 모든 경로에서 쿠키 유효
                         .maxAge(60 * 60)   // 쿠키 수명 (초 단위, 예: 1시간)
                         .sameSite("Lax")   // CSRF 방어
