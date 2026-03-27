@@ -3,6 +3,7 @@ import { useParams, useNavigate } from 'react-router-dom';
 import Header from '@/components/Layout/Header/NavBar';
 import Footer from '@/components/Layout/Footer';
 import ProfileSummary from '@/domains/User/MyPage/Point/Components/Profile/ProfileSummary';
+import Avatar from '@/components/Avatar/Avatar';
 import ContentListItem from '@/domains/User/MyPage/Point/Components/ContentList/ContentListItem';
 import Pagination from '@/domains/User/MyPage/Point/Components/ContentList/Pagination';
 import {
@@ -570,14 +571,10 @@ export default function UserProfilePage() {
           <div className="w-full flex flex-col gap-[36px]">
             {/* 아바타 + 기본 정보 */}
             <div className="inline-flex pl-8 pr-[510px] items-start gap-6">
-              <img
-                src={profile.profileImage || '/default_user_profile.png'}
-                alt="Profile"
-                className="w-[96px] h-[96px] rounded-full object-cover border border-gray-100"
-                onError={(e) => {
-                  (e.currentTarget as HTMLImageElement).src =
-                    '/default_user_profile.png';
-                }}
+              <Avatar
+                src={profile.profileImage}
+                size={96}
+                className="board-detail__avatar"
               />
               <ProfileSummary userInfo={userInfo} />
             </div>
