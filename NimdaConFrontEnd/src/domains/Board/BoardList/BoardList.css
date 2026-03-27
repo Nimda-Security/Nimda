@@ -276,7 +276,7 @@
 .board-list__comments {
   display: flex;
   align-items: center;
-  gap: 2px;
+  gap: 4px;
   font-size: 12px;
   font-weight: 700;
   color: var(--color-blue);
@@ -286,7 +286,7 @@
 .board-list__likes {
   display: flex;
   align-items: center;
-  gap: 2px;
+  gap: 4px;
   font-size: 12px;
   font-weight: 700;
   color: var(--color-red);
