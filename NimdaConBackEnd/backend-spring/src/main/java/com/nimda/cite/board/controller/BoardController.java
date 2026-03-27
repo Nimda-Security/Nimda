@@ -307,7 +307,8 @@ public class BoardController {
             @RequestParam("title") String title,
             @RequestParam("content") String content,
             @RequestParam(value = "tag", required = false) String tag,
-            @RequestParam(value = "attachmentIds", required = false) List<Long> attachmentIds) {
+            @RequestParam(value = "attachmentIds", required = false) List<Long> attachmentIds,
+            @RequestParam(value = "pinned", required = false) Boolean pinned) {
         try {
             if (userDetails == null) {
                 return ApiResponse.fail("로그인이 필요합니다.").toResponse(HttpStatus.UNAUTHORIZED);
@@ -358,6 +359,15 @@ public class BoardController {
             board.setContent(content);
             board.setCategory(category);
             board.setTag(tag); // 태그 설정 (null 가능)
+
+            // 관리자만 고정 여부 설정 가능
+            if (pinned != null) {
+                boolean isAdmin = author.getAuthorities().stream()
+                        .anyMatch(authority -> authority.getAuthorityName().equals("ROLE_ADMIN"));
+                if (isAdmin) {
+                    board.setPinned(pinned);
+                }
+            }
 
             boardService.write(board, author, attachmentIds);
 
@@ -420,7 +430,8 @@ public class BoardController {
             @RequestParam("title") String title,
             @RequestParam("content") String content,
             @RequestParam(value = "tag", required = false) String tag,
-            @RequestParam(value = "attachmentIds", required = false) List<Long> attachmentIds) {
+            @RequestParam(value = "attachmentIds", required = false) List<Long> attachmentIds,
+            @RequestParam(value = "pinned", required = false) Boolean pinned) {
         try {
             Board boardTemp = boardService.boardView(id);
 
@@ -462,6 +473,11 @@ public class BoardController {
             boardTemp.setContent(content);
             boardTemp.setCategory(category);
             boardTemp.setTag(tag); // 태그 설정 (null 가능)
+
+            // 관리자만 고정 여부 설정 가능
+            if (pinned != null && isAdmin) {
+                boardTemp.setPinned(pinned);
+            }
 
             boardService.write(boardTemp, currentUser, attachmentIds);
 
