@@ -135,13 +135,13 @@
   background-color: #ffe8e8;
 }
 
-/* 카테고리 내 공지 (회색 배경) */
+/* 카테고리 내 공지 (연노랑 배경) */
 .board-list__row--notice {
-  background-color: var(--color-gray-100);
+  background-color: #fffbeb;
 }
 
 .board-list__row--notice:hover {
-  background-color: #d9d9d9;
+  background-color: #fef3c7;
 }
 
 /* 짝수 행 배경 */
@@ -217,7 +217,7 @@
    글 제목
    =========================== */
 .board-list__post-title {
-  flex: 1;
+  /* flex: 1 제거하여 댓글/좋아요가 제목 바로 옆에 붙게 함 */
   font-size: 14px;
   font-weight: 500;
   color: var(--color-black);
@@ -237,10 +237,9 @@
    프로필 이미지
    =========================== */
 .board-list__avatar {
-  width: 22px;
-  height: 22px;
+  width: 32px;
+  height: 32px;
   border-radius: 50%;
-  border: 0.2px solid var(--color-gray-600);
   object-fit: cover;
   flex-shrink: 0;
   margin-left: 0;
@@ -277,7 +276,7 @@
 .board-list__comments {
   display: flex;
   align-items: center;
-  gap: 2px;
+  gap: 4px;
   font-size: 12px;
   font-weight: 700;
   color: var(--color-blue);
@@ -287,7 +286,7 @@
 .board-list__likes {
   display: flex;
   align-items: center;
-  gap: 2px;
+  gap: 4px;
   font-size: 12px;
   font-weight: 700;
   color: var(--color-red);
@@ -402,12 +401,11 @@
   display: flex;
   align-items: center;
   justify-content: center;
+  gap: 6px;
   background-color: #c76085;
-  /* User requested pink */
   color: #fff;
   border: none;
-  padding: 6px;
-  /* 사각형 버튼 모양을 위해 상하좌우 동일하게 패딩 부여 */
+  padding: 8px 16px;
   border-radius: 8px;
   cursor: pointer;
   transition: all 0.2s ease;

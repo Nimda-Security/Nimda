@@ -91,6 +91,11 @@ public class BoardController {
                 .anyMatch(a -> a.getAuthorityName().equals(role));
     }
 
+    // 사용자가 해당 게시글을 좋아요 눌렀는지 확인
+    private boolean isLiked(Board board, User user) {
+        return user != null && boardLikeService.isUserLiked(user.getId(), board.getId());
+    }
+
     @GetMapping
     public ResponseEntity<?> getPostsByCategory(
             @AuthenticationPrincipal CustomUserDetails userDetails,
@@ -110,6 +115,8 @@ public class BoardController {
             } else {
                 return ApiResponse.fail("categoryId 또는 slug 파라미터가 필요합니다.").toResponse(HttpStatus.BAD_REQUEST);
             }
+
+            User user = extractUserFromHeader(authHeader);
 
             // "카르텔" 카테고리 접근 권한 확인
             if (isCartelCategory(category)) {
@@ -154,7 +161,7 @@ public class BoardController {
                     .map(board -> {
                         long likeCount = boardLikeService.getLikeCount(board.getId());
                         long commentCount = commentRepository.countByBoardIdAndStatusNot(board.getId(), STATUS.DELETED);
-                        return BoardResponseDTO.from(board, likeCount, commentCount);
+                        return BoardResponseDTO.from(board, likeCount, isLiked(board, user) , commentCount);
                     })
                     .collect(java.util.stream.Collectors.toList());
             resolveProfileImages(postsDTO);
@@ -177,6 +184,7 @@ public class BoardController {
 
     @GetMapping("/pinned")
     public ResponseEntity<?> getPinnedPosts(
+            @RequestHeader(value = "Authorization", required = false) String authHeader,
             @RequestParam(value = "categoryId", required = false) Long categoryId,
             @RequestParam(value = "slug", required = false) String slug,
             @PageableDefault(size = 4, sort = "createdAt", direction = Sort.Direction.DESC) Pageable pageable) {
@@ -192,6 +200,7 @@ public class BoardController {
                 return ApiResponse.fail("categoryId 또는 slug 파라미터가 필요합니다.").toResponse(HttpStatus.BAD_REQUEST);
             }
 
+            User user = extractUserFromHeader(authHeader);
             Page<Board> boards = boardService.boardListByCategoryWithPinned(category, pageable);
 
             // 고정글 목록에 좋아요 개수 추가하여 DTO로 변환
@@ -199,7 +208,7 @@ public class BoardController {
                     .map(board -> {
                         long likeCount = boardLikeService.getLikeCount(board.getId());
                         long commentCount = commentRepository.countByBoardIdAndStatusNot(board.getId(), STATUS.DELETED);
-                        return BoardResponseDTO.from(board, likeCount, commentCount);
+                        return BoardResponseDTO.from(board, likeCount, isLiked(board, user), commentCount);
                     })
                     .collect(java.util.stream.Collectors.toList());
             resolveProfileImages(postsDTO);
@@ -222,6 +231,7 @@ public class BoardController {
 
     @GetMapping("/popular")
     public ResponseEntity<?> getPopularPosts(
+            @RequestHeader(value = "Authorization", required = false) String authHeader,
             @RequestParam(value = "categoryId", required = false) Long categoryId,
             @RequestParam(value = "slug", required = false) String slug,
             @PageableDefault(size = 10, sort = "createdAt", direction = Sort.Direction.DESC) Pageable pageable) {
@@ -233,8 +243,10 @@ public class BoardController {
                     maxSize,
                     pageable.getSort());
 
+            User user = extractUserFromHeader(authHeader);
             Page<Board> boards;
             Category category = null;
+
             if (categoryId != null || slug != null) {
                 if (categoryId != null) {
                     category = categoryRepository.findById(categoryId)
@@ -257,7 +269,7 @@ public class BoardController {
                     .map(board -> {
                         long likeCount = boardLikeService.getLikeCount(board.getId());
                         long commentCount = commentRepository.countByBoardIdAndStatusNot(board.getId(), STATUS.DELETED);
-                        return BoardResponseDTO.from(board, likeCount, commentCount);
+                        return BoardResponseDTO.from(board, likeCount, isLiked(board, user), commentCount);
                     })
                     .collect(java.util.stream.Collectors.toList());
             resolveProfileImages(postsDTO);
@@ -336,7 +348,7 @@ public class BoardController {
 
             long likeCount = boardLikeService.getLikeCount(board.getId());
             var attachments = attachmentService.listAttachmentsForBoard(board.getId());
-            BoardResponseDTO boardDto = BoardResponseDTO.from(board, likeCount, attachments);
+            BoardResponseDTO boardDto = BoardResponseDTO.from(board, likeCount, false, 0L, attachments);
             resolveProfileImage(boardDto);
 
             return ApiResponse.ok("게시글이 성공적으로 작성되었습니다.", Map.of("board", boardDto))
@@ -360,6 +372,8 @@ public class BoardController {
                 return ApiResponse.ok("삭제된 게시글입니다.", Map.of("deleted", true)).toResponse();
             }
 
+            User user = extractUserFromHeader(authHeader);
+
             // "카르텔" 카테고리 접근 권한 확인
             if (board.getCategory() != null && isCartelCategory(board.getCategory())) {
                 User user = userDetails != null ? userDetails.getUser() : null;
@@ -369,8 +383,9 @@ public class BoardController {
             }
 
             long likeCount = boardLikeService.getLikeCount(board.getId());
+            long commentCount = commentRepository.countByBoardIdAndStatusNot(board.getId(), STATUS.DELETED);
             var attachments = attachmentService.listAttachmentsForBoard(board.getId());
-            BoardResponseDTO boardDto = BoardResponseDTO.from(board, likeCount, attachments);
+            BoardResponseDTO boardDto = BoardResponseDTO.from(board, likeCount, isLiked(board, user), commentCount, attachments);
             resolveProfileImage(boardDto);
             return ApiResponse.ok("게시글을 성공적으로 조회했습니다.", Map.of("board", boardDto)).toResponse();
 
@@ -433,8 +448,9 @@ public class BoardController {
             boardService.write(boardTemp, currentUser, attachmentIds);
 
             long likeCount = boardLikeService.getLikeCount(boardTemp.getId());
+            long commentCount = commentRepository.countByBoardIdAndStatusNot(boardTemp.getId(), STATUS.DELETED);
             var attachments = attachmentService.listAttachmentsForBoard(boardTemp.getId());
-            BoardResponseDTO boardDto = BoardResponseDTO.from(boardTemp, likeCount, attachments);
+            BoardResponseDTO boardDto = BoardResponseDTO.from(boardTemp, likeCount, isLiked(boardTemp, currentUser), commentCount, attachments);
             resolveProfileImage(boardDto);
 
             return ApiResponse.ok("게시글이 성공적으로 수정되었습니다.", Map.of("board", boardDto)).toResponse();
@@ -576,17 +592,21 @@ public class BoardController {
      * 특정 유저가 작성한 게시글 목록 조회 (공개 프로필용)
      */
     @GetMapping("/user/{nickname}")
-    public ResponseEntity<?> getBoardsByNickname(@PathVariable String nickname) {
+    public ResponseEntity<?> getBoardsByNickname(
+            @RequestHeader(value = "Authorization", required = false) String authHeader,
+            @PathVariable String nickname) {
         try {
             User targetUser = userRepository.findByNickname(nickname).orElse(null);
             if (targetUser == null) {
                 return ApiResponse.fail("사용자를 찾을 수 없습니다.").toResponse(HttpStatus.NOT_FOUND);
             }
 
+            User user = extractUserFromHeader(authHeader);
             List<Board> boards = boardService.getMyBoards(targetUser);
             List<BoardResponseDTO> dtos = boards.stream()
                     .map(b -> BoardResponseDTO.from(b,
                             boardLikeService.getLikeCount(b.getId()),
+                            isLiked(b, user),
                             commentRepository.countByBoardIdAndStatusNot(b.getId(), STATUS.DELETED)))
                     .toList();
             resolveProfileImages(new java.util.ArrayList<>(dtos));
@@ -614,6 +634,7 @@ public class BoardController {
             List<BoardResponseDTO> dtos = boards.stream()
                     .map(b -> BoardResponseDTO.from(b,
                             boardLikeService.getLikeCount(b.getId()),
+                            isLiked(b, currentUser),
                             commentRepository.countByBoardIdAndStatusNot(b.getId(), STATUS.DELETED)))
                     .toList();
             resolveProfileImages(new java.util.ArrayList<>(dtos));
@@ -671,6 +692,7 @@ public class BoardController {
                 boardService.findById(boardId).ifPresent(board -> {
                     dtos.add(BoardResponseDTO.from(board,
                             boardLikeService.getLikeCount(board.getId()),
+                            isLiked(board, currentUser),
                             commentRepository.countByBoardIdAndStatusNot(board.getId(), STATUS.DELETED)));
                 });
             }

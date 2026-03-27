@@ -973,6 +973,21 @@ body {
   color: var(--color-red);
 }
 
+.home-gallery__card-comments {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 12px;
+  font-weight: 700;
+  color: var(--color-blue);
+}
+
+.home-gallery__card-meta svg {
+  width: 12px;
+  height: 12px;
+  flex-shrink: 0;
+}
+
 .home-gallery__card-separator {
   color: var(--color-gray-400);
   font-size: 12px;
