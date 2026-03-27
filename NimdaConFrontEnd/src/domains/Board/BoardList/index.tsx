@@ -316,8 +316,8 @@ function BoardListPage({ slug: propSlug }: BoardListPageProps) {
             {/* 글로벌 공지 */}
             {displayGlobalNotices.map((post) => (
               <div key={`notice-${post.id}`} className="board-list__row board-list__row--pinned" onClick={() => navigate(`/board/notice/${post.id}`)}>
+                <span className="board-list__notice-label">필독</span>
                 <div className="board-list__row-content">
-                  <span className="board-list__category-tag">{getCategoryTagLabel(post, '필독')}</span>
                   <div className="board-list__title-line">
                     <span className="board-list__post-title board-list__post-title--bold">{post.title}</span>
                     <span className="board-list__comments"><MessageBox /> {post.commentCount ?? 0}</span>
@@ -338,8 +338,8 @@ function BoardListPage({ slug: propSlug }: BoardListPageProps) {
             {/* 현재 카테고리 고정글 */}
             {pinnedPosts.map((post) => (
               <div key={`pinned-${post.id}`} className="board-list__row board-list__row--notice" onClick={() => handleBoardClick(post.id)}>
+                <span className="board-list__notice-label">{isNoticeCategory ? '필독' : '고정'}</span>
                 <div className="board-list__row-content">
-                  <span className="board-list__category-tag">{getCategoryTagLabel(post, isNoticeCategory ? '필독' : '고정')}</span>
                   <div className="board-list__title-line">
                     <span className="board-list__post-title board-list__post-title--bold">{post.title}</span>
                     <span className="board-list__comments"><MessageBox /> {post.commentCount ?? 0}</span>
