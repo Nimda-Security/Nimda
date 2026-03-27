@@ -401,15 +401,22 @@ const UserInfoContent: React.FC<UserInfoContentProps> = ({
                   학과
                 </span>
                 <div className="flex items-center gap-3">
-                  <input
-                    type="text"
-                    autoFocus
-                    value={majorInput}
-                    onChange={(e) => setMajorInput(e.target.value)}
-                    className="flex-1 h-[32px] border-2 border-[#d97399] rounded-[4px] pl-5 pr-3 text-[14px] font-medium text-[#525252] outline-none"
-                    style={{ paddingLeft: '16px' }}
-                    maxLength={20}
-                  />
+                <div className="flex flex-wrap gap-2 py-2">
+                  {['소프트웨어학과', '컴퓨터공학과', '스마트정보기술공학과', '전기전자제어공학부', '인공지능학부', '정보통신공학과'].map(m => (
+                    <button
+                      key={m}
+                      type="button"
+                      onClick={() => setMajorInput(m)}
+                      className={`h-[32px] px-4 rounded-[4px] text-[13px] font-semibold transition-all border-2 ${
+                        majorInput === m 
+                          ? 'bg-[#d97399] border-[#d97399] text-white' 
+                          : 'bg-white border-[#e5e5e5] text-[#8b8b8b] hover:border-[#d97399]'
+                      }`}
+                    >
+                      {m}
+                    </button>
+                  ))}
+                </div>
                   <button
                     onClick={() =>
                       handleSaveField('major', majorInput, setIsEditingMajor)
