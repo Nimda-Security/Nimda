@@ -483,8 +483,10 @@ const UserInfoContent: React.FC<UserInfoContentProps> = ({
         </div>
       </div>
 
-      {/* 안내 문구 (테두리 박스와의 간격 40px 유지) */}
-      <p className="text-center text-[14px] font-medium mt-[40px] mb-[100px]">
+      <p
+        className="text-center text-[14px] font-medium"
+        style={{ marginTop: '48px', marginBottom: '80px' }}
+      >
         <span className="text-[#d97399]">특정 정보</span>
         <span className="text-[#8b8b8b]">
           는 관리자의 승인을 받아야 수정이 가능합니다.
