@@ -223,7 +223,7 @@ const UserInfoContent: React.FC<UserInfoContentProps> = ({
                   생년월일
                 </span>
                 <div className="flex items-center gap-3">
-                  <div className="flex-1 grid grid-cols-3 gap-2">
+                  <div className="flex-1 grid grid-cols-[72px_44px_44px] gap-2">
                     <input
                       type="text"
                       autoFocus
@@ -234,9 +234,9 @@ const UserInfoContent: React.FC<UserInfoContentProps> = ({
                         )
                       }
                       placeholder="년(4자)"
-                      className="w-full h-[32px] border-2 border-[#d97399] rounded-[4px] pl-5 pr-3 text-[14px] font-medium text-[#525252] outline-none"
-                      style={{ paddingLeft: '16px' }}
+                      className="w-full h-[32px] border-2 border-[#d97399] rounded-[4px] pl-[13px] pr-3 text-[14px] font-medium text-[#525252] outline-none"
                       maxLength={4}
+                      style={{ paddingLeft: '12px' }}
                     />
                     <input
                       type="text"
@@ -248,7 +248,7 @@ const UserInfoContent: React.FC<UserInfoContentProps> = ({
                       }
                       placeholder="월"
                       className="w-full h-[32px] border-2 border-[#d97399] rounded-[4px] pl-5 pr-3 text-[14px] font-medium text-[#525252] outline-none"
-                      style={{ paddingLeft: '16px' }}
+                      style={{ paddingLeft: '12px' }}
                       maxLength={2}
                     />
                     <input
@@ -261,7 +261,7 @@ const UserInfoContent: React.FC<UserInfoContentProps> = ({
                       }
                       placeholder="일"
                       className="w-full h-[32px] border-2 border-[#d97399] rounded-[4px] pl-5 pr-3 text-[14px] font-medium text-[#525252] outline-none"
-                      style={{ paddingLeft: '16px' }}
+                      style={{ paddingLeft: '12px' }}
                       maxLength={2}
                     />
                   </div>
