@@ -318,8 +318,8 @@ function BoardListPage({ slug: propSlug }: BoardListPageProps) {
                   <span className="board-list__category-tag">{getCategoryTagLabel(post, '필독')}</span>
                   <div className="board-list__title-line">
                     <span className="board-list__post-title board-list__post-title--bold">{post.title}</span>
-                    {post.commentCount !== undefined && post.commentCount > 0 && <span className="board-list__comments"><MessageBox /> {post.commentCount}</span>}
-                    {post.likeCount !== undefined && post.likeCount > 0 && <span className="board-list__likes"><Heart filled={likeStatuses[post.id]} /> {post.likeCount}</span>}
+                    <span className="board-list__comments"><MessageBox /> {post.commentCount ?? 0}</span>
+                    <span className="board-list__likes"><Heart filled={likeStatuses[post.id]} /> {post.likeCount ?? 0}</span>
                   </div>
                 </div>
                 <div className="board-list__meta">
@@ -340,8 +340,8 @@ function BoardListPage({ slug: propSlug }: BoardListPageProps) {
                   <span className="board-list__category-tag">{getCategoryTagLabel(post, isNoticeCategory ? '필독' : '고정')}</span>
                   <div className="board-list__title-line">
                     <span className="board-list__post-title board-list__post-title--bold">{post.title}</span>
-                    {post.commentCount !== undefined && post.commentCount > 0 && <span className="board-list__comments"><MessageBox /> {post.commentCount}</span>}
-                    {post.likeCount !== undefined && post.likeCount > 0 && <span className="board-list__likes"><Heart filled={likeStatuses[post.id]} /> {post.likeCount}</span>}
+                    <span className="board-list__comments"><MessageBox /> {post.commentCount ?? 0}</span>
+                    <span className="board-list__likes"><Heart filled={likeStatuses[post.id]} /> {post.likeCount ?? 0}</span>
                   </div>
                 </div>
                 <div className="board-list__meta">
@@ -365,8 +365,8 @@ function BoardListPage({ slug: propSlug }: BoardListPageProps) {
                     <span className="board-list__category-tag">{getCategoryTagLabel(post)}</span>
                     <div className="board-list__title-line">
                       <span className="board-list__post-title">{post.title}</span>
-                      {post.commentCount !== undefined && post.commentCount > 0 && <span className="board-list__comments"><MessageBox /> {post.commentCount}</span>}
-                      {post.likeCount !== undefined && post.likeCount > 0 && <span className="board-list__likes"><Heart filled={likeStatuses[post.id]} /> {post.likeCount}</span>}
+                      <span className="board-list__comments"><MessageBox /> {post.commentCount ?? 0}</span>
+                      <span className="board-list__likes"><Heart filled={likeStatuses[post.id]} /> {post.likeCount ?? 0}</span>
                     </div>
                   </div>
                   <div className="board-list__meta">
