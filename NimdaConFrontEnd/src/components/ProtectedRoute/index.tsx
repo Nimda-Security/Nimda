@@ -8,10 +8,10 @@ interface ProtectedRouteProps {
 
 const ProtectedRoute = ({ children, requireAdmin = false }: ProtectedRouteProps) => {
     if (requireAdmin) {
-        const token = localStorage.getItem('authToken');
+        const user = localStorage.getItem('user');
 
         // 로그인하지 않은 경우 → 로그인 페이지로 리다이렉트
-        if (!token) {
+        if (!user) {
             return <Navigate to="/login" replace />;
         }
 

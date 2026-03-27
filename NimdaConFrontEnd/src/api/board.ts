@@ -1,4 +1,4 @@
-// 게시판 관련 API 함수들
+﻿// 게시판 관련 API 함수들
 
 import type {
   Category,
@@ -79,18 +79,12 @@ export const getBoardListAPI = async (
       queryParams.append('includeChildren', 'true');
     }
 
-    const token = localStorage.getItem('authToken');
-    const headers: Record<string, string> = {
-      'Content-Type': 'application/json',
-    };
-
-    if (token) {
-      headers['Authorization'] = `Bearer ${token}`;
-    }
-
     const response = await fetch(`${API_BASE_URL}?${queryParams.toString()}`, {
       method: 'GET',
-      headers: getAuthHeaders(), 
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      credentials: 'include',
     });
 
     const result = await parseJsonSafe(response);
@@ -142,18 +136,12 @@ export const getBoardDetailAPI = async (
   id: number
 ): Promise<BoardDetailResponse | BoardErrorResponse> => {
   try {
-    const token = localStorage.getItem('authToken');
-    const headers: Record<string, string> = {
-      'Content-Type': 'application/json',
-    };
-
-    if (token) {
-      headers['Authorization'] = `Bearer ${token}`;
-    }
-
     const response = await fetch(`${API_BASE_URL}/${id}`, {
       method: 'GET',
-      headers,
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      credentials: 'include',
     });
 
     const result = await parseJsonSafe(response);
@@ -199,25 +187,6 @@ export const createBoardAPI = async (
   data: BoardWriteRequest
 ): Promise<BoardWriteResponse | BoardErrorResponse> => {
   try {
-    const token = localStorage.getItem('authToken');
-    console.log('[createBoardAPI] 토큰 확인:', token ? `존재함 (길이: ${token.length})` : '없음');
-
-    if (!token) {
-      return {
-        success: false,
-        message: '로그인이 필요합니다.',
-      };
-    }
-
-    // categoryId 유효성 검사
-    if (!data.categoryId || typeof data.categoryId !== 'number') {
-      console.error('[createBoardAPI] 유효하지 않은 categoryId:', data.categoryId);
-      return {
-        success: false,
-        message: '카테고리 ID가 유효하지 않습니다.',
-      };
-    }
-
     const formData = new FormData();
     formData.append('categoryId', data.categoryId.toString());
     formData.append('title', data.title);
@@ -235,17 +204,13 @@ export const createBoardAPI = async (
     console.log('[createBoardAPI] 요청 전송:', {
       url: API_BASE_URL,
       method: 'POST',
-      hasToken: !!token,
       categoryId: data.categoryId,
       title: data.title,
     });
 
     const response = await fetch(API_BASE_URL, {
       method: 'POST',
-      headers: {
-        Authorization: `Bearer ${token}`,
-        // FormData 사용 시 Content-Type은 브라우저가 자동으로 설정
-      },
+      credentials: 'include',
       body: formData,
     });
 
@@ -287,14 +252,6 @@ export const updateBoardAPI = async (
   data: BoardWriteRequest
 ): Promise<BoardWriteResponse | BoardErrorResponse> => {
   try {
-    const token = localStorage.getItem('authToken');
-    if (!token) {
-      return {
-        success: false,
-        message: '로그인이 필요합니다.',
-      };
-    }
-
     const formData = new FormData();
     formData.append('categoryId', data.categoryId.toString());
     formData.append('title', data.title);
@@ -311,9 +268,7 @@ export const updateBoardAPI = async (
 
     const response = await fetch(`${API_BASE_URL}/${id}`, {
       method: 'PUT',
-      headers: {
-        Authorization: `Bearer ${token}`,
-      },
+      credentials: 'include',
       body: formData,
     });
 
@@ -351,20 +306,12 @@ export const deleteBoardAPI = async (
   id: number
 ): Promise<BoardDeleteResponse | BoardErrorResponse> => {
   try {
-    const token = localStorage.getItem('authToken');
-    if (!token) {
-      return {
-        success: false,
-        message: '로그인이 필요합니다.',
-      };
-    }
-
     const response = await fetch(`${API_BASE_URL}/${id}`, {
       method: 'DELETE',
       headers: {
-        Authorization: `Bearer ${token}`,
         'Content-Type': 'application/json',
       },
+      credentials: 'include',
     });
 
     const result = await parseJsonSafe(response);
@@ -422,18 +369,12 @@ export const getPinnedPostsAPI = async (
       queryParams.append('slug', slug);
     }
 
-    const token = localStorage.getItem('authToken');
-    const headers: Record<string, string> = {
-      'Content-Type': 'application/json',
-    };
-
-    if (token) {
-      headers['Authorization'] = `Bearer ${token}`;
-    }
-
     const response = await fetch(`${API_BASE_URL}/pinned?${queryParams.toString()}`, {
       method: 'GET',
-      headers: getAuthHeaders(), 
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      credentials: 'include',
     });
 
     const result = await parseJsonSafe(response);
@@ -497,7 +438,10 @@ export const getPopularPostsAPI = async (
 
     const response = await fetch(`${API_BASE_URL}/popular?${queryParams.toString()}`, {
       method: 'GET',
-      headers: getAuthHeaders(),
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      credentials: 'include',
     });
 
     const result = await parseJsonSafe(response);
@@ -594,21 +538,12 @@ export const getBoardLikeStatusAPI = async (
   boardId: number
 ): Promise<BoardLikeStatusResponse | BoardErrorResponse> => {
   try {
-    const token = localStorage.getItem('authToken');
-
-    if (!token) {
-      return {
-        success: false,
-        message: '로그인이 필요합니다.',
-      };
-    }
-
     const response = await fetch(`${LIKE_API_BASE_URL}/${boardId}/likeStatus`, {
       method: 'GET',
       headers: {
         'Content-Type': 'application/json',
-        'Authorization': `Bearer ${token}`,
       },
+      credentials: 'include',
     });
 
     const result = await parseJsonSafe(response);
@@ -644,21 +579,12 @@ export const toggleBoardLikeAPI = async (
   boardId: number
 ): Promise<BoardLikeToggleResponse | BoardErrorResponse> => {
   try {
-    const token = localStorage.getItem('authToken');
-
-    if (!token) {
-      return {
-        success: false,
-        message: '로그인이 필요합니다.',
-      };
-    }
-
     const response = await fetch(`${LIKE_API_BASE_URL}/${boardId}`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
-        'Authorization': `Bearer ${token}`,
       },
+      credentials: 'include',
     });
 
     const result = await parseJsonSafe(response);
@@ -694,21 +620,12 @@ export const toggleBoardPinAPI = async (
   boardId: number
 ): Promise<BoardWriteResponse | BoardErrorResponse> => {
   try {
-    const token = localStorage.getItem('authToken');
-
-    if (!token) {
-      return {
-        success: false,
-        message: '로그인이 필요합니다.',
-      };
-    }
-
     const response = await fetch(`${API_BASE_URL}/${boardId}/pin`, {
       method: 'PATCH',
       headers: {
         'Content-Type': 'application/json',
-        'Authorization': `Bearer ${token}`,
       },
+      credentials: 'include',
     });
 
     const result = await parseJsonSafe(response);
@@ -742,15 +659,12 @@ export const toggleBoardPinAPI = async (
  */
 export const getMyBoardCountAPI = async (): Promise<number> => {
   try {
-    const token = localStorage.getItem('authToken');
-    if (!token) return 0;
-
     const response = await fetch(`${API_BASE_URL}/my/board-count`, {
       method: 'GET',
       headers: {
         'Content-Type': 'application/json',
-        'Authorization': `Bearer ${token}`,
       },
+      credentials: 'include',
     });
 
     const result = await response.json();
@@ -782,15 +696,12 @@ export interface MyBoard {
 
 export const getMyBoardsAPI = async (): Promise<MyBoard[]> => {
   try {
-    const token = localStorage.getItem('authToken');
-    if (!token) return [];
-
     const response = await fetch(`${API_BASE_URL}/my/boards`, {
       method: 'GET',
       headers: {
         'Content-Type': 'application/json',
-        'Authorization': `Bearer ${token}`,
       },
+      credentials: 'include',
     });
 
     const result = await response.json();
@@ -821,15 +732,12 @@ export const getMyBoardsAPI = async (): Promise<MyBoard[]> => {
  */
 export const deleteMyBoardsAPI = async (boardIds: number[]): Promise<{ success: boolean; message?: string }> => {
   try {
-    const token = localStorage.getItem('authToken');
-    if (!token) return { success: false, message: '로그인이 필요합니다.' };
-
     const response = await fetch(`${API_BASE_URL}/my/boards`, {
       method: 'DELETE',
       headers: {
         'Content-Type': 'application/json',
-        'Authorization': `Bearer ${token}`,
       },
+      credentials: 'include',
       body: JSON.stringify({ boardIds }),
     });
 

@@ -6,6 +6,8 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
 
+import java.util.List;
+
 @Getter
 @Setter
 @Builder
@@ -26,5 +28,6 @@ public class LoginResponseDTO {
         private String userId;
         private String nickname;
         private String email;
+        private List<String> roles;
     }
 }

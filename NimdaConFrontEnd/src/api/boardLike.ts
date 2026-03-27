@@ -15,18 +15,12 @@ export interface BoardLikeResponse {
  */
 export const getPushedBoardLikesCount = async (): Promise<number> => {
   try {
-    const authToken = localStorage.getItem("authToken");
-    if (!authToken) {
-      console.warn("인증 토큰이 없습니다.");
-      return 0;
-    }
-
     const response = await fetch(`${API_BASE_URL}/pushedLikes/count`, {
       method: "GET",
       headers: {
         "Content-Type": "application/json",
-        "Authorization": `Bearer ${authToken}`,
       },
+      credentials: "include",
     });
 
     if (!response.ok) {
@@ -47,17 +41,12 @@ export const getPushedBoardLikesCount = async (): Promise<number> => {
  */
 export const toggleBoardLike = async (boardId: number): Promise<BoardLikeResponse> => {
   try {
-    const authToken = localStorage.getItem("authToken");
-    if (!authToken) {
-      throw new Error("인증 토큰이 없습니다.");
-    }
-
     const response = await fetch(`${API_BASE_URL}/${boardId}`, {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
-        "Authorization": `Bearer ${authToken}`,
       },
+      credentials: "include",
     });
 
     if (!response.ok) {
@@ -85,17 +74,12 @@ export const toggleBoardLike = async (boardId: number): Promise<BoardLikeRespons
  */
 export const getBoardLikeStatus = async (boardId: number): Promise<BoardLikeResponse> => {
   try {
-    const authToken = localStorage.getItem("authToken");
-    if (!authToken) {
-      throw new Error("인증 토큰이 없습니다.");
-    }
-
     const response = await fetch(`${API_BASE_URL}/${boardId}/likeStatus`, {
       method: "GET",
       headers: {
         "Content-Type": "application/json",
-        "Authorization": `Bearer ${authToken}`,
       },
+      credentials: "include",
     });
 
     if (!response.ok) {
@@ -134,15 +118,12 @@ export interface LikedBoard {
 
 export const getLikedBoardsAPI = async (): Promise<LikedBoard[]> => {
   try {
-    const authToken = localStorage.getItem("authToken");
-    if (!authToken) return [];
-
     const response = await fetch(`${API_BASE_URL}/pushedLikes`, {
       method: "GET",
       headers: {
         "Content-Type": "application/json",
-        "Authorization": `Bearer ${authToken}`,
       },
+      credentials: "include",
     });
 
     if (!response.ok) return [];
