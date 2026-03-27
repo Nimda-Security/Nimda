@@ -294,7 +294,6 @@ function BoardListPage({ slug: propSlug }: BoardListPageProps) {
           ))}
         </div>
 
-        <div className="board-list__divider" />
 
         <div style={{ display: 'flex', justifyContent: 'flex-end', marginTop: '16px', marginBottom: '8px' }}>
           {canWrite && (
@@ -306,6 +305,9 @@ function BoardListPage({ slug: propSlug }: BoardListPageProps) {
             </button>
           )}
         </div>
+
+        <div className="board-list__divider" />
+
         {loading && <div className="board-list__status">로딩 중...</div>}
         {error && <div className="board-list__status board-list__status--error">{error}</div>}
 
