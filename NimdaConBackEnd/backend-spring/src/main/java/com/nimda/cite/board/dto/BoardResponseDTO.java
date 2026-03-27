@@ -1,6 +1,5 @@
 package com.nimda.cite.board.dto;
 
-import com.fasterxml.jackson.annotation.JsonInclude;
 import com.nimda.cite.attachment.dto.AttachmentResponseDto;
 import com.nimda.cite.board.entity.Board;
 import com.nimda.cup.user.entity.User;

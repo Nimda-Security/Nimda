@@ -2,10 +2,8 @@ package com.nimda.cite.comment.service;
 
 import com.nimda.cite.alarm.Event.AddChildCommentEvent;
 import com.nimda.cite.alarm.Event.AddCommentEvent;
-import com.nimda.cite.alarm.service.AlarmService;
 import com.nimda.cite.board.entity.Board;
 import com.nimda.cite.board.repository.BoardRepository;
-import com.nimda.cite.board.repository.CategoryRepository;
 import com.nimda.cite.comment.dto.*;
 import com.nimda.cite.comment.entity.Comment;
 import com.nimda.cite.comment.enums.STATUS;
@@ -38,9 +36,6 @@ public class CommentService {
 
     @Autowired
     private UserRepository userRepository;
-
-    @Autowired
-    private AlarmService alarmService;
 
     @Autowired
     private ApplicationEventPublisher eventPublisher;

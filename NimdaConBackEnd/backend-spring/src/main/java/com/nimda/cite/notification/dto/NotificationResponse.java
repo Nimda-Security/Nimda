@@ -1,7 +1,6 @@
 package com.nimda.cite.notification.dto;
 
 import com.nimda.cite.notification.entity.Notification;
-import com.nimda.cup.user.entity.User;
 import lombok.Builder;
 import lombok.Getter;
 
