@@ -1,5 +1,6 @@
 import { useEffect, useState, useRef } from 'react';
 import { Link } from 'react-router-dom';
+import Avatar from '@/components/Avatar/Avatar';
 import { Heart } from '@/components/icons/Heart';
 import { MessageBox } from '@/components/icons/MessageBox';
 import { VerticalDots } from '@/components/icons/VerticalDots';
@@ -21,6 +22,8 @@ import type {
   CommentStatus,
 } from '@/domains/Comment/types';
 import './Comment.css';
+import { formatDate } from '@/utils/formatDate';
+
 
 interface CommentSectionProps {
   boardId: number;
@@ -32,11 +35,7 @@ interface CommentSectionProps {
  */
 function CommentAvatar({ src }: { src: string | null; name: string }) {
   return (
-    <img
-      src={src || "/default_user_profile.png"}
-      alt=""
-      className="comment-item__avatar"
-    />
+    <Avatar src={src} size={32} className="comment-item__avatar" />
   );
 }
 
@@ -67,11 +66,7 @@ function CommentInput({
       {/* [수정] 하드코딩된 '?'를 지우고 내 프로필 이미지를 렌더링하도록 변경 */}
       {showAvatar && (
         <div className="comment-input__avatar">
-          <img
-            src={profileImage || "/default_user_profile.png"}
-            alt="내 프로필"
-            style={{ width: '100%', height: '100%', borderRadius: '50%', objectFit: 'cover' }}
-          />
+          <Avatar src={profileImage} size="100%" />
         </div>
       )}
       <div className="comment-input__body">
@@ -107,14 +102,6 @@ function StatusBadge({ status }: { status: CommentStatus }) {
   return <span className={`comment-status-badge comment-status-badge${mod}`}>{label}</span>;
 }
 
-function formatCommentDate(dateStr: string) {
-  const d = new Date(dateStr);
-  const m = String(d.getMonth() + 1).padStart(2, '0');
-  const day = String(d.getDate()).padStart(2, '0');
-  const h = String(d.getHours()).padStart(2, '0');
-  const min = String(d.getMinutes()).padStart(2, '0');
-  return `${m}. ${day}. ${h}:${min}`;
-}
 
 interface CommentMoreDropdownProps {
   editable: boolean;
@@ -186,7 +173,6 @@ function CommentMoreDropdown({
           {editable && (
             <li role="menuitem">
               <button type="button" className="comment-more__item" onClick={handleEdit}>
-                <span className="comment-more__icon">✏️</span>
                 수정
               </button>
             </li>
@@ -194,9 +180,6 @@ function CommentMoreDropdown({
           {hideable && (
             <li role="menuitem">
               <button type="button" className="comment-more__item" onClick={handleToggleHide}>
-                <span className="comment-more__icon">
-                  {currentStatus === 'HIDDEN' ? '👁️' : '🚫'}
-                </span>
                 {currentStatus === 'HIDDEN' ? '공개' : '숨김'}
               </button>
             </li>
@@ -208,7 +191,6 @@ function CommentMoreDropdown({
                 className="comment-more__item comment-more__item--danger"
                 onClick={handleDelete}
               >
-                <span className="comment-more__icon">🗑️</span>
                 삭제
               </button>
             </li>
@@ -254,8 +236,6 @@ function CommentItem({
   replyInputRef,
   myProfileImage // [추가]
 }: CommentItemProps) {
-  const isDeleted = comment.isDeleted;
-  const isHidden = comment.status === 'HIDDEN';
   const isReply = comment.parentId !== null;
   const children = comment.children ?? [];
 
@@ -273,7 +253,10 @@ function CommentItem({
             >
               {comment.authorName}
             </Link>
-            <span className="comment-item__date">{formatCommentDate(comment.createdAt)}</span>
+            <span className="comment-item__date">{formatDate(comment.createdAt)}</span>
+            {comment.updatedAt && comment.updatedAt !== comment.createdAt && (
+              <span className="comment-item__edited">(수정됨)</span>
+            )}
             {hideable && <StatusBadge status={comment.status} />}
             <CommentMoreDropdown
               editable={editable}
@@ -286,32 +269,31 @@ function CommentItem({
             />
           </div>
 
-          {isDeleted ? (
-            <p className="comment-item__content comment-item__content--deleted">삭제된 댓글입니다.</p>
-          ) : isHidden ? (
-            <p className="comment-item__content comment-item__content--hidden">숨겨진 댓글입니다.</p>
-          ) : (
-            <p className="comment-item__content">{comment.context}</p>
-          )}
+          <p className={`comment-item__content${
+            comment.isDeleted || comment.status === 'HIDDEN'
+              ? ' comment-item__content--muted'
+              : ''
+          }`}>
+            {comment.context}
+          </p>
 
-          {!isDeleted && (
-            <div className="comment-item__footer">
-              {!comment.parentId && (
-                <button
-                  type="button"
-                  onClick={() => onReply(comment.id, comment.authorName)}
-                  className="comment-item__reply-btn"
-                >
-                  <MessageBox />
-                  <span>{comment.children?.length ?? 0}</span>
-                </button>
-              )}
-              <button type="button" className={`comment-item__like-btn${comment.isLiked ? ' comment-item__like-btn--active' : ''}`} onClick={() => onToggleLike(comment.id)}>
-                <Heart filled={comment.isLiked} />
-                <span>{comment.likeCount}</span>
+
+          <div className="comment-item__footer">
+            {!comment.parentId && (
+              <button
+                type="button"
+                onClick={() => onReply(comment.id, comment.authorName)}
+                className="comment-item__reply-btn"
+              >
+                <MessageBox />
+                <span>{comment.children?.length ?? 0}</span>
               </button>
-            </div>
-          )}
+            )}
+            <button type="button" className={`comment-item__like-btn${comment.isLiked ? ' comment-item__like-btn--active' : ''}`} onClick={() => onToggleLike(comment.id)}>
+              <Heart filled={comment.isLiked} />
+              <span>{comment.likeCount}</span>
+            </button>
+          </div>
         </div>
       </div>
 

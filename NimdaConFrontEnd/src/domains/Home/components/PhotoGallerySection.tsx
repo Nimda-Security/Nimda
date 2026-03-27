@@ -4,6 +4,8 @@ import { Heart } from "@/components/icons/Heart";
 import { getBoardListAPI, getBoardDetailAPI } from "@/api/board";
 import { getAttachmentPresignedUrl } from "@/api/attachments";
 import type { Board } from "@/domains/Board/types";
+import { formatDate } from '@/utils/formatDate';
+import { useLikeStatuses } from "@/domains/Board/useLikeStatuses";
 
 const IMAGE_EXTENSIONS = ["jpg", "jpeg", "png", "gif", "webp", "bmp", "svg"];
 
@@ -26,34 +28,13 @@ const getFirstImageAttachmentId = (board: Board): number | null => {
   return null;
 };
 
-/**
- * 날짜 포맷 (오늘이면 HH:MM, 올해면 MM.DD, 아니면 YY.MM.DD)
- */
-const formatDate = (dateStr: string): string => {
-  const date = new Date(dateStr);
-  const now = new Date();
-
-  const isToday =
-    date.getFullYear() === now.getFullYear() &&
-    date.getMonth() === now.getMonth() &&
-    date.getDate() === now.getDate();
-
-  if (isToday) {
-    return `${String(date.getHours()).padStart(2, "0")}:${String(date.getMinutes()).padStart(2, "0")}`;
-  }
-
-  if (date.getFullYear() === now.getFullYear()) {
-    return `${String(date.getMonth() + 1).padStart(2, "0")}.${String(date.getDate()).padStart(2, "0")}`;
-  }
-
-  return `${String(date.getFullYear()).slice(2)}.${String(date.getMonth() + 1).padStart(2, "0")}.${String(date.getDate()).padStart(2, "0")}`;
-};
 
 const PhotoGallerySection: React.FC = () => {
   const [posts, setPosts] = useState<Board[]>([]);
   const [thumbnails, setThumbnails] = useState<Record<number, string | null>>({});
   const [loading, setLoading] = useState(true);
   const [categorySlug, setCategorySlug] = useState("picture-board");
+  const likeStatuses = useLikeStatuses(posts);  
 
   useEffect(() => {
     const loadPhotoPosts = async () => {
@@ -138,7 +119,7 @@ const PhotoGallerySection: React.FC = () => {
                 <p className="home-gallery__card-title">{post.title}</p>
                 <div className="home-gallery__card-meta">
                   <div className="home-gallery__card-likes">
-                    <Heart filled={false} />
+                    <Heart filled={likeStatuses[post.id] ?? false} />
                     <span>{post.likeCount ?? 0}</span>
                   </div>
                   <span className="home-gallery__card-separator">|</span>

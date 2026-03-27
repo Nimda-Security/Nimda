@@ -4,11 +4,13 @@ import { getPopularPostsAPI } from "@/api/board";
 import type { Board } from "@/domains/Board/types";
 import { Heart } from "@/components/icons/Heart";
 import { MessageBox } from "@/components/icons/MessageBox";
+import { useLikeStatuses } from "@/domains/Board/useLikeStatuses";
 
 const PopularPostsSection: React.FC = () => {
   const navigate = useNavigate();
   const [popularPosts, setPopularPosts] = useState<Board[]>([]);
   const [loading, setLoading] = useState(true);
+  const likeStatuses = useLikeStatuses(popularPosts);
 
   useEffect(() => {
     const loadPopularPosts = async () => {
@@ -104,7 +106,7 @@ const PopularPostsSection: React.FC = () => {
                 <span className="home-popular__comments-count">{post.commentCount ?? 0}</span>
               </div>
               <div className="home-popular__likes">
-                <Heart filled={true} />
+                <Heart filled={likeStatuses[post.id] ?? false} />
                 <span className="home-popular__likes-count">{post.likeCount || 0}</span>
               </div>
               <span className="home-popular__date">{formatDate(post.createdAt)}</span>

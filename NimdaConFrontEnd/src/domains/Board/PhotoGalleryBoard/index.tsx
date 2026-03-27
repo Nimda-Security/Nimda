@@ -1,11 +1,14 @@
 import React, { useState, useEffect, useCallback } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import Layout from "@/components/Layout";
+import Avatar from "@/components/Avatar/Avatar";
 import { Heart } from "@/components/icons/Heart";
 import { getBoardListAPI, getBoardDetailAPI } from "@/api/board";
 import { getAttachmentPresignedUrl } from "@/api/attachments";
 import type { Board } from "@/domains/Board/types";
 import "./PhotoGalleryBoard.css";
+import { formatDate } from '@/utils/formatDate';
+import { useLikeStatuses } from "@/domains/Board/useLikeStatuses";
 
 const IMAGE_EXTENSIONS = ["jpg", "jpeg", "png", "gif", "webp", "bmp", "svg"];
 
@@ -21,20 +24,6 @@ const getFirstImageAttachmentId = (board: Board): number | null => {
   return null;
 };
 
-const formatDate = (dateStr: string): string => {
-  const date = new Date(dateStr);
-  const now = new Date();
-  const isToday = date.toDateString() === now.toDateString();
-  const isThisYear = date.getFullYear() === now.getFullYear();
-  if (isToday) {
-    return `${String(date.getHours()).padStart(2, "0")}:${String(date.getMinutes()).padStart(2, "0")}`;
-  }
-  if (isThisYear) {
-    return `${String(date.getMonth() + 1).padStart(2, "0")}.${String(date.getDate()).padStart(2, "0")}`;
-  }
-  return `${String(date.getFullYear()).slice(2)}.${String(date.getMonth() + 1).padStart(2, "0")}.${String(date.getDate()).padStart(2, "0")}`;
-};
-
 const PAGE_SIZE = 8;
 
 const PhotoGalleryBoard: React.FC = () => {
@@ -47,6 +36,7 @@ const PhotoGalleryBoard: React.FC = () => {
   const [selectedYear, setSelectedYear] = useState<number | null>(null);
   // 모든 페이지에서 누적한 연도 목록
   const [availableYears, setAvailableYears] = useState<number[]>([]);
+  const likeStatuses = useLikeStatuses(posts);
 
   const loadPosts = useCallback(async (page: number) => {
     setLoading(true);
@@ -198,13 +188,10 @@ const PhotoGalleryBoard: React.FC = () => {
                     )}
                     <div className="photo-gallery-board__info">
                       <div className="photo-gallery-board__author">
-                        <img
-                          src={post.author?.profileImage || "/default_user_profile.png"}
-                          alt=""
+                        <Avatar
+                          src={post.author?.profileImage}
+                          size={20}
                           className="photo-gallery-board__avatar"
-                          onError={(e) => {
-                            e.currentTarget.src = "/default_user_profile.png";
-                          }}
                         />
                         <span className="photo-gallery-board__nickname">
                           {post.author?.nickname || "익명"}
@@ -213,7 +200,7 @@ const PhotoGalleryBoard: React.FC = () => {
                       <p className="photo-gallery-board__title">{post.title}</p>
                       <div className="photo-gallery-board__meta">
                         <span className="photo-gallery-board__meta-likes">
-                          <Heart filled />
+                          <Heart filled={likeStatuses[post.id] ?? false} />
                           <span>{post.likeCount ?? 0}</span>
                         </span>
                         <span className="photo-gallery-board__meta-sep">|</span>
