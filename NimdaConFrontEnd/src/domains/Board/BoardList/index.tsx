@@ -218,11 +218,10 @@ function BoardListPage({ slug: propSlug }: BoardListPageProps) {
 
   // 렌더링용 변수들
   const categoryName = category?.name || CATEGORY_LABELS[slug] || '게시판';
-  const getCategoryTagLabel = (post: Board, fallbackLabel?: string) => {
+  const getCategoryTagLabel = (post: Board, fallbackLabel?: string): string | null => {
     if (post.tag) return `# ${post.tag}`;
     if (fallbackLabel) return `# ${fallbackLabel}`;
-    if (post.category?.name) return `# ${post.category.name}`;
-    return '# 게시물';
+    return null;
   };
 
   const isNewsCategoryGroup = useMemo(() => {
@@ -278,15 +277,6 @@ function BoardListPage({ slug: propSlug }: BoardListPageProps) {
           <h1 className="board-list__title">{categoryName}</h1>
         </div>
 
-        {childCategories.length > 0 && (
-          <div className="board-list__tabs" style={{ marginBottom: '16px' }}>
-            <button className={`board-list__tab ${activeTab === 'all' ? 'board-list__tab--active' : ''}`} onClick={() => handleTabClick('all')}>전체</button>
-            {childCategories.map((child) => (
-              <button key={child.id} className={`board-list__tab ${activeTab === child.slug ? 'board-list__tab--active' : ''}`} onClick={() => handleTabClick(child.slug)}>{child.name}</button>
-            ))}
-          </div>
-        )}
-
         <div className="board-list__tag-filter">
           <button className={`board-list__tag-filter-item ${selectedTag === null ? 'board-list__tag-filter-item--active' : ''}`} onClick={() => handleTagClick(null)}>전체</button>
           {availableTags.map((tag) => (
@@ -294,8 +284,16 @@ function BoardListPage({ slug: propSlug }: BoardListPageProps) {
           ))}
         </div>
 
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-end', marginTop: '16px', marginBottom: '8px' }}>
+          {childCategories.length > 0 ? (
+            <div className="board-list__tabs" style={{ marginBottom: 0 }}>
+              <button className={`board-list__tab ${activeTab === 'all' ? 'board-list__tab--active' : ''}`} onClick={() => handleTabClick('all')}>전체</button>
+              {childCategories.map((child) => (
+                <button key={child.id} className={`board-list__tab ${activeTab === child.slug ? 'board-list__tab--active' : ''}`} onClick={() => handleTabClick(child.slug)}>{child.name}</button>
+              ))}
+            </div>
+          ) : <div />}
 
-        <div style={{ display: 'flex', justifyContent: 'flex-end', marginTop: '16px', marginBottom: '8px' }}>
           {canWrite && (
             <button className="board-list__write-btn" onClick={handleWriteClick}>
               <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
@@ -316,8 +314,8 @@ function BoardListPage({ slug: propSlug }: BoardListPageProps) {
             {/* 글로벌 공지 */}
             {displayGlobalNotices.map((post) => (
               <div key={`notice-${post.id}`} className="board-list__row board-list__row--pinned" onClick={() => navigate(`/board/notice/${post.id}`)}>
+                <span className="board-list__notice-label">필독</span>
                 <div className="board-list__row-content">
-                  <span className="board-list__category-tag">{getCategoryTagLabel(post, '필독')}</span>
                   <div className="board-list__title-line">
                     <span className="board-list__post-title board-list__post-title--bold">{post.title}</span>
                     <span className="board-list__comments"><MessageBox /> {post.commentCount ?? 0}</span>
@@ -338,14 +336,15 @@ function BoardListPage({ slug: propSlug }: BoardListPageProps) {
             {/* 현재 카테고리 고정글 */}
             {pinnedPosts.map((post) => (
               <div key={`pinned-${post.id}`} className="board-list__row board-list__row--notice" onClick={() => handleBoardClick(post.id)}>
+                <span className="board-list__notice-label">{isNoticeCategory ? '필독' : '고정'}</span>
                 <div className="board-list__row-content">
-                  <span className="board-list__category-tag">{getCategoryTagLabel(post, isNoticeCategory ? '필독' : '고정')}</span>
+                  {getCategoryTagLabel(post, isNoticeCategory ? '필독' : '고정') && <span className="board-list__category-tag">{getCategoryTagLabel(post, isNoticeCategory ? '필독' : '고정')}</span>}
                   <div className="board-list__title-line">
                     <span className="board-list__post-title board-list__post-title--bold">{post.title}</span>
                     <span className="board-list__comments"><MessageBox /> {post.commentCount ?? 0}</span>
                     <span className="board-list__likes"><Heart filled={post.isLiked} /> {post.likeCount ?? 0}</span>
                   </div>
-                </div>
+                </div >
                 <div className="board-list__meta">
                   <div className="board-list__author-info">
                     <Link to={post.author?.nickname ? `/user/${post.author.nickname}` : '#'} className="board-list__author" onClick={(e) => e.stopPropagation()}>{post.author?.nickname || '익명'}</Link>
@@ -354,47 +353,52 @@ function BoardListPage({ slug: propSlug }: BoardListPageProps) {
                   <Avatar src={post.author?.profileImage} size={32} className="board-list__avatar" />
                 </div>
                 <div className="board-list__row-divider" />
-              </div>
-            ))}
+              </div >
+            ))
+            }
 
             {/* 일반 게시글 */}
-            {boards.length === 0 && pinnedPosts.length === 0 && displayGlobalNotices.length === 0 ? (
-              <div className="board-list__status">게시글이 없습니다.</div>
-            ) : (
-              boards.map((post) => (
-                <div key={post.id} className="board-list__row" onClick={() => handleBoardClick(post.id)}>
-                  <div className="board-list__row-content">
-                    <span className="board-list__category-tag">{getCategoryTagLabel(post)}</span>
-                    <div className="board-list__title-line">
-                      <span className="board-list__post-title">{post.title}</span>
-                      <span className="board-list__comments"><MessageBox /> {post.commentCount ?? 0}</span>
-                      <span className="board-list__likes"><Heart filled={post.isLiked} /> {post.likeCount ?? 0}</span>
+            {
+              boards.length === 0 && pinnedPosts.length === 0 && displayGlobalNotices.length === 0 ? (
+                <div className="board-list__status">게시글이 없습니다.</div>
+              ) : (
+                boards.map((post) => (
+                  <div key={post.id} className="board-list__row" onClick={() => handleBoardClick(post.id)}>
+                    <div className="board-list__row-content">
+                      {getCategoryTagLabel(post) && <span className="board-list__category-tag">{getCategoryTagLabel(post)}</span>}
+                      <div className="board-list__title-line">
+                        <span className="board-list__post-title">{post.title}</span>
+                        <span className="board-list__comments"><MessageBox /> {post.commentCount ?? 0}</span>
+                        <span className="board-list__likes"><Heart filled={post.isLiked} /> {post.likeCount ?? 0}</span>
+                      </div>
                     </div>
-                  </div>
-                  <div className="board-list__meta">
-                    <div className="board-list__author-info">
-                      <Link to={post.author?.nickname ? `/user/${post.author.nickname}` : '#'} className="board-list__author" onClick={(e) => e.stopPropagation()}>{post.author?.nickname || '익명'}</Link>
-                      <span className="board-list__date">{formatDate(post.createdAt)}</span>
+                    <div className="board-list__meta">
+                      <div className="board-list__author-info">
+                        <Link to={post.author?.nickname ? `/user/${post.author.nickname}` : '#'} className="board-list__author" onClick={(e) => e.stopPropagation()}>{post.author?.nickname || '익명'}</Link>
+                        <span className="board-list__date">{formatDate(post.createdAt)}</span>
+                      </div>
+                      <Avatar src={post.author?.profileImage} size={32} className="board-list__avatar" />
                     </div>
-                    <Avatar src={post.author?.profileImage} size={32} className="board-list__avatar" />
+                    <div className="board-list__row-divider" />
                   </div>
-                  <div className="board-list__row-divider" />
-                </div>
-              ))
-            )}
+                ))
+              )
+            }
 
             {/* 페이지네이션 */}
-            {totalPages > 1 && (
-              <div className="board-list__pagination">
-                <button className="board-list__page-btn" onClick={() => handlePageChange(0)} disabled={currentPage === 0}>«</button>
-                <button className="board-list__page-btn" onClick={() => handlePageChange(Math.max(0, currentPage - 1))} disabled={currentPage === 0}>‹</button>
-                {renderPageNumbers().map((page) => (
-                  <button key={page} className={`board-list__page-num ${page === currentPage ? 'board-list__page-num--active' : ''}`} onClick={() => handlePageChange(page)}>{page + 1}</button>
-                ))}
-                <button className="board-list__page-btn" onClick={() => handlePageChange(Math.min(totalPages - 1, currentPage + 1))} disabled={currentPage >= totalPages - 1}>›</button>
-                <button className="board-list__page-btn" onClick={() => handlePageChange(totalPages - 1)} disabled={currentPage >= totalPages - 1}>»</button>
-              </div>
-            )}
+            {
+              totalPages > 1 && (
+                <div className="board-list__pagination">
+                  <button className="board-list__page-btn" onClick={() => handlePageChange(0)} disabled={currentPage === 0}>«</button>
+                  <button className="board-list__page-btn" onClick={() => handlePageChange(Math.max(0, currentPage - 1))} disabled={currentPage === 0}>‹</button>
+                  {renderPageNumbers().map((page) => (
+                    <button key={page} className={`board-list__page-num ${page === currentPage ? 'board-list__page-num--active' : ''}`} onClick={() => handlePageChange(page)}>{page + 1}</button>
+                  ))}
+                  <button className="board-list__page-btn" onClick={() => handlePageChange(Math.min(totalPages - 1, currentPage + 1))} disabled={currentPage >= totalPages - 1}>›</button>
+                  <button className="board-list__page-btn" onClick={() => handlePageChange(totalPages - 1)} disabled={currentPage >= totalPages - 1}>»</button>
+                </div>
+              )
+            }
 
             {/* 검색 */}
             <form className="board-list__search" onSubmit={handleSearch}>
@@ -403,8 +407,8 @@ function BoardListPage({ slug: propSlug }: BoardListPageProps) {
             </form>
           </>
         )}
-      </div>
-    </Layout>
+      </div >
+    </Layout >
   );
 }
 
