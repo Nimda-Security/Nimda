@@ -45,7 +45,7 @@ const LikedPostsContent: React.FC = () => {
 
   if (boards.length === 0) {
     return (
-      <div className="flex flex-col w-full">
+      <div className="flex flex-col w-full px-4">
         <div
           className="border border-[#d4d4d4] rounded-[4px] bg-[#f5f5f5]"
           style={{
@@ -82,7 +82,7 @@ const LikedPostsContent: React.FC = () => {
   }
 
   return (
-    <div className="flex flex-col w-full">
+    <div className="flex flex-col w-full px-4">
       <div className="border border-[#d4d4d4] rounded-[4px] bg-transparent overflow-hidden">
         {displayedBoards.map((board, idx) => (
           <ContentListItem
