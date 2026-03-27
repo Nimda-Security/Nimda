@@ -365,20 +365,20 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  background-color: #c76085; /* User requested pink */
+  background-color: #c76085;
+  /* User requested pink */
   color: #fff;
   border: none;
-  padding: 10px; /* 사각형 버튼 모양을 위해 상하좌우 동일하게 패딩 부여 */
+  padding: 6px;
+  /* 사각형 버튼 모양을 위해 상하좌우 동일하게 패딩 부여 */
   border-radius: 8px;
   cursor: pointer;
   transition: all 0.2s ease;
-  box-shadow: 0 3px 6px rgba(217, 115, 153, 0.25);
 }
 
 .board-list__write-btn:hover {
   background-color: #c76085;
   transform: translateY(-1px);
-  box-shadow: 0 5px 12px rgba(217, 115, 153, 0.35);
 }
 
 .board-list__write-icon-box {

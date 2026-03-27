@@ -34,6 +34,12 @@ const getStringValue = (value: unknown): string =>
 const getBooleanValue = (value: unknown): boolean =>
   typeof value === 'boolean' ? value : false;
 
+const splitBirthDate = (birth?: string) => ({
+  year: birth && birth.length >= 4 ? birth.slice(0, 4) : '',
+  month: birth && birth.length >= 6 ? birth.slice(4, 6) : '',
+  day: birth && birth.length >= 8 ? birth.slice(6, 8) : '',
+});
+
 const isValidBirthDate = (dateStr: string): boolean => {
   if (!/^\d{8}$/.test(dateStr)) return false;
 
@@ -74,7 +80,9 @@ const UserInfoContent: React.FC<UserInfoContentProps> = ({
   const [bojIdInput, setBojIdInput] = useState('');
   const [isEditingBojId, setIsEditingBojId] = useState(false);
 
-  const [birthInput, setBirthInput] = useState('');
+  const [birthYearInput, setBirthYearInput] = useState('');
+  const [birthMonthInput, setBirthMonthInput] = useState('');
+  const [birthDayInput, setBirthDayInput] = useState('');
   const [isEditingBirth, setIsEditingBirth] = useState(false);
 
   const [majorInput, setMajorInput] = useState('');
@@ -103,7 +111,10 @@ const UserInfoContent: React.FC<UserInfoContentProps> = ({
           setUser(normalized);
           setNicknameInput(normalized.nickname || '');
           setBojIdInput(normalized.bojId || '');
-          setBirthInput(normalized.birth || '');
+          const birthParts = splitBirthDate(normalized.birth);
+          setBirthYearInput(birthParts.year);
+          setBirthMonthInput(birthParts.month);
+          setBirthDayInput(birthParts.day);
           setMajorInput(normalized.major || '');
           setStudentNumInput(normalized.studentNum || '');
         }
@@ -121,8 +132,13 @@ const UserInfoContent: React.FC<UserInfoContentProps> = ({
     try {
       const res = await toggleEmailHide();
       if (res.success) {
+        const responseEmailHide = (res as { emailHide?: unknown }).emailHide;
+        const nextEmailHide =
+          typeof responseEmailHide === 'boolean'
+            ? responseEmailHide
+            : !getBooleanValue(user.emailHide);
         setUser((prev) =>
-          prev ? { ...prev, emailHide: getBooleanValue(res.emailHide) } : prev
+          prev ? { ...prev, emailHide: nextEmailHide } : prev
         );
       } else {
         alert(res.message || '이메일 설정 변경에 실패했습니다.');
@@ -202,35 +218,71 @@ const UserInfoContent: React.FC<UserInfoContentProps> = ({
                 <span className="text-[16px] font-medium text-[#0c0c0c]">
                   생년월일
                 </span>
-                <div className="flex items-center">
-                  <input
-                    type="text"
-                    autoFocus
-                    value={birthInput}
-                    onChange={(e) =>
-                      setBirthInput(
-                        e.target.value.replace(/[^0-9]/g, '').slice(0, 8)
-                      )
-                    }
-                    placeholder="YYYYMMDD"
-                    className="flex-1 h-[32px] border-2 border-[#d97399] rounded-[4px] px-3 text-[14px] font-medium text-[#525252] outline-none"
-                    maxLength={8}
-                  />
+                <div className="flex items-center gap-3">
+                  <div className="flex-1 grid grid-cols-3 gap-2">
+                    <input
+                      type="text"
+                      autoFocus
+                      value={birthYearInput}
+                      onChange={(e) =>
+                        setBirthYearInput(
+                          e.target.value.replace(/[^0-9]/g, '').slice(0, 4)
+                        )
+                      }
+                      placeholder="년(4자)"
+                      className="w-full h-[32px] border-2 border-[#d97399] rounded-[4px] pl-5 pr-3 text-[14px] font-medium text-[#525252] outline-none"
+                      style={{ paddingLeft: '16px' }}
+                      maxLength={4}
+                    />
+                    <input
+                      type="text"
+                      value={birthMonthInput}
+                      onChange={(e) =>
+                        setBirthMonthInput(
+                          e.target.value.replace(/[^0-9]/g, '').slice(0, 2)
+                        )
+                      }
+                      placeholder="월"
+                      className="w-full h-[32px] border-2 border-[#d97399] rounded-[4px] pl-5 pr-3 text-[14px] font-medium text-[#525252] outline-none"
+                      style={{ paddingLeft: '16px' }}
+                      maxLength={2}
+                    />
+                    <input
+                      type="text"
+                      value={birthDayInput}
+                      onChange={(e) =>
+                        setBirthDayInput(
+                          e.target.value.replace(/[^0-9]/g, '').slice(0, 2)
+                        )
+                      }
+                      placeholder="일"
+                      className="w-full h-[32px] border-2 border-[#d97399] rounded-[4px] pl-5 pr-3 text-[14px] font-medium text-[#525252] outline-none"
+                      style={{ paddingLeft: '16px' }}
+                      maxLength={2}
+                    />
+                  </div>
                   <button
                     onClick={() =>
-                      handleSaveField('birth', birthInput, setIsEditingBirth)
+                      handleSaveField(
+                        'birth',
+                        `${birthYearInput}${birthMonthInput}${birthDayInput}`,
+                        setIsEditingBirth
+                      )
                     }
                     disabled={savingField === 'birth'}
-                    className="ml-[15px]"
+                    className="shrink-0"
                   >
                     <img src="/check 1.svg" alt="저장" className="w-5 h-5" />
                   </button>
                   <button
                     onClick={() => {
-                      setBirthInput(user?.birth || '');
+                      const birthParts = splitBirthDate(user?.birth);
+                      setBirthYearInput(birthParts.year);
+                      setBirthMonthInput(birthParts.month);
+                      setBirthDayInput(birthParts.day);
                       setIsEditingBirth(false);
                     }}
-                    className="ml-5"
+                    className="shrink-0"
                   >
                     <img src="/no 1.svg" alt="취소" className="w-5 h-5" />
                   </button>
@@ -264,8 +316,14 @@ const UserInfoContent: React.FC<UserInfoContentProps> = ({
                   {user?.emailHide ? '보이기' : '숨기기'}
                 </button>
               </div>
-              <span className="text-[16px] font-semibold text-[#525252]">
-                {user?.emailHide ? '-' : user?.email || '-'}
+              <span
+                className={
+                  user?.emailHide
+                    ? 'text-[13px] font-medium text-[#a3a3a3]'
+                    : 'text-[16px] font-semibold text-[#525252]'
+                }
+              >
+                {user?.emailHide ? '숨김 상태입니다.' : user?.email || '-'}
               </span>
             </div>
           </div>
@@ -273,11 +331,21 @@ const UserInfoContent: React.FC<UserInfoContentProps> = ({
           {/* 오른쪽 컬럼 */}
           <div className="flex-1 flex flex-col gap-6">
             <div className="flex flex-col gap-2">
-              <span className="text-[16px] font-medium text-[#0c0c0c]">
-                닉네임
-              </span>
+              <div className="flex items-center justify-between">
+                <span className="text-[16px] font-medium text-[#0c0c0c]">
+                  닉네임
+                </span>
+                {!isEditingNickname && (
+                  <button
+                    onClick={() => setIsEditingNickname(true)}
+                    className="text-[12px] font-semibold text-[#d97399] hover:underline"
+                  >
+                    수정
+                  </button>
+                )}
+              </div>
               {isEditingNickname ? (
-                <div className="flex items-center">
+                <div className="flex items-center gap-3">
                   <div className="relative flex-1">
                     <input
                       type="text"
@@ -288,7 +356,8 @@ const UserInfoContent: React.FC<UserInfoContentProps> = ({
                           setNicknameInput(e.target.value);
                         }
                       }}
-                      className="w-full h-[32px] border-2 border-[#d97399] rounded-[4px] px-3 text-[14px] font-medium text-[#525252] outline-none"
+                      className="w-full h-[32px] border-2 border-[#d97399] rounded-[4px] pl-5 pr-12 text-[14px] font-medium text-[#525252] outline-none"
+                      style={{ paddingLeft: '16px' }}
                       maxLength={maxNicknameLength}
                     />
                     <span className="absolute right-3 top-1/2 -translate-y-1/2 text-[12px] font-medium text-[#d97399]">
@@ -304,7 +373,7 @@ const UserInfoContent: React.FC<UserInfoContentProps> = ({
                       )
                     }
                     disabled={savingField === 'nickname'}
-                    className="ml-[15px]"
+                    className="shrink-0"
                   >
                     <img src="/check 1.svg" alt="저장" className="w-5 h-5" />
                   </button>
@@ -313,23 +382,15 @@ const UserInfoContent: React.FC<UserInfoContentProps> = ({
                       setNicknameInput(user?.nickname || '');
                       setIsEditingNickname(false);
                     }}
-                    className="ml-5"
+                    className="shrink-0"
                   >
                     <img src="/no 1.svg" alt="취소" className="w-5 h-5" />
                   </button>
                 </div>
               ) : (
-                <div className="flex items-center justify-between">
-                  <span className="text-[16px] font-semibold text-[#525252]">
-                    {user?.nickname || '-'}
-                  </span>
-                  <button
-                    onClick={() => setIsEditingNickname(true)}
-                    className="text-[12px] font-semibold text-[#d97399] hover:underline"
-                  >
-                    수정
-                  </button>
-                </div>
+                <span className="text-[16px] font-semibold text-[#525252]">
+                  {user?.nickname || '-'}
+                </span>
               )}
             </div>
 
@@ -339,13 +400,14 @@ const UserInfoContent: React.FC<UserInfoContentProps> = ({
                 <span className="text-[16px] font-medium text-[#0c0c0c]">
                   학과
                 </span>
-                <div className="flex items-center">
+                <div className="flex items-center gap-3">
                   <input
                     type="text"
                     autoFocus
                     value={majorInput}
                     onChange={(e) => setMajorInput(e.target.value)}
-                    className="flex-1 h-[32px] border-2 border-[#d97399] rounded-[4px] px-3 text-[14px] font-medium text-[#525252] outline-none"
+                    className="flex-1 h-[32px] border-2 border-[#d97399] rounded-[4px] pl-5 pr-3 text-[14px] font-medium text-[#525252] outline-none"
+                    style={{ paddingLeft: '16px' }}
                     maxLength={20}
                   />
                   <button
@@ -353,7 +415,7 @@ const UserInfoContent: React.FC<UserInfoContentProps> = ({
                       handleSaveField('major', majorInput, setIsEditingMajor)
                     }
                     disabled={savingField === 'major'}
-                    className="ml-[15px]"
+                    className="shrink-0"
                   >
                     <img src="/check 1.svg" alt="저장" className="w-5 h-5" />
                   </button>
@@ -362,7 +424,7 @@ const UserInfoContent: React.FC<UserInfoContentProps> = ({
                       setMajorInput(user?.major || '');
                       setIsEditingMajor(false);
                     }}
-                    className="ml-5"
+                    className="shrink-0"
                   >
                     <img src="/no 1.svg" alt="취소" className="w-5 h-5" />
                   </button>
@@ -383,13 +445,14 @@ const UserInfoContent: React.FC<UserInfoContentProps> = ({
                 <span className="text-[16px] font-medium text-[#0c0c0c]">
                   학번
                 </span>
-                <div className="flex items-center">
+                <div className="flex items-center gap-3">
                   <input
                     type="text"
                     autoFocus
                     value={studentNumInput}
                     onChange={(e) => setStudentNumInput(e.target.value)}
-                    className="flex-1 h-[32px] border-2 border-[#d97399] rounded-[4px] px-3 text-[14px] font-medium text-[#525252] outline-none"
+                    className="flex-1 h-[32px] border-2 border-[#d97399] rounded-[4px] pl-5 pr-3 text-[14px] font-medium text-[#525252] outline-none"
+                    style={{ paddingLeft: '16px' }}
                     maxLength={9}
                   />
                   <button
@@ -401,7 +464,7 @@ const UserInfoContent: React.FC<UserInfoContentProps> = ({
                       )
                     }
                     disabled={savingField === 'studentNum'}
-                    className="ml-[15px]"
+                    className="shrink-0"
                   >
                     <img src="/check 1.svg" alt="저장" className="w-5 h-5" />
                   </button>
@@ -410,7 +473,7 @@ const UserInfoContent: React.FC<UserInfoContentProps> = ({
                       setStudentNumInput(user?.studentNum || '');
                       setIsEditingStudentNum(false);
                     }}
-                    className="ml-5"
+                    className="shrink-0"
                   >
                     <img src="/no 1.svg" alt="취소" className="w-5 h-5" />
                   </button>
@@ -431,13 +494,14 @@ const UserInfoContent: React.FC<UserInfoContentProps> = ({
                 <span className="text-[16px] font-medium text-[#0c0c0c]">
                   백준 ID
                 </span>
-                <div className="flex items-center">
+                <div className="flex items-center gap-3">
                   <input
                     type="text"
                     autoFocus
                     value={bojIdInput}
                     onChange={(e) => setBojIdInput(e.target.value)}
-                    className="flex-1 h-[32px] border-2 border-[#d97399] rounded-[4px] px-3 text-[14px] font-medium text-[#525252] outline-none"
+                    className="flex-1 h-[32px] border-2 border-[#d97399] rounded-[4px] pl-5 pr-3 text-[14px] font-medium text-[#525252] outline-none"
+                    style={{ paddingLeft: '16px' }}
                     maxLength={50}
                   />
                   <button
@@ -445,7 +509,7 @@ const UserInfoContent: React.FC<UserInfoContentProps> = ({
                       handleSaveField('bojId', bojIdInput, setIsEditingBojId)
                     }
                     disabled={savingField === 'bojId'}
-                    className="ml-[15px]"
+                    className="shrink-0"
                   >
                     <img src="/check 1.svg" alt="저장" className="w-5 h-5" />
                   </button>
@@ -454,7 +518,7 @@ const UserInfoContent: React.FC<UserInfoContentProps> = ({
                       setBojIdInput(user?.bojId || '');
                       setIsEditingBojId(false);
                     }}
-                    className="ml-5"
+                    className="shrink-0"
                   >
                     <img src="/no 1.svg" alt="취소" className="w-5 h-5" />
                   </button>
@@ -473,7 +537,13 @@ const UserInfoContent: React.FC<UserInfoContentProps> = ({
                     수정
                   </button>
                 </div>
-                <span className="text-[16px] font-semibold text-[#525252]">
+                <span
+                  className={
+                    user?.bojId
+                      ? 'text-[16px] font-semibold text-[#525252]'
+                      : 'text-[13px] font-medium text-[#a3a3a3]'
+                  }
+                >
                   {user?.bojId ||
                     '백준 ID를 입력하면 내 프로필에 solved.ac 티어가 표시됩니다.'}
                 </span>
@@ -483,8 +553,10 @@ const UserInfoContent: React.FC<UserInfoContentProps> = ({
         </div>
       </div>
 
-      {/* 안내 문구 (테두리 박스와의 간격 40px 유지) */}
-      <p className="text-center text-[14px] font-medium mt-[40px] mb-[100px]">
+      <p
+        className="text-center text-[14px] font-medium"
+        style={{ marginTop: '48px', marginBottom: '80px' }}
+      >
         <span className="text-[#d97399]">특정 정보</span>
         <span className="text-[#8b8b8b]">
           는 관리자의 승인을 받아야 수정이 가능합니다.

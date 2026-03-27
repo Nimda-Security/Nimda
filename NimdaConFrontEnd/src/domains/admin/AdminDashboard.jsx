@@ -2,9 +2,24 @@ import React, { useState, useEffect } from 'react';
 import NavBar from '@/components/Layout/Header/NavBar';
 import Footer from '@/components/Layout/Footer';
 import { useNavigate, useLocation } from 'react-router-dom';
-import { getAllUsersAPI, getPendingUsersAPI, approveUserAPI, rejectUserAPI } from '@/api/admin/admin';
-import { getBoardListAPI, deleteBoardAPI, toggleBoardPinAPI } from '@/api/board';
-import { getAllCategoriesAdminAPI, updateCategoryAPI, createCategoryAPI, deleteCategoryAPI, updateCategorySortOrderAPI } from '@/api/category';
+import {
+  getAllUsersAPI,
+  getPendingUsersAPI,
+  approveUserAPI,
+  rejectUserAPI,
+} from '@/api/admin/admin';
+import {
+  getBoardListAPI,
+  deleteBoardAPI,
+  toggleBoardPinAPI,
+} from '@/api/board';
+import {
+  getAllCategoriesAdminAPI,
+  updateCategoryAPI,
+  createCategoryAPI,
+  deleteCategoryAPI,
+  updateCategorySortOrderAPI,
+} from '@/api/category';
 import UserInfo from './sections/UserInfo';
 import PendingUsers from './sections/PendingUsers';
 import PostManagement from './sections/PostManagement';
@@ -32,7 +47,8 @@ function AdminDashboard() {
   const [categoriesLoading, setCategoriesLoading] = useState(false);
   const [selectedCategoryId, setSelectedCategoryId] = useState(null);
   const [selectedPostCategoryId, setSelectedPostCategoryId] = useState(null);
-  const [selectedPinPostCategoryId, setSelectedPinPostCategoryId] = useState(null);
+  const [selectedPinPostCategoryId, setSelectedPinPostCategoryId] =
+    useState(null);
   const [pinPosts, setPinPosts] = useState([]);
   const [pinPostsLoading, setPinPostsLoading] = useState(false);
   const [showAddCategoryModal, setShowAddCategoryModal] = useState(false);
@@ -57,7 +73,8 @@ function AdminDashboard() {
   useEffect(() => {
     if (location.state) {
       if (location.state.section) setActiveSection(location.state.section);
-      if (location.state.subSection) setActiveSubSection(location.state.subSection);
+      if (location.state.subSection)
+        setActiveSubSection(location.state.subSection);
       // 상태 사용 후 초기화 (뒤로가기 시 중복 처리 방지)
       window.history.replaceState({}, document.title);
     }
@@ -111,7 +128,9 @@ function AdminDashboard() {
       if (result.success) {
         setPendingUsers(result.users || []);
       } else {
-        alert('승인 대기 사용자 목록을 불러오는데 실패했습니다: ' + result.message);
+        alert(
+          '승인 대기 사용자 목록을 불러오는데 실패했습니다: ' + result.message
+        );
       }
     } catch (error) {
       console.error('승인 대기 사용자 목록 로드 오류:', error);
@@ -129,7 +148,10 @@ function AdminDashboard() {
       console.log('카테고리 목록 로드 성공:', allCategories.length, '개');
     } catch (error) {
       console.error('카테고리 목록 로드 오류:', error);
-      const errorMessage = error instanceof Error ? error.message : '카테고리 목록을 불러오는 중 오류가 발생했습니다.';
+      const errorMessage =
+        error instanceof Error
+          ? error.message
+          : '카테고리 목록을 불러오는 중 오류가 발생했습니다.';
       alert(errorMessage);
       setCategories([]); // 에러 발생 시 빈 배열로 설정
     } finally {
@@ -190,7 +212,8 @@ function AdminDashboard() {
     e.stopPropagation();
     const nextActive = !category.isActive;
     const action = nextActive ? '표시' : '숨김';
-    if (!confirm(`"${category.name}" 카테고리를 ${action} 처리하시겠습니까?`)) return;
+    if (!confirm(`"${category.name}" 카테고리를 ${action} 처리하시겠습니까?`))
+      return;
     try {
       const result = await updateCategoryAPI(category.id, {
         name: category.name,
@@ -210,30 +233,30 @@ function AdminDashboard() {
     }
   };
 
- const handleDeleteCategory = async () => { 
-  if (!selectedCategoryId) return;
-  if (!window.confirm('정말 이 카테고리를 삭제하시겠습니까?')) return;
+  const handleDeleteCategory = async () => {
+    if (!selectedCategoryId) return;
+    if (!window.confirm('정말 이 카테고리를 삭제하시겠습니까?')) return;
 
-  try {
-    // 이제 await를 정상적으로 사용할 수 있습니다.
-    const result = await deleteCategoryAPI(selectedCategoryId);
+    try {
+      // 이제 await를 정상적으로 사용할 수 있습니다.
+      const result = await deleteCategoryAPI(selectedCategoryId);
 
-    if (result.success) {
-      alert('카테고리가 성공적으로 삭제되었습니다.');
-      setSelectedCategoryId(null); // 선택 해제
-      
-      // 약간의 지연 후 목록 새로고침
-      setTimeout(() => {
-        loadCategories();
-      }, 300);
-    } else {
-      alert(result.message || '카테고리 삭제에 실패했습니다.');
+      if (result.success) {
+        alert('카테고리가 성공적으로 삭제되었습니다.');
+        setSelectedCategoryId(null); // 선택 해제
+
+        // 약간의 지연 후 목록 새로고침
+        setTimeout(() => {
+          loadCategories();
+        }, 300);
+      } else {
+        alert(result.message || '카테고리 삭제에 실패했습니다.');
+      }
+    } catch (error) {
+      console.error('카테고리 삭제 오류:', error);
+      alert('카테고리 삭제 중 오류가 발생했습니다.');
     }
-  } catch (error) {
-    console.error('카테고리 삭제 오류:', error);
-    alert('카테고리 삭제 중 오류가 발생했습니다.');
-  }
-};
+  };
 
   const handleApproveUser = async (userId) => {
     if (!confirm('이 사용자를 승인하시겠습니까?')) return;
@@ -277,7 +300,10 @@ function AdminDashboard() {
         alert('게시글이 삭제되었습니다.');
         // 현재 선택된 카테고리의 게시글 목록 다시 로드
         if (selectedPostCategoryId) {
-          const selectedCategory = findCategoryById(activeCategoryTree, selectedPostCategoryId);
+          const selectedCategory = findCategoryById(
+            activeCategoryTree,
+            selectedPostCategoryId
+          );
           if (selectedCategory) {
             loadPosts(selectedCategory.slug);
           }
@@ -325,7 +351,10 @@ function AdminDashboard() {
         alert(result.message || '게시글 고정 상태가 변경되었습니다.');
         // 현재 선택된 카테고리의 게시글 목록 다시 로드
         if (selectedPinPostCategoryId) {
-          const selectedCategory = findCategoryById(activeCategoryTree, selectedPinPostCategoryId);
+          const selectedCategory = findCategoryById(
+            activeCategoryTree,
+            selectedPinPostCategoryId
+          );
           if (selectedCategory) {
             loadPinPosts(selectedCategory.slug);
           }
@@ -359,17 +388,20 @@ function AdminDashboard() {
     try {
       const token = localStorage.getItem('authToken');
 
-      const presignedResponse = await fetch(`/api/users/me/profile-image/presigned-url`, {
-        method: 'POST',
-        headers: {
-          'Authorization': `Bearer ${token}`,
-          'Content-Type': 'application/json'
-        },
-        body: JSON.stringify({
-          fileName: file.name,
-          contentType: file.type
-        })
-      });
+      const presignedResponse = await fetch(
+        `/api/users/me/profile-image/presigned-url`,
+        {
+          method: 'POST',
+          headers: {
+            Authorization: `Bearer ${token}`,
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            fileName: file.name,
+            contentType: file.type,
+          }),
+        }
+      );
 
       const presignedResult = await presignedResponse.json();
 
@@ -381,9 +413,9 @@ function AdminDashboard() {
       const s3UploadResponse = await fetch(presignedResult.presignedUrl, {
         method: 'PUT',
         headers: {
-          'Content-Type': file.type
+          'Content-Type': file.type,
         },
-        body: file
+        body: file,
       });
 
       if (!s3UploadResponse.ok) {
@@ -394,22 +426,33 @@ function AdminDashboard() {
       const dbUpdateResponse = await fetch(`/api/users/me/profile-image`, {
         method: 'PUT',
         headers: {
-          'Authorization': `Bearer ${token}`,
-          'Content-Type': 'application/json'
+          Authorization: `Bearer ${token}`,
+          'Content-Type': 'application/json',
         },
         body: JSON.stringify({
-          imageUrl: presignedResult.imageUrl
-        })
+          imageUrl: presignedResult.imageUrl,
+        }),
       });
 
       const dbUpdateResult = await dbUpdateResponse.json();
 
       if (dbUpdateResponse.ok && dbUpdateResult.success) {
-        setSelectedUser({ ...selectedUser, profileImage: dbUpdateResult.profileImage });
-        setUsers(users.map(u => u.id === selectedUser.id ? { ...u, profileImage: dbUpdateResult.profileImage } : u));
+        setSelectedUser({
+          ...selectedUser,
+          profileImage: dbUpdateResult.profileImage,
+        });
+        setUsers(
+          users.map((u) =>
+            u.id === selectedUser.id
+              ? { ...u, profileImage: dbUpdateResult.profileImage }
+              : u
+          )
+        );
         alert('프로필 이미지가 업데이트되었습니다.');
       } else {
-        alert(dbUpdateResult.message || '프로필 이미지 업데이트에 실패했습니다.');
+        alert(
+          dbUpdateResult.message || '프로필 이미지 업데이트에 실패했습니다.'
+        );
       }
     } catch (error) {
       console.error('이미지 업로드 오류:', error);
@@ -426,12 +469,12 @@ function AdminDashboard() {
     const rootCategories = [];
 
     // 모든 카테고리를 맵에 추가
-    categories.forEach(cat => {
+    categories.forEach((cat) => {
       categoryMap.set(cat.id, { ...cat, children: [] });
     });
 
     // 부모-자식 관계 구성
-    categories.forEach(cat => {
+    categories.forEach((cat) => {
       const category = categoryMap.get(cat.id);
       if (cat.parentId && categoryMap.has(cat.parentId)) {
         const parent = categoryMap.get(cat.parentId);
@@ -453,12 +496,13 @@ function AdminDashboard() {
   const filterActiveCategories = (tree) => {
     const filterRecursive = (items) => {
       return items
-        .filter(item => item.isActive !== false)
-        .map(item => ({
+        .filter((item) => item.isActive !== false)
+        .map((item) => ({
           ...item,
-          children: item.children && item.children.length > 0
-            ? filterRecursive(item.children)
-            : []
+          children:
+            item.children && item.children.length > 0
+              ? filterRecursive(item.children)
+              : [],
         }));
     };
     return filterRecursive(tree);
@@ -471,7 +515,7 @@ function AdminDashboard() {
   const getTotalCategoryCount = (tree) => {
     let count = 0;
     const countRecursive = (items) => {
-      items.forEach(item => {
+      items.forEach((item) => {
         count++;
         if (item.children && item.children.length > 0) {
           countRecursive(item.children);
@@ -494,12 +538,14 @@ function AdminDashboard() {
     return null;
   };
 
-  const selectedCategoryData = selectedCategoryId ? findCategoryById(categoryTree, selectedCategoryId) : null;
+  const selectedCategoryData = selectedCategoryId
+    ? findCategoryById(categoryTree, selectedCategoryId)
+    : null;
 
   // 모든 카테고리를 평탄화 (부모 선택용)
   const flattenCategories = (tree, level = 0) => {
     const result = [];
-    tree.forEach(category => {
+    tree.forEach((category) => {
       result.push({ ...category, level });
       if (category.children && category.children.length > 0) {
         result.push(...flattenCategories(category.children, level + 1));
@@ -545,8 +591,8 @@ function AdminDashboard() {
     const siblings = getSiblings(newTree, draggedParentId);
     if (!siblings) return;
 
-    const draggedIdx = siblings.findIndex(n => n.id === draggedId);
-    const targetIdx = siblings.findIndex(n => n.id === targetId);
+    const draggedIdx = siblings.findIndex((n) => n.id === draggedId);
+    const targetIdx = siblings.findIndex((n) => n.id === targetId);
     if (draggedIdx === -1 || targetIdx === -1) return;
 
     const [removed] = siblings.splice(draggedIdx, 1);
@@ -600,7 +646,10 @@ function AdminDashboard() {
       <div key={category.id}>
         <div
           className={`admin__catorder-item ${isSelected ? 'admin__catorder-item--selected' : ''} ${level > 0 ? 'admin__catorder-item--child' : ''} ${isInactive ? 'admin__catorder-item--inactive' : ''} ${isDragOver ? 'admin__catorder-item--drag-over' : ''}`}
-          style={{ paddingLeft: `${12 + level * 20}px`, opacity: isDragging ? 0.4 : 1 }}
+          style={{
+            paddingLeft: `${12 + level * 20}px`,
+            opacity: isDragging ? 0.4 : 1,
+          }}
           draggable
           onDragStart={(e) => {
             setDraggedItemId(category.id);
@@ -628,11 +677,17 @@ function AdminDashboard() {
           }}
           onClick={() => setSelectedCategoryId(category.id)}
         >
-          <span className="admin__catorder-drag" style={{ cursor: 'grab' }}>⠿</span>
+          <span className="admin__catorder-drag" style={{ cursor: 'grab' }}>
+            ⠿
+          </span>
           {level > 0 && <span className="admin__catorder-prefix">ㄴ</span>}
-          <span className={`admin__catorder-name ${isInactive ? 'admin__catorder-name--inactive' : ''}`}>
+          <span
+            className={`admin__catorder-name ${isInactive ? 'admin__catorder-name--inactive' : ''}`}
+          >
             {category.name}
-            {isParent && <span className="admin__catorder-count">({childCount})</span>}
+            {isParent && (
+              <span className="admin__catorder-count">({childCount})</span>
+            )}
           </span>
           <button
             onClick={(e) => handleToggleCategoryActive(category, e)}
@@ -653,7 +708,10 @@ function AdminDashboard() {
             {isInactive ? '표시' : '숨김'}
           </button>
         </div>
-        {isParent && category.children?.map(child => renderCategoryOrderItem(child, level + 1))}
+        {isParent &&
+          category.children?.map((child) =>
+            renderCategoryOrderItem(child, level + 1)
+          )}
       </div>
     );
   };
@@ -662,19 +720,20 @@ function AdminDashboard() {
   const renderCategoryItem = (category, level = 0) => {
     const indent = level * 39;
     const isParent = category.children && category.children.length > 0;
-    const itemClass = level === 0
-      ? 'admin__category-item admin__category-item--parent'
-      : 'admin__category-item admin__category-item--child';
+    const itemClass =
+      level === 0
+        ? 'admin__category-item admin__category-item--parent'
+        : 'admin__category-item admin__category-item--child';
 
     return (
       <div key={category.id}>
-        <div
-          className={itemClass}
-          style={{ marginLeft: `${indent}px` }}
-        >
+        <div className={itemClass} style={{ marginLeft: `${indent}px` }}>
           {category.name}
         </div>
-        {isParent && category.children?.map(child => renderCategoryItem(child, level + 1))}
+        {isParent &&
+          category.children?.map((child) =>
+            renderCategoryItem(child, level + 1)
+          )}
       </div>
     );
   };
@@ -682,7 +741,11 @@ function AdminDashboard() {
   useEffect(() => {
     if (activeSection === 'pending') {
       loadPendingUsers();
-    } else if (activeSection === 'category-order' || activeSection === 'category-edit' || activeSection === 'category-deactivate') {
+    } else if (
+      activeSection === 'category-order' ||
+      activeSection === 'category-edit' ||
+      activeSection === 'category-deactivate'
+    ) {
       loadCategories();
     } else if (activeSection === 'posts') {
       // 포스트 수정/삭제 섹션: 카테고리 목록 로드 (게시글은 카테고리 선택 시 로드)
@@ -717,17 +780,19 @@ function AdminDashboard() {
 
   // categoryTree가 변경되면 localCategoryTree 동기화
   useEffect(() => {
-    setLocalCategoryTree(JSON.parse(JSON.stringify(buildCategoryTree(categories))));
+    setLocalCategoryTree(
+      JSON.parse(JSON.stringify(buildCategoryTree(categories)))
+    );
     setOrderChanged(false);
   }, [categories]);
 
   const getUserRoles = (user) => {
     if (!user.authorities || user.authorities.length === 0) return [];
-    return user.authorities.map(auth => auth.authorityName || auth);
+    return user.authorities.map((auth) => auth.authorityName || auth);
   };
 
   const hasRole = (user, role) => {
-    return getUserRoles(user).some(r => r.includes(role));
+    return getUserRoles(user).some((r) => r.includes(role));
   };
 
   const renderContent = () => {
@@ -824,15 +889,23 @@ function AdminDashboard() {
             <div className="admin__header-row">
               <h2 className="admin__section-title">마일리지 지급</h2>
             </div>
-            <MileagePaymentForm onGrant={async (data) => {
-              const { studentId, mileageAmount, reason } = data;
-              const result = await updatePointManual(studentId, reason, Number(mileageAmount));
-              if (result.success) {
-                alert(`[지급 성공]\n학번: ${studentId}\n금액: ${mileageAmount}\n사유: ${reason}`);
-              } else {
-                alert(`[지급 실패]\n${result.message}`);
-              }
-            }} />
+            <MileagePaymentForm
+              onGrant={async (data) => {
+                const { studentId, mileageAmount, reason } = data;
+                const result = await updatePointManual(
+                  studentId,
+                  reason,
+                  Number(mileageAmount)
+                );
+                if (result.success) {
+                  alert(
+                    `[지급 성공]\n학번: ${studentId}\n금액: ${mileageAmount}\n사유: ${reason}`
+                  );
+                } else {
+                  alert(`[지급 실패]\n${result.message}`);
+                }
+              }}
+            />
             <div style={{ marginTop: '32px', fontSize: '13px', color: '#999' }}>
               <p>· 정확한 학번을 입력했는지 다시 한번 확인해 주세요.</p>
               <p>· 사유는 사용자 마이페이지에 그대로 노출됩니다.</p>
@@ -860,16 +933,17 @@ function AdminDashboard() {
           />
 
           {/* Content */}
-          <main className="admin__content">
-            {renderContent()}
-          </main>
+          <main className="admin__content">{renderContent()}</main>
         </div>
       </div>
       <Footer />
 
       {/* 카테고리 추가 모달 */}
       {showAddCategoryModal && (
-        <div className="admin__modal-overlay" onClick={() => setShowAddCategoryModal(false)}>
+        <div
+          className="admin__modal-overlay"
+          onClick={() => setShowAddCategoryModal(false)}
+        >
           <div className="admin__modal" onClick={(e) => e.stopPropagation()}>
             <div className="admin__modal-header">
               <h3>카테고리 추가</h3>
@@ -889,14 +963,16 @@ function AdminDashboard() {
 
             <div style={{ padding: '20px' }}>
               <div style={{ marginBottom: '16px' }}>
-                <label style={{
-                  display: 'block',
-                  marginBottom: '6px',
-                  fontSize: '13px',
-                  fontWeight: 600,
-                  fontFamily: 'Pretendard, sans-serif',
-                  color: 'var(--color-black)'
-                }}>
+                <label
+                  style={{
+                    display: 'block',
+                    marginBottom: '6px',
+                    fontSize: '13px',
+                    fontWeight: 600,
+                    fontFamily: 'Pretendard, sans-serif',
+                    color: 'var(--color-black)',
+                  }}
+                >
                   카테고리명 *
                 </label>
                 <input
@@ -911,20 +987,22 @@ function AdminDashboard() {
                     fontFamily: 'Pretendard, sans-serif',
                     border: '1px solid var(--color-gray-200)',
                     borderRadius: '4px',
-                    outline: 'none'
+                    outline: 'none',
                   }}
                 />
               </div>
 
               <div style={{ marginBottom: '16px' }}>
-                <label style={{
-                  display: 'block',
-                  marginBottom: '6px',
-                  fontSize: '13px',
-                  fontWeight: 600,
-                  fontFamily: 'Pretendard, sans-serif',
-                  color: 'var(--color-black)'
-                }}>
+                <label
+                  style={{
+                    display: 'block',
+                    marginBottom: '6px',
+                    fontSize: '13px',
+                    fontWeight: 600,
+                    fontFamily: 'Pretendard, sans-serif',
+                    color: 'var(--color-black)',
+                  }}
+                >
                   슬러그 (URL) *
                 </label>
                 <input
@@ -939,33 +1017,41 @@ function AdminDashboard() {
                     fontFamily: 'Pretendard, sans-serif',
                     border: '1px solid var(--color-gray-200)',
                     borderRadius: '4px',
-                    outline: 'none'
+                    outline: 'none',
                   }}
                 />
-                <p style={{
-                  marginTop: '4px',
-                  fontSize: '11px',
-                  color: 'var(--color-gray-400)',
-                  fontFamily: 'Pretendard, sans-serif'
-                }}>
+                <p
+                  style={{
+                    marginTop: '4px',
+                    fontSize: '11px',
+                    color: 'var(--color-gray-400)',
+                    fontFamily: 'Pretendard, sans-serif',
+                  }}
+                >
                   영문 소문자, 숫자, 하이픈(-)만 사용 가능합니다.
                 </p>
               </div>
 
               <div style={{ marginBottom: '20px' }}>
-                <label style={{
-                  display: 'block',
-                  marginBottom: '6px',
-                  fontSize: '13px',
-                  fontWeight: 600,
-                  fontFamily: 'Pretendard, sans-serif',
-                  color: 'var(--color-black)'
-                }}>
+                <label
+                  style={{
+                    display: 'block',
+                    marginBottom: '6px',
+                    fontSize: '13px',
+                    fontWeight: 600,
+                    fontFamily: 'Pretendard, sans-serif',
+                    color: 'var(--color-black)',
+                  }}
+                >
                   부모 카테고리 (선택사항)
                 </label>
                 <select
                   value={newCategoryParentId || ''}
-                  onChange={(e) => setNewCategoryParentId(e.target.value ? Number(e.target.value) : null)}
+                  onChange={(e) =>
+                    setNewCategoryParentId(
+                      e.target.value ? Number(e.target.value) : null
+                    )
+                  }
                   style={{
                     width: '100%',
                     padding: '8px 12px',
@@ -974,27 +1060,30 @@ function AdminDashboard() {
                     border: '1px solid var(--color-gray-200)',
                     borderRadius: '4px',
                     outline: 'none',
-                    backgroundColor: '#ffffff'
+                    backgroundColor: '#ffffff',
                   }}
                 >
                   <option value="">최상위 카테고리</option>
-                  {allCategoriesFlat.map(category => (
+                  {allCategoriesFlat.map((category) => (
                     <option key={category.id} value={category.id}>
-                      {'  '.repeat(category.level)}{category.name}
+                      {'  '.repeat(category.level)}
+                      {category.name}
                     </option>
                   ))}
                 </select>
               </div>
 
               <div style={{ marginBottom: '20px' }}>
-                <label style={{
-                  display: 'block',
-                  marginBottom: '6px',
-                  fontSize: '13px',
-                  fontWeight: 600,
-                  fontFamily: 'Pretendard, sans-serif',
-                  color: 'var(--color-black)'
-                }}>
+                <label
+                  style={{
+                    display: 'block',
+                    marginBottom: '6px',
+                    fontSize: '13px',
+                    fontWeight: 600,
+                    fontFamily: 'Pretendard, sans-serif',
+                    color: 'var(--color-black)',
+                  }}
+                >
                   바로가기 URL (선택사항)
                 </label>
                 <input
@@ -1009,26 +1098,31 @@ function AdminDashboard() {
                     fontFamily: 'Pretendard, sans-serif',
                     border: '1px solid var(--color-gray-200)',
                     borderRadius: '4px',
-                    outline: 'none'
+                    outline: 'none',
                   }}
                 />
-                <p style={{
-                  marginTop: '4px',
-                  fontSize: '11px',
-                  color: 'var(--color-gray-400)',
-                  fontFamily: 'Pretendard, sans-serif'
-                }}>
-                  입력하면 클릭 시 해당 URL로 바로 이동합니다. 게시판으로 사용하려면 비워두세요.
+                <p
+                  style={{
+                    marginTop: '4px',
+                    fontSize: '11px',
+                    color: 'var(--color-gray-400)',
+                    fontFamily: 'Pretendard, sans-serif',
+                  }}
+                >
+                  입력하면 클릭 시 해당 URL로 바로 이동합니다. 게시판으로
+                  사용하려면 비워두세요.
                 </p>
               </div>
 
-              <div style={{
-                display: 'flex',
-                gap: '8px',
-                justifyContent: 'flex-end',
-                paddingTop: '16px',
-                borderTop: '1px solid var(--color-gray-200)'
-              }}>
+              <div
+                style={{
+                  display: 'flex',
+                  gap: '8px',
+                  justifyContent: 'flex-end',
+                  paddingTop: '16px',
+                  borderTop: '1px solid var(--color-gray-200)',
+                }}
+              >
                 <button
                   className="admin__btn"
                   onClick={() => {
