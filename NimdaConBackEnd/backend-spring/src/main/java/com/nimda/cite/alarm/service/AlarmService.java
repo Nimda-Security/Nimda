@@ -79,7 +79,7 @@ public class AlarmService {
                 .recipient(event.getBoardAuthor()) // 게시글 작성자
                 .sender(event.getCommentAuthor()) // 댓글 작성자
                 .message(event.getCommentAuthor().getName()+"님이 댓글을 남겼습니다.-"+
-                        event.getBoardTitle())
+                        event.getCommentContent())
                 .notificationType(NotificationType.AddCommentAtBoard)
                 .relatedEntityId(event.getBoardId())
                 // 게시글 url

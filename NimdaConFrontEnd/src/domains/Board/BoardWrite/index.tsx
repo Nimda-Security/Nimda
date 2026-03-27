@@ -1,7 +1,7 @@
 import { useState, useEffect, useRef } from 'react';
 import { useNavigate, useParams, useSearchParams } from 'react-router-dom';
 import Layout from '@/components/Layout';
-import { createBoardAPI } from '@/api/board';
+import { createBoardAPI, getBoardDetailAPI, updateBoardAPI } from '@/api/board';
 import { uploadBoardFileViaS3 } from '@/api/attachments';
 import { getCategoryBySlugAPI, getAllCategoriesAPI } from '@/api/category';
 import ChevronDown from '@/components/icons/ChevronDown';
@@ -10,9 +10,10 @@ import type { Category } from '../types';
 
 function BoardWritePage() {
   const navigate = useNavigate();
-  const { boardType: paramBoardType } = useParams<{ boardType: string }>();
+  const { boardType: paramBoardType, id: editId } = useParams<{ boardType: string; id: string }>();
   const [searchParams] = useSearchParams();
 
+  const isEditMode = !!editId;
   const slug = paramBoardType?.toLowerCase() || 'news';
 
   const [allCategories, setAllCategories] = useState<Category[]>([]);
@@ -22,8 +23,11 @@ function BoardWritePage() {
 
   const [title, setTitle] = useState('');
   const [content, setContent] = useState('');
-  const [tag, setTag] = useState<string>(''); // 기존 tag 필드는 필요시 사용 (현재는 카테고리 선택으로 대체하는 흐름이나 보존 가능)
+  const [tag, setTag] = useState<string>('');
   const [file, setFile] = useState<File | null>(null);
+  /** 수정 모드: 기존 첨부 ID 목록 */
+  const [existingAttachmentIds, setExistingAttachmentIds] = useState<number[] | null>(null);
+  const [editBoardId, setEditBoardId] = useState<number | null>(null);
   const [isDragOver, setIsDragOver] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -55,6 +59,43 @@ function BoardWritePage() {
   // URL slug에 따른 초기 게시판 설정
   useEffect(() => {
     if (allCategories.length === 0) return;
+
+    // 수정 모드: 게시글 데이터 로드
+    if (isEditMode && editId) {
+      const loadBoard = async () => {
+        try {
+          const res = await getBoardDetailAPI(parseInt(editId));
+          if (res.success && 'board' in res) {
+            const b = res.board;
+            setEditBoardId(b.id);
+            setTitle(b.title);
+            setTag(b.tag || '');
+            if (b.attachments !== undefined) {
+              setExistingAttachmentIds(b.attachments.map(a => a.id));
+            }
+            // 카테고리 설정
+            if (b.category) {
+              if (b.category.parentId) {
+                setParentCategoryId(b.category.parentId);
+                setSubCategoryId(b.category.id);
+              } else {
+                setParentCategoryId(b.category.id);
+                setSubCategoryId(b.category.id);
+              }
+            }
+            // contentEditable에 기존 HTML 삽입
+            if (contentRef.current) {
+              contentRef.current.innerHTML = b.content;
+              setContent(b.content);
+            }
+          }
+        } catch {
+          setError('게시글을 불러오는 중 오류가 발생했습니다.');
+        }
+      };
+      loadBoard();
+      return;
+    }
 
     const fetchInitial = async () => {
       const cat = allCategories.find(c => c.slug === slug);
@@ -104,16 +145,35 @@ function BoardWritePage() {
       setIsSubmitting(true);
       setError(null);
 
-      let attachmentIds: number[] | undefined;
+      let attachmentIds: number[] | undefined = existingAttachmentIds ?? undefined;
       if (file) {
         const uploaded = await uploadBoardFileViaS3(file, targetCategoryId);
         if (!uploaded.ok) {
           setError(uploaded.message);
           return;
         }
-        attachmentIds = [uploaded.attachmentId];
+        attachmentIds = [...(attachmentIds ?? []), uploaded.attachmentId];
       }
 
+      // 수정 모드
+      if (isEditMode && editBoardId) {
+        const response = await updateBoardAPI(editBoardId, {
+          categoryId: targetCategoryId,
+          title: title.trim(),
+          content: getEditorContent(),
+          tag: tag.trim() || undefined,
+          attachmentIds,
+        });
+        if (response.success && 'board' in response) {
+          const boardSlug = response.board.category?.slug || slug;
+          navigate(`/board/${boardSlug}/${editBoardId}`);
+        } else {
+          setError(response.message || '게시글 수정에 실패했습니다.');
+        }
+        return;
+      }
+
+      // 작성 모드
       const response = await createBoardAPI({
         categoryId: targetCategoryId,
         title: title.trim(),
@@ -130,7 +190,7 @@ function BoardWritePage() {
         setError(response.message || '게시글 작성에 실패했습니다.');
       }
     } catch (err) {
-      setError('게시글 작성 중 오류가 발생했습니다.');
+      setError(isEditMode ? '게시글 수정 중 오류가 발생했습니다.' : '게시글 작성 중 오류가 발생했습니다.');
     } finally {
       setIsSubmitting(false);
     }
@@ -444,7 +504,7 @@ function BoardWritePage() {
               취소
             </button>
             <button type="submit" className="bw-btn bw-btn--submit" disabled={isSubmitting}>
-              {isSubmitting ? '등록 중...' : '등록'}
+              {isSubmitting ? (isEditMode ? '수정 중...' : '등록 중...') : (isEditMode ? '수정' : '등록')}
             </button>
           </div>
 

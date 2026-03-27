@@ -75,13 +75,15 @@ const NotificationBell: React.FC = () => {
       >
         <img src="/bell.svg" alt="알림" className="w-[32px] h-[32px]" />
 
-        {hasUnread && (
-          <img
-            src="/Ellipse-bell.svg"
-            alt="새 알림"
-            className="absolute top-[8px] right-[8px] w-4 h-4"
-          />
-        )}
+       {hasUnread && (
+         <img
+           src="/Ellipse-bell.svg"
+           alt="새 알림"
+           /* top과 right 수치를 조정하여 위치를 잡습니다. */
+           /* 12px 크기라면 w-3 h-3 (12px) 정도로 맞추는 게 피그마와 비슷합니다. */
+           className="absolute top-[6px] right-[6px] w-[12px] height-[12px] z-10"
+         />
+       )}
       </button>
 
       {/* 패널 위치 설정:

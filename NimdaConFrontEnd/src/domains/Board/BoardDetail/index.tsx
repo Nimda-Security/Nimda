@@ -1,17 +1,26 @@
 import { useEffect, useState } from 'react';
-import { useNavigate, useParams } from 'react-router-dom';
+import { useNavigate, useParams, Link } from 'react-router-dom';
 import { MessageBox } from '@/components/icons/MessageBox';
 import { VerticalDots } from '@/components/icons/VerticalDots';
 import Layout from '@/components/Layout';
-import { openAttachmentDownloadInNewTab } from '@/api/attachments';
+import { openAttachmentDownloadInNewTab, getAttachmentPresignedUrl } from '@/api/attachments';
 import { getBoardDetailAPI, deleteBoardAPI, getFileDownloadURL, getBoardLikeStatusAPI } from '@/api/board';
 import { getAllCategoriesAPI } from '@/api/category';
-import { hasRole, isAdmin } from '@/utils/jwt';
+import { hasRole, isAdmin, getCurrentNickname } from '@/utils/jwt';
 import type { Board } from '../types';
+import type { BoardAttachmentMeta } from '../types';
 import CommentSection from '@/domains/Comment';
 import BoardLikeButton from './BoardLikeButton';
 import { Heart } from '@/components/icons/Heart';
 import './BoardDetail.css';
+
+const IMAGE_EXTENSIONS = ['jpg', 'jpeg', 'png', 'gif', 'webp', 'bmp', 'svg'];
+
+const isImageAttachment = (att: BoardAttachmentMeta): boolean => {
+  if (!att.originFilename) return false;
+  const ext = att.originFilename.split('.').pop()?.toLowerCase() || '';
+  return IMAGE_EXTENSIONS.includes(ext);
+};
 
 function BoardDetailPage() {
   const navigate = useNavigate();
@@ -23,6 +32,8 @@ function BoardDetailPage() {
   const [isDeleting, setIsDeleting] = useState(false);
   const [likeCount, setLikeCount] = useState(0);
   const [isLiked, setIsLiked] = useState(false);
+  const [imageUrls, setImageUrls] = useState<Record<number, string>>({});
+  const [menuOpen, setMenuOpen] = useState(false);
 
   useEffect(() => { if (id) fetchBoard(parseInt(id)); }, [id]);
 
@@ -51,6 +62,18 @@ function BoardDetailPage() {
 
         setBoard(boardData);
         await fetchLikeStatus(boardId);
+
+        // 이미지 첨부파일의 presigned URL 로드
+        if (boardData.attachments && boardData.attachments.length > 0) {
+          const urls: Record<number, string> = {};
+          await Promise.all(
+            boardData.attachments.filter(isImageAttachment).map(async (att) => {
+              const url = await getAttachmentPresignedUrl(att.id);
+              if (url) urls[att.id] = url;
+            })
+          );
+          setImageUrls(urls);
+        }
       } else {
         // 백엔드에서 403 반환한 경우
         if (res.message === '접근 권한이 없습니다.') {
@@ -103,7 +126,7 @@ function BoardDetailPage() {
     }
   };
 
-  const isAuthor = () => !board ? false : false;
+  const isAuthor = () => !!board && !!board.author?.nickname && board.author.nickname === getCurrentNickname();
 
   const fmtDate = (s: string) => {
     const d = new Date(s);
@@ -145,12 +168,17 @@ function BoardDetailPage() {
 
           <div className="board-detail__meta">
             <img
-              src="/default_user_profile.png"
+              src={board.author?.profileImage || "/default_user_profile.png"}
               alt=""
               className="board-detail__avatar"
               style={{ width: 32, height: 32, borderRadius: '50%', objectFit: 'cover' }}
             />
-            <span className="board-detail__author">{board.author?.nickname ?? '알 수 없음'}</span>
+            <Link
+              to={board.author?.nickname ? `/user/${board.author.nickname}` : '#'}
+              className="board-detail__author"
+            >
+              {board.author?.nickname ?? '알 수 없음'}
+            </Link>
             <span className="board-detail__date">{fmtDate(board.createdAt)}</span>
             <span className="board-detail__date">{fmtTime(board.createdAt)}</span>
 
@@ -165,10 +193,35 @@ function BoardDetailPage() {
               </span>
             </div>
 
-            {/* 첨부는 본문 아래 attachments 블록으로 이동 — 메타 행은 유지(더보기만) */}
-            <button type="button" className="board-detail__more-btn" aria-label="더보기">
-              <VerticalDots size={24} />
-            </button>
+            {/* 작성자 또는 어드민만 점 세 개 버튼 표시 */}
+            {(isAuthor() || isAdmin()) && (
+              <div className="board-detail__menu-wrap">
+                <button
+                  type="button"
+                  className="board-detail__more-btn"
+                  aria-label="더보기"
+                  onClick={() => setMenuOpen(prev => !prev)}
+                >
+                  <VerticalDots size={24} />
+                </button>
+                {menuOpen && (
+                  <ul className="board-detail__menu">
+                    {isAuthor() && (
+                      <li>
+                        <button type="button" onClick={() => { setMenuOpen(false); handleEdit(); }}>
+                          수정
+                        </button>
+                      </li>
+                    )}
+                    <li>
+                      <button type="button" onClick={() => { setMenuOpen(false); void handleDelete(); }} disabled={isDeleting}>
+                        {isDeleting ? '삭제 중...' : '삭제'}
+                      </button>
+                    </li>
+                  </ul>
+                )}
+              </div>
+            )}
           </div>
         </header>
 
@@ -177,30 +230,52 @@ function BoardDetailPage() {
         {/* Body */}
         <div className="board-detail__body" dangerouslySetInnerHTML={{ __html: board.content }} />
 
-        {/* S3·Attachment 연동 첨부 목록 (상세 API board.attachments) */}
-        {board.attachments && board.attachments.length > 0 && (
-          <section className="board-detail__attachments" aria-label="첨부파일">
-            <h2 className="board-detail__attachments-title">첨부파일</h2>
-            <ul className="board-detail__attachments-list">
-              {board.attachments.map((att) => (
-                <li key={att.id}>
-                  <a
-                    href="#"
-                    className="board-detail__attachments-link"
-                    onClick={(e) => {
-                      e.preventDefault();
-                      void openAttachmentDownloadInNewTab(att.id).then((r) => {
-                        if (!r.ok) alert(r.message);
-                      });
-                    }}
-                  >
-                    📎 {att.originFilename ?? `첨부 #${att.id}`}
-                  </a>
-                </li>
-              ))}
-            </ul>
-          </section>
-        )}
+        {/* S3·Attachment 연동 — 이미지 첨부는 인라인 표시, 나머지는 다운로드 링크 */}
+        {board.attachments && board.attachments.length > 0 && (() => {
+          const images = board.attachments!.filter(isImageAttachment);
+          const files = board.attachments!.filter(att => !isImageAttachment(att));
+          return (
+            <>
+              {images.length > 0 && (
+                <section className="board-detail__inline-images" aria-label="이미지">
+                  {images.map((att) => (
+                    imageUrls[att.id] ? (
+                      <img
+                        key={att.id}
+                        src={imageUrls[att.id]}
+                        alt={att.originFilename ?? '이미지'}
+                        style={{ maxWidth: '100%', borderRadius: 8, marginBottom: 12, display: 'block' }}
+                      />
+                    ) : null
+                  ))}
+                </section>
+              )}
+              {files.length > 0 && (
+                <section className="board-detail__attachments" aria-label="첨부파일">
+                  <h2 className="board-detail__attachments-title">첨부파일</h2>
+                  <ul className="board-detail__attachments-list">
+                    {files.map((att) => (
+                      <li key={att.id}>
+                        <a
+                          href="#"
+                          className="board-detail__attachments-link"
+                          onClick={(e) => {
+                            e.preventDefault();
+                            void openAttachmentDownloadInNewTab(att.id).then((r) => {
+                              if (!r.ok) alert(r.message);
+                            });
+                          }}
+                        >
+                          📎 {att.originFilename ?? `첨부 #${att.id}`}
+                        </a>
+                      </li>
+                    ))}
+                  </ul>
+                </section>
+              )}
+            </>
+          );
+        })()}
 
         {/* 레거시 단일 첨부(board-uploads 등) — attachments가 없을 때만 표시 */}
         {(!board.attachments || board.attachments.length === 0) && board.filename && board.filepath && (
@@ -225,15 +300,7 @@ function BoardDetailPage() {
         {/* 댓글 */}
         <CommentSection boardId={board.id} />
 
-        {/* 수정/삭제 */}
-        {isAuthor() && (
-          <footer className="board-detail__actions">
-            <button type="button" onClick={handleEdit} className="board-detail__btn board-detail__btn--edit">수정</button>
-            <button type="button" onClick={handleDelete} disabled={isDeleting} className="board-detail__btn board-detail__btn--delete">
-              {isDeleting ? '삭제 중...' : '삭제'}
-            </button>
-          </footer>
-        )}
+
       </div>
     </Layout>
   );

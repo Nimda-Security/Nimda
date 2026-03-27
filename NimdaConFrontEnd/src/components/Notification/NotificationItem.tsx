@@ -8,6 +8,7 @@ export interface NotificationItemProps {
   message: string;
   preview?: string;
   senderNickName?: string;
+  senderProfileImage?: string;
   time: string;
   isRead: boolean;
   url?: string;
@@ -39,6 +40,7 @@ const NotificationItem: React.FC<NotificationItemProps> = ({
   message,
   preview,
   senderNickName,
+  senderProfileImage,
   time,
   isRead,
   onClick,
@@ -61,9 +63,23 @@ const NotificationItem: React.FC<NotificationItemProps> = ({
 
       {/* 2. 프로필 (40, 12, 24x24) */}
       {hasNickName && (
-        <div className="absolute left-[40px] top-[12px] w-[24px] h-[24px] rounded-full bg-[#0c0c0c] flex items-center justify-center border border-white">
-          <span className="text-white text-[10px] font-bold leading-none">
-            {senderNickName[0]}
+        <div className="absolute left-[40px] top-[12px] w-[24px] h-[24px] rounded-full bg-[#0c0c0c] flex items-center justify-center border border-white overflow-hidden">
+          {senderProfileImage ? (
+            <img
+              src={senderProfileImage}
+              alt={senderNickName}
+              className="w-full h-full object-cover"
+              onError={(e) => {
+                e.currentTarget.style.display = 'none';
+                e.currentTarget.nextElementSibling?.removeAttribute('style');
+              }}
+            />
+          ) : null}
+          <span
+            className="text-white text-[10px] font-bold leading-none"
+            style={senderProfileImage ? { display: 'none' } : {}}
+          >
+            {senderNickName![0]}
           </span>
         </div>
       )}

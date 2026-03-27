@@ -5,12 +5,14 @@ import com.nimda.cite.comment.service.CommentService;
 import com.nimda.cite.common.response.ApiResponse;
 import com.nimda.cite.common.s3.S3Service;
 import com.nimda.cup.common.util.JwtUtil;
+import com.nimda.cup.user.repository.UserRepository;
 import jakarta.validation.Valid;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.server.ResponseStatusException;
 
 import java.util.List;
 import java.util.Map;
@@ -27,6 +29,9 @@ public class CommentController {
 
     @Autowired(required = false)
     private S3Service s3Service;
+
+    @Autowired
+    private UserRepository userRepository;
 
     private void resolveCommentProfileImages(List<CommentResponse> comments) {
         if (s3Service == null || comments == null) return;
@@ -230,6 +235,28 @@ public class CommentController {
 
         } catch (Exception e) {
             return ApiResponse.fail("댓글 삭제 중 오류가 발생했습니다: " + e.getMessage())
+                    .toResponse(HttpStatus.INTERNAL_SERVER_ERROR);
+        }
+    }
+
+    /**
+     * 특정 유저의 작성 댓글 목록 조회 (공개 프로필용, 인증 불필요)
+     * GET /api/comments/user/{nickname}
+     */
+    @GetMapping("/comments/user/{nickname}")
+    public ResponseEntity<?> getCommentsByNickname(@PathVariable String nickname) {
+        try {
+            return userRepository.findByNickname(nickname)
+                    .map(user -> {
+                        List<MyCommentResponse> comments = commentService.getMyComments(user.getId());
+                        return ApiResponse.ok("댓글 목록을 조회했습니다.",
+                                Map.of("comments", comments)).toResponse();
+                    })
+                    .orElseThrow(
+                            () -> new ResponseStatusException(HttpStatus.NOT_FOUND)
+                    );
+        } catch (Exception e) {
+            return ApiResponse.fail("댓글 조회 중 오류가 발생했습니다: " + e.getMessage())
                     .toResponse(HttpStatus.INTERNAL_SERVER_ERROR);
         }
     }

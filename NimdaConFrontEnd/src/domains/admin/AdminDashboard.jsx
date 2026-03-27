@@ -186,40 +186,54 @@ function AdminDashboard() {
     }
   };
 
-  const handleDeleteCategory = async () => {
-    if (!selectedCategoryId) {
-      alert('삭제할 카테고리를 선택해주세요.');
-      return;
-    }
-
-    if (!selectedCategoryData) {
-      alert('선택된 카테고리 정보를 찾을 수 없습니다.');
-      return;
-    }
-
-    const categoryName = selectedCategoryData.name;
-    if (!confirm(`정말 "${categoryName}" 카테고리를 삭제하시겠습니까?\n\n하위 카테고리나 게시글이 있으면 삭제할 수 없습니다.`)) {
-      return;
-    }
-
+  const handleToggleCategoryActive = async (category, e) => {
+    e.stopPropagation();
+    const nextActive = !category.isActive;
+    const action = nextActive ? '표시' : '숨김';
+    if (!confirm(`"${category.name}" 카테고리를 ${action} 처리하시겠습니까?`)) return;
     try {
-      const result = await deleteCategoryAPI(selectedCategoryId);
-
+      const result = await updateCategoryAPI(category.id, {
+        name: category.name,
+        slug: category.slug,
+        parentId: category.parentId || null,
+        sortOrder: category.sortOrder,
+        isActive: nextActive,
+      });
       if (result.success) {
-        alert('카테고리가 성공적으로 삭제되었습니다.');
-        setSelectedCategoryId(null); // 선택 해제
-        // 약간의 지연 후 목록 새로고침
-        setTimeout(() => {
-          loadCategories();
-        }, 300);
+        loadCategories();
       } else {
-        alert(result.message || '카테고리 삭제에 실패했습니다.');
+        alert(result.message || `${action} 처리에 실패했습니다.`);
       }
     } catch (error) {
-      console.error('카테고리 삭제 오류:', error);
-      alert('카테고리 삭제 중 오류가 발생했습니다.');
+      console.error('카테고리 활성화 토글 오류:', error);
+      alert('처리 중 오류가 발생했습니다.');
     }
   };
+
+ const handleDeleteCategory = async () => { 
+  if (!selectedCategoryId) return;
+  if (!window.confirm('정말 이 카테고리를 삭제하시겠습니까?')) return;
+
+  try {
+    // 이제 await를 정상적으로 사용할 수 있습니다.
+    const result = await deleteCategoryAPI(selectedCategoryId);
+
+    if (result.success) {
+      alert('카테고리가 성공적으로 삭제되었습니다.');
+      setSelectedCategoryId(null); // 선택 해제
+      
+      // 약간의 지연 후 목록 새로고침
+      setTimeout(() => {
+        loadCategories();
+      }, 300);
+    } else {
+      alert(result.message || '카테고리 삭제에 실패했습니다.');
+    }
+  } catch (error) {
+    console.error('카테고리 삭제 오류:', error);
+    alert('카테고리 삭제 중 오류가 발생했습니다.');
+  }
+};
 
   const handleApproveUser = async (userId) => {
     if (!confirm('이 사용자를 승인하시겠습니까?')) return;
@@ -494,7 +508,84 @@ function AdminDashboard() {
     return result;
   };
 
-  const allCategoriesFlat = flattenCategories(categoryTree);
+  const allCategoriesFlat = flattenCategories(activeCategoryTree);
+
+  // 드래그앤드롭으로 카테고리 순서 변경
+  const handleCategoryDrop = (draggedId, targetId) => {
+    const findParentId = (nodes, id, parentId = null) => {
+      for (const node of nodes) {
+        if (node.id === id) return parentId;
+        if (node.children && node.children.length > 0) {
+          const result = findParentId(node.children, id, node.id);
+          if (result !== undefined) return result;
+        }
+      }
+      return undefined;
+    };
+
+    const getSiblings = (nodes, parentId) => {
+      if (parentId === null) return nodes;
+      for (const node of nodes) {
+        if (node.id === parentId) return node.children;
+        if (node.children && node.children.length > 0) {
+          const result = getSiblings(node.children, parentId);
+          if (result) return result;
+        }
+      }
+      return null;
+    };
+
+    const newTree = JSON.parse(JSON.stringify(localCategoryTree));
+    const draggedParentId = findParentId(newTree, draggedId);
+    const targetParentId = findParentId(newTree, targetId);
+
+    // 같은 부모 레벨 내에서만 순서 변경 허용
+    if (draggedParentId !== targetParentId) return;
+
+    const siblings = getSiblings(newTree, draggedParentId);
+    if (!siblings) return;
+
+    const draggedIdx = siblings.findIndex(n => n.id === draggedId);
+    const targetIdx = siblings.findIndex(n => n.id === targetId);
+    if (draggedIdx === -1 || targetIdx === -1) return;
+
+    const [removed] = siblings.splice(draggedIdx, 1);
+    siblings.splice(targetIdx, 0, removed);
+
+    setLocalCategoryTree(newTree);
+    setOrderChanged(true);
+  };
+
+  // 카테고리 순서 저장
+  const handleSaveOrder = async () => {
+    setSavingOrder(true);
+    try {
+      const sortOrders = [];
+      const flattenForOrder = (nodes) => {
+        nodes.forEach((node, idx) => {
+          sortOrders.push({ id: node.id, sortOrder: idx });
+          if (node.children && node.children.length > 0) {
+            flattenForOrder(node.children);
+          }
+        });
+      };
+      flattenForOrder(localCategoryTree);
+
+      const result = await updateCategorySortOrderAPI(sortOrders);
+      if (result.success) {
+        alert('카테고리 순서가 저장되었습니다.');
+        setOrderChanged(false);
+        await loadCategories();
+      } else {
+        alert(result.message || '순서 저장에 실패했습니다.');
+      }
+    } catch (error) {
+      console.error('순서 저장 오류:', error);
+      alert('순서 저장 중 오류가 발생했습니다.');
+    } finally {
+      setSavingOrder(false);
+    }
+  };
 
   // 드래그앤드롭으로 카테고리 순서 변경
   const handleCategoryDrop = (draggedId, targetId) => {
@@ -620,6 +711,24 @@ function AdminDashboard() {
             {category.name}
             {isParent && <span className="admin__catorder-count">({childCount})</span>}
           </span>
+          <button
+            onClick={(e) => handleToggleCategoryActive(category, e)}
+            style={{
+              marginLeft: 'auto',
+              fontSize: '11px',
+              padding: '2px 7px',
+              border: '1px solid',
+              borderRadius: '3px',
+              cursor: 'pointer',
+              background: 'none',
+              color: isInactive ? '#38a169' : '#a0aec0',
+              borderColor: isInactive ? '#38a169' : '#cbd5e0',
+              flexShrink: 0,
+            }}
+            title={isInactive ? '표시' : '숨김'}
+          >
+            {isInactive ? '표시' : '숨김'}
+          </button>
         </div>
         {isParent && category.children?.map(child => renderCategoryOrderItem(child, level + 1))}
       </div>

@@ -155,16 +155,30 @@ body {
   padding-bottom: 0;
 }
 
+
+
+/* 사이드바 프로필 아바타 영역 */
 .sidebar-profile__avatar {
-  width: 100%;
-  aspect-ratio: 1;
-  border-radius: 50%;
+  width: 100%;           /* 사이드바 너비에 맞춤 */
+  aspect-ratio: 1 / 1;   /* 가로세로 1:1 비율 유지 */
+  border-radius: 50%;    /* 완벽한 원형 */
   background-color: var(--color-gray-100);
   margin: 0 auto 12px;
+
   display: flex;
   align-items: center;
   justify-content: center;
-  overflow: hidden;
+
+  overflow: hidden;      /* 중요: 원 밖으로 나가는 이미지 커팅 */
+  position: relative;    /* 이미지 배치를 위한 기준점 */
+}
+
+/* 추가: 아바타 내부의 이미지 스타일 */
+.sidebar-profile__avatar img {
+  width: 100% !important;  /* 부모 너비에 꽉 채움 */
+  height: 100% !important; /* 부모 높이에 꽉 채움 */
+  object-fit: cover;       /* 비율 유지하며 꽉 채우기 (다람쥐가 찌그러지지 않음) */
+  display: block;
 }
 
 .sidebar-profile__name {
@@ -576,7 +590,7 @@ body {
   width: 100%;
   height: 390px;
   overflow: hidden;
-  background-color: var(--color-gray-100);
+  background-color: #000;
 }
 
 .home-banner__slide {
@@ -594,9 +608,8 @@ body {
   pointer-events: none;
 }
 
-/* 단일 이미지 배너: 높이를 100%로 채우고 이미지를 cover로 맞춤 */
+/* 이미지 슬라이드: absolute 위치는 .home-banner__slide에서 이미 설정 */
 .home-banner__slide--img {
-  position: relative;
   height: 100%;
 }
 
@@ -608,8 +621,10 @@ body {
 .home-banner__img {
   width: 100%;
   height: 100%;
-  object-fit: cover;
+  object-fit: contain;
+  object-position: center;
   display: block;
+  background-color: #000;
 }
 
 .home-banner__btn {
