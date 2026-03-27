@@ -43,6 +43,7 @@ public class BoardLikeController {
                         List<BoardResponseDTO> dtos = boards.stream()
                                 .map(b -> BoardResponseDTO.from(b,
                                         boardLikeService.getLikeCount(b.getId()),
+                                        false,
                                         commentRepository.countByBoardIdAndStatusNot(b.getId(), STATUS.DELETED)))
                                 .toList();
                         return ApiResponse.ok(Map.of("boards", dtos)).toResponse();
@@ -101,6 +102,7 @@ public class BoardLikeController {
         List<BoardResponseDTO> dtos = boards.stream()
                 .map(b -> BoardResponseDTO.from(b,
                         boardLikeService.getLikeCount(b.getId()),
+                        true,
                         commentRepository.countByBoardIdAndStatusNot(b.getId(), STATUS.DELETED)))
                 .toList();
         return ApiResponse.ok(Map.of("boards", dtos)).toResponse();

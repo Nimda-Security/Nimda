@@ -47,6 +47,7 @@ export interface Board {
   category: Category;
   author: BoardAuthor;
   views: number;
+  isLiked?: boolean; // 좋아요 상태
   likeCount?: number; // 좋아요 개수 (선택적)
   commentCount?: number; // 댓글 개수 (선택적)
   pinned: boolean;

@@ -27,6 +27,16 @@ const parseJsonSafe = async (response: Response) => {
 };
 
 /**
+ * 토큰 파싱
+ */
+const getAuthHeaders = (): Record<string, string> => {
+  const token = localStorage.getItem('authToken');
+  const headers: Record<string, string> = { 'Content-Type': 'application/json' };
+  if (token) headers['Authorization'] = `Bearer ${token}`;
+  return headers;
+};
+
+/**
  * 게시글 목록 조회 API
  * 
  * @param params 게시글 목록 조회 파라미터

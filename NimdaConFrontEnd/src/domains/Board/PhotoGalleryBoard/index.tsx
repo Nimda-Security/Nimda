@@ -8,7 +8,6 @@ import { getAttachmentPresignedUrl } from "@/api/attachments";
 import type { Board } from "@/domains/Board/types";
 import "./PhotoGalleryBoard.css";
 import { formatDate } from '@/utils/formatDate';
-import { useLikeStatuses } from "@/domains/Board/useLikeStatuses";
 
 const IMAGE_EXTENSIONS = ["jpg", "jpeg", "png", "gif", "webp", "bmp", "svg"];
 
@@ -36,7 +35,6 @@ const PhotoGalleryBoard: React.FC = () => {
   const [selectedYear, setSelectedYear] = useState<number | null>(null);
   // 모든 페이지에서 누적한 연도 목록
   const [availableYears, setAvailableYears] = useState<number[]>([]);
-  const likeStatuses = useLikeStatuses(posts);
 
   const loadPosts = useCallback(async (page: number) => {
     setLoading(true);
@@ -118,21 +116,20 @@ const PhotoGalleryBoard: React.FC = () => {
             className="board-list__write-btn"
             onClick={() => navigate("/board/picture-board/write")}
           >
-            <div className="board-list__write-icon-box">
-              <svg
-                width="16"
-                height="16"
-                viewBox="0 0 24 24"
-                fill="none"
-                stroke="currentColor"
-                strokeWidth="2.5"
-                strokeLinecap="round"
-                strokeLinejoin="round"
-              >
-                <path d="M12 20h9" />
-                <path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z" />
-              </svg>
-            </div>
+            <svg
+              width="16"
+              height="16"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth="2.5"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+            >
+              <path d="M12 20h9" />
+              <path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z" />
+            </svg>
+            <span style={{ fontWeight: 600, fontSize: '15px' }}>글쓰기</span>
           </button>
         </div>
 
@@ -190,20 +187,26 @@ const PhotoGalleryBoard: React.FC = () => {
                       <div className="photo-gallery-board__author">
                         <Avatar
                           src={post.author?.profileImage}
-                          size={20}
+                          size={28}
                           className="photo-gallery-board__avatar"
                         />
                         <span className="photo-gallery-board__nickname">
                           {post.author?.nickname || "익명"}
                         </span>
                       </div>
-                      <p className="photo-gallery-board__title">{post.title}</p>
+                      <div className="photo-gallery-board__title-line">
+                        <p className="photo-gallery-board__title">{post.title}</p>
+                        <div className="photo-gallery-board__counts">
+                          <span className="photo-gallery-board__count photo-gallery-board__count--comments">
+                            [{post.commentCount ?? 0}]
+                          </span>
+                          <span className="photo-gallery-board__count photo-gallery-board__count--likes">
+                            <Heart filled={post.isLiked} />
+                            <span>{post.likeCount ?? 0}</span>
+                          </span>
+                        </div>
+                      </div>
                       <div className="photo-gallery-board__meta">
-                        <span className="photo-gallery-board__meta-likes">
-                          <Heart filled={likeStatuses[post.id] ?? false} />
-                          <span>{post.likeCount ?? 0}</span>
-                        </span>
-                        <span className="photo-gallery-board__meta-sep">|</span>
                         <span>{formatDate(post.createdAt)}</span>
                       </div>
                     </div>

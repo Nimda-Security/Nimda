@@ -10,7 +10,7 @@ import { MessageBox } from '@/components/icons/MessageBox';
 import { isAdmin, hasRole } from '@/utils/jwt';
 import { formatDate } from '@/utils/formatDate';
 import './BoardList.css';
-import { useLikeStatuses } from "@/domains/Board/useLikeStatuses";
+import Avatar from '@/components/Avatar/Avatar';
 
 interface BoardListPageProps {
   slug?: string;
@@ -45,8 +45,6 @@ function BoardListPage({ slug: propSlug }: BoardListPageProps) {
   const allPostsForLikes = useMemo(() => {
     return [...noticePosts, ...pinnedPosts, ...boards];
   }, [noticePosts, pinnedPosts, boards]);
-
-  const likeStatuses = useLikeStatuses(allPostsForLikes);
 
   // 공지사항 로딩 (최초 1회)
   useEffect(() => {
@@ -278,16 +276,16 @@ function BoardListPage({ slug: propSlug }: BoardListPageProps) {
       <div className="board-list">
         <div className="board-list__header">
           <h1 className="board-list__title">{categoryName}</h1>
-          {canWrite && (
-            <button className="board-list__write-btn" onClick={handleWriteClick}>
-              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-                <path d="M12 20h9"></path>
-                <path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"></path>
-              </svg>
-              <span style={{ fontWeight: 600, fontSize: '15px' }}>글쓰기</span>
-            </button>
-          )}
         </div>
+
+        {childCategories.length > 0 && (
+          <div className="board-list__tabs" style={{ marginBottom: '16px' }}>
+            <button className={`board-list__tab ${activeTab === 'all' ? 'board-list__tab--active' : ''}`} onClick={() => handleTabClick('all')}>전체</button>
+            {childCategories.map((child) => (
+              <button key={child.id} className={`board-list__tab ${activeTab === child.slug ? 'board-list__tab--active' : ''}`} onClick={() => handleTabClick(child.slug)}>{child.name}</button>
+            ))}
+          </div>
+        )}
 
         <div className="board-list__tag-filter">
           <button className={`board-list__tag-filter-item ${selectedTag === null ? 'board-list__tag-filter-item--active' : ''}`} onClick={() => handleTagClick(null)}>전체</button>
@@ -296,16 +294,18 @@ function BoardListPage({ slug: propSlug }: BoardListPageProps) {
           ))}
         </div>
 
-        {childCategories.length > 0 && (
-          <div className="board-list__tabs">
-            <button className={`board-list__tab ${activeTab === 'all' ? 'board-list__tab--active' : ''}`} onClick={() => handleTabClick('all')}>전체</button>
-            {childCategories.map((child) => (
-              <button key={child.id} className={`board-list__tab ${activeTab === child.slug ? 'board-list__tab--active' : ''}`} onClick={() => handleTabClick(child.slug)}>{child.name}</button>
-            ))}
-          </div>
-        )}
-
         <div className="board-list__divider" />
+
+        <div style={{ display: 'flex', justifyContent: 'flex-end', marginTop: '16px', marginBottom: '8px' }}>
+          {canWrite && (
+            <button className="board-list__write-btn" onClick={handleWriteClick}>
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                <path d="M12 20h9"></path>
+                <path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"></path>
+              </svg>
+            </button>
+          )}
+        </div>
         {loading && <div className="board-list__status">로딩 중...</div>}
         {error && <div className="board-list__status board-list__status--error">{error}</div>}
 
@@ -318,8 +318,8 @@ function BoardListPage({ slug: propSlug }: BoardListPageProps) {
                   <span className="board-list__category-tag">{getCategoryTagLabel(post, '필독')}</span>
                   <div className="board-list__title-line">
                     <span className="board-list__post-title board-list__post-title--bold">{post.title}</span>
-                    {post.commentCount !== undefined && post.commentCount > 0 && <span className="board-list__comments"><MessageBox /> {post.commentCount}</span>}
-                    {post.likeCount !== undefined && post.likeCount > 0 && <span className="board-list__likes"><Heart filled={likeStatuses[post.id]} /> {post.likeCount}</span>}
+                    <span className="board-list__comments"><MessageBox /> {post.commentCount ?? 0}</span>
+                    <span className="board-list__likes"><Heart filled={post.isLiked} /> {post.likeCount ?? 0}</span>
                   </div>
                 </div>
                 <div className="board-list__meta">
@@ -327,7 +327,7 @@ function BoardListPage({ slug: propSlug }: BoardListPageProps) {
                     <Link to={post.author?.nickname ? `/user/${post.author.nickname}` : '#'} className="board-list__author" onClick={(e) => e.stopPropagation()}>{post.author?.nickname || '익명'}</Link>
                     <span className="board-list__date">{formatDate(post.createdAt)}</span>
                   </div>
-                  <img src={post.author?.profileImage || '/default_user_profile.png'} alt="" className="board-list__avatar" />
+                  <Avatar src={post.author?.profileImage} size={32} className="board-list__avatar" />
                 </div>
                 <div className="board-list__row-divider" />
               </div>
@@ -340,8 +340,8 @@ function BoardListPage({ slug: propSlug }: BoardListPageProps) {
                   <span className="board-list__category-tag">{getCategoryTagLabel(post, isNoticeCategory ? '필독' : '고정')}</span>
                   <div className="board-list__title-line">
                     <span className="board-list__post-title board-list__post-title--bold">{post.title}</span>
-                    {post.commentCount !== undefined && post.commentCount > 0 && <span className="board-list__comments"><MessageBox /> {post.commentCount}</span>}
-                    {post.likeCount !== undefined && post.likeCount > 0 && <span className="board-list__likes"><Heart filled={likeStatuses[post.id]} /> {post.likeCount}</span>}
+                    <span className="board-list__comments"><MessageBox /> {post.commentCount ?? 0}</span>
+                    <span className="board-list__likes"><Heart filled={post.isLiked} /> {post.likeCount ?? 0}</span>
                   </div>
                 </div>
                 <div className="board-list__meta">
@@ -349,7 +349,7 @@ function BoardListPage({ slug: propSlug }: BoardListPageProps) {
                     <Link to={post.author?.nickname ? `/user/${post.author.nickname}` : '#'} className="board-list__author" onClick={(e) => e.stopPropagation()}>{post.author?.nickname || '익명'}</Link>
                     <span className="board-list__date">{formatDate(post.createdAt)}</span>
                   </div>
-                  <img src={post.author?.profileImage || '/default_user_profile.png'} alt="" className="board-list__avatar" />
+                  <Avatar src={post.author?.profileImage} size={32} className="board-list__avatar" />
                 </div>
                 <div className="board-list__row-divider" />
               </div>
@@ -365,8 +365,8 @@ function BoardListPage({ slug: propSlug }: BoardListPageProps) {
                     <span className="board-list__category-tag">{getCategoryTagLabel(post)}</span>
                     <div className="board-list__title-line">
                       <span className="board-list__post-title">{post.title}</span>
-                      {post.commentCount !== undefined && post.commentCount > 0 && <span className="board-list__comments"><MessageBox /> {post.commentCount}</span>}
-                      {post.likeCount !== undefined && post.likeCount > 0 && <span className="board-list__likes"><Heart filled={likeStatuses[post.id]} /> {post.likeCount}</span>}
+                      <span className="board-list__comments"><MessageBox /> {post.commentCount ?? 0}</span>
+                      <span className="board-list__likes"><Heart filled={post.isLiked} /> {post.likeCount ?? 0}</span>
                     </div>
                   </div>
                   <div className="board-list__meta">
@@ -374,7 +374,7 @@ function BoardListPage({ slug: propSlug }: BoardListPageProps) {
                       <Link to={post.author?.nickname ? `/user/${post.author.nickname}` : '#'} className="board-list__author" onClick={(e) => e.stopPropagation()}>{post.author?.nickname || '익명'}</Link>
                       <span className="board-list__date">{formatDate(post.createdAt)}</span>
                     </div>
-                    <img src={post.author?.profileImage || '/default_user_profile.png'} alt="" className="board-list__avatar" />
+                    <Avatar src={post.author?.profileImage} size={32} className="board-list__avatar" />
                   </div>
                   <div className="board-list__row-divider" />
                 </div>
