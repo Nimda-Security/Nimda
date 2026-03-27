@@ -35,6 +35,8 @@ export interface BoardAttachmentMeta {
   id: number;
   originFilename?: string;
   downloadUrl?: string;
+  extension?: string;
+  fileSize?: number;
 }
 
 /**

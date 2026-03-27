@@ -338,6 +338,18 @@
 }
 
 /* ===========================
+   썸네일
+   =========================== */
+.board-list__thumbnail {
+  width: 48px;
+  height: 48px;
+  object-fit: cover;
+  border-radius: 6px;
+  flex-shrink: 0;
+  margin-left: 12px;
+}
+
+/* ===========================
    페이지네이션
    =========================== */
 .board-list__pagination {

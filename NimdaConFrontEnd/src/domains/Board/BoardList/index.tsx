@@ -225,6 +225,12 @@ function BoardListPage({ slug: propSlug }: BoardListPageProps) {
     return '# 게시물';
   };
 
+  const getFirstImageUrl = (content: string): string | null => {
+    if (!content) return null;
+    const match = content.match(/<img[^>]+src=["']([^"']+)["']/i);
+    return match ? match[1] : null;
+  };
+
   const isNewsCategoryGroup = useMemo(() => {
     if (!category) return slug === 'news';
     if (category.name === '새 소식') return true;
@@ -324,6 +330,9 @@ function BoardListPage({ slug: propSlug }: BoardListPageProps) {
                     <span className="board-list__likes"><Heart filled={post.isLiked} /> {post.likeCount ?? 0}</span>
                   </div>
                 </div>
+                {getFirstImageUrl(post.content) && (
+                  <img className="board-list__thumbnail" src={getFirstImageUrl(post.content)!} alt="" loading="lazy" />
+                )}
                 <div className="board-list__meta">
                   <div className="board-list__author-info">
                     <Link to={post.author?.nickname ? `/user/${post.author.nickname}` : '#'} className="board-list__author" onClick={(e) => e.stopPropagation()}>{post.author?.nickname || '익명'}</Link>
@@ -346,6 +355,9 @@ function BoardListPage({ slug: propSlug }: BoardListPageProps) {
                     <span className="board-list__likes"><Heart filled={post.isLiked} /> {post.likeCount ?? 0}</span>
                   </div>
                 </div>
+                {getFirstImageUrl(post.content) && (
+                  <img className="board-list__thumbnail" src={getFirstImageUrl(post.content)!} alt="" loading="lazy" />
+                )}
                 <div className="board-list__meta">
                   <div className="board-list__author-info">
                     <Link to={post.author?.nickname ? `/user/${post.author.nickname}` : '#'} className="board-list__author" onClick={(e) => e.stopPropagation()}>{post.author?.nickname || '익명'}</Link>
@@ -371,6 +383,9 @@ function BoardListPage({ slug: propSlug }: BoardListPageProps) {
                       <span className="board-list__likes"><Heart filled={post.isLiked} /> {post.likeCount ?? 0}</span>
                     </div>
                   </div>
+                  {getFirstImageUrl(post.content) && (
+                    <img className="board-list__thumbnail" src={getFirstImageUrl(post.content)!} alt="" loading="lazy" />
+                  )}
                   <div className="board-list__meta">
                     <div className="board-list__author-info">
                       <Link to={post.author?.nickname ? `/user/${post.author.nickname}` : '#'} className="board-list__author" onClick={(e) => e.stopPropagation()}>{post.author?.nickname || '익명'}</Link>

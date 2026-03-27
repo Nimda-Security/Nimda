@@ -26,18 +26,18 @@ function BoardWritePage() {
   const [title, setTitle] = useState('');
   const [content, setContent] = useState('');
   const [tag, setTag] = useState<string>('');
-  const [file, setFile] = useState<File | null>(null);
-  /** 수정 모드: 기존 첨부 ID 목록 */
-  const [existingAttachmentIds, setExistingAttachmentIds] = useState<number[] | null>(null);
+  const [attachedFiles, setAttachedFiles] = useState<{id: number, name: string, size: number}[]>([]);
   const [editBoardId, setEditBoardId] = useState<number | null>(null);
   const [isDragOver, setIsDragOver] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [isUploading, setIsUploading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [showFontSize, setShowFontSize] = useState(false);
   const [showColorPicker, setShowColorPicker] = useState(false);
   const colorInputRef = useRef<HTMLInputElement>(null);
 
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const imageInputRef = useRef<HTMLInputElement>(null);
   const contentRef = useRef<HTMLDivElement>(null);
 
   // contentEditable에서 HTML 추출
@@ -72,8 +72,12 @@ function BoardWritePage() {
             setEditBoardId(b.id);
             setTitle(b.title);
             setTag(b.tag || '');
-            if (b.attachments !== undefined) {
-              setExistingAttachmentIds(b.attachments.map(a => a.id));
+            if (b.attachments && b.attachments.length > 0) {
+              setAttachedFiles(b.attachments.map(a => ({
+                id: a.id,
+                name: a.originFilename || 'file',
+                size: a.fileSize || 0,
+              })));
             }
             // 카테고리 설정
             if (b.category) {
@@ -160,15 +164,7 @@ function BoardWritePage() {
       setIsSubmitting(true);
       setError(null);
 
-      let attachmentIds: number[] | undefined = existingAttachmentIds ?? undefined;
-      if (file) {
-        const uploaded = await uploadBoardFileViaS3(file, targetCategoryId);
-        if (!uploaded.ok) {
-          setError(uploaded.message);
-          return;
-        }
-        attachmentIds = [...(attachmentIds ?? []), uploaded.attachmentId];
-      }
+      const attachmentIds: number[] | undefined = attachedFiles.length > 0 ? attachedFiles.map(f => f.id) : undefined;
 
       // 수정 모드
       if (isEditMode && editBoardId) {
@@ -218,15 +214,62 @@ function BoardWritePage() {
     }
   };
 
-  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    if (e.target.files && e.target.files[0]) {
-      setFile(e.target.files[0]);
+  const handleImageSelect = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const selectedFiles = e.target.files;
+    if (!selectedFiles || selectedFiles.length === 0) return;
+    const targetCategoryId = subCategoryId || parentCategoryId;
+    if (!targetCategoryId) { setError('카테고리를 먼저 선택해주세요.'); return; }
+
+    setIsUploading(true);
+    setError(null);
+    for (const f of Array.from(selectedFiles)) {
+      const result = await uploadBoardFileViaS3(f, targetCategoryId);
+      if (result.ok) {
+        setAttachedFiles(prev => [...prev, { id: result.attachmentId, name: f.name, size: f.size }]);
+        const imgUrl = `/api/cite/attachments/${result.attachmentId}/download?disposition=inline`;
+        const safeAlt = f.name.replace(/&/g, '&amp;').replace(/"/g, '&quot;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+        contentRef.current?.focus();
+        document.execCommand('insertHTML', false, `<img src="${imgUrl}" alt="${safeAlt}" style="max-width:100%;margin:8px 0;border-radius:8px;" /><br>`);
+        setContent(getEditorContent());
+      } else {
+        setError(result.message);
+        break;
+      }
     }
+    setIsUploading(false);
+    if (imageInputRef.current) imageInputRef.current.value = '';
   };
 
-  const handleRemoveFile = () => {
-    setFile(null);
+  const handleFileSelect = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const selectedFiles = e.target.files;
+    if (!selectedFiles || selectedFiles.length === 0) return;
+    const targetCategoryId = subCategoryId || parentCategoryId;
+    if (!targetCategoryId) { setError('카테고리를 먼저 선택해주세요.'); return; }
+
+    setIsUploading(true);
+    setError(null);
+    for (const f of Array.from(selectedFiles)) {
+      const result = await uploadBoardFileViaS3(f, targetCategoryId);
+      if (result.ok) {
+        setAttachedFiles(prev => [...prev, { id: result.attachmentId, name: f.name, size: f.size }]);
+      } else {
+        setError(result.message);
+        break;
+      }
+    }
+    setIsUploading(false);
     if (fileInputRef.current) fileInputRef.current.value = '';
+  };
+
+  const handleRemoveFile = (attachmentId: number) => {
+    setAttachedFiles(prev => prev.filter(f => f.id !== attachmentId));
+  };
+
+  const formatFileSize = (bytes: number): string => {
+    if (!bytes) return '';
+    if (bytes < 1024) return `${bytes}B`;
+    if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(1)}KB`;
+    return `${(bytes / (1024 * 1024)).toFixed(1)}MB`;
   };
 
   const handleDragOver = (e: React.DragEvent) => {
@@ -236,11 +279,35 @@ function BoardWritePage() {
 
   const handleDragLeave = () => setIsDragOver(false);
 
-  const handleDrop = (e: React.DragEvent) => {
+  const handleDrop = async (e: React.DragEvent) => {
     e.preventDefault();
     setIsDragOver(false);
-    const droppedFile = e.dataTransfer.files[0];
-    if (droppedFile) setFile(droppedFile);
+    const droppedFiles = e.dataTransfer.files;
+    if (!droppedFiles || droppedFiles.length === 0) return;
+
+    const targetCategoryId = subCategoryId || parentCategoryId;
+    if (!targetCategoryId) { setError('카테고리를 먼저 선택해주세요.'); return; }
+
+    setIsUploading(true);
+    setError(null);
+    for (const f of Array.from(droppedFiles)) {
+      const isImage = f.type.startsWith('image/');
+      const result = await uploadBoardFileViaS3(f, targetCategoryId);
+      if (result.ok) {
+        setAttachedFiles(prev => [...prev, { id: result.attachmentId, name: f.name, size: f.size }]);
+        if (isImage) {
+          const imgUrl = `/api/cite/attachments/${result.attachmentId}/download?disposition=inline`;
+          const safeAlt = f.name.replace(/&/g, '&amp;').replace(/"/g, '&quot;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+          contentRef.current?.focus();
+          document.execCommand('insertHTML', false, `<img src="${imgUrl}" alt="${safeAlt}" style="max-width:100%;margin:8px 0;border-radius:8px;" /><br>`);
+          setContent(getEditorContent());
+        }
+      } else {
+        setError(result.message);
+        break;
+      }
+    }
+    setIsUploading(false);
   };
 
   // 텍스트 포맷팅 (bold, italic, underline, strikeThrough)
@@ -478,7 +545,7 @@ function BoardWritePage() {
               )}
             </div>
             <span className="bw-tool-dot" />
-            <button type="button" className="bw-tool-btn" title="사진 첨부" onClick={() => fileInputRef.current?.click()}>
+            <button type="button" className="bw-tool-btn" title="사진 첨부" onClick={() => imageInputRef.current?.click()}>
               <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
                 <rect x="3" y="3" width="18" height="18" rx="2" ry="2" />
                 <circle cx="8.5" cy="8.5" r="1.5" />
@@ -544,37 +611,55 @@ function BoardWritePage() {
           {/* ── 첨부파일 ── */}
           <div className="bw-section">
             <span className="bw-section-label">첨부파일</span>
-            {file ? (
-              <div className="bw-file-selected">
-                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                  <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" />
-                  <polyline points="14 2 14 8 20 8" />
-                </svg>
-                <span className="bw-file-name">{file.name}</span>
-                <button type="button" className="bw-file-remove" onClick={handleRemoveFile}>×</button>
-              </div>
-            ) : (
-              <div
-                className={`bw-dropzone ${isDragOver ? 'bw-dropzone--active' : ''}`}
-                onDragOver={handleDragOver}
-                onDragLeave={handleDragLeave}
-                onDrop={handleDrop}
-                onClick={() => fileInputRef.current?.click()}
-              >
-                <svg className="bw-dropzone-icon" width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
-                  <polyline points="16 16 12 12 8 16" />
-                  <line x1="12" y1="12" x2="12" y2="21" />
-                  <path d="M20.39 18.39A5 5 0 0 0 18 9h-1.26A8 8 0 1 0 3 16.3" />
-                </svg>
-                <p className="bw-dropzone-text">파일을 드래그하거나 클릭하여 업로드</p>
-                <p className="bw-dropzone-hint">최대 50MB &nbsp;·&nbsp; 이미지, PDF, 문서 파일 지원</p>
+            {attachedFiles.length > 0 && (
+              <div className="bw-file-list">
+                {attachedFiles.map((f) => (
+                  <div key={f.id} className="bw-file-selected">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                      <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" />
+                      <polyline points="14 2 14 8 20 8" />
+                    </svg>
+                    <span className="bw-file-name">{f.name}</span>
+                    <span className="bw-file-size">{formatFileSize(f.size)}</span>
+                    <button type="button" className="bw-file-remove" onClick={() => handleRemoveFile(f.id)}>×</button>
+                  </div>
+                ))}
               </div>
             )}
+            <div
+              className={`bw-dropzone ${isDragOver ? 'bw-dropzone--active' : ''}`}
+              onDragOver={handleDragOver}
+              onDragLeave={handleDragLeave}
+              onDrop={handleDrop}
+              onClick={() => fileInputRef.current?.click()}
+            >
+              {isUploading ? (
+                <p className="bw-dropzone-text">업로드 중...</p>
+              ) : (
+                <>
+                  <svg className="bw-dropzone-icon" width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+                    <polyline points="16 16 12 12 8 16" />
+                    <line x1="12" y1="12" x2="12" y2="21" />
+                    <path d="M20.39 18.39A5 5 0 0 0 18 9h-1.26A8 8 0 1 0 3 16.3" />
+                  </svg>
+                  <p className="bw-dropzone-text">파일을 드래그하거나 클릭하여 업로드</p>
+                  <p className="bw-dropzone-hint">최대 50MB &nbsp;·&nbsp; 여러 파일 동시 업로드 가능</p>
+                </>
+              )}
+            </div>
             <input
               ref={fileInputRef}
-              id="bw-file"
               type="file"
-              onChange={handleFileChange}
+              multiple
+              onChange={handleFileSelect}
+              style={{ display: 'none' }}
+            />
+            <input
+              ref={imageInputRef}
+              type="file"
+              accept="image/*"
+              multiple
+              onChange={handleImageSelect}
               style={{ display: 'none' }}
             />
           </div>
