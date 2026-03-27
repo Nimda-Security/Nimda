@@ -26,7 +26,7 @@ function BoardWritePage() {
   const [title, setTitle] = useState('');
   const [content, setContent] = useState('');
   const [tag, setTag] = useState<string>('');
-  const [attachedFiles, setAttachedFiles] = useState<{id: number, name: string, size: number}[]>([]);
+  const [attachedFiles, setAttachedFiles] = useState<{id: number, name: string, size: number, isInline?: boolean}[]>([]);
   const [editBoardId, setEditBoardId] = useState<number | null>(null);
   const [isDragOver, setIsDragOver] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -225,7 +225,7 @@ function BoardWritePage() {
     for (const f of Array.from(selectedFiles)) {
       const result = await uploadBoardFileViaS3(f, targetCategoryId);
       if (result.ok) {
-        setAttachedFiles(prev => [...prev, { id: result.attachmentId, name: f.name, size: f.size }]);
+        setAttachedFiles(prev => [...prev, { id: result.attachmentId, name: f.name, size: f.size, isInline: true }]);
         const imgUrl = `/api/cite/attachments/${result.attachmentId}/download?disposition=inline`;
         const safeAlt = f.name.replace(/&/g, '&amp;').replace(/"/g, '&quot;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
         contentRef.current?.focus();
@@ -611,9 +611,9 @@ function BoardWritePage() {
           {/* ── 첨부파일 ── */}
           <div className="bw-section">
             <span className="bw-section-label">첨부파일</span>
-            {attachedFiles.length > 0 && (
+            {attachedFiles.some(f => !f.isInline) && (
               <div className="bw-file-list">
-                {attachedFiles.map((f) => (
+                {attachedFiles.filter(f => !f.isInline).map((f) => (
                   <div key={f.id} className="bw-file-selected">
                     <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                       <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" />
