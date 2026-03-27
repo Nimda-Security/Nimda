@@ -217,7 +217,7 @@
    글 제목
    =========================== */
 .board-list__post-title {
-  flex: 1;
+  /* flex: 1 제거하여 댓글/좋아요가 제목 바로 옆에 붙게 함 */
   font-size: 14px;
   font-weight: 500;
   color: var(--color-black);
@@ -237,8 +237,8 @@
    프로필 이미지
    =========================== */
 .board-list__avatar {
-  width: 28px;
-  height: 28px;
+  width: 32px;
+  height: 32px;
   border-radius: 50%;
   object-fit: cover;
   flex-shrink: 0;
@@ -276,7 +276,7 @@
 .board-list__comments {
   display: flex;
   align-items: center;
-  gap: 2px;
+  gap: 4px;
   font-size: 12px;
   font-weight: 700;
   color: var(--color-blue);
@@ -286,7 +286,7 @@
 .board-list__likes {
   display: flex;
   align-items: center;
-  gap: 2px;
+  gap: 4px;
   font-size: 12px;
   font-weight: 700;
   color: var(--color-red);
@@ -401,12 +401,11 @@
   display: flex;
   align-items: center;
   justify-content: center;
+  gap: 6px;
   background-color: #c76085;
-  /* User requested pink */
   color: #fff;
   border: none;
-  padding: 6px;
-  /* 사각형 버튼 모양을 위해 상하좌우 동일하게 패딩 부여 */
+  padding: 8px 16px;
   border-radius: 8px;
   cursor: pointer;
   transition: all 0.2s ease;

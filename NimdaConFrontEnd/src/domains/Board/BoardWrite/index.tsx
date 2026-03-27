@@ -3,7 +3,7 @@ import { useNavigate, useParams, useSearchParams } from 'react-router-dom';
 import Layout from '@/components/Layout';
 import { createBoardAPI, getBoardDetailAPI, updateBoardAPI } from '@/api/board';
 import { uploadBoardFileViaS3 } from '@/api/attachments';
-import { getCategoryBySlugAPI, getAllCategoriesAPI } from '@/api/category';
+import { getAllCategoriesAPI } from '@/api/category';
 import ChevronDown from '@/components/icons/ChevronDown';
 import { isAdmin, hasRole } from '@/utils/jwt';
 import type { Category } from '../types';
@@ -11,7 +11,7 @@ import type { Category } from '../types';
 function BoardWritePage() {
   const navigate = useNavigate();
   const { boardType: paramBoardType, id: editId } = useParams<{ boardType: string; id: string }>();
-  const [searchParams] = useSearchParams();
+  const [searchParams] = useSearchParams(); // eslint-disable-line @typescript-eslint/no-unused-vars
 
   const isEditMode = !!editId;
   const slug = paramBoardType?.toLowerCase() || 'news';
@@ -20,6 +20,7 @@ function BoardWritePage() {
   const [parentCategoryId, setParentCategoryId] = useState<number | null>(null);
   const [subCategoryId, setSubCategoryId] = useState<number | null>(null);
   const [showParentDropdown, setShowParentDropdown] = useState(false);
+  const [showSubDropdown, setShowSubDropdown] = useState(false);
 
   const [title, setTitle] = useState('');
   const [content, setContent] = useState('');
@@ -126,6 +127,19 @@ function BoardWritePage() {
     .filter(c => c.name !== '카르텔' || hasRole('ROLE_CARTEL') || isAdmin());
   const currentParentCat = allCategories.find(c => c.id === parentCategoryId);
   const subCategories = allCategories.filter(c => c.parentId === parentCategoryId && c.isActive);
+  const currentSubCat = allCategories.find(c => c.id === subCategoryId);
+
+  // 현재 선택된 소분류(혹은 대분류)의 availableTags를 파싱
+  const currentTagList: string[] = (() => {
+    const targetCat = currentSubCat || currentParentCat;
+    if (!targetCat?.availableTags) return [];
+    try {
+      const parsed = JSON.parse(targetCat.availableTags);
+      return Array.isArray(parsed) ? parsed : [];
+    } catch {
+      return [];
+    }
+  })();
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -263,10 +277,11 @@ function BoardWritePage() {
       <div className="bw-page">
         <form onSubmit={handleSubmit} className="bw-container">
 
-          {/* ── 상단: 대분류 게시판 선택 ── */}
+          {/* ── 상단: 대분류 + 소분류 게시판 선택 ── */}
           <div className="bw-top-bar">
+            {/* 대분류 */}
             <span className="bw-label">게시판</span>
-            <div className="bw-category-selector" onClick={() => setShowParentDropdown(p => !p)}>
+            <div className="bw-category-selector" onClick={() => { setShowParentDropdown(p => !p); setShowSubDropdown(false); }}>
               <span className="bw-category-selected">
                 {currentParentCat ? currentParentCat.name : '선택하세요'}
               </span>
@@ -282,9 +297,13 @@ function BoardWritePage() {
                       onClick={(e) => {
                         e.stopPropagation();
                         setParentCategoryId(cat.id);
-                        // 부모가 바뀌면 자식을 첫 번째 자식으로 초기화 거나 null
                         const children = allCategories.filter(c => c.parentId === cat.id);
-                        setSubCategoryId(children.length > 0 ? children[0].id : cat.id);
+                        if (children.length > 0) {
+                          setSubCategoryId(children[0].id);
+                        } else {
+                          setSubCategoryId(cat.id);
+                        }
+                        setTag('');
                         setShowParentDropdown(false);
                       }}
                     >
@@ -294,6 +313,39 @@ function BoardWritePage() {
                 </div>
               )}
             </div>
+
+            {/* 소분류 (하위 카테고리가 있을 때만 표시) */}
+            {subCategories.length > 0 && (
+              <>
+                <span className="bw-label" style={{ marginLeft: '16px' }}>소분류</span>
+                <div className="bw-category-selector" onClick={() => { setShowSubDropdown(p => !p); setShowParentDropdown(false); }}>
+                  <span className="bw-category-selected">
+                    {currentSubCat ? currentSubCat.name : '선택하세요'}
+                  </span>
+                  <span className={`bw-chevron ${showSubDropdown ? 'bw-chevron--open' : ''}`}>
+                    <ChevronDown />
+                  </span>
+                  {showSubDropdown && (
+                    <div className="bw-category-dropdown">
+                      {subCategories.map(sub => (
+                        <div
+                          key={sub.id}
+                          className={`bw-category-option ${sub.id === subCategoryId ? 'bw-category-option--active' : ''}`}
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            setSubCategoryId(sub.id);
+                            setTag('');
+                            setShowSubDropdown(false);
+                          }}
+                        >
+                          {sub.name}
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                </div>
+              </>
+            )}
           </div>
 
           <div className="bw-divider" />
@@ -430,27 +482,24 @@ function BoardWritePage() {
 
           <div className="bw-divider" />
 
-          {/* ── 하위 카테고리 선택 (칩) ── */}
+          {/* ── 태그 선택 (소분류의 availableTags 기반) ── */}
           <div className="bw-section">
             <span className="bw-section-label">세부 카테고리</span>
-            {subCategories.length > 0 ? (
+            {currentTagList.length > 0 ? (
               <div className="bw-tag-list">
-                {subCategories.map((sub) => (
+                {currentTagList.map((tagOption) => (
                   <button
-                    key={sub.id}
+                    key={tagOption}
                     type="button"
-                    className={`bw-tag-chip ${subCategoryId === sub.id ? 'bw-tag-chip--active' : ''}`}
-                    onClick={() => setSubCategoryId(sub.id)}
+                    className={`bw-tag-chip ${tag === tagOption ? 'bw-tag-chip--active' : ''}`}
+                    onClick={() => setTag(tag === tagOption ? '' : tagOption)}
                   >
-                    #{sub.name}
+                    #{tagOption}
                   </button>
                 ))}
               </div>
             ) : (
-              <p className="bw-tag-hint">선택한 게시판에 세부 카테고리가 없습니다.</p>
-            )}
-            {!subCategoryId && subCategories.length > 0 && (
-              <p className="bw-tag-required">게시글 분류를 위한 세부 카테고리를 선택해 주세요.</p>
+              <p className="bw-tag-hint">카테고리가 없습니다.</p>
             )}
           </div>
 
