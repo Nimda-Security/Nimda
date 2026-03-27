@@ -1,8 +1,9 @@
 package com.nimda.cite.alarm.controller;
 
 import com.nimda.cite.alarm.service.AlarmService;
-import com.nimda.cup.common.util.JwtUtil;
+import com.nimda.cup.user.security.CustomUserDetails;
 import lombok.RequiredArgsConstructor;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.servlet.mvc.method.annotation.SseEmitter;
 
@@ -11,11 +12,10 @@ import org.springframework.web.servlet.mvc.method.annotation.SseEmitter;
 @RequestMapping("/api/alarm")
 public class AlarmController {
     private final AlarmService alarmService;
-    private final JwtUtil jwtUtil;
 
     @GetMapping("/subscribe")
-    public SseEmitter subscribe(@RequestHeader("Authorization") String authHeader) {
-        Long userId = jwtUtil.extractUserId(authHeader.substring(7));
+    public SseEmitter subscribe(@AuthenticationPrincipal CustomUserDetails userDetails) {
+        Long userId = userDetails.getUser().getId();
         return alarmService.subscribe(userId);
     }
 }

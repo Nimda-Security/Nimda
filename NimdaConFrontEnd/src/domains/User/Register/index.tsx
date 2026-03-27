@@ -202,22 +202,19 @@ const handleSubmit = async () => {
                   {/* 학과 */}
                   <div className="reg__field">
                     <div className="reg__label">학과<span className="reg__required">*</span></div>
-                    <div className="flex flex-wrap gap-2 py-1">
-                      {['소프트웨어학과', '컴퓨터공학과', '스마트정보기술공학과', '전기전자제어공학부', '인공지능학부', '정보통신공학과'].map(m => (
-                        <button
-                          key={m}
-                          type="button"
-                          onClick={() => set("major", m)}
-                          className={`h-[32px] px-3 rounded-[4px] text-[12px] font-semibold transition-all border-2 ${
-                            form.major === m 
-                              ? 'bg-[#d97399] border-[#d97399] text-white shadow-sm' 
-                              : 'bg-white border-[#e5e5e5] text-[#8b8b8b] hover:border-[#d97399]'
-                          }`}
-                        >
-                          {m}
-                        </button>
-                      ))}
-                    </div>
+                    <select
+                      className={`reg__input-box ${!form.major ? "reg__input-box--placeholder" : ""} ${errors.major ? "reg__input-box--error" : ""}`}
+                      value={form.major}
+                      onChange={(e) => set("major", e.target.value)}
+                    >
+                      <option value="" disabled hidden>전공을 선택해 주세요</option>
+                      <option value="소프트웨어학과">소프트웨어학과</option>
+                      <option value="컴퓨터공학과">컴퓨터공학과</option>
+                      <option value="스마트정보기술공학과">스마트정보기술공학과</option>
+                      <option value="전기전자제어공학부">전기전자제어공학부</option>
+                      <option value="인공지능학부">인공지능학부</option>
+                      <option value="정보통신공학과">정보통신공학과</option>
+                    </select>
                     {errors.major && <div className="reg__error">{errors.major}</div>}
                   </div>
 

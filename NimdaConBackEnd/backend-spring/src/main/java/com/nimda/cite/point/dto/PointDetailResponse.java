@@ -1,7 +1,6 @@
 package com.nimda.cite.point.dto;
 
 import com.nimda.cite.point.entity.PointDetail;
-import com.nimda.cite.point.entity.UserBalance;
 import lombok.Builder;
 import lombok.Getter;
 

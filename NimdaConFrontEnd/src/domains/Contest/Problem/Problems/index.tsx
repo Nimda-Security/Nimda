@@ -13,7 +13,7 @@ const useProblems = () => {
     const fetchProblems = async () => {
       try {
         setLoading(true);
-        const res = await fetch('/api/problems');
+        const res = await fetch('/api/problems', { credentials: 'include' });
         if (!res.ok) throw new Error('응답 에러');
         const data = await res.json();
         if (data.problems && Array.isArray(data.problems)) {

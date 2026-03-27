@@ -10,13 +10,14 @@ import com.nimda.cite.attachment.store.S3FileStore;
 import com.nimda.cite.board.constants.CategoryConstants;
 import com.nimda.cite.common.response.ApiResponse;
 import com.nimda.cite.common.s3.S3Service;
-import com.nimda.cup.common.util.JwtUtil;
+import com.nimda.cup.user.security.CustomUserDetails;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.core.io.Resource;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
@@ -41,16 +42,13 @@ public class AttachmentController {
 
     private final AttachmentService attachmentService;
     private final FileStore fileStore;
-    private final JwtUtil jwtUtil;
     @Autowired(required = false)
     private S3Service s3Service;
 
     public AttachmentController(AttachmentService attachmentService,
-                                FileStore fileStore,
-                                JwtUtil jwtUtil) {
+                                FileStore fileStore) {
         this.attachmentService = attachmentService;
         this.fileStore = fileStore;
-        this.jwtUtil = jwtUtil;
     }
 
     /**
@@ -59,11 +57,11 @@ public class AttachmentController {
      */
     @PostMapping("/upload")
     public ResponseEntity<?> upload(
-            @RequestHeader(value = "Authorization", required = false) String authHeader,
+            @AuthenticationPrincipal CustomUserDetails userDetails,
             @RequestParam("file") MultipartFile file,
             @RequestParam("boardId") Long boardId,
             @RequestParam("categoryId") Long categoryId) {
-        Long userId = resolveUserId(authHeader);
+        Long userId = userDetails != null ? userDetails.getUser().getId() : null;
         if (userId == null) {
             return ApiResponse.fail("로그인이 필요합니다.").toResponse(HttpStatus.UNAUTHORIZED);
         }
@@ -155,8 +153,8 @@ public class AttachmentController {
      */
     @GetMapping("/my")
     public ResponseEntity<?> myFiles(
-            @RequestHeader(value = "Authorization", required = false) String authHeader) {
-        Long userId = resolveUserId(authHeader);
+            @AuthenticationPrincipal CustomUserDetails userDetails) {
+        Long userId = userDetails != null ? userDetails.getUser().getId() : null;
         if (userId == null) {
             return ApiResponse.fail("로그인이 필요합니다.").toResponse(HttpStatus.UNAUTHORIZED);
         }
@@ -169,9 +167,9 @@ public class AttachmentController {
      */
     @DeleteMapping
     public ResponseEntity<?> delete(
-            @RequestHeader(value = "Authorization", required = false) String authHeader,
+            @AuthenticationPrincipal CustomUserDetails userDetails,
             @RequestBody AttachmentDeleteRequestDto request) {
-        Long userId = resolveUserId(authHeader);
+        Long userId = userDetails != null ? userDetails.getUser().getId() : null;
         if (userId == null) {
             return ApiResponse.fail("로그인이 필요합니다.").toResponse(HttpStatus.UNAUTHORIZED);
         }
@@ -213,9 +211,9 @@ public class AttachmentController {
      */
     @PostMapping("/register")
     public ResponseEntity<?> registerFromS3(
-            @RequestHeader(value = "Authorization", required = false) String authHeader,
+            @AuthenticationPrincipal CustomUserDetails userDetails,
             @RequestBody AttachmentRegisterRequestDto request) {
-        Long userId = resolveUserId(authHeader);
+        Long userId = userDetails != null ? userDetails.getUser().getId() : null;
         if (userId == null) {
             return ApiResponse.fail("로그인이 필요합니다.").toResponse(HttpStatus.UNAUTHORIZED);
         }
@@ -236,17 +234,6 @@ public class AttachmentController {
                 "파일이 등록되었습니다.",
                 Map.of("attachmentId", attachmentId)
         ).toResponse(HttpStatus.CREATED);
-    }
-
-    private Long resolveUserId(String authHeader) {
-        if (authHeader == null || !authHeader.startsWith("Bearer ")) {
-            return null;
-        }
-        String token = authHeader.substring(7);
-        if (jwtUtil.isTokenExpired(token)) {
-            return null;
-        }
-        return jwtUtil.extractUserId(token);
     }
 
     private String getContentType(String ext) {

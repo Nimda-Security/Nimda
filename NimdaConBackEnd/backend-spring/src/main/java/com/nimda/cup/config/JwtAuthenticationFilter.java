@@ -39,53 +39,51 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
 
     @Override
     protected void doFilterInternal(@NonNull HttpServletRequest request,
-            @NonNull HttpServletResponse response,
-            @NonNull FilterChain filterChain) throws ServletException, IOException {
+                                    @NonNull HttpServletResponse response,
+                                    @NonNull FilterChain filterChain) throws ServletException, IOException {
 
-        // Authorization 헤더에서 토큰 추출
-        String authHeader = request.getHeader("Authorization");
         String token = null;
 
-        // "Bearer " 접두사 제거
-        if (authHeader != null && authHeader.startsWith("Bearer ")) {
-            token = authHeader.substring(7);
+        // 1. Authorization 헤더 대신 쿠키에서 토큰 추출
+        jakarta.servlet.http.Cookie[] cookies = request.getCookies();
+        if (cookies != null) {
+            for (jakarta.servlet.http.Cookie cookie : cookies) {
+                if ("Authorization".equals(cookie.getName())) { // 쿠키 이름 설정
+                    token = cookie.getValue();
+                    break;
+                }
+            }
+        }
+
+        // 2. 토큰이 존재할 경우 기존 로직 수행
+        if (token != null) {
             try {
-                // 토큰에서 사용자 ID 추출
                 Long userId = jwtUtil.extractUserId(token);
 
-                if (userId != null) {
-                    // 사용자 ID로 사용자 조회 (권한 정보 포함)
+                if (userId != null && SecurityContextHolder.getContext().getAuthentication() == null) {
                     Optional<User> userOpt = userRepository.findById(userId);
 
                     if (userOpt.isPresent()) {
                         User user = userOpt.get();
 
-                        // 토큰 유효성 검증
+                        // 닉네임 기반 검증 (기존 로직 유지)
                         if (jwtUtil.validateToken(token, user.getNickname())) {
-                            // CustomUserDetails 생성
                             CustomUserDetails customUserDetails = new CustomUserDetails(user);
-
-                            // Authentication 객체 생성
                             UsernamePasswordAuthenticationToken authentication = new UsernamePasswordAuthenticationToken(
                                     customUserDetails,
                                     null,
                                     customUserDetails.getAuthorities());
 
-                            // 요청 정보 설정
                             authentication.setDetails(new WebAuthenticationDetailsSource().buildDetails(request));
-
-                            // SecurityContext에 인증 정보 설정
                             SecurityContextHolder.getContext().setAuthentication(authentication);
                         }
                     }
                 }
             } catch (Exception e) {
-                // 토큰 검증 실패 시 로그만 남기고 계속 진행
                 logger.error("JWT 토큰 검증 실패", e);
             }
         }
 
-        // 다음 필터로 요청 전달
         filterChain.doFilter(request, response);
     }
 }
