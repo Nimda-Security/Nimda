@@ -294,7 +294,7 @@ function BoardWritePage() {
       const isImage = f.type.startsWith('image/');
       const result = await uploadBoardFileViaS3(f, targetCategoryId);
       if (result.ok) {
-        setAttachedFiles(prev => [...prev, { id: result.attachmentId, name: f.name, size: f.size }]);
+        setAttachedFiles(prev => [...prev, { id: result.attachmentId, name: f.name, size: f.size, isInline: isImage }]);
         if (isImage) {
           const imgUrl = `/api/cite/attachments/${result.attachmentId}/download?disposition=inline`;
           const safeAlt = f.name.replace(/&/g, '&amp;').replace(/"/g, '&quot;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
