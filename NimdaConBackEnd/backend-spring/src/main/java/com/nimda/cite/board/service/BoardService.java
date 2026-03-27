@@ -148,8 +148,20 @@ Long categoryId = board.getCategory() != null ? board.getCategory().getId() : nu
         Board board = boardRepository.findById(id)
                 .orElseThrow(() -> new RuntimeException("게시글을 찾을 수 없습니다: " + id));
 
-        // 현재 고정 상태를 반전
-        board.setPinned(!board.getPinned());
+        boolean willBePinned = !board.getPinned();
+        board.setPinned(willBePinned);
+
+        // 고정 시 태그가 없으면 "필독" 자동 설정, 해제 시 "필독" 태그 제거
+        if (willBePinned) {
+            if (board.getTag() == null || board.getTag().isBlank()) {
+                board.setTag("필독");
+            }
+        } else {
+            if ("필독".equals(board.getTag())) {
+                board.setTag(null);
+            }
+        }
+
         boardRepository.save(board);
 
         return board;
