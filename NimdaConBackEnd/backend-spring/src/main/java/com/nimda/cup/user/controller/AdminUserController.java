@@ -145,4 +145,93 @@ public class AdminUserController {
         }
     }
 
+    /**
+     * 서버에 등록된 전체 권한 목록 조회
+     */
+    @GetMapping("/roles")
+    public ResponseEntity<?> getAvailableRoles() {
+        try {
+            List<String> roles = adminUserService.findAllRoleNames();
+
+            Map<String, Object> response = new HashMap<>();
+            response.put("success", true);
+            response.put("roles", roles);
+
+            return ResponseEntity.ok(response);
+        } catch (Exception e) {
+            Map<String, Object> error = new HashMap<>();
+            error.put("success", false);
+            error.put("message", "권한 목록 조회 중 오류가 발생했습니다: " + e.getMessage());
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(error);
+        }
+    }
+
+    /**
+     * 사용자 권한 1개를 추가 부여
+     */
+    @PutMapping("/{id}/role")
+    public ResponseEntity<?> grantRole(
+            @PathVariable Long id,
+            @RequestBody Map<String, String> request) {
+        try {
+            String role = request != null ? request.get("role") : null;
+            User updatedUser = adminUserService.grantRole(id, role);
+
+            List<String> assignedRoles = updatedUser.getAuthorities().stream()
+                    .map(a -> a.getAuthorityName())
+                    .toList();
+
+            Map<String, Object> response = new HashMap<>();
+            response.put("success", true);
+            response.put("message", "권한이 부여되었습니다.");
+            response.put("roles", assignedRoles);
+
+            return ResponseEntity.ok(response);
+        } catch (RuntimeException e) {
+            Map<String, Object> error = new HashMap<>();
+            error.put("success", false);
+            error.put("message", e.getMessage());
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(error);
+        } catch (Exception e) {
+            Map<String, Object> error = new HashMap<>();
+            error.put("success", false);
+            error.put("message", "권한 부여 중 오류가 발생했습니다: " + e.getMessage());
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(error);
+        }
+    }
+
+    /**
+     * 사용자 권한 1개 제거
+     */
+    @PutMapping("/{id}/role/remove")
+    public ResponseEntity<?> revokeRole(
+            @PathVariable Long id,
+            @RequestBody Map<String, String> request) {
+        try {
+            String role = request != null ? request.get("role") : null;
+            User updatedUser = adminUserService.revokeRole(id, role);
+
+            List<String> assignedRoles = updatedUser.getAuthorities().stream()
+                    .map(a -> a.getAuthorityName())
+                    .toList();
+
+            Map<String, Object> response = new HashMap<>();
+            response.put("success", true);
+            response.put("message", "권한이 제거되었습니다.");
+            response.put("roles", assignedRoles);
+
+            return ResponseEntity.ok(response);
+        } catch (RuntimeException e) {
+            Map<String, Object> error = new HashMap<>();
+            error.put("success", false);
+            error.put("message", e.getMessage());
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(error);
+        } catch (Exception e) {
+            Map<String, Object> error = new HashMap<>();
+            error.put("success", false);
+            error.put("message", "권한 제거 중 오류가 발생했습니다: " + e.getMessage());
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(error);
+        }
+    }
+
 }
