@@ -11,6 +11,7 @@ import type { Board } from '../types';
 import type { BoardAttachmentMeta } from '../types';
 import CommentSection from '@/domains/Comment';
 import BoardLikeButton from './BoardLikeButton';
+import Avatar from '@/components/Avatar/Avatar';
 import { Heart } from '@/components/icons/Heart';
 import './BoardDetail.css';
 
@@ -159,19 +160,18 @@ function BoardDetailPage() {
   return (
     <Layout>
       <div>
-        <button type="button" onClick={handleGoBack} className="board-detail__back">← 목록으로 돌아가기</button>
-
         {/* Head */}
         <header className="board-detail__head">
-          <p className="board-detail__category">{board.category?.name ?? boardType ?? '게시판'}</p>
+          <button type="button" onClick={handleGoBack} className="board-detail__back">
+            ← {board.category?.name ?? boardType ?? '게시판'}
+          </button>
           <h1 className="board-detail__title">{board.title}</h1>
 
           <div className="board-detail__meta">
-            <img
-              src={board.author?.profileImage || "/default_user_profile.png"}
-              alt=""
+            <Avatar
+              src={board.author?.profileImage}
+              size={32}
               className="board-detail__avatar"
-              style={{ width: 32, height: 32, borderRadius: '50%', objectFit: 'cover' }}
             />
             <Link
               to={board.author?.nickname ? `/user/${board.author.nickname}` : '#'}

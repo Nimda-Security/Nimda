@@ -29,14 +29,6 @@
   margin-bottom: 16px;
 }
 
-.board-detail__category {
-  font-size: 16px;
-  font-weight: 500;
-  color: var(--color-gray-500);
-  line-height: 1.5;
-  margin-bottom: 8px;
-}
-
 .board-detail__title {
   font-size: 24px;
   font-weight: 700;

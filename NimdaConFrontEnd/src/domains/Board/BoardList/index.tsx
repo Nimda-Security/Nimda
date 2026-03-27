@@ -8,32 +8,13 @@ import { CATEGORY_LABELS } from '../constants';
 import { Heart } from '@/components/icons/Heart';
 import { MessageBox } from '@/components/icons/MessageBox';
 import { isAdmin, hasRole } from '@/utils/jwt';
+import { formatDate } from '@/utils/formatDate';
 import './BoardList.css';
+import { useLikeStatuses } from "@/domains/Board/useLikeStatuses";
 
 interface BoardListPageProps {
   slug?: string;
 }
-
-/**
- * 날짜 포맷팅
- * - 오늘: "15:38"
- * - 올해: "02.20"
- * - 작년 이전: "25.12.31"
- */
-const formatDate = (dateStr: string): string => {
-  const date = new Date(dateStr);
-  const now = new Date();
-  const isToday = date.toDateString() === now.toDateString();
-  const isThisYear = date.getFullYear() === now.getFullYear();
-
-  if (isToday) {
-    return `${String(date.getHours()).padStart(2, '0')}:${String(date.getMinutes()).padStart(2, '0')}`;
-  }
-  if (isThisYear) {
-    return `${String(date.getMonth() + 1).padStart(2, '0')}.${String(date.getDate()).padStart(2, '0')}`;
-  }
-  return `${String(date.getFullYear()).slice(2)}.${String(date.getMonth() + 1).padStart(2, '0')}.${String(date.getDate()).padStart(2, '0')}`;
-};
 
 function BoardListPage({ slug: propSlug }: BoardListPageProps) {
   const navigate = useNavigate();
@@ -59,6 +40,8 @@ function BoardListPage({ slug: propSlug }: BoardListPageProps) {
   const [searchTrigger, setSearchTrigger] = useState(0);
   const [selectedTag, setSelectedTag] = useState<string | null>(null); // 선택된 태그 (null = 전체)
   const [availableTags, setAvailableTags] = useState<string[]>([]); // 사용 가능한 태그 목록
+
+  const likeStatuses = useLikeStatuses([...boards, ...pinnedPosts, ...noticePosts]);
 
   // 공지사항(필독) 가져오기 - notice 카테고리의 글 (컴포넌트 마운트 시 1회)
   useEffect(() => {
@@ -335,21 +318,20 @@ function BoardListPage({ slug: propSlug }: BoardListPageProps) {
           <h1 className="board-list__title">{categoryName}</h1>
           {canWrite && (
           <button className="board-list__write-btn" onClick={handleWriteClick}>
-            <div className="board-list__write-icon-box">
-              <svg
-                width="16"
-                height="16"
-                viewBox="0 0 24 24"
-                fill="none"
-                stroke="currentColor"
-                strokeWidth="2.5"
-                strokeLinecap="round"
-                strokeLinejoin="round"
-              >
-                <path d="M12 20h9"></path>
-                <path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"></path>
-              </svg>
-            </div>
+            <svg
+              width="16"
+              height="16"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth="2.5"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+            >
+              <path d="M12 20h9"></path>
+              <path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"></path>
+            </svg>
+            <span style={{ fontWeight: 600, fontSize: '15px' }}>글쓰기</span>
           </button>
           )}
         </div>
@@ -565,6 +547,16 @@ function BoardListPage({ slug: propSlug }: BoardListPageProps) {
                       alt=""
                       className="board-list__avatar"
                     />
+                    <Link
+                      to={post.author?.nickname ? `/user/${post.author.nickname}` : '#'}
+                      className="board-list__author"
+                      onClick={(e) => e.stopPropagation()}
+                    >
+                      {post.author?.nickname || '익명'}
+                    </Link>
+                    <span className="board-list__date">
+                      {formatDate(post.createdAt)}
+                    </span>
                   </div>
                   <div className="board-list__row-divider" />
                 </div>
