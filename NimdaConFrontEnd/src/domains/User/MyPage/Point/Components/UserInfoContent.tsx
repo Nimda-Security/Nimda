@@ -168,6 +168,10 @@ const UserInfoContent: React.FC<UserInfoContentProps> = ({
       return;
     }
 
+    if (field === 'studentNum' && trimmedValue.length !== 9) {
+      return;
+    }
+
     setSavingField(field);
     try {
       const res = await updateProfileAPI({ [field]: trimmedValue });
@@ -401,15 +405,27 @@ const UserInfoContent: React.FC<UserInfoContentProps> = ({
                   학과
                 </span>
                 <div className="flex items-center gap-3">
-                  <input
-                    type="text"
+                  <select
                     autoFocus
                     value={majorInput}
                     onChange={(e) => setMajorInput(e.target.value)}
-                    className="flex-1 h-[32px] border-2 border-[#d97399] rounded-[4px] pl-5 pr-3 text-[14px] font-medium text-[#525252] outline-none"
-                    style={{ paddingLeft: '16px' }}
-                    maxLength={20}
-                  />
+                    className="flex-1 h-[32px] border-2 border-[#d97399] rounded-[4px] text-[14px] font-medium text-[#525252] outline-none cursor-pointer bg-white appearance-none"
+                    style={{ 
+                      paddingLeft: '12px',
+                      paddingRight: '32px',
+                      backgroundImage: `url("data:image/svg+xml,%3Csvg width='10' height='6' viewBox='0 0 10 6' fill='none' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M1 1L5 5L9 1' stroke='%23D97399' stroke-width='1.5' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E")`,
+                      backgroundRepeat: 'no-repeat',
+                      backgroundPosition: 'calc(100% - 12px) center'
+                    }}
+                  >
+                    <option value="" disabled>전공 선택</option>
+                    <option value="소프트웨어학과">소프트웨어학과</option>
+                    <option value="컴퓨터공학과">컴퓨터공학과</option>
+                    <option value="스마트정보기술공학과">스마트정보기술공학과</option>
+                    <option value="전기전자제어공학부">전기전자제어공학부</option>
+                    <option value="인공지능학부">인공지능학부</option>
+                    <option value="정보통신공학과">정보통신공학과</option>
+                  </select>
                   <button
                     onClick={() =>
                       handleSaveField('major', majorInput, setIsEditingMajor)
@@ -450,7 +466,7 @@ const UserInfoContent: React.FC<UserInfoContentProps> = ({
                     type="text"
                     autoFocus
                     value={studentNumInput}
-                    onChange={(e) => setStudentNumInput(e.target.value)}
+                    onChange={(e) => setStudentNumInput(e.target.value.replace(/[^0-9]/g, ''))}
                     className="flex-1 h-[32px] border-2 border-[#d97399] rounded-[4px] pl-5 pr-3 text-[14px] font-medium text-[#525252] outline-none"
                     style={{ paddingLeft: '16px' }}
                     maxLength={9}
@@ -463,8 +479,9 @@ const UserInfoContent: React.FC<UserInfoContentProps> = ({
                         setIsEditingStudentNum
                       )
                     }
-                    disabled={savingField === 'studentNum'}
+                    disabled={savingField === 'studentNum' || studentNumInput.length !== 9}
                     className="shrink-0"
+                    style={{ opacity: (savingField === 'studentNum' || studentNumInput.length !== 9) ? 0.3 : 1 }}
                   >
                     <img src="/check 1.svg" alt="저장" className="w-5 h-5" />
                   </button>
@@ -478,6 +495,11 @@ const UserInfoContent: React.FC<UserInfoContentProps> = ({
                     <img src="/no 1.svg" alt="취소" className="w-5 h-5" />
                   </button>
                 </div>
+                {studentNumInput.length !== 9 && (
+                  <span className="text-[12px] text-[#d97399] font-medium pl-1">
+                    학번은 9자리로 입력해야 합니다.
+                  </span>
+                )}
               </div>
             ) : (
               <InfoField
