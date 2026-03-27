@@ -8,7 +8,6 @@ import { getAttachmentPresignedUrl } from "@/api/attachments";
 import type { Board } from "@/domains/Board/types";
 import "./PhotoGalleryBoard.css";
 import { formatDate } from '@/utils/formatDate';
-import { useLikeStatuses } from "@/domains/Board/useLikeStatuses";
 
 const IMAGE_EXTENSIONS = ["jpg", "jpeg", "png", "gif", "webp", "bmp", "svg"];
 
@@ -36,7 +35,6 @@ const PhotoGalleryBoard: React.FC = () => {
   const [selectedYear, setSelectedYear] = useState<number | null>(null);
   // 모든 페이지에서 누적한 연도 목록
   const [availableYears, setAvailableYears] = useState<number[]>([]);
-  const likeStatuses = useLikeStatuses(posts);
 
   const loadPosts = useCallback(async (page: number) => {
     setLoading(true);
@@ -200,7 +198,7 @@ const PhotoGalleryBoard: React.FC = () => {
                       <p className="photo-gallery-board__title">{post.title}</p>
                       <div className="photo-gallery-board__meta">
                         <span className="photo-gallery-board__meta-likes">
-                          <Heart filled={likeStatuses[post.id] ?? false} />
+                          <Heart filled={post.isLiked} />
                           <span>{post.likeCount ?? 0}</span>
                         </span>
                         <span className="photo-gallery-board__meta-sep">|</span>
