@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useMemo } from 'react';
 import { useNavigate, useParams, useSearchParams, Link } from 'react-router-dom';
 import Layout from '@/components/Layout';
 import { getBoardListAPI, getPinnedPostsAPI } from '@/api/board';
@@ -22,7 +22,7 @@ function BoardListPage({ slug: propSlug }: BoardListPageProps) {
   const [searchParams] = useSearchParams();
 
   const slug = propSlug || paramBoardType?.toLowerCase() || 'news';
-  const tabFromUrl = searchParams.get('tab'); // ?tab=xxx 쿼리 파라미터
+  const tabFromUrl = searchParams.get('tab');
 
   const [boards, setBoards] = useState<Board[]>([]);
   const [pinnedPosts, setPinnedPosts] = useState<Board[]>([]);
@@ -36,14 +36,19 @@ function BoardListPage({ slug: propSlug }: BoardListPageProps) {
   const [totalPages, setTotalPages] = useState(0);
   const [activeTab, setActiveTab] = useState('all');
   const [searchKeyword, setSearchKeyword] = useState('');
-  // 검색 실행 트리거 (검색 버튼 클릭 시 증가)
   const [searchTrigger, setSearchTrigger] = useState(0);
-  const [selectedTag, setSelectedTag] = useState<string | null>(null); // 선택된 태그 (null = 전체)
-  const [availableTags, setAvailableTags] = useState<string[]>([]); // 사용 가능한 태그 목록
+  const [selectedTag, setSelectedTag] = useState<string | null>(null);
+  const [availableTags, setAvailableTags] = useState<string[]>([]);
 
-  const likeStatuses = useLikeStatuses([...boards, ...pinnedPosts, ...noticePosts]);
+  // ★ 해결 포인트 1: 의존성 배열의 참조값 고정
+  // boards나 pinnedPosts가 실제로 변하지 않으면 새로운 배열을 만들지 않음
+  const allPostsForLikes = useMemo(() => {
+    return [...noticePosts, ...pinnedPosts, ...boards];
+  }, [noticePosts, pinnedPosts, boards]);
 
-  // 공지사항(필독) 가져오기 - notice 카테고리의 글 (컴포넌트 마운트 시 1회)
+  const likeStatuses = useLikeStatuses(allPostsForLikes);
+
+  // 공지사항 로딩 (최초 1회)
   useEffect(() => {
     let cancelled = false;
     const fetchNotice = async () => {
@@ -65,25 +70,22 @@ function BoardListPage({ slug: propSlug }: BoardListPageProps) {
           setNoticePosts(listResponse.posts);
         }
       } catch {
-        // 공지사항 조회 실패해도 무시
+        /* ignore */
       }
     };
     fetchNotice();
-    return () => {
-      cancelled = true;
-    };
+    return () => { cancelled = true; };
   }, []);
 
-  // slug 변경 시: 카테고리 정보 + 하위 카테고리 로딩, 상태 초기화
+  // 카테고리 정보 로딩
   useEffect(() => {
     let cancelled = false;
-    // 상태 초기화
     setCategory(null);
     setChildCategories([]);
     setActiveTab(tabFromUrl || 'all');
     setCurrentPage(0);
     setSearchKeyword('');
-    setSelectedTag(null); // 태그 필터 초기화
+    setSelectedTag(null);
 
     const loadCategoryInfo = async () => {
       try {
@@ -101,66 +103,47 @@ function BoardListPage({ slug: propSlug }: BoardListPageProps) {
           setChildCategories(children);
         }
       } catch {
-        // 카테고리 정보 로딩 실패해도 무시
+        /* ignore */
       }
     };
     loadCategoryInfo();
-    return () => {
-      cancelled = true;
-    };
+    return () => { cancelled = true; };
   }, [slug, tabFromUrl]);
 
-  // 태그 목록 수집:
-  // - 0단 카테고리인 경우: 하위 1단 카테고리들의 태그 수집
-  // - 1단 카테고리인 경우: 해당 카테고리의 태그 수집
+  // 태그 목록 수집
   useEffect(() => {
     const collectTags = () => {
       const tagSet = new Set<string>();
-
-      // 0단 카테고리인 경우 (하위 카테고리가 있는 경우): 하위 카테고리들의 태그만 수집
       if (childCategories.length > 0) {
         childCategories.forEach((cat) => {
           if (cat.availableTags) {
             try {
               const tags = JSON.parse(cat.availableTags);
-              if (Array.isArray(tags)) {
-                tags.forEach((tag: string) => tagSet.add(tag));
-              }
-            } catch {
-              // JSON 파싱 실패 시 무시
-            }
+              if (Array.isArray(tags)) tags.forEach((tag: string) => tagSet.add(tag));
+            } catch { /* ignore */ }
           }
         });
-      }
-      // 1단 카테고리인 경우: 현재 카테고리의 태그 수집
-      else if (category) {
-        if (category.availableTags) {
-          try {
-            const tags = JSON.parse(category.availableTags);
-            if (Array.isArray(tags)) {
-              tags.forEach((tag: string) => tagSet.add(tag));
-            }
-          } catch {
-            // JSON 파싱 실패 시 무시
-          }
-        }
+      } else if (category?.availableTags) {
+        try {
+          const tags = JSON.parse(category.availableTags);
+          if (Array.isArray(tags)) tags.forEach((tag: string) => tagSet.add(tag));
+        } catch { /* ignore */ }
       }
 
-      setAvailableTags(Array.from(tagSet).sort());
+      const newTags = Array.from(tagSet).sort();
+      // 불필요한 상태 업데이트 방지 (내용이 같으면 업데이트 안 함)
+      setAvailableTags(prev => JSON.stringify(prev) === JSON.stringify(newTags) ? prev : newTags);
     };
-
     collectTags();
   }, [category, childCategories]);
 
-  // 게시글 목록 불러오기 (slug, activeTab, currentPage, searchKeyword 변경 시)
+  // 게시글 목록 불러오기
   useEffect(() => {
     let cancelled = false;
-
     const fetchPosts = async () => {
       try {
         setLoading(true);
         setError(null);
-
         const targetSlug = activeTab === 'all' ? slug : activeTab;
 
         const response = await getBoardListAPI({
@@ -175,24 +158,21 @@ function BoardListPage({ slug: propSlug }: BoardListPageProps) {
         if (cancelled) return;
 
         if (response.success) {
-          // 태그 필터링 적용
           let filteredPosts = response.posts;
           if (selectedTag !== null) {
-            // selectedTag가 null이 아니면 해당 태그만 필터링
-            // selectedTag가 null이면 전체 (필터링 안 함)
             filteredPosts = response.posts.filter((p) => p.tag === selectedTag);
           }
 
           const pinned = filteredPosts.filter((p) => p.pinned);
           const regular = filteredPosts.filter((p) => !p.pinned);
+
           setPinnedPosts(pinned);
           setBoards(regular);
           setTotalPages(response.totalPages);
+
+          // ★ 해결 포인트 2: ID 비교를 통한 무한 루프 방지
           if (activeTab === 'all' && response.category?.id) {
-            // 현재 카테고리 ID와 새로 들어온 ID가 다를 때만 업데이트하여 렌더링 방지
-            if (!category || category.id !== response.category.id) {
-              setCategory(response.category);
-            }
+            setCategory(prev => (prev?.id === response.category.id ? prev : response.category));
           }
         } else {
           setError(response.message);
@@ -211,75 +191,63 @@ function BoardListPage({ slug: propSlug }: BoardListPageProps) {
     };
 
     fetchPosts();
-    return () => {
-      cancelled = true;
-    };
+    return () => { cancelled = true; };
   }, [slug, activeTab, currentPage, searchTrigger, selectedTag]);
 
-  const handleBoardClick = (id: number) => {
-    navigate(`/board/${slug}/${id}`);
-  };
-
+  // 핸들러 함수들
+  const handleBoardClick = (id: number) => navigate(`/board/${slug}/${id}`);
   const handleWriteClick = () => {
-    // 선택된 태그가 있으면 쿼리 파라미터로 전달
-    const tagParam = selectedTag
-      ? `?tag=${encodeURIComponent(selectedTag)}`
-      : '';
+    const tagParam = selectedTag ? `?tag=${encodeURIComponent(selectedTag)}` : '';
     navigate(`/board/${slug}/write${tagParam}`);
   };
-
   const handlePageChange = (page: number) => {
     setCurrentPage(page);
     window.scrollTo({ top: 0, behavior: 'smooth' });
   };
-
   const handleTabClick = (tabSlug: string) => {
     setActiveTab(tabSlug);
     setCurrentPage(0);
   };
-
   const handleSearch = (e: React.FormEvent) => {
     e.preventDefault();
     setCurrentPage(0);
     setSearchTrigger((prev) => prev + 1);
   };
-
   const handleTagClick = (tag: string | null) => {
     setSelectedTag(tag);
     setCurrentPage(0);
   };
 
+  // 렌더링용 변수들
   const categoryName = category?.name || CATEGORY_LABELS[slug] || '게시판';
-
   const getCategoryTagLabel = (post: Board, fallbackLabel?: string) => {
     if (post.tag) return `# ${post.tag}`;
     if (fallbackLabel) return `# ${fallbackLabel}`;
     if (post.category?.name) return `# ${post.category.name}`;
-    return '# 게시글';
+    return '# 게시물';
   };
 
-  // "새 소식" 카테고리(자신 또는 부모)인 경우 ADMIN만 글쓰기 가능
-  const isNewsCategoryGroup = (() => {
+  const isNewsCategoryGroup = useMemo(() => {
     if (!category) return slug === 'news';
     if (category.name === '새 소식') return true;
     if (category.parentId) {
       const parent = allCategories.find((c) => c.id === category.parentId);
-      if (parent && parent.name === '새 소식') return true;
+      return parent?.name === '새 소식';
     }
     return false;
-  })();
+  }, [category, slug, allCategories]);
+
   const canWrite = !isNewsCategoryGroup || isAdmin();
 
-  // "카르텔" 카테고리 접근 권한 확인
-  const isCartelCategoryGroup = (() => {
+  const isCartelCategoryGroup = useMemo(() => {
     if (!category) return false;
     if (category.name === '카르텔') return true;
     if (category.parentId) {
       const parent = allCategories.find((c) => c.id === category.parentId);
-      if (parent && parent.name === '카르텔') return true;
+      return parent?.name === '카르텔';
     }
     return false;
-  })();
+  }, [category, allCategories]);
 
   useEffect(() => {
     if (isCartelCategoryGroup && !hasRole('ROLE_CARTEL') && !isAdmin()) {
@@ -288,342 +256,148 @@ function BoardListPage({ slug: propSlug }: BoardListPageProps) {
     }
   }, [isCartelCategoryGroup, navigate]);
 
-  // 공지사항: notice 카테고리의 고정글 + 현재 카테고리의 고정글 (중복 제거)
-  const allPinnedIds = new Set(pinnedPosts.map((p) => p.id));
-  const globalNotices = noticePosts.filter((p) => !allPinnedIds.has(p.id));
-  // 현재 카테고리가 notice 자체라면 globalNotices 비우기
   const isNoticeCategory = slug === 'notice';
-  const displayGlobalNotices = isNoticeCategory ? [] : globalNotices;
+  const displayGlobalNotices = useMemo(() => {
+    if (isNoticeCategory) return [];
+    const pinnedIds = new Set(pinnedPosts.map(p => p.id));
+    return noticePosts.filter(p => !pinnedIds.has(p.id));
+  }, [isNoticeCategory, noticePosts, pinnedPosts]);
 
-  // 페이지 번호 렌더링용
   const renderPageNumbers = () => {
     const pages: number[] = [];
     const maxVisible = 5;
     let start = Math.max(0, currentPage - Math.floor(maxVisible / 2));
     const end = Math.min(totalPages, start + maxVisible);
-    if (end - start < maxVisible) {
-      start = Math.max(0, end - maxVisible);
-    }
-    for (let i = start; i < end; i++) {
-      pages.push(i);
-    }
+    if (end - start < maxVisible) start = Math.max(0, end - maxVisible);
+    for (let i = start; i < end; i++) pages.push(i);
     return pages;
   };
 
   return (
     <Layout>
       <div className="board-list">
-        {/* 헤더: 제목 + 글쓰기 버튼 */}
         <div className="board-list__header">
           <h1 className="board-list__title">{categoryName}</h1>
           {canWrite && (
-          <button className="board-list__write-btn" onClick={handleWriteClick}>
-            <svg
-              width="16"
-              height="16"
-              viewBox="0 0 24 24"
-              fill="none"
-              stroke="currentColor"
-              strokeWidth="2.5"
-              strokeLinecap="round"
-              strokeLinejoin="round"
-            >
-              <path d="M12 20h9"></path>
-              <path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"></path>
-            </svg>
-            <span style={{ fontWeight: 600, fontSize: '15px' }}>글쓰기</span>
-          </button>
+            <button className="board-list__write-btn" onClick={handleWriteClick}>
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                <path d="M12 20h9"></path>
+                <path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"></path>
+              </svg>
+              <span style={{ fontWeight: 600, fontSize: '15px' }}>글쓰기</span>
+            </button>
           )}
         </div>
 
-        {/* 태그 필터 - 전체는 항상 표시 */}
         <div className="board-list__tag-filter">
-          <button
-            className={`board-list__tag-filter-item ${selectedTag === null ? 'board-list__tag-filter-item--active' : ''}`}
-            onClick={() => handleTagClick(null)}
-          >
-            전체
-          </button>
+          <button className={`board-list__tag-filter-item ${selectedTag === null ? 'board-list__tag-filter-item--active' : ''}`} onClick={() => handleTagClick(null)}>전체</button>
           {availableTags.map((tag) => (
-            <button
-              key={tag}
-              className={`board-list__tag-filter-item ${selectedTag === tag ? 'board-list__tag-filter-item--active' : ''}`}
-              onClick={() => handleTagClick(tag)}
-            >
-              {tag}
-            </button>
+            <button key={tag} className={`board-list__tag-filter-item ${selectedTag === tag ? 'board-list__tag-filter-item--active' : ''}`} onClick={() => handleTagClick(tag)}>{tag}</button>
           ))}
         </div>
 
-        {/* 말머리 탭 */}
         {childCategories.length > 0 && (
           <div className="board-list__tabs">
-            <button
-              className={`board-list__tab ${activeTab === 'all' ? 'board-list__tab--active' : ''}`}
-              onClick={() => handleTabClick('all')}
-            >
-              전체
-            </button>
+            <button className={`board-list__tab ${activeTab === 'all' ? 'board-list__tab--active' : ''}`} onClick={() => handleTabClick('all')}>전체</button>
             {childCategories.map((child) => (
-              <button
-                key={child.id}
-                className={`board-list__tab ${activeTab === child.slug ? 'board-list__tab--active' : ''}`}
-                onClick={() => handleTabClick(child.slug)}
-              >
-                {child.name}
-              </button>
+              <button key={child.id} className={`board-list__tab ${activeTab === child.slug ? 'board-list__tab--active' : ''}`} onClick={() => handleTabClick(child.slug)}>{child.name}</button>
             ))}
           </div>
         )}
 
-        {/* 구분선 */}
         <div className="board-list__divider" />
-
-        {/* 로딩 */}
         {loading && <div className="board-list__status">로딩 중...</div>}
-
-        {/* 에러 */}
-        {error && (
-          <div className="board-list__status board-list__status--error">
-            {error}
-          </div>
-        )}
+        {error && <div className="board-list__status board-list__status--error">{error}</div>}
 
         {!loading && !error && (
           <>
-            {/* ===== 글로벌 공지 (notice 카테고리 고정글) - "필독", 핑크 배경 ===== */}
+            {/* 글로벌 공지 */}
             {displayGlobalNotices.map((post) => (
-              <div
-                key={`notice-${post.id}`}
-                className="board-list__row board-list__row--pinned"
-                onClick={() => navigate(`/board/notice/${post.id}`)}
-              >
+              <div key={`notice-${post.id}`} className="board-list__row board-list__row--pinned" onClick={() => navigate(`/board/notice/${post.id}`)}>
                 <div className="board-list__row-content">
-                  <span className="board-list__category-tag">
-                    {getCategoryTagLabel(post, '필독')}
-                  </span>
+                  <span className="board-list__category-tag">{getCategoryTagLabel(post, '필독')}</span>
                   <div className="board-list__title-line">
-                    <span className="board-list__post-title board-list__post-title--bold">
-                      {post.title}
-                    </span>
-                    {post.commentCount !== undefined && post.commentCount > 0 && (
-                      <span className="board-list__comments">
-                        <MessageBox /> {post.commentCount}
-                      </span>
-                    )}
-                    {post.likeCount !== undefined && post.likeCount > 0 && (
-                      <span className="board-list__likes">
-                        <Heart filled /> {post.likeCount}
-                      </span>
-                    )}
+                    <span className="board-list__post-title board-list__post-title--bold">{post.title}</span>
+                    {post.commentCount !== undefined && post.commentCount > 0 && <span className="board-list__comments"><MessageBox /> {post.commentCount}</span>}
+                    {post.likeCount !== undefined && post.likeCount > 0 && <span className="board-list__likes"><Heart filled={likeStatuses[post.id]} /> {post.likeCount}</span>}
                   </div>
                 </div>
                 <div className="board-list__meta">
                   <div className="board-list__author-info">
-                    <Link
-                      to={post.author?.nickname ? `/user/${post.author.nickname}` : '#'}
-                      className="board-list__author"
-                      onClick={(e) => e.stopPropagation()}
-                    >
-                      {post.author?.nickname || '익명'}
-                    </Link>
-                    <span className="board-list__date">
-                      {formatDate(post.createdAt)}
-                    </span>
+                    <Link to={post.author?.nickname ? `/user/${post.author.nickname}` : '#'} className="board-list__author" onClick={(e) => e.stopPropagation()}>{post.author?.nickname || '익명'}</Link>
+                    <span className="board-list__date">{formatDate(post.createdAt)}</span>
                   </div>
-                  <img
-                    src={
-                      post.author?.profileImage || '/default_user_profile.png'
-                    }
-                    alt=""
-                    className="board-list__avatar"
-                  />
+                  <img src={post.author?.profileImage || '/default_user_profile.png'} alt="" className="board-list__avatar" />
                 </div>
                 <div className="board-list__row-divider" />
               </div>
             ))}
 
-            {/* ===== 현재 카테고리 고정글 - 공지사항이면 "필독", 그 외 "고정", 회색 배경 ===== */}
+            {/* 현재 카테고리 고정글 */}
             {pinnedPosts.map((post) => (
-              <div
-                key={`pinned-${post.id}`}
-                className="board-list__row board-list__row--notice"
-                onClick={() => handleBoardClick(post.id)}
-              >
+              <div key={`pinned-${post.id}`} className="board-list__row board-list__row--notice" onClick={() => handleBoardClick(post.id)}>
                 <div className="board-list__row-content">
-                  <span className="board-list__category-tag">
-                    {getCategoryTagLabel(post, isNoticeCategory ? '필독' : '고정')}
-                  </span>
+                  <span className="board-list__category-tag">{getCategoryTagLabel(post, isNoticeCategory ? '필독' : '고정')}</span>
                   <div className="board-list__title-line">
-                    <span className="board-list__post-title board-list__post-title--bold">
-                      {post.title}
-                    </span>
-                    {post.commentCount !== undefined && post.commentCount > 0 && (
-                      <span className="board-list__comments">
-                        <MessageBox /> {post.commentCount}
-                      </span>
-                    )}
-                    {post.likeCount !== undefined && post.likeCount > 0 && (
-                      <span className="board-list__likes">
-                        <Heart filled /> {post.likeCount}
-                      </span>
-                    )}
+                    <span className="board-list__post-title board-list__post-title--bold">{post.title}</span>
+                    {post.commentCount !== undefined && post.commentCount > 0 && <span className="board-list__comments"><MessageBox /> {post.commentCount}</span>}
+                    {post.likeCount !== undefined && post.likeCount > 0 && <span className="board-list__likes"><Heart filled={likeStatuses[post.id]} /> {post.likeCount}</span>}
                   </div>
                 </div>
                 <div className="board-list__meta">
                   <div className="board-list__author-info">
-                    <Link
-                      to={post.author?.nickname ? `/user/${post.author.nickname}` : '#'}
-                      className="board-list__author"
-                      onClick={(e) => e.stopPropagation()}
-                    >
-                      {post.author?.nickname || '익명'}
-                    </Link>
-                    <span className="board-list__date">
-                      {formatDate(post.createdAt)}
-                    </span>
+                    <Link to={post.author?.nickname ? `/user/${post.author.nickname}` : '#'} className="board-list__author" onClick={(e) => e.stopPropagation()}>{post.author?.nickname || '익명'}</Link>
+                    <span className="board-list__date">{formatDate(post.createdAt)}</span>
                   </div>
-                  <img
-                    src={
-                      post.author?.profileImage || '/default_user_profile.png'
-                    }
-                    alt=""
-                    className="board-list__avatar"
-                  />
+                  <img src={post.author?.profileImage || '/default_user_profile.png'} alt="" className="board-list__avatar" />
                 </div>
                 <div className="board-list__row-divider" />
               </div>
             ))}
 
-            {/* 고정글과 일반글 사이 구분 */}
-
-            {/* ===== 일반 게시글 ===== */}
-            {boards.length === 0 &&
-            pinnedPosts.length === 0 &&
-            displayGlobalNotices.length === 0 ? (
+            {/* 일반 게시글 */}
+            {boards.length === 0 && pinnedPosts.length === 0 && displayGlobalNotices.length === 0 ? (
               <div className="board-list__status">게시글이 없습니다.</div>
             ) : (
               boards.map((post) => (
-                <div
-                  key={post.id}
-                  className="board-list__row"
-                  onClick={() => handleBoardClick(post.id)}
-                >
+                <div key={post.id} className="board-list__row" onClick={() => handleBoardClick(post.id)}>
                   <div className="board-list__row-content">
-                    <span className="board-list__category-tag">
-                      {getCategoryTagLabel(post)}
-                    </span>
+                    <span className="board-list__category-tag">{getCategoryTagLabel(post)}</span>
                     <div className="board-list__title-line">
                       <span className="board-list__post-title">{post.title}</span>
-                      {post.commentCount !== undefined && post.commentCount > 0 && (
-                        <span className="board-list__comments">
-                          <MessageBox /> {post.commentCount}
-                        </span>
-                      )}
-                      {post.likeCount !== undefined && post.likeCount > 0 && (
-                        <span className="board-list__likes">
-                          <Heart filled /> {post.likeCount}
-                        </span>
-                      )}
+                      {post.commentCount !== undefined && post.commentCount > 0 && <span className="board-list__comments"><MessageBox /> {post.commentCount}</span>}
+                      {post.likeCount !== undefined && post.likeCount > 0 && <span className="board-list__likes"><Heart filled={likeStatuses[post.id]} /> {post.likeCount}</span>}
                     </div>
                   </div>
                   <div className="board-list__meta">
                     <div className="board-list__author-info">
-                      <Link
-                        to={post.author?.nickname ? `/user/${post.author.nickname}` : '#'}
-                        className="board-list__author"
-                        onClick={(e) => e.stopPropagation()}
-                      >
-                        {post.author?.nickname || '익명'}
-                      </Link>
-                      <span className="board-list__date">
-                        {formatDate(post.createdAt)}
-                      </span>
+                      <Link to={post.author?.nickname ? `/user/${post.author.nickname}` : '#'} className="board-list__author" onClick={(e) => e.stopPropagation()}>{post.author?.nickname || '익명'}</Link>
+                      <span className="board-list__date">{formatDate(post.createdAt)}</span>
                     </div>
-                    <img
-                      src={
-                        post.author?.profileImage || '/default_user_profile.png'
-                      }
-                      alt=""
-                      className="board-list__avatar"
-                    />
-                    <Link
-                      to={post.author?.nickname ? `/user/${post.author.nickname}` : '#'}
-                      className="board-list__author"
-                      onClick={(e) => e.stopPropagation()}
-                    >
-                      {post.author?.nickname || '익명'}
-                    </Link>
-                    <span className="board-list__date">
-                      {formatDate(post.createdAt)}
-                    </span>
+                    <img src={post.author?.profileImage || '/default_user_profile.png'} alt="" className="board-list__avatar" />
                   </div>
                   <div className="board-list__row-divider" />
                 </div>
               ))
             )}
 
-            {/* ===== 페이지네이션 ===== */}
+            {/* 페이지네이션 */}
             {totalPages > 1 && (
               <div className="board-list__pagination">
-                <button
-                  className="board-list__page-btn"
-                  onClick={() => handlePageChange(0)}
-                  disabled={currentPage === 0}
-                  title="첫 페이지"
-                >
-                  «
-                </button>
-                <button
-                  className="board-list__page-btn"
-                  onClick={() => handlePageChange(Math.max(0, currentPage - 1))}
-                  disabled={currentPage === 0}
-                  title="이전 페이지"
-                >
-                  ‹
-                </button>
+                <button className="board-list__page-btn" onClick={() => handlePageChange(0)} disabled={currentPage === 0}>«</button>
+                <button className="board-list__page-btn" onClick={() => handlePageChange(Math.max(0, currentPage - 1))} disabled={currentPage === 0}>‹</button>
                 {renderPageNumbers().map((page) => (
-                  <button
-                    key={page}
-                    className={`board-list__page-num ${page === currentPage ? 'board-list__page-num--active' : ''}`}
-                    onClick={() => handlePageChange(page)}
-                  >
-                    {page + 1}
-                  </button>
+                  <button key={page} className={`board-list__page-num ${page === currentPage ? 'board-list__page-num--active' : ''}`} onClick={() => handlePageChange(page)}>{page + 1}</button>
                 ))}
-                <button
-                  className="board-list__page-btn"
-                  onClick={() =>
-                    handlePageChange(Math.min(totalPages - 1, currentPage + 1))
-                  }
-                  disabled={currentPage >= totalPages - 1}
-                  title="다음 페이지"
-                >
-                  ›
-                </button>
-                <button
-                  className="board-list__page-btn"
-                  onClick={() => handlePageChange(totalPages - 1)}
-                  disabled={currentPage >= totalPages - 1}
-                  title="마지막 페이지"
-                >
-                  »
-                </button>
+                <button className="board-list__page-btn" onClick={() => handlePageChange(Math.min(totalPages - 1, currentPage + 1))} disabled={currentPage >= totalPages - 1}>›</button>
+                <button className="board-list__page-btn" onClick={() => handlePageChange(totalPages - 1)} disabled={currentPage >= totalPages - 1}>»</button>
               </div>
             )}
 
-            {/* ===== 검색 ===== */}
+            {/* 검색 */}
             <form className="board-list__search" onSubmit={handleSearch}>
-              <input
-                type="text"
-                className="board-list__search-input"
-                placeholder="검색어를 입력하세요"
-                value={searchKeyword}
-                onChange={(e) => setSearchKeyword(e.target.value)}
-              />
-              <button type="submit" className="board-list__search-btn">
-                검색
-              </button>
+              <input type="text" className="board-list__search-input" placeholder="검색어를 입력하세요" value={searchKeyword} onChange={(e) => setSearchKeyword(e.target.value)} />
+              <button type="submit" className="board-list__search-btn">검색</button>
             </form>
           </>
         )}
