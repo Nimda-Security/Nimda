@@ -119,10 +119,7 @@ const ContentListItem: React.FC<ContentListItemProps> = ({
       {/* 4. 작성자 정보 */}
       {item.authorNickname && (
         <div className="flex-shrink-0 flex items-center gap-[8px]">
-          <div
-            className="w-[24px] h-[24px] rounded-full flex-shrink-0 overflow-hidden"
-            style={{ border: "0.2px solid #737373" }}
-          >
+          <div className="w-[24px] h-[24px] rounded-full flex-shrink-0">
             <Avatar
               src={item.authorProfileImage}
               size={24}
