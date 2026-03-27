@@ -205,7 +205,6 @@ function BoardWritePage() {
         content: getEditorContent(),
         tag: tag.trim() || undefined,
         attachmentIds,
-        ...(isAdmin() && { pinned: isPinned }),
       });
 
       if (response.success && 'board' in response) {
@@ -622,24 +621,6 @@ function BoardWritePage() {
           </div>
 
           <div className="bw-divider" />
-
-          {/* ── 고정 여부 (관리자만) ── */}
-          {isAdmin() && (
-            <>
-              <div className="bw-section">
-                <label className="bw-checkbox-label">
-                  <input
-                    type="checkbox"
-                    checked={isPinned}
-                    onChange={(e) => setIsPinned(e.target.checked)}
-                    className="bw-checkbox-input"
-                  />
-                  <span className="bw-checkbox-text">이 게시글을 고정합니다</span>
-                </label>
-              </div>
-              <div className="bw-divider" />
-            </>
-          )}
 
           {/* ── 첨부파일 ── */}
           <div className="bw-section">
