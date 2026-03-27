@@ -1,4 +1,5 @@
 import React from "react";
+import Avatar from "@/components/Avatar/Avatar";
 import CheckBox from "./CheckBox";
 
 export interface ContentListItemData {
@@ -122,9 +123,9 @@ const ContentListItem: React.FC<ContentListItemProps> = ({
             className="w-[24px] h-[24px] rounded-full flex-shrink-0 overflow-hidden"
             style={{ border: "0.2px solid #737373" }}
           >
-            <img
-              src={item.authorProfileImage || "/default_user_profile.png"}
-              alt=""
+            <Avatar
+              src={item.authorProfileImage}
+              size={24}
               className="w-full h-full object-cover rounded-full"
             />
           </div>

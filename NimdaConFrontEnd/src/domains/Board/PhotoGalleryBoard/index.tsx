@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useCallback } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import Layout from "@/components/Layout";
+import Avatar from "@/components/Avatar/Avatar";
 import { Heart } from "@/components/icons/Heart";
 import { getBoardListAPI, getBoardDetailAPI } from "@/api/board";
 import { getAttachmentPresignedUrl } from "@/api/attachments";
@@ -187,13 +188,10 @@ const PhotoGalleryBoard: React.FC = () => {
                     )}
                     <div className="photo-gallery-board__info">
                       <div className="photo-gallery-board__author">
-                        <img
-                          src={post.author?.profileImage || "/default_user_profile.png"}
-                          alt=""
+                        <Avatar
+                          src={post.author?.profileImage}
+                          size={20}
                           className="photo-gallery-board__avatar"
-                          onError={(e) => {
-                            e.currentTarget.src = "/default_user_profile.png";
-                          }}
                         />
                         <span className="photo-gallery-board__nickname">
                           {post.author?.nickname || "익명"}

@@ -1,5 +1,6 @@
 import { useEffect, useState, useRef } from 'react';
 import { Link } from 'react-router-dom';
+import Avatar from '@/components/Avatar/Avatar';
 import { Heart } from '@/components/icons/Heart';
 import { MessageBox } from '@/components/icons/MessageBox';
 import { VerticalDots } from '@/components/icons/VerticalDots';
@@ -34,11 +35,7 @@ interface CommentSectionProps {
  */
 function CommentAvatar({ src }: { src: string | null; name: string }) {
   return (
-    <img
-      src={src || "/default_user_profile.png"}
-      alt=""
-      className="comment-item__avatar"
-    />
+    <Avatar src={src} size={32} className="comment-item__avatar" />
   );
 }
 
@@ -69,11 +66,7 @@ function CommentInput({
       {/* [수정] 하드코딩된 '?'를 지우고 내 프로필 이미지를 렌더링하도록 변경 */}
       {showAvatar && (
         <div className="comment-input__avatar">
-          <img
-            src={profileImage || "/default_user_profile.png"}
-            alt="내 프로필"
-            style={{ width: '100%', height: '100%', borderRadius: '50%', objectFit: 'cover' }}
-          />
+          <Avatar src={profileImage} size="100%" />
         </div>
       )}
       <div className="comment-input__body">
