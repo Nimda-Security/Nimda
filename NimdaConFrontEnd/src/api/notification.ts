@@ -1,5 +1,4 @@
 import axios from 'axios';
-import { getAuthToken } from './auth';
 
 // 백엔드 NotificationResponse DTO 매핑
 // ApiResponse<T> = { success: boolean, message?: string, data?: T }
@@ -24,14 +23,7 @@ interface ApiResponseWrapper<T> {
 
 const api = axios.create({
   baseURL: '/api/notifications',
-});
-
-api.interceptors.request.use((config) => {
-  const token = getAuthToken();
-  if (token) {
-    config.headers.Authorization = `Bearer ${token}`;
-  }
-  return config;
+  withCredentials: true,
 });
 
 export const notificationApi = {
@@ -68,17 +60,13 @@ export const notificationApi = {
     await api.delete(`/${notificationId}`);
   },
 
-  // SSE 구독: GET /api/alarm/subscribe (Authorization 헤더 필요)
-  subscribe: (onNotification: (data: NotificationResponse) => void): AbortController | null => {
-    const token = getAuthToken();
-    if (!token) return null;
-
+  subscribe: (onNotification: (data: NotificationResponse) => void): AbortController => {
     const controller = new AbortController();
 
     (async () => {
       try {
         const response = await fetch('/api/alarm/subscribe', {
-          headers: { Authorization: `Bearer ${token}` },
+          credentials: 'include',
           signal: controller.signal,
         });
 

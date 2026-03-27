@@ -13,7 +13,6 @@ package com.nimda.cup.contest.controller;
  * - Authority.ROLE_ADMIN 권한 확인
  */
 
-import com.nimda.cup.common.util.JwtUtil;
 import com.nimda.cup.contest.dto.*;
 import com.nimda.cup.contest.entity.Contest;
 import com.nimda.cup.contest.entity.ContestParticipant;
@@ -21,13 +20,14 @@ import com.nimda.cup.contest.entity.ContestProblem;
 import com.nimda.cup.contest.enums.ContestRole;
 import com.nimda.cup.contest.service.ContestService;
 import com.nimda.cup.user.entity.User;
-import com.nimda.cup.user.repository.UserRepository;
+import com.nimda.cup.user.security.CustomUserDetails;
 import jakarta.validation.Valid;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.HashMap;
@@ -41,31 +41,6 @@ public class ContestController {
     @Autowired
     private ContestService contestService;
 
-    @Autowired
-    private JwtUtil jwtUtil;
-
-    @Autowired
-    private UserRepository userRepository;
-
-    private User getUserFromToken(String authHeader) {
-        if (authHeader == null || !authHeader.startsWith("Bearer ")) {
-            return null;
-        }
-
-        try {
-            String token = authHeader.substring(7); // "Bearer " 제거
-            String nickname = jwtUtil.extractNickname(token);
-
-            if (nickname != null && !jwtUtil.isTokenExpired(token)) {
-                return userRepository.findByNickname(nickname).orElse(null);
-            }
-        } catch (Exception e) {
-            // 토큰이 유효하지 않으면 null 반환
-        }
-
-        return null;
-    }
-
     // Contest CRUD API
     /**
      * 대회 생성 API
@@ -77,17 +52,17 @@ public class ContestController {
      */
     @PostMapping
     public ResponseEntity<Map<String, Object>> createContest(
-            @RequestHeader(value = "Authorization", required = false) String authHeader,
+            @AuthenticationPrincipal CustomUserDetails userDetails,
             @Valid @RequestBody ContestCreateDTO createDTO) {
         try {
             // 사용자 정보 추출
-            User user = getUserFromToken(authHeader);
-            if (user == null) {
+            if (userDetails == null) {
                 Map<String, Object> errorResponse = new HashMap<>();
                 errorResponse.put("success", false);
                 errorResponse.put("message", "로그인이 필요합니다.");
                 return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(errorResponse);
             }
+            User user = userDetails.getUser();
 
             // 대회 생성 (관리자 권한 확인 포함)
             Contest contest = contestService.createContest(createDTO, user);
@@ -183,18 +158,18 @@ public class ContestController {
      */
     @PutMapping("/{contestId}")
     public ResponseEntity<Map<String, Object>> updateContest(
-            @RequestHeader(value = "Authorization", required = false) String authHeader,
+            @AuthenticationPrincipal CustomUserDetails userDetails,
             @PathVariable Long contestId,
             @Valid @RequestBody ContestCreateDTO createDTO) {
         try {
             // 사용자 정보 추출
-            User user = getUserFromToken(authHeader);
-            if (user == null) {
+            if (userDetails == null) {
                 Map<String, Object> errorResponse = new HashMap<>();
                 errorResponse.put("success", false);
                 errorResponse.put("message", "로그인이 필요합니다.");
                 return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(errorResponse);
             }
+            User user = userDetails.getUser();
 
             // 대회 수정 (관리자 권한 확인 포함)
             Contest contest = contestService.updateContest(contestId, createDTO, user);
@@ -230,17 +205,17 @@ public class ContestController {
      */
     @DeleteMapping("/{contestId}")
     public ResponseEntity<Map<String, Object>> deleteContest(
-            @RequestHeader(value = "Authorization", required = false) String authHeader,
+            @AuthenticationPrincipal CustomUserDetails userDetails,
             @PathVariable Long contestId) {
         try {
             // 사용자 정보 추출
-            User user = getUserFromToken(authHeader);
-            if (user == null) {
+            if (userDetails == null) {
                 Map<String, Object> errorResponse = new HashMap<>();
                 errorResponse.put("success", false);
                 errorResponse.put("message", "로그인이 필요합니다.");
                 return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(errorResponse);
             }
+            User user = userDetails.getUser();
 
             // 대회 삭제 (관리자 권한 확인 포함)
             contestService.deleteContest(contestId, user);
@@ -272,18 +247,18 @@ public class ContestController {
      */
     @PostMapping("/{contestId}/problems")
     public ResponseEntity<Map<String, Object>> addProblemToContest(
-            @RequestHeader(value = "Authorization", required = false) String authHeader,
+            @AuthenticationPrincipal CustomUserDetails userDetails,
             @PathVariable Long contestId,
             @RequestBody Map<String, Object> request) {
         try {
             // 사용자 정보 추출
-            User user = getUserFromToken(authHeader);
-            if (user == null) {
+            if (userDetails == null) {
                 Map<String, Object> errorResponse = new HashMap<>();
                 errorResponse.put("success", false);
                 errorResponse.put("message", "로그인이 필요합니다.");
                 return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(errorResponse);
             }
+            User user = userDetails.getUser();
 
             Long problemId = Long.valueOf(request.get("problemId").toString());
             Integer score = request.get("score") != null ? Integer.valueOf(request.get("score").toString()) : null;
@@ -320,18 +295,18 @@ public class ContestController {
      */
     @DeleteMapping("/{contestId}/problems/{problemId}")
     public ResponseEntity<Map<String, Object>> removeProblemFromContest(
-            @RequestHeader(value = "Authorization", required = false) String authHeader,
+            @AuthenticationPrincipal CustomUserDetails userDetails,
             @PathVariable Long contestId,
             @PathVariable Long problemId) {
         try {
             // 사용자 정보 추출
-            User user = getUserFromToken(authHeader);
-            if (user == null) {
+            if (userDetails == null) {
                 Map<String, Object> errorResponse = new HashMap<>();
                 errorResponse.put("success", false);
                 errorResponse.put("message", "로그인이 필요합니다.");
                 return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(errorResponse);
             }
+            User user = userDetails.getUser();
 
             // 대회에서 문제 제거 (관리자 권한 확인 포함)
             contestService.removeProblemFromContest(contestId, problemId, user);

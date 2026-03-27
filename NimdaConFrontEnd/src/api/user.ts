@@ -25,7 +25,7 @@ export interface UserComment {
  * 닉네임으로 유저 공개 프로필 조회
  */
 export async function getUserProfileByNickname(nickname: string): Promise<UserPublicProfile | null> {
-  const res = await fetch(`${API_BASE_URL}/users/nickname/${encodeURIComponent(nickname)}`);
+  const res = await fetch(`${API_BASE_URL}/users/nickname/${encodeURIComponent(nickname)}`, { credentials: 'include' });
   if (!res.ok) return null;
   return res.json();
 }
@@ -34,7 +34,7 @@ export async function getUserProfileByNickname(nickname: string): Promise<UserPu
  * 특정 유저가 작성한 게시글 목록 조회
  */
 export async function getUserBoardsAPI(nickname: string) {
-  const res = await fetch(`${API_BASE_URL}/cite/board/user/${encodeURIComponent(nickname)}`);
+  const res = await fetch(`${API_BASE_URL}/cite/board/user/${encodeURIComponent(nickname)}`, { credentials: 'include' });
   if (!res.ok) return [];
   const data = await res.json();
   // ApiResponse 래퍼: { success, message, data: [...] }
@@ -59,7 +59,7 @@ export interface LikedBoard {
 }
 
 export async function getUserLikedBoardsByNickname(nickname: string): Promise<LikedBoard[]> {
-  const res = await fetch(`/api/like/board/user/${encodeURIComponent(nickname)}/liked`);
+  const res = await fetch(`/api/like/board/user/${encodeURIComponent(nickname)}/liked`, { credentials: 'include' });
   if (!res.ok) return [];
   const data = await res.json();
   if (data?.success) {
@@ -85,7 +85,7 @@ export async function getUserLikedBoardsByNickname(nickname: string): Promise<Li
  * 특정 유저 마일리지 잔액 조회 (공개)
  */
 export async function getUserPointBalanceByNickname(nickname: string): Promise<number> {
-  const res = await fetch(`/api/cite/point/user/${encodeURIComponent(nickname)}`);
+  const res = await fetch(`/api/cite/point/user/${encodeURIComponent(nickname)}`, { credentials: 'include' });
   if (!res.ok) return 0;
   const data = await res.json();
   if (data?.success) return data.data?.totalAmount ?? 0;
@@ -104,7 +104,7 @@ export interface PointHistoryItem {
 }
 
 export async function getUserPointDetailsByNickname(nickname: string): Promise<PointHistoryItem[]> {
-  const res = await fetch(`/api/cite/point/user/${encodeURIComponent(nickname)}/details`);
+  const res = await fetch(`/api/cite/point/user/${encodeURIComponent(nickname)}/details`, { credentials: 'include' });
   if (!res.ok) return [];
   const data = await res.json();
   if (data?.success && Array.isArray(data.data)) {
@@ -123,7 +123,7 @@ export async function getUserPointDetailsByNickname(nickname: string): Promise<P
  * 특정 유저가 작성한 댓글 목록 조회 (공개)
  */
 export async function getUserCommentsByNickname(nickname: string): Promise<UserComment[]> {
-  const res = await fetch(`${API_BASE_URL}/comments/user/${encodeURIComponent(nickname)}`);
+  const res = await fetch(`${API_BASE_URL}/comments/user/${encodeURIComponent(nickname)}`, { credentials: 'include' });
   if (!res.ok) return [];
   const data = await res.json();
   if (data?.success && Array.isArray(data.data?.comments)) return data.data.comments;

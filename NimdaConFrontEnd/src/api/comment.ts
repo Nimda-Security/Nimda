@@ -22,13 +22,6 @@ const parseJsonSafe = async (response: Response) => {
   }
 };
 
-/**
- * 토큰 조회
- * ⚠️ localStorage는 XSS에 취약합니다.
- * 가능하다면 httpOnly 쿠키 기반 인증으로 전환을 권장합니다.
- */
-const getToken = (): string | null => localStorage.getItem('authToken');
-
 // =============== 응답 타입 ===============
 
 export interface CommentErrorResponse {
@@ -81,17 +74,12 @@ export const createCommentAPI = async (
   data: CommentCreateRequest
 ): Promise<CommentSingleResponse | CommentErrorResponse> => {
   try {
-    const token = getToken();
-    if (!token) {
-      return { success: false, message: '로그인이 필요합니다.' };
-    }
-
     const response = await fetch(`${API_BASE_URL}/board/${boardId}/comments`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
-        Authorization: `Bearer ${token}`,
       },
+      credentials: 'include',
       body: JSON.stringify(data),
     });
 
@@ -137,17 +125,12 @@ export const getCommentsAPI = async (
   boardId: number
 ): Promise<CommentListResponse | CommentErrorResponse> => {
   try {
-    const token = getToken();
-    if (!token) {
-      return { success: false, message: '로그인이 필요합니다.' };
-    }
-
     const response = await fetch(`${API_BASE_URL}/board/${boardId}/comments`, {
       method: 'GET',
       headers: {
         'Content-Type': 'application/json',
-        Authorization: `Bearer ${token}`,
       },
+      credentials: 'include',
     });
 
     const result = await parseJsonSafe(response);
@@ -184,17 +167,12 @@ export const updateCommentAPI = async (
   data: CommentUpdateRequest
 ): Promise<CommentSingleResponse | CommentErrorResponse> => {
   try {
-    const token = getToken();
-    if (!token) {
-      return { success: false, message: '로그인이 필요합니다.' };
-    }
-
     const response = await fetch(`${API_BASE_URL}/comments/${commentId}`, {
       method: 'PATCH',
       headers: {
         'Content-Type': 'application/json',
-        Authorization: `Bearer ${token}`,
       },
+      credentials: 'include',
       body: JSON.stringify(data),
     });
 
@@ -236,17 +214,12 @@ export const updateCommentStatusAPI = async (
   data: CommentStatusUpdateRequest
 ): Promise<CommentSingleResponse | CommentErrorResponse> => {
   try {
-    const token = getToken();
-    if (!token) {
-      return { success: false, message: '로그인이 필요합니다.' };
-    }
-
     const response = await fetch(`${API_BASE_URL}/comments/${commentId}/status`, {
       method: 'PATCH',
       headers: {
         'Content-Type': 'application/json',
-        Authorization: `Bearer ${token}`,
       },
+      credentials: 'include',
       body: JSON.stringify(data),
     });
 
@@ -286,17 +259,12 @@ export const deleteCommentAPI = async (
   commentId: number
 ): Promise<CommentDeleteResponse | CommentErrorResponse> => {
   try {
-    const token = getToken();
-    if (!token) {
-      return { success: false, message: '로그인이 필요합니다.' };
-    }
-
     const response = await fetch(`${API_BASE_URL}/comments/${commentId}`, {
       method: 'DELETE',
       headers: {
         'Content-Type': 'application/json',
-        Authorization: `Bearer ${token}`,
       },
+      credentials: 'include',
     });
 
     const result = await parseJsonSafe(response);
@@ -329,15 +297,12 @@ export interface MyComment {
 
 export const getMyCommentsAPI = async (): Promise<MyComment[]> => {
   try {
-    const token = getToken();
-    if (!token) return [];
-
     const response = await fetch(`${API_BASE_URL}/my-page/comments`, {
       method: 'GET',
       headers: {
         'Content-Type': 'application/json',
-        'Authorization': `Bearer ${token}`,
       },
+      credentials: 'include',
     });
 
     const result = await parseJsonSafe(response);
@@ -354,15 +319,12 @@ export const getMyCommentsAPI = async (): Promise<MyComment[]> => {
 // 마이페이지 선택 댓글 삭제
 export const deleteMyCommentsAPI = async (commentIds: number[]): Promise<{ success: boolean; message: string }> => {
   try {
-    const token = getToken();
-    if (!token) return { success: false, message: '로그인이 필요합니다.' };
-
     const response = await fetch(`${API_BASE_URL}/my-page/comments`, {
       method: 'DELETE',
       headers: {
         'Content-Type': 'application/json',
-        'Authorization': `Bearer ${token}`,
       },
+      credentials: 'include',
       body: JSON.stringify({ commentIds }),
     });
 
@@ -380,15 +342,12 @@ export const deleteMyCommentsAPI = async (commentIds: number[]): Promise<{ succe
 // 작성 댓글 개수 가지고 오기
 export const getMyCommentCountAPI = async (): Promise<number> => {
   try {
-    const token = localStorage.getItem('authToken');
-    if (!token) return 0;
-
     const response = await fetch(`${API_BASE_URL}/comments/my/count`, {
       method: 'GET',
       headers: {
         'Content-Type': 'application/json',
-        'Authorization': `Bearer ${token}`,
       },
+      credentials: 'include',
     });
 
     const result = await response.json();
