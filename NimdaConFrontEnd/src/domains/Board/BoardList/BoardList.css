@@ -114,7 +114,7 @@
 .board-list__row {
   display: flex;
   align-items: center;
-  height: 40px;
+  min-height: 60px;
   padding: 0 16px;
   position: relative;
   cursor: pointer;
@@ -128,7 +128,7 @@
 /* 고정글 - 필독 (핑크 배경) */
 .board-list__row--pinned {
   background-color: var(--color-pink-bg);
-  height: 40px;
+  min-height: 60px;
 }
 
 .board-list__row--pinned:hover {
@@ -149,22 +149,50 @@
   background-color: var(--color-white);
 }
 
+/* 행 좌측 콘텐츠 컨테이너 (카테고리태그 + 제목라인 수직 스택) */
+.board-list__row-content {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  justify-content: center;
+  min-width: 0;
+  padding: 8px 0;
+}
+
+/* 카테고리 해시태그 (#카테고리명) */
+.board-list__category-tag {
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--color-pink);
+  line-height: 1.5;
+  white-space: nowrap;
+  flex-shrink: 0;
+}
+
+/* 제목 + 댓글/좋아요 가로 배치 */
+.board-list__title-line {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  min-width: 0;
+}
+
 /* ===========================
    태그 / 배지
    =========================== */
 .board-list__tag {
-  min-width: 40px;
-  height: 24px;
-  padding: 0 8px;
   display: inline-flex;
   align-items: center;
   justify-content: center;
+  padding: 0 10px;
+  height: 22px;
   font-size: 12px;
   font-weight: 700;
   color: var(--color-white);
   flex-shrink: 0;
-  margin-right: 8px;
   white-space: nowrap;
+  align-self: flex-start;
 }
 
 /* 필독 태그 (빨강 + 둥근 pill) */
@@ -198,6 +226,7 @@
   overflow: hidden;
   text-overflow: ellipsis;
   min-width: 0;
+  flex-shrink: 1;
 }
 
 .board-list__post-title--bold {
@@ -222,12 +251,12 @@
   font-weight: 500;
   color: var(--color-black);
   flex-shrink: 0;
-  margin-left: 0;
   white-space: nowrap;
+  text-decoration: none;
 }
 
 /* ===========================
-   메타 정보 (댓글, 좋아요, 날짜)
+   메타 정보 (작성자, 날짜)
    =========================== */
 .board-list__meta {
   display: flex;
@@ -235,6 +264,14 @@
   gap: 8px;
   flex-shrink: 0;
   margin-left: 16px;
+}
+
+/* 작성자명 + 날짜 우측 정렬 수직 스택 */
+.board-list__author-info {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 0;
 }
 
 .board-list__comments {

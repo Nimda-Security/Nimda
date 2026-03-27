@@ -206,7 +206,10 @@ function BoardListPage({ slug: propSlug }: BoardListPageProps) {
           setBoards(regular);
           setTotalPages(response.totalPages);
           if (activeTab === 'all' && response.category?.id) {
-            setCategory(response.category);
+            // 현재 카테고리 ID와 새로 들어온 ID가 다를 때만 업데이트하여 렌더링 방지
+            if (!category || category.id !== response.category.id) {
+              setCategory(response.category);
+            }
           }
         } else {
           setError(response.message);
@@ -264,6 +267,13 @@ function BoardListPage({ slug: propSlug }: BoardListPageProps) {
   };
 
   const categoryName = category?.name || CATEGORY_LABELS[slug] || '게시판';
+
+  const getCategoryTagLabel = (post: Board, fallbackLabel?: string) => {
+    if (post.tag) return `# ${post.tag}`;
+    if (fallbackLabel) return `# ${fallbackLabel}`;
+    if (post.category?.name) return `# ${post.category.name}`;
+    return '# 게시글';
+  };
 
   // "새 소식" 카테고리(자신 또는 부모)인 경우 ADMIN만 글쓰기 가능
   const isNewsCategoryGroup = (() => {
@@ -406,20 +416,39 @@ function BoardListPage({ slug: propSlug }: BoardListPageProps) {
                 className="board-list__row board-list__row--pinned"
                 onClick={() => navigate(`/board/notice/${post.id}`)}
               >
-                {post.tag && (
-                  <span className="board-list__tag board-list__tag--red">
-                    {post.tag}
+                <div className="board-list__row-content">
+                  <span className="board-list__category-tag">
+                    {getCategoryTagLabel(post, '필독')}
                   </span>
-                )}
-                {!post.tag && (
-                  <span className="board-list__tag board-list__tag--red">
-                    필독
-                  </span>
-                )}
-                <span className="board-list__post-title board-list__post-title--bold">
-                  {post.title}
-                </span>
+                  <div className="board-list__title-line">
+                    <span className="board-list__post-title board-list__post-title--bold">
+                      {post.title}
+                    </span>
+                    {post.commentCount !== undefined && post.commentCount > 0 && (
+                      <span className="board-list__comments">
+                        <MessageBox /> {post.commentCount}
+                      </span>
+                    )}
+                    {post.likeCount !== undefined && post.likeCount > 0 && (
+                      <span className="board-list__likes">
+                        <Heart filled /> {post.likeCount}
+                      </span>
+                    )}
+                  </div>
+                </div>
                 <div className="board-list__meta">
+                  <div className="board-list__author-info">
+                    <Link
+                      to={post.author?.nickname ? `/user/${post.author.nickname}` : '#'}
+                      className="board-list__author"
+                      onClick={(e) => e.stopPropagation()}
+                    >
+                      {post.author?.nickname || '익명'}
+                    </Link>
+                    <span className="board-list__date">
+                      {formatDate(post.createdAt)}
+                    </span>
+                  </div>
                   <img
                     src={
                       post.author?.profileImage || '/default_user_profile.png'
@@ -427,26 +456,6 @@ function BoardListPage({ slug: propSlug }: BoardListPageProps) {
                     alt=""
                     className="board-list__avatar"
                   />
-                  <Link
-                    to={post.author?.nickname ? `/user/${post.author.nickname}` : '#'}
-                    className="board-list__author"
-                    onClick={(e) => e.stopPropagation()}
-                  >
-                    {post.author?.nickname || '익명'}
-                  </Link>
-                  {post.commentCount !== undefined && post.commentCount > 0 && (
-                    <span className="board-list__comments">
-                      <MessageBox /> {post.commentCount}
-                    </span>
-                  )}
-                  {post.likeCount !== undefined && post.likeCount > 0 && (
-                    <span className="board-list__likes">
-                      <Heart filled /> {post.likeCount}
-                    </span>
-                  )}
-                  <span className="board-list__date">
-                    {formatDate(post.createdAt)}
-                  </span>
                 </div>
                 <div className="board-list__row-divider" />
               </div>
@@ -459,20 +468,39 @@ function BoardListPage({ slug: propSlug }: BoardListPageProps) {
                 className="board-list__row board-list__row--notice"
                 onClick={() => handleBoardClick(post.id)}
               >
-                {post.tag && (
-                  <span className="board-list__tag board-list__tag--notice">
-                    {post.tag}
+                <div className="board-list__row-content">
+                  <span className="board-list__category-tag">
+                    {getCategoryTagLabel(post, isNoticeCategory ? '필독' : '고정')}
                   </span>
-                )}
-                {!post.tag && (
-                  <span className={`board-list__tag ${isNoticeCategory ? 'board-list__tag--red' : 'board-list__tag--notice'}`}>
-                    {isNoticeCategory ? '필독' : '고정'}
-                  </span>
-                )}
-                <span className="board-list__post-title board-list__post-title--bold">
-                  {post.title}
-                </span>
+                  <div className="board-list__title-line">
+                    <span className="board-list__post-title board-list__post-title--bold">
+                      {post.title}
+                    </span>
+                    {post.commentCount !== undefined && post.commentCount > 0 && (
+                      <span className="board-list__comments">
+                        <MessageBox /> {post.commentCount}
+                      </span>
+                    )}
+                    {post.likeCount !== undefined && post.likeCount > 0 && (
+                      <span className="board-list__likes">
+                        <Heart filled /> {post.likeCount}
+                      </span>
+                    )}
+                  </div>
+                </div>
                 <div className="board-list__meta">
+                  <div className="board-list__author-info">
+                    <Link
+                      to={post.author?.nickname ? `/user/${post.author.nickname}` : '#'}
+                      className="board-list__author"
+                      onClick={(e) => e.stopPropagation()}
+                    >
+                      {post.author?.nickname || '익명'}
+                    </Link>
+                    <span className="board-list__date">
+                      {formatDate(post.createdAt)}
+                    </span>
+                  </div>
                   <img
                     src={
                       post.author?.profileImage || '/default_user_profile.png'
@@ -480,29 +508,6 @@ function BoardListPage({ slug: propSlug }: BoardListPageProps) {
                     alt=""
                     className="board-list__avatar"
                   />
-                  <Link
-                    to={post.author?.nickname ? `/user/${post.author.nickname}` : '#'}
-                    className="board-list__author"
-                    onClick={(e) => e.stopPropagation()}
-                  >
-                    {post.author?.nickname || '익명'}
-                  </Link>
-                  {post.views > 0 && (
-                    <span className="board-list__views">조회 {post.views}</span>
-                  )}
-                  {post.commentCount !== undefined && post.commentCount > 0 && (
-                    <span className="board-list__comments">
-                      <MessageBox /> {post.commentCount}
-                    </span>
-                  )}
-                  {post.likeCount !== undefined && post.likeCount > 0 && (
-                    <span className="board-list__likes">
-                      <Heart filled /> {post.likeCount}
-                    </span>
-                  )}
-                  <span className="board-list__date">
-                    {formatDate(post.createdAt)}
-                  </span>
                 </div>
                 <div className="board-list__row-divider" />
               </div>
@@ -522,25 +527,37 @@ function BoardListPage({ slug: propSlug }: BoardListPageProps) {
                   className="board-list__row"
                   onClick={() => handleBoardClick(post.id)}
                 >
-                  {/* 게시글 태그 또는 카테고리 태그 표시 */}
-                  {post.tag ? (
-                    <span className="board-list__tag board-list__tag--gray">
-                      {post.tag}
+                  <div className="board-list__row-content">
+                    <span className="board-list__category-tag">
+                      {getCategoryTagLabel(post)}
                     </span>
-                  ) : (
-                    post.category &&
-                    post.category.name &&
-                    activeTab === 'all' &&
-                    childCategories.length > 0 && (
-                      <span className="board-list__tag board-list__tag--gray">
-                        {post.category.name.length > 4
-                          ? post.category.name.slice(0, 4)
-                          : post.category.name}
-                      </span>
-                    )
-                  )}
-                  <span className="board-list__post-title">{post.title}</span>
+                    <div className="board-list__title-line">
+                      <span className="board-list__post-title">{post.title}</span>
+                      {post.commentCount !== undefined && post.commentCount > 0 && (
+                        <span className="board-list__comments">
+                          <MessageBox /> {post.commentCount}
+                        </span>
+                      )}
+                      {post.likeCount !== undefined && post.likeCount > 0 && (
+                        <span className="board-list__likes">
+                          <Heart filled /> {post.likeCount}
+                        </span>
+                      )}
+                    </div>
+                  </div>
                   <div className="board-list__meta">
+                    <div className="board-list__author-info">
+                      <Link
+                        to={post.author?.nickname ? `/user/${post.author.nickname}` : '#'}
+                        className="board-list__author"
+                        onClick={(e) => e.stopPropagation()}
+                      >
+                        {post.author?.nickname || '익명'}
+                      </Link>
+                      <span className="board-list__date">
+                        {formatDate(post.createdAt)}
+                      </span>
+                    </div>
                     <img
                       src={
                         post.author?.profileImage || '/default_user_profile.png'
@@ -548,31 +565,6 @@ function BoardListPage({ slug: propSlug }: BoardListPageProps) {
                       alt=""
                       className="board-list__avatar"
                     />
-                    <Link
-                      to={post.author?.nickname ? `/user/${post.author.nickname}` : '#'}
-                      className="board-list__author"
-                      onClick={(e) => e.stopPropagation()}
-                    >
-                      {post.author?.nickname || '익명'}
-                    </Link>
-                    {post.views > 0 && (
-                      <span className="board-list__views">
-                        조회 {post.views}
-                      </span>
-                    )}
-                    {post.commentCount !== undefined && post.commentCount > 0 && (
-                      <span className="board-list__comments">
-                        <MessageBox /> {post.commentCount}
-                      </span>
-                    )}
-                    {post.likeCount !== undefined && post.likeCount > 0 && (
-                      <span className="board-list__likes">
-                        <Heart filled /> {post.likeCount}
-                      </span>
-                    )}
-                    <span className="board-list__date">
-                      {formatDate(post.createdAt)}
-                    </span>
                   </div>
                   <div className="board-list__row-divider" />
                 </div>
