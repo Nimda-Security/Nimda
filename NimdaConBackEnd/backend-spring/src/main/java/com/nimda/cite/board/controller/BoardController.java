@@ -85,6 +85,17 @@ public class BoardController {
         return false;
     }
 
+    // "배너" 카테고리(자신 또는 부모)인지 확인
+    private boolean isBannerCategory(Category category) {
+        if (category == null) return false;
+        if ("banner".equalsIgnoreCase(category.getSlug())) return true;
+        if (category.getParentId() != null) {
+            Category parent = categoryRepository.findById(category.getParentId()).orElse(null);
+            if (parent != null && "banner".equalsIgnoreCase(parent.getSlug())) return true;
+        }
+        return false;
+    }
+
     // 사용자가 특정 역할을 보유하는지 확인
     private boolean hasRole(User user, String role) {
         return user != null && user.getAuthorities().stream()
@@ -322,6 +333,11 @@ public class BoardController {
                 }
             }
 
+            // "배너" 카테고리(자신 또는 부모)는 ADMIN만 작성 가능
+            if (isBannerCategory(category) && !hasRole(author, "ROLE_ADMIN")) {
+                return ApiResponse.fail("배너 게시판은 관리자만 작성할 수 있습니다.").toResponse(HttpStatus.FORBIDDEN);
+            }
+
             // "카르텔" 카테고리 접근 권한 확인
             if (isCartelCategory(category)) {
                 if (!hasRole(author, "ROLE_CARTEL") && !hasRole(author, "ROLE_ADMIN")) {
@@ -422,6 +438,10 @@ public class BoardController {
 
             Category category = categoryRepository.findById(categoryId)
                     .orElseThrow(() -> new RuntimeException("카테고리를 찾을 수 없습니다: " + categoryId));
+
+            if (isBannerCategory(category) && !isAdmin) {
+                return ApiResponse.fail("배너 게시판은 관리자만 수정할 수 있습니다.").toResponse(HttpStatus.FORBIDDEN);
+            }
 
             // "카르텔" 카테고리 접근 권한 확인
             if (isCartelCategory(category)) {

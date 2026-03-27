@@ -33,7 +33,7 @@ const Banner: React.FC = () => {
   useEffect(() => {
     const load = async () => {
       try {
-        const result = await getPinnedPostsAPI(undefined, "picture-board", 10);
+        const result = await getPinnedPostsAPI(undefined, "banner", 10);
         const pinnedPosts = (result.posts || []).filter((p) => p.pinned);
 
         const resolved: BannerImage[] = [];

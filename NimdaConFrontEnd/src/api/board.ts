@@ -184,6 +184,9 @@ export const createBoardAPI = async (
     if (data.tag) {
       formData.append('tag', data.tag);
     }
+    if (data.pinned !== undefined) {
+      formData.append('pinned', String(data.pinned));
+    }
     // multipart `file` 제거됨 — 이유: 백엔드는 S3 presigned 후 `attachmentIds`만 받음.
     if (data.attachmentIds !== undefined && data.attachmentIds.length > 0) {
       for (const aid of data.attachmentIds) {
@@ -248,6 +251,9 @@ export const updateBoardAPI = async (
     formData.append('content', data.content);
     if (data.tag) {
       formData.append('tag', data.tag);
+    }
+    if (data.pinned !== undefined) {
+      formData.append('pinned', String(data.pinned));
     }
     // 수정 시 생략하면 첨부 동기화 안 함. 전달 시 최종 목록으로 동기화(빈 배열 = 전부 삭제).
     if (data.attachmentIds !== undefined) {
