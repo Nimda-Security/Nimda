@@ -339,10 +339,7 @@ function BoardListPage({ slug: propSlug }: BoardListPageProps) {
               <div key={`pinned-${post.id}`} className="board-list__row board-list__row--notice" onClick={() => handleBoardClick(post.id)}>
                 <span className="board-list__notice-label">{isNoticeCategory ? '필독' : '고정'}</span>
                 <div className="board-list__row-content">
-<<<<<<< HEAD
-=======
-                  {getCategoryTagLabel(post, isNoticeCategory ? '필독' : '고정') && <span className="board-list__category-tag">{getCategoryTagLabel(post, isNoticeCategory ? '필독' : '고정')}</span>}
->>>>>>> baffb2edd824a2b08bb3acc25aeceac6a3504797
+
   <div className="board-list__title-line">
     <span className="board-list__post-title board-list__post-title--bold">{post.title}</span>
     <span className="board-list__comments"><MessageBox /> {post.commentCount ?? 0}</span>
