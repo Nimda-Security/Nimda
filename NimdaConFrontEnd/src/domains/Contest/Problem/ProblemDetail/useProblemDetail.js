@@ -21,7 +21,7 @@ export function useProblemDetail(id) {
     setError(null);
     try {
       // 1. 문제 정보 가져오기
-      const response = await fetch(`/api/problems/${encodeURIComponent(id)}`);
+      const response = await fetch(`/api/problems/${encodeURIComponent(id)}`, { credentials: 'include' });
 
       if (!response.ok) {
         throw new Error(

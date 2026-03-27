@@ -312,6 +312,19 @@ function BoardWritePage() {
             />
           </div>
 
+          <div className="bw-tag-input-area">
+            <span className="bw-tag-icon">#</span>
+            <input
+              type="text"
+              value={tag}
+              onChange={(e) => setTag(e.target.value)}
+              placeholder="태그(말머리)를 입력하세요 (선택 사항)"
+              className="bw-tag-field"
+              maxLength={20}
+            />
+            </div>
+
+
           <div className="bw-divider" />
 
           {/* ── 툴바 ── */}

@@ -112,6 +112,7 @@ public class AuthService {
                 .userId(fullUser.getUserId())
                 .nickname(fullUser.getNickname())
                 .email(fullUser.getEmail())
+                .roles(authorities)
                 .build();
 
         return LoginResponseDTO.builder()

@@ -7,9 +7,8 @@ import com.nimda.cite.board.dto.CategoryUpdateDTO;
 import com.nimda.cite.board.entity.Category;
 import com.nimda.cite.board.service.CategoryService;
 import com.nimda.cite.common.response.ApiResponse;
-import com.nimda.cup.common.util.JwtUtil;
 import com.nimda.cup.user.entity.User;
-import com.nimda.cup.user.repository.UserRepository;
+import com.nimda.cup.user.security.CustomUserDetails;
 
 import jakarta.validation.Valid;
 import org.slf4j.Logger;
@@ -17,6 +16,7 @@ import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -29,43 +29,6 @@ public class CategoryController {
 
     @Autowired
     private CategoryService categoryService;
-
-    @Autowired
-    private JwtUtil jwtUtil;
-
-    @Autowired
-    private UserRepository userRepository;
-
-    /**
-     * JWT 토큰에서 사용자 정보 추출
-     * 
-     * @param authHeader Authorization 헤더 값
-     * @return User 객체 (토큰이 유효하지 않으면 null)
-     */
-    // authHeader - Authorization Header
-    private User getUserFromToken(String authHeader) {
-
-        // [Exception] Authorization Header가 Null이거나 Bearer로 시작하지 않는경우 파싱 종료
-        if (authHeader == null || !authHeader.startsWith("Bearer ")) {
-            return null;
-        }
-
-        try {
-
-            String token = authHeader.substring(7); // Delete "Bearer"
-            String nickname = jwtUtil.extractNickname(token); // JWT Token Nickname Extract
-            if (nickname != null && !jwtUtil.isTokenExpired(token)) {
-                return userRepository.findByNickname(nickname).orElse(null);
-            }
-
-        } catch (Exception e) {
-            // 토큰이 유효하지 않으면 null 반환
-            // 로깅: 디버깅 및 보안 모니터링을 위해 예외 로그 기록
-            logger.debug("JWT 토큰 파싱 실패: {}", e.getMessage());
-        }
-
-        return null;
-    }
 
     // API1. getAllCategories
     // feat. 활성화된 카테고리 조회 API (일반 사용자용)
@@ -91,10 +54,10 @@ public class CategoryController {
      */
     @GetMapping("/all")
     public ResponseEntity<?> getAllCategoriesAdmin(
-            @RequestHeader(value = "Authorization", required = false) String authHeader) {
+            @AuthenticationPrincipal CustomUserDetails userDetails) {
 
         try {
-            User user = getUserFromToken(authHeader);
+            User user = userDetails != null ? userDetails.getUser() : null;
             if (user == null) {
                 return ApiResponse.fail("로그인이 필요합니다.").toResponse(HttpStatus.UNAUTHORIZED);
             }
@@ -142,10 +105,10 @@ public class CategoryController {
      */
     @PostMapping
     public ResponseEntity<?> createCategory(
-            @RequestHeader(value = "Authorization", required = false) String authHeader,
+            @AuthenticationPrincipal CustomUserDetails userDetails,
             @Valid @RequestBody CategoryCreateDTO createDTO) {
         try {
-            User user = getUserFromToken(authHeader);
+            User user = userDetails != null ? userDetails.getUser() : null;
             if (user == null) {
                 return ApiResponse.fail("로그인이 필요합니다.").toResponse(HttpStatus.UNAUTHORIZED);
             }
@@ -174,11 +137,11 @@ public class CategoryController {
      */
     @PutMapping("/{id}")
     public ResponseEntity<?> updateCategory(
-            @RequestHeader(value = "Authorization", required = false) String authHeader,
+            @AuthenticationPrincipal CustomUserDetails userDetails,
             @PathVariable Long id,
             @Valid @RequestBody CategoryUpdateDTO updateDTO) {
         try {
-            User user = getUserFromToken(authHeader);
+            User user = userDetails != null ? userDetails.getUser() : null;
             if (user == null) {
                 return ApiResponse.fail("로그인이 필요합니다.").toResponse(HttpStatus.UNAUTHORIZED);
             }
@@ -208,10 +171,10 @@ public class CategoryController {
      */
     @DeleteMapping("/{id}")
     public ResponseEntity<?> deleteCategory(
-            @RequestHeader(value = "Authorization", required = false) String authHeader,
+            @AuthenticationPrincipal CustomUserDetails userDetails,
             @PathVariable Long id) {
         try {
-            User user = getUserFromToken(authHeader);
+            User user = userDetails != null ? userDetails.getUser() : null;
             if (user == null) {
                 return ApiResponse.fail("로그인이 필요합니다.").toResponse(HttpStatus.UNAUTHORIZED);
             }
@@ -238,10 +201,10 @@ public class CategoryController {
      */
     @PutMapping("/sort-order")
     public ResponseEntity<?> updateSortOrders(
-            @RequestHeader(value = "Authorization", required = false) String authHeader,
+            @AuthenticationPrincipal CustomUserDetails userDetails,
             @RequestBody List<CategorySortOrderDTO> sortOrders) {
         try {
-            User user = getUserFromToken(authHeader);
+            User user = userDetails != null ? userDetails.getUser() : null;
             if (user == null) {
                 return ApiResponse.fail("로그인이 필요합니다.").toResponse(HttpStatus.UNAUTHORIZED);
             }
