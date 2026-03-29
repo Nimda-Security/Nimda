@@ -294,7 +294,7 @@ function BoardListPage({ slug: propSlug }: BoardListPageProps) {
           ))}
         </div>
 
-        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-end', marginTop: '16px', marginBottom: '8px' }}>
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginTop: '16px', marginBottom: '8px' }}>
           {childCategories.length > 0 ? (
             <div className="board-list__tabs" style={{ marginBottom: 0 }}>
               <button className={`board-list__tab ${activeTab === 'all' ? 'board-list__tab--active' : ''}`} onClick={() => handleTabClick('all')}>전체</button>
@@ -346,36 +346,25 @@ function BoardListPage({ slug: propSlug }: BoardListPageProps) {
             {/* 현재 카테고리 고정글 */}
             {pinnedPosts.map((post) => (
               <div key={`pinned-${post.id}`} className="board-list__row board-list__row--notice" onClick={() => handleBoardClick(post.id)}>
-                <span className="board-list__notice-label">필독</span>
+                <span className="board-list__notice-label">{isNoticeCategory ? '필독' : '고정'}</span>
                 <div className="board-list__row-content">
-                  {getCategoryTagLabel(post) && <span className="board-list__category-tag">{getCategoryTagLabel(post)}</span>}
+                  {getCategoryTagLabel(post, isNoticeCategory ? '필독' : '고정') && <span className="board-list__category-tag">{getCategoryTagLabel(post, isNoticeCategory ? '필독' : '고정')}</span>}
                   <div className="board-list__title-line">
                     <span className="board-list__post-title board-list__post-title--bold">{post.title}</span>
                     <span className="board-list__comments"><MessageBox /> {post.commentCount ?? 0}</span>
                     <span className="board-list__likes"><Heart filled={post.isLiked} /> {post.likeCount ?? 0}</span>
-              {/* 현재 카테고리 고정글 */}
-              {pinnedPosts.map((post) => (
-                <div key={`pinned-${post.id}`} className="board-list__row board-list__row--notice" onClick={() => handleBoardClick(post.id)}>
-                  <span className="board-list__notice-label">{isNoticeCategory ? '필독' : '고정'}</span>
-                  <div className="board-list__row-content">
-                    {getCategoryTagLabel(post, isNoticeCategory ? '필독' : '고정') && <span className="board-list__category-tag">{getCategoryTagLabel(post, isNoticeCategory ? '필독' : '고정')}</span>}
-                    <div className="board-list__title-line">
-                      <span className="board-list__post-title board-list__post-title--bold">{post.title}</span>
-                      <span className="board-list__comments"><MessageBox /> {post.commentCount ?? 0}</span>
-                      <span className="board-list__likes"><Heart filled={post.isLiked} /> {post.likeCount ?? 0}</span>
-                    </div>
-                  </div >
-                  <div className="board-list__meta">
-                    <div className="board-list__author-info">
-                      <Link to={post.author?.nickname ? `/user/${post.author.nickname}` : '#'} className="board-list__author" onClick={(e) => e.stopPropagation()}>{post.author?.nickname || '익명'}</Link>
-                      <span className="board-list__date">{formatDate(post.createdAt)}</span>
-                    </div>
-                    <Avatar src={post.author?.profileImage} size={32} className="board-list__avatar" />
                   </div>
-                  <div className="board-list__row-divider" />
-                </div >
-              ))
-              }
+                </div>
+                <div className="board-list__meta">
+                  <div className="board-list__author-info">
+                    <Link to={post.author?.nickname ? `/user/${post.author.nickname}` : '#'} className="board-list__author" onClick={(e) => e.stopPropagation()}>{post.author?.nickname || '익명'}</Link>
+                    <span className="board-list__date">{formatDate(post.createdAt)}</span>
+                  </div>
+                  <Avatar src={post.author?.profileImage} size={32} className="board-list__avatar" />
+                </div>
+                <div className="board-list__row-divider" />
+              </div>
+            ))}
 
               {/* 일반 게시글 */}
               {
