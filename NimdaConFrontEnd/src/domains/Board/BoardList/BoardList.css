@@ -421,6 +421,15 @@
   margin-bottom: 16px;
 }
 
+.board-list__nav-container {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  width: 100%;
+  margin-top: 16px;
+  margin-bottom: 8px;
+}
+
 .board-list__write-btn {
   display: flex;
   align-items: center;
@@ -429,10 +438,13 @@
   background-color: #c76085;
   color: #fff;
   border: none;
-  padding: 10px 10px;
+  padding: 8px;
+  width: 34px;
+  height: 34px;
   border-radius: 8px;
   cursor: pointer;
   transition: all 0.2s ease;
+  flex-shrink: 0;
 }
 
 .board-list__write-btn:hover {
@@ -440,15 +452,6 @@
   transform: translateY(-1px);
 }
 
-.board-list__write-icon-box {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  background-color: transparent;
-  width: 26px;
-  height: 26px;
-  border-radius: 6px;
-}
 
 /* ===========================
    상태 (로딩/에러/빈)
