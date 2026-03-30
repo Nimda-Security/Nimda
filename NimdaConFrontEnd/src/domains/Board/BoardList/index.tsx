@@ -289,7 +289,7 @@ function BoardListPage({ slug: propSlug }: BoardListPageProps) {
 
         {/* 태그 필터 */}
         <div className="board-list__tag-filter">
-        {tags && tags.map((tag) => (
+        {availableTags && availableTags.map((tag) => (
           <button
             key={tag}
             className={`board-list__tag-filter-item ${selectedTag === tag ? 'board-list__tag-filter-item--active' : ''}`}
