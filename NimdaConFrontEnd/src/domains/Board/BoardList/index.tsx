@@ -300,7 +300,7 @@ function BoardListPage({ slug: propSlug }: BoardListPageProps) {
         ))}
       </div>
 
-        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-end', marginTop: '16px', marginBottom: '8px' }}>
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginTop: '16px', marginBottom: '8px' }}>
           {childCategories.length > 0 ? (
             <div className="board-list__tabs" style={{ marginBottom: 0 }}>
               <button className={`board-list__tab ${activeTab === 'all' ? 'board-list__tab--active' : ''}`} onClick={() => handleTabClick('all')}>전체</button>
