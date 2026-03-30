@@ -8,5 +8,5 @@ import java.util.List;
 
 @Repository
 public interface PointDetailRepository extends JpaRepository<PointDetail, Long> {
-    List<PointDetail> findByUserBalanceId(Long balanceId);
+    List<PointDetail> findByUserBalanceIdOrderByCreatedAtDesc(Long balanceId);
 }
