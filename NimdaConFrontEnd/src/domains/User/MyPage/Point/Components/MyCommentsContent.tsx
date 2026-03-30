@@ -1,10 +1,10 @@
-import React, { useState, useEffect } from "react";
-import { getMyCommentsAPI, deleteMyCommentsAPI } from "@/api/comment";
-import type { MyComment } from "@/api/comment";
-import ContentListItem from "./ContentList/ContentListItem";
-import ContentListActionBar from "./ContentList/ContentListActionBar";
-import Pagination from "./ContentList/Pagination";
-import { useNavigate } from "react-router-dom";
+import React, { useState, useEffect } from 'react';
+import { getMyCommentsAPI, deleteMyCommentsAPI } from '@/api/comment';
+import type { MyComment } from '@/api/comment';
+import ContentListItem from './ContentList/ContentListItem';
+import ContentListActionBar from './ContentList/ContentListActionBar';
+import Pagination from './ContentList/Pagination';
+import { useNavigate } from 'react-router-dom';
 
 const ITEMS_PER_PAGE = 8;
 
@@ -53,8 +53,11 @@ const MyCommentsContent: React.FC = () => {
     if (res.success) {
       setComments((prev) => prev.filter((c) => !selectedIds.has(c.id)));
       setSelectedIds(new Set());
-      const newTotalPages = Math.ceil((comments.length - ids.length) / ITEMS_PER_PAGE);
-      if (currentPage > newTotalPages && newTotalPages > 0) setCurrentPage(newTotalPages);
+      const newTotalPages = Math.ceil(
+        (comments.length - ids.length) / ITEMS_PER_PAGE
+      );
+      if (currentPage > newTotalPages && newTotalPages > 0)
+        setCurrentPage(newTotalPages);
     } else {
       alert(res.message);
     }
@@ -69,7 +72,7 @@ const MyCommentsContent: React.FC = () => {
   }
 
   return (
-    <div className="flex flex-col w-full">
+    <div className="flex flex-col w-full px-4">
       {comments.length > 0 ? (
         <div className="border border-[#d4d4d4] rounded-[4px] bg-transparent overflow-hidden">
           {displayedComments.map((comment, idx) => (
@@ -119,12 +122,14 @@ const MyCommentsContent: React.FC = () => {
         </div>
       )}
 
-        <div className="h-[12px]" />
+      <div className="h-[12px]" />
 
       {comments.length > 0 && (
         <div className="mt-[8px]">
           <ContentListActionBar
-            allSelected={selectedIds.size === comments.length && comments.length > 0}
+            allSelected={
+              selectedIds.size === comments.length && comments.length > 0
+            }
             onToggleAll={toggleAll}
             onDelete={handleDelete}
             hasSelected={selectedIds.size > 0}
@@ -132,7 +137,11 @@ const MyCommentsContent: React.FC = () => {
         </div>
       )}
 
-      <Pagination currentPage={currentPage} totalPages={totalPages} onPageChange={setCurrentPage} />
+      <Pagination
+        currentPage={currentPage}
+        totalPages={totalPages}
+        onPageChange={setCurrentPage}
+      />
     </div>
   );
 };

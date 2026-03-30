@@ -23,7 +23,7 @@ public class RegisterDTO {
     private String name;
 
     @NotBlank(message = "Nickname is required")
-    @Size(min = 3, max = 20, message = "Nickname must be between 3 and 20 characters")
+    @Size(min = 2, max = 20, message = "Nickname must be between 3 and 20 characters")
     private String nickname;
 
     @NotBlank(message = "Password is required")

@@ -35,12 +35,6 @@ data: T;
 
 const API_BASE_URL = "/api/cite/attendance";
 
-// --- [헬퍼 함수: 인증 헤더 생성] ---
-const getAuthHeader = () => {
-const authToken = localStorage.getItem("authToken");
-return authToken ? { "Authorization": `Bearer ${authToken}` } : {};
-};
-
 // --- [API 함수 모음] ---
 
 /**
@@ -53,12 +47,23 @@ const response = await fetch(`${API_BASE_URL}/checkIn`, {
 method: "POST",
 headers: {
 "Content-Type": "application/json",
-...getAuthHeader(),
-      },
-    });
+// 이제 Authorization 헤더는 넣지 않습니다.
+},
+credentials: "include", // [중요] 쿠키 기반 인증을 위해 추가
+});
+
+if (!response.ok) {
+      const errorData = await response.json();
+      return {
+        success: false,
+        message: errorData.message || "출석 체크에 실패했습니다.",
+        data: ""
+      };
+    }
 
     return await response.json();
-  } catch (error) {
+
+  } catch (error) { // 여기서 에러가 났던 51번 라인입니다.
     console.error("출석 체크 실패:", error);
     return { success: false, message: "서버 통신 오류", data: "" };
   }
@@ -130,8 +135,8 @@ export const getMyAttendance = async (): Promise<ApiResponse<Attendance>> => {
       method: "GET",
       headers: {
         "Content-Type": "application/json",
-        ...getAuthHeader(),
       },
+      credentials: "include",
     });
     return await response.json();
   } catch (error) {
@@ -149,8 +154,8 @@ export const getMyLogs = async (): Promise<AttendanceDetailLog[]> => {
       method: "GET",
       headers: {
         "Content-Type": "application/json",
-        ...getAuthHeader(),
       },
+      credentials: "include",
     });
     const result: ApiResponse<AttendanceDetailLog[]> = await response.json();
     return result.success ? result.data : [];
@@ -170,8 +175,8 @@ export const getMyTotalAttendanceCount = async (): Promise<number> => {
       method: "GET",
       headers: {
         "Content-Type": "application/json",
-        ...getAuthHeader(),
       },
+      credentials: "include",
     });
 
     if (!response.ok) return 0;

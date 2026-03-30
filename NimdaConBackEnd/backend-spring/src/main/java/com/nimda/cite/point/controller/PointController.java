@@ -6,11 +6,12 @@ import com.nimda.cite.point.dto.ManualBalanceUpdateRequest;
 import com.nimda.cite.point.dto.PointDetailResponse;
 import com.nimda.cite.point.entity.UserBalance;
 import com.nimda.cite.point.service.PointService;
-import com.nimda.cup.common.util.JwtUtil;
 import com.nimda.cup.user.repository.UserRepository;
+import com.nimda.cup.user.security.CustomUserDetails;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.server.ResponseStatusException;
 
@@ -20,16 +21,14 @@ import java.util.List;
 @RequestMapping("/api/cite/point")
 @RequiredArgsConstructor
 public class PointController {
-    private final JwtUtil jwtUtil;
     private final PointService pointService;
     private final UserRepository userRepository;
 
     // PointController.java 수정
 
     @GetMapping
-    public ResponseEntity<?> getBalance(@RequestHeader("Authorization") String authHeader) {
-        // 바디 대신 헤더의 토큰에서 userId를 가져옵니다.
-        Long userId = jwtUtil.extractUserId(resolveToken(authHeader));
+    public ResponseEntity<?> getBalance(@AuthenticationPrincipal CustomUserDetails userDetails) {
+        Long userId = userDetails.getUser().getId();
 
         UserBalance balance = pointService.findUserBalance(userId);
         BalanceResponse dto = BalanceResponse.builder()
@@ -42,8 +41,8 @@ public class PointController {
 
     // 계좌 전체 조회
     @GetMapping("/allBalance")
-    public ResponseEntity<?> totalBalance(@RequestHeader("Authorization") String authHeader) {
-        Long userId = jwtUtil.extractUserId(resolveToken(authHeader));
+    public ResponseEntity<?> totalBalance(@AuthenticationPrincipal CustomUserDetails userDetails) {
+        Long userId = userDetails.getUser().getId();
         List<BalanceResponse> dto = pointService.findAllUserBalance().stream().map(BalanceResponse::from)
                 .toList();
         return ApiResponse.ok("계좌 전체 조회에 성공했습니다.",dto).toResponse();
@@ -51,8 +50,8 @@ public class PointController {
 
     // 특정 계좌 디테일 조회
     @GetMapping("/pointDetails")
-    public ResponseEntity<?> viewPointDetail(@RequestHeader("Authorization") String authHeader) {
-        Long userId = jwtUtil.extractUserId(resolveToken(authHeader));
+    public ResponseEntity<?> viewPointDetail(@AuthenticationPrincipal CustomUserDetails userDetails) {
+        Long userId = userDetails.getUser().getId();
 
         List<PointDetailResponse> dto = pointService.findPointDetail(userId).stream().map(
                 PointDetailResponse::from).toList();
@@ -62,9 +61,9 @@ public class PointController {
 
     @PostMapping
     public ResponseEntity<?> updateUserBalanceManual(
-            @RequestHeader("Authorization") String authHeader, @RequestBody ManualBalanceUpdateRequest req) {
+            @AuthenticationPrincipal CustomUserDetails userDetails, @RequestBody ManualBalanceUpdateRequest req) {
 
-        Long userId = jwtUtil.extractUserId(resolveToken(authHeader));
+        Long userId = userDetails.getUser().getId();
         BalanceResponse dto = BalanceResponse.from(
                 pointService.updateBalanceManual(userId, req.getDescription(),req.getAmount())
                 );
@@ -117,10 +116,4 @@ public class PointController {
         }
     }
 
-    protected String resolveToken(String authHeader) {
-        if (authHeader != null && authHeader.startsWith("Bearer ")) {
-            return authHeader.substring(7);
-        }
-        throw new IllegalArgumentException("유효하지 않은 인증 헤더입니다.");
-    }
 }

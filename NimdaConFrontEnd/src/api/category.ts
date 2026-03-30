@@ -1,4 +1,4 @@
-// 카테고리 관련 API 함수들
+﻿// 카테고리 관련 API 함수들
 
 import type { Category } from '@/domains/Board/types';
 
@@ -20,32 +20,10 @@ const parseJsonSafe = async (response: Response) => {
 };
 
 /**
- * Note1. getAuthToken
- * feat. LocalStorage에서 JWT Token 추출
+ * Note1-2. 쿠키 기반 인증 전환
+ * 모든 인증은 HttpOnly 쿠키로 보내지므로 JS에서 토큰을 직접 다뤄 필요 없음
+ * fetch는 같은 오리진 요청에 쿠키를 자동으로 포함하여 보냄
  */
-const getAuthToken = (): string | null => {
-  return localStorage.getItem('authToken');
-};
-
-/**
- * Note2. getAuthHeaders 
- * Authorization 헤더 생성
- *  case1: Token이 있는 경우 'Content-Type', 'Authorization' Header extrat
- *  case2: Token이 없는 경우 'Content-Type' extract 
- */
-const getAuthHeaders = (): Record<string, string> => {
-
-  const token = getAuthToken();
-  const headers: Record<string, string> = {
-    'Content-Type': 'application/json',
-  };
-
-  if (token) {
-    headers['Authorization'] = `Bearer ${token}`;
-  }
-
-  return headers;
-};
 
 /**
  * Slug로 카테고리 조회
@@ -58,6 +36,7 @@ export const getCategoryBySlugAPI = async (slug: string): Promise<Category | nul
       headers: {
         'Content-Type': 'application/json',
       },
+      credentials: 'include',
     });
 
     if (response.ok) {
@@ -105,6 +84,7 @@ export const getAllCategoriesAPI = async (): Promise<Category[]> => {
       headers: {
         'Content-Type': 'application/json',
       },
+      credentials: 'include',
     });
 
     if (response.ok) {
@@ -135,14 +115,10 @@ export const getAllCategoriesAPI = async (): Promise<Category[]> => {
  */
 export const getAllCategoriesAdminAPI = async (): Promise<Category[]> => {
   try {
-    const token = getAuthToken();
-    if (!token) {
-      throw new Error('로그인이 필요합니다.');
-    }
-
     const response = await fetch(`${API_BASE_URL}/all`, {
       method: 'GET',
-      headers: getAuthHeaders(),
+      headers: { 'Content-Type': 'application/json' },
+      credentials: 'include',
     });
 
     if (response.ok) {
@@ -229,17 +205,10 @@ export const createCategoryAPI = async (
   data: CategoryCreateRequest
 ): Promise<CategoryResponse> => {
   try {
-    const token = getAuthToken();
-    if (!token) {
-      return {
-        success: false,
-        message: '로그인이 필요합니다.',
-      };
-    }
-
     const response = await fetch(API_BASE_URL, {
       method: 'POST',
-      headers: getAuthHeaders(),
+      headers: { 'Content-Type': 'application/json' },
+      credentials: 'include',
       body: JSON.stringify(data),
     });
 
@@ -289,17 +258,10 @@ export const updateCategoryAPI = async (
   data: CategoryUpdateRequest
 ): Promise<CategoryResponse> => {
   try {
-    const token = getAuthToken();
-    if (!token) {
-      return {
-        success: false,
-        message: '로그인이 필요합니다.',
-      };
-    }
-
     const response = await fetch(`${API_BASE_URL}/${id}`, {
       method: 'PUT',
-      headers: getAuthHeaders(),
+      headers: { 'Content-Type': 'application/json' },
+      credentials: 'include',
       body: JSON.stringify(data),
     });
 
@@ -356,7 +318,8 @@ export const updateCategorySortOrderAPI = async (
   try {
     const response = await fetch(`${API_BASE_URL}/sort-order`, {
       method: 'PUT',
-      headers: getAuthHeaders(),
+      headers: { 'Content-Type': 'application/json' },
+      credentials: 'include',
       body: JSON.stringify(sortOrders),
     });
 
@@ -384,17 +347,10 @@ export const deleteCategoryAPI = async (
   id: number
 ): Promise<CategoryDeleteResponse> => {
   try {
-    const token = getAuthToken();
-    if (!token) {
-      return {
-        success: false,
-        message: '로그인이 필요합니다.',
-      };
-    }
-
     const response = await fetch(`${API_BASE_URL}/${id}`, {
       method: 'DELETE',
-      headers: getAuthHeaders(),
+      headers: { 'Content-Type': 'application/json' },
+      credentials: 'include',
     });
 
     if (response.ok) {

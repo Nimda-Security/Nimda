@@ -11,9 +11,12 @@ import com.nimda.cup.user.exception.UserNotApprovedException;
 import com.nimda.cup.user.security.CustomUserDetails;
 import com.nimda.cup.user.service.AuthService;
 import com.nimda.cite.common.s3.S3Service;
+import jakarta.servlet.http.HttpServletResponse;
 import jakarta.validation.Valid;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseCookie;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
@@ -39,30 +42,61 @@ public class AuthController {
      * @return JWT 토큰과 사용자 정보
      */
     @PostMapping("/login")
-    public ResponseEntity<?> login(@Valid @RequestBody LoginDTO loginRequest) {
+    public ResponseEntity<?> login(@Valid @RequestBody LoginDTO loginRequest, HttpServletResponse response) { // HttpServletResponse 추가
         try {
-            // 사용자 인증
             Optional<User> userOpt = authService.validateUser(
                     loginRequest.getUserId(),
                     loginRequest.getPassword());
 
             if (userOpt.isPresent()) {
-                // 로그인 성공
-                LoginResponseDTO response = authService.login(userOpt.get());
-                return ResponseEntity.ok(response);
+                LoginResponseDTO loginData = authService.login(userOpt.get());
+                String token = loginData.getAccessToken(); // DTO에서 토큰 추출
+
+                // 1. 쿠키 생성 (이름을 Authorization으로 설정)
+                ResponseCookie cookie = ResponseCookie.from("Authorization", token)
+                        .httpOnly(true)    // 자바스크립트 접근 차단 (보안 핵심)
+                        .secure(true)      // HTTPS 환경에서만 전송 (로컬 테스트 시 주의*)
+                        .path("/")         // 모든 경로에서 쿠키 유효
+                        .maxAge(60 * 60)   // 쿠키 수명 (초 단위, 예: 1시간)
+                        .sameSite("Lax")   // CSRF 방어
+                        .build();
+
+                // 2. 응답 헤더에 쿠키 추가 및 바디 응답
+                // 이제 프론트엔드에 토큰을 바디로 줄 필요가 없으므로 DTO에서 토큰을 제외하거나 유지해도 됨
+                return ResponseEntity.ok()
+                        .header(HttpHeaders.SET_COOKIE, cookie.toString())
+                        .body(Map.of("success", true, "message", "로그인 성공", "user", loginData.getUser()));
             } else {
-                // 인증 실패 (비밀번호 오류 또는 사용자 없음)
                 return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
                         .body(Map.of("message", "Invalid user ID or password"));
             }
         } catch (UserNotApprovedException e) {
-            // 승인되지 않은 계정
             return ResponseEntity.status(HttpStatus.FORBIDDEN)
                     .body(Map.of("message", e.getMessage()));
         } catch (Exception e) {
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
                     .body(Map.of("message", "Login failed: " + e.getMessage()));
         }
+    }
+
+    /**
+     * 로그아웃
+     * 브라우저에 저장된 Authorization 쿠키를 만료시킨다.
+     */
+    @PostMapping("/logout")
+    public ResponseEntity<?> logout() {
+        // 쿠키의 유효 시간을 0으로 설정하여 즉시 만료시킴
+        ResponseCookie cookie = ResponseCookie.from("Authorization", "")
+                .httpOnly(true)
+                .secure(true) // 운영 환경에 맞춰 설정 (로컬 환경이 HTTP라면 false로 테스트)
+                .path("/")
+                .maxAge(0)    // 만료 시간을 0으로 설정하는 것이 핵심
+                .sameSite("Lax")
+                .build();
+
+        return ResponseEntity.ok()
+                .header(HttpHeaders.SET_COOKIE, cookie.toString())
+                .body(Map.of("success", true, "message", "로그아웃 성공"));
     }
 
     /**

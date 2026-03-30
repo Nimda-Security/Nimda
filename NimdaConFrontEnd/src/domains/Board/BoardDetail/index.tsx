@@ -3,25 +3,16 @@ import { useNavigate, useParams, Link } from 'react-router-dom';
 import { MessageBox } from '@/components/icons/MessageBox';
 import { VerticalDots } from '@/components/icons/VerticalDots';
 import Layout from '@/components/Layout';
-import { openAttachmentDownloadInNewTab, getAttachmentPresignedUrl } from '@/api/attachments';
+import { openAttachmentDownloadInNewTab } from '@/api/attachments';
 import { getBoardDetailAPI, deleteBoardAPI, getFileDownloadURL, getBoardLikeStatusAPI } from '@/api/board';
 import { getAllCategoriesAPI } from '@/api/category';
 import { hasRole, isAdmin, getCurrentNickname } from '@/utils/jwt';
 import type { Board } from '../types';
-import type { BoardAttachmentMeta } from '../types';
 import CommentSection from '@/domains/Comment';
 import BoardLikeButton from './BoardLikeButton';
 import Avatar from '@/components/Avatar/Avatar';
 import { Heart } from '@/components/icons/Heart';
 import './BoardDetail.css';
-
-const IMAGE_EXTENSIONS = ['jpg', 'jpeg', 'png', 'gif', 'webp', 'bmp', 'svg'];
-
-const isImageAttachment = (att: BoardAttachmentMeta): boolean => {
-  if (!att.originFilename) return false;
-  const ext = att.originFilename.split('.').pop()?.toLowerCase() || '';
-  return IMAGE_EXTENSIONS.includes(ext);
-};
 
 function BoardDetailPage() {
   const navigate = useNavigate();
@@ -33,8 +24,8 @@ function BoardDetailPage() {
   const [isDeleting, setIsDeleting] = useState(false);
   const [likeCount, setLikeCount] = useState(0);
   const [isLiked, setIsLiked] = useState(false);
-  const [imageUrls, setImageUrls] = useState<Record<number, string>>({});
   const [menuOpen, setMenuOpen] = useState(false);
+  const [showAttachments, setShowAttachments] = useState(false);
 
   useEffect(() => { if (id) fetchBoard(parseInt(id)); }, [id]);
 
@@ -63,18 +54,6 @@ function BoardDetailPage() {
 
         setBoard(boardData);
         await fetchLikeStatus(boardId);
-
-        // 이미지 첨부파일의 presigned URL 로드
-        if (boardData.attachments && boardData.attachments.length > 0) {
-          const urls: Record<number, string> = {};
-          await Promise.all(
-            boardData.attachments.filter(isImageAttachment).map(async (att) => {
-              const url = await getAttachmentPresignedUrl(att.id);
-              if (url) urls[att.id] = url;
-            })
-          );
-          setImageUrls(urls);
-        }
       } else {
         // 백엔드에서 403 반환한 경우
         if (res.message === '접근 권한이 없습니다.') {
@@ -165,34 +144,9 @@ function BoardDetailPage() {
           <button type="button" onClick={handleGoBack} className="board-detail__back">
             ← {board.category?.name ?? boardType ?? '게시판'}
           </button>
-          <h1 className="board-detail__title">{board.title}</h1>
 
-          <div className="board-detail__meta">
-            <Avatar
-              src={board.author?.profileImage}
-              size={32}
-              className="board-detail__avatar"
-            />
-            <Link
-              to={board.author?.nickname ? `/user/${board.author.nickname}` : '#'}
-              className="board-detail__author"
-            >
-              {board.author?.nickname ?? '알 수 없음'}
-            </Link>
-            <span className="board-detail__date">{fmtDate(board.createdAt)}</span>
-            <span className="board-detail__date">{fmtTime(board.createdAt)}</span>
-
-            <div className="board-detail__stats">
-              <span className="board-detail__stat-comments">
-                <MessageBox />
-                {board.commentCount ?? 0}
-              </span>
-              <span className="board-detail__stat-likes">
-                <Heart filled={isLiked} />
-                {likeCount}
-              </span>
-            </div>
-
+          <div className="board-detail__title-row">
+            <h1 className="board-detail__title">{board.title}</h1>
             {/* 작성자 또는 어드민만 점 세 개 버튼 표시 */}
             {(isAuthor() || isAdmin()) && (
               <div className="board-detail__menu-wrap">
@@ -223,6 +177,35 @@ function BoardDetailPage() {
               </div>
             )}
           </div>
+          
+          <div className="board-detail__meta">
+            <Avatar
+              src={board.author?.profileImage}
+              size={40}
+              className="board-detail__avatar"
+            />
+            <div className="board-detail__meta-info">
+              <Link
+                to={board.author?.nickname ? `/user/${board.author.nickname}` : '#'}
+                className="board-detail__author"
+              >
+                {board.author?.nickname ?? '알 수 없음'}
+              </Link>
+              <div className="board-detail__meta-sub">
+                <span className="board-detail__date">
+                  {fmtDate(board.createdAt)} {fmtTime(board.createdAt)}
+                </span>
+                <span className="board-detail__stat-comments">
+                  <MessageBox />
+                  {board.commentCount ?? 0}
+                </span>
+                <span className="board-detail__stat-likes">
+                  <Heart filled={isLiked} />
+                  {likeCount}
+                </span>
+              </div>
+            </div>
+          </div>
         </header>
 
         <hr className="board-detail__divider" />
@@ -230,31 +213,28 @@ function BoardDetailPage() {
         {/* Body */}
         <div className="board-detail__body" dangerouslySetInnerHTML={{ __html: board.content }} />
 
-        {/* S3·Attachment 연동 — 이미지 첨부는 인라인 표시, 나머지는 다운로드 링크 */}
-        {board.attachments && board.attachments.length > 0 && (() => {
-          const images = board.attachments!.filter(isImageAttachment);
-          const files = board.attachments!.filter(att => !isImageAttachment(att));
-          return (
-            <>
-              {images.length > 0 && (
-                <section className="board-detail__inline-images" aria-label="이미지">
-                  {images.map((att) => (
-                    imageUrls[att.id] ? (
-                      <img
-                        key={att.id}
-                        src={imageUrls[att.id]}
-                        alt={att.originFilename ?? '이미지'}
-                        style={{ maxWidth: '100%', borderRadius: 8, marginBottom: 12, display: 'block' }}
-                      />
-                    ) : null
-                  ))}
-                </section>
-              )}
-              {files.length > 0 && (
-                <section className="board-detail__attachments" aria-label="첨부파일">
-                  <h2 className="board-detail__attachments-title">첨부파일</h2>
+        {/* 첨부파일 버튼 — S3 또는 레거시 첨부가 있을 때만 표시 */}
+        {((board.attachments && board.attachments.length > 0) ||
+          ((!board.attachments || board.attachments.length === 0) && board.filename && board.filepath)) && (
+          <div className="board-detail__attachment-wrap">
+            <button
+              type="button"
+              className="board-detail__attachment-toggle"
+              onClick={() => setShowAttachments(prev => !prev)}
+            >
+              📎 첨부파일
+              {board.attachments && board.attachments.length > 0
+                ? ` (${board.attachments.length})`
+                : ' (1)'}
+              <span className={`board-detail__attachment-arrow ${showAttachments ? 'board-detail__attachment-arrow--open' : ''}`}>▾</span>
+            </button>
+
+            {showAttachments && (
+              <div className="board-detail__attachment-dropdown">
+                {/* S3·Attachment 연동 */}
+                {board.attachments && board.attachments.length > 0 && (
                   <ul className="board-detail__attachments-list">
-                    {files.map((att) => (
+                    {board.attachments.map((att) => (
                       <li key={att.id}>
                         <a
                           href="#"
@@ -271,19 +251,28 @@ function BoardDetailPage() {
                       </li>
                     ))}
                   </ul>
-                </section>
-              )}
-            </>
-          );
-        })()}
+                )}
 
-        {/* 레거시 단일 첨부(board-uploads 등) — attachments가 없을 때만 표시 */}
-        {(!board.attachments || board.attachments.length === 0) && board.filename && board.filepath && (
-          <section className="board-detail__attachments board-detail__attachments--legacy" aria-label="첨부파일">
-            <button type="button" onClick={handleLegacyFileDownload} className="board-detail__file-btn">
-              📎 첨부파일 ({board.filename.includes('_') ? board.filename.split('_').slice(1).join('_') : board.filename})
-            </button>
-          </section>
+                {/* 레거시 단일 첨부 */}
+                {(!board.attachments || board.attachments.length === 0) && board.filename && board.filepath && (
+                  <ul className="board-detail__attachments-list">
+                    <li>
+                      <a
+                        href="#"
+                        className="board-detail__attachments-link"
+                        onClick={(e) => {
+                          e.preventDefault();
+                          handleLegacyFileDownload();
+                        }}
+                      >
+                        📎 {board.filename.includes('_') ? board.filename.split('_').slice(1).join('_') : board.filename}
+                      </a>
+                    </li>
+                  </ul>
+                )}
+              </div>
+            )}
+          </div>
         )}
 
         {/* 좋아요 */}

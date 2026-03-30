@@ -7,11 +7,12 @@ import com.nimda.cite.comment.repository.CommentRepository;
 import com.nimda.cite.common.response.ApiResponse;
 import com.nimda.cite.like.dto.BoardLikeResponse;
 import com.nimda.cite.like.service.BoardLikeService;
-import com.nimda.cup.common.util.JwtUtil;
 import com.nimda.cup.user.repository.UserRepository;
+import com.nimda.cup.user.security.CustomUserDetails;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.server.ResponseStatusException;
 
@@ -26,7 +27,6 @@ import java.util.Map;
 public class BoardLikeController {
 
     private final BoardLikeService boardLikeService;
-    private final JwtUtil jwtUtil;
     private final CommentRepository commentRepository;
     private final UserRepository userRepository;
 
@@ -43,6 +43,7 @@ public class BoardLikeController {
                         List<BoardResponseDTO> dtos = boards.stream()
                                 .map(b -> BoardResponseDTO.from(b,
                                         boardLikeService.getLikeCount(b.getId()),
+                                        false,
                                         commentRepository.countByBoardIdAndStatusNot(b.getId(), STATUS.DELETED)))
                                 .toList();
                         return ApiResponse.ok(Map.of("boards", dtos)).toResponse();
@@ -59,9 +60,9 @@ public class BoardLikeController {
     @GetMapping("/{boardId}/likeStatus")
     public ResponseEntity<?> getLikeStatus(
             @PathVariable Long boardId,
-            @RequestHeader("Authorization") String authHeader) {
+            @AuthenticationPrincipal CustomUserDetails userDetails) {
 
-        Long userId = jwtUtil.extractUserId(authHeader.substring(7));
+        Long userId = userDetails.getUser().getId();
         long count = boardLikeService.getLikeCount(boardId);
         boolean isLiked = boardLikeService.isUserLiked(userId, boardId);
         BoardLikeResponse dto = BoardLikeResponse.builder().likeCount(count).isLiked(isLiked).build();
@@ -76,10 +77,10 @@ public class BoardLikeController {
 
     @PostMapping("/{boardId}")
     public ResponseEntity<?> toggleLike(
-            @RequestHeader("Authorization") String authHeader,
+            @AuthenticationPrincipal CustomUserDetails userDetails,
             @PathVariable Long boardId) {
 
-        Long userId = jwtUtil.extractUserId(authHeader.substring(7));
+        Long userId = userDetails.getUser().getId();
         String message = boardLikeService.toggleLike(userId, boardId);
         long likeCount = boardLikeService.getLikeCount(boardId);
         boolean isLiked = !message.contains("취소");
@@ -87,20 +88,21 @@ public class BoardLikeController {
     }
 
     @GetMapping("/totalLikes")
-    public ResponseEntity<?> getTotalLikesReceived(@RequestHeader("Authorization") String authHeader) {
-        Long userId = jwtUtil.extractUserId(authHeader.substring(7));
+    public ResponseEntity<?> getTotalLikesReceived(@AuthenticationPrincipal CustomUserDetails userDetails) {
+        Long userId = userDetails.getUser().getId();
         long totalReceived = boardLikeService.getTotalLikesReceived(userId);
         BoardLikeResponse dto = BoardLikeResponse.builder().likeCount(totalReceived).build();
         return ApiResponse.ok(dto).toResponse();
     }
 
     @GetMapping("/pushedLikes")
-    public ResponseEntity<?> getLikeBoards(@RequestHeader("Authorization") String authHeader) {
-        Long userId = jwtUtil.extractUserId(authHeader.substring(7));
+    public ResponseEntity<?> getLikeBoards(@AuthenticationPrincipal CustomUserDetails userDetails) {
+        Long userId = userDetails.getUser().getId();
         List<Board> boards = boardLikeService.getTotalLikeBoards(userId);
         List<BoardResponseDTO> dtos = boards.stream()
                 .map(b -> BoardResponseDTO.from(b,
                         boardLikeService.getLikeCount(b.getId()),
+                        true,
                         commentRepository.countByBoardIdAndStatusNot(b.getId(), STATUS.DELETED)))
                 .toList();
         return ApiResponse.ok(Map.of("boards", dtos)).toResponse();
@@ -108,16 +110,14 @@ public class BoardLikeController {
 
     @GetMapping("/pushedLikes/count")
     public ResponseEntity<?> getPushedLikesCount(
-            @RequestHeader(value = "Authorization", required = false) String authHeader) {
+            @AuthenticationPrincipal CustomUserDetails userDetails) {
 
-        // 1. 헤더가 없는 경우 즉시 처리 (NPE 방지)
-        if (authHeader == null || !authHeader.startsWith("Bearer ")) {
+        if (userDetails == null) {
             return ApiResponse.fail("로그인 정보가 없습니다.").toResponse(HttpStatus.UNAUTHORIZED);
         }
 
         try {
-            String token = authHeader.substring(7);
-            Long userId = jwtUtil.extractUserId(token);
+            Long userId = userDetails.getUser().getId();
 
             long count = boardLikeService.countTotalLikeBoards(userId);
 

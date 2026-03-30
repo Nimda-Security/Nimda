@@ -4,9 +4,12 @@ import Footer from '@/components/Layout/Footer';
 import { useNavigate, useLocation } from 'react-router-dom';
 import {
   getAllUsersAPI,
+  getAvailableRolesAPI,
   getPendingUsersAPI,
   approveUserAPI,
+  removeUserRoleAPI,
   rejectUserAPI,
+  updateUserRoleAPI,
 } from '@/api/admin/admin';
 import {
   getBoardListAPI,
@@ -38,6 +41,9 @@ function AdminDashboard() {
   const [users, setUsers] = useState([]);
   const [loading, setLoading] = useState(false);
   const [selectedUser, setSelectedUser] = useState(null);
+  const [availableRoles, setAvailableRoles] = useState([]);
+  const [grantingRole, setGrantingRole] = useState(false);
+  const [removingRole, setRemovingRole] = useState(false);
   const [pendingUsers, setPendingUsers] = useState([]);
   const [pendingUsersLoading, setPendingUsersLoading] = useState(false);
   const [posts, setPosts] = useState([]);
@@ -98,6 +104,20 @@ function AdminDashboard() {
       alert('사용자 목록을 불러오는 중 오류가 발생했습니다.');
     } finally {
       setLoading(false);
+    }
+  };
+
+  const loadAvailableRoles = async () => {
+    try {
+      const result = await getAvailableRolesAPI();
+      if (result.success) {
+        setAvailableRoles(result.roles || []);
+      } else {
+        alert('권한 목록을 불러오는데 실패했습니다: ' + result.message);
+      }
+    } catch (error) {
+      console.error('권한 목록 로드 오류:', error);
+      alert('권한 목록을 불러오는 중 오류가 발생했습니다.');
     }
   };
 
@@ -386,16 +406,14 @@ function AdminDashboard() {
 
     setUploadingImage(true);
     try {
-      const token = localStorage.getItem('authToken');
-
       const presignedResponse = await fetch(
         `/api/users/me/profile-image/presigned-url`,
         {
           method: 'POST',
           headers: {
-            Authorization: `Bearer ${token}`,
             'Content-Type': 'application/json',
           },
+          credentials: 'include',
           body: JSON.stringify({
             fileName: file.name,
             contentType: file.type,
@@ -426,9 +444,9 @@ function AdminDashboard() {
       const dbUpdateResponse = await fetch(`/api/users/me/profile-image`, {
         method: 'PUT',
         headers: {
-          Authorization: `Bearer ${token}`,
           'Content-Type': 'application/json',
         },
+        credentials: 'include',
         body: JSON.stringify({
           imageUrl: presignedResult.imageUrl,
         }),
@@ -460,6 +478,70 @@ function AdminDashboard() {
     } finally {
       setUploadingImage(false);
       event.target.value = '';
+    }
+  };
+
+  const handleGrantRole = async (userId, role) => {
+    if (!role) {
+      alert('부여할 권한을 선택해주세요.');
+      return;
+    }
+
+    setGrantingRole(true);
+    try {
+      const result = await updateUserRoleAPI(userId, role);
+      if (result.success) {
+        alert(result.message || '권한이 부여되었습니다.');
+        await loadUsers();
+
+        if (selectedUser && selectedUser.id === userId) {
+          const nextRoles = (result.roles || []).map((r) =>
+            typeof r === 'string' ? { authorityName: r } : r
+          );
+          setSelectedUser((prev) =>
+            prev ? { ...prev, authorities: nextRoles } : prev
+          );
+        }
+      } else {
+        alert(result.message || '권한 부여에 실패했습니다.');
+      }
+    } catch (error) {
+      console.error('권한 부여 오류:', error);
+      alert('권한 부여 중 오류가 발생했습니다.');
+    } finally {
+      setGrantingRole(false);
+    }
+  };
+
+  const handleRemoveRole = async (userId, role) => {
+    if (!role) {
+      alert('제거할 권한을 선택해주세요.');
+      return;
+    }
+
+    setRemovingRole(true);
+    try {
+      const result = await removeUserRoleAPI(userId, role);
+      if (result.success) {
+        alert(result.message || '권한이 제거되었습니다.');
+        await loadUsers();
+
+        if (selectedUser && selectedUser.id === userId) {
+          const nextRoles = (result.roles || []).map((r) =>
+            typeof r === 'string' ? { authorityName: r } : r
+          );
+          setSelectedUser((prev) =>
+            prev ? { ...prev, authorities: nextRoles } : prev
+          );
+        }
+      } else {
+        alert(result.message || '권한 제거에 실패했습니다.');
+      }
+    } catch (error) {
+      console.error('권한 제거 오류:', error);
+      alert('권한 제거 중 오류가 발생했습니다.');
+    } finally {
+      setRemovingRole(false);
     }
   };
 
@@ -759,6 +841,7 @@ function AdminDashboard() {
       }
     } else if (activeSection === 'user-info') {
       loadUsers();
+      loadAvailableRoles();
     }
   }, [activeSection]);
 
@@ -787,8 +870,13 @@ function AdminDashboard() {
   }, [categories]);
 
   const getUserRoles = (user) => {
-    if (!user.authorities || user.authorities.length === 0) return [];
-    return user.authorities.map((auth) => auth.authorityName || auth);
+    if (user?.authorities && user.authorities.length > 0) {
+      return user.authorities.map((auth) => auth.authorityName || auth);
+    }
+    if (user?.roles && user.roles.length > 0) {
+      return user.roles.map((role) => role.authorityName || role);
+    }
+    return [];
   };
 
   const hasRole = (user, role) => {
@@ -809,6 +897,11 @@ function AdminDashboard() {
             getUserRoles={getUserRoles}
             uploadingImage={uploadingImage}
             handleImageUpload={handleImageUpload}
+            availableRoles={availableRoles}
+            grantingRole={grantingRole}
+            handleGrantRole={handleGrantRole}
+            removingRole={removingRole}
+            handleRemoveRole={handleRemoveRole}
           />
         );
       case 'pending':

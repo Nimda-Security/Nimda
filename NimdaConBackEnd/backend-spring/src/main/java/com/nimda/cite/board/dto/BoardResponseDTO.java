@@ -1,6 +1,5 @@
 package com.nimda.cite.board.dto;
 
-import com.fasterxml.jackson.annotation.JsonInclude;
 import com.nimda.cite.attachment.dto.AttachmentResponseDto;
 import com.nimda.cite.board.entity.Board;
 import com.nimda.cup.user.entity.User;
@@ -32,6 +31,7 @@ public class BoardResponseDTO {
     private CategoryResponseDTO category;
     private AuthorInfo author;
     private Integer views;
+    private Boolean isLiked;
     private Long likeCount;
     private Long commentCount;
     private Boolean pinned;
@@ -63,19 +63,23 @@ public class BoardResponseDTO {
 
     /**
      * 정적 팩토리 메서드: Board Entity를 BoardResponseDTO로 변환
-     * 
+     *
      * @param board     변환할 Board 엔티티
      * @param likeCount 좋아요 개수
      * @return BoardResponseDTO
      */
-    public static BoardResponseDTO from(Board board, long likeCount) {
-        return from(board, likeCount, null);
+    public static BoardResponseDTO from(Board board, long likeCount, boolean isLiked, long commentCount) {
+        BoardResponseDTO dto = from(board, likeCount, isLiked, commentCount, null);
+        if (dto != null) dto.setCommentCount(commentCount);
+        return dto;
     }
+
 
     /**
      * @param attachments 상세 응답용. 목록 API에서는 null 전달(필드 생략).
      */
-    public static BoardResponseDTO from(Board board, long likeCount, List<AttachmentResponseDto> attachments) {
+    public static BoardResponseDTO from(Board board, long likeCount, boolean isLiked,
+                                        long commentCount, List<AttachmentResponseDto> attachments) {
         if (board == null) {
             return null;
         }
@@ -100,7 +104,8 @@ public class BoardResponseDTO {
                 .author(authorInfo)
                 .views(board.getPostView())
                 .likeCount(likeCount)
-                .commentCount(0L)
+                .isLiked(isLiked)
+                .commentCount(commentCount)
                 .pinned(board.getPinned())
                 .tag(board.getTag()) // 태그 필드 추가
                 .filename(board.getFilename())
@@ -109,11 +114,5 @@ public class BoardResponseDTO {
                 .createdAt(board.getCreatedAt())
                 .updatedAt(board.getUpdatedAt())
                 .build();
-    }
-
-    public static BoardResponseDTO from(Board board, long likeCount, long commentCount) {
-        BoardResponseDTO dto = from(board, likeCount);
-        if (dto != null) dto.setCommentCount(commentCount);
-        return dto;
     }
 }

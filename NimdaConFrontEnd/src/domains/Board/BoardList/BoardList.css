@@ -34,7 +34,8 @@
   font-weight: 500;
   color: var(--color-black);
   line-height: 1.5;
-  padding: 0;
+  padding: 0 0 6px 0;
+  position: relative;
   cursor: pointer;
   background: none;
   border: none;
@@ -49,6 +50,17 @@
 .board-list__tag-filter-item--active {
   font-weight: 600;
   color: #d97399;
+}
+
+.board-list__tag-filter-item--active::after {
+  content: '';
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  width: 100%;
+  height: 3px;
+  background-color: #d97399;
+  border-radius: 1.5px;
 }
 
 /* ===========================
@@ -276,7 +288,7 @@
 .board-list__comments {
   display: flex;
   align-items: center;
-  gap: 2px;
+  gap: 4px;
   font-size: 12px;
   font-weight: 700;
   color: var(--color-blue);
@@ -286,7 +298,7 @@
 .board-list__likes {
   display: flex;
   align-items: center;
-  gap: 2px;
+  gap: 4px;
   font-size: 12px;
   font-weight: 700;
   color: var(--color-red);
@@ -323,6 +335,18 @@
   right: 0;
   height: 1px;
   background-color: var(--color-gray-200);
+}
+
+/* ===========================
+   썸네일
+   =========================== */
+.board-list__thumbnail {
+  width: 48px;
+  height: 48px;
+  object-fit: cover;
+  border-radius: 6px;
+  flex-shrink: 0;
+  margin-left: 12px;
 }
 
 /* ===========================
@@ -397,6 +421,15 @@
   margin-bottom: 16px;
 }
 
+.board-list__nav-container {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  width: 100%;
+  margin-top: 16px;
+  margin-bottom: 8px;
+}
+
 .board-list__write-btn {
   display: flex;
   align-items: center;
@@ -405,10 +438,13 @@
   background-color: #c76085;
   color: #fff;
   border: none;
-  padding: 8px 16px;
+  padding: 8px;
+  width: 34px;
+  height: 34px;
   border-radius: 8px;
   cursor: pointer;
   transition: all 0.2s ease;
+  flex-shrink: 0;
 }
 
 .board-list__write-btn:hover {
@@ -416,15 +452,6 @@
   transform: translateY(-1px);
 }
 
-.board-list__write-icon-box {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  background-color: transparent;
-  width: 26px;
-  height: 26px;
-  border-radius: 6px;
-}
 
 /* ===========================
    상태 (로딩/에러/빈)

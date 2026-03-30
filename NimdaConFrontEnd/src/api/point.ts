@@ -25,13 +25,12 @@ export interface PointResponse<T> {
  */
 export const getUserBalance = async () => {
   try {
-    const authToken = localStorage.getItem("authToken");
     const response = await fetch(`${API_BASE_URL}`, {
       method: "GET",
       headers: {
         "Content-Type": "application/json",
-        "Authorization": `Bearer ${authToken}`,
       },
+      credentials: "include",
     });
 
     const result = await response.json();
@@ -54,18 +53,12 @@ export const getUserBalance = async () => {
  */
 export const getPointDetailsAPI = async (): Promise<PointHistoryItem[]> => {
   try {
-    const authToken = localStorage.getItem("authToken");
-    if (!authToken) {
-      console.warn("인증 토큰이 없습니다.");
-      return [];
-    }
-
     const response = await fetch(`${API_BASE_URL}/pointDetails`, {
       method: "GET",
       headers: {
         "Content-Type": "application/json",
-        "Authorization": `Bearer ${authToken}`,
       },
+      credentials: "include",
     });
 
     if (!response.ok) {
@@ -99,18 +92,12 @@ export const getPointDetailsAPI = async (): Promise<PointHistoryItem[]> => {
  */
 export const updatePointManual = async (userId: number, description: string, amount: number) => {
   try {
-    const authToken = localStorage.getItem("authToken");
-
-    if (!authToken) {
-      return { success: false, message: "인증 토큰이 없습니다." };
-    }
-
     const response = await fetch(`${API_BASE_URL}`, {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
-        "Authorization": `Bearer ${authToken}`,
       },
+      credentials: "include",
       body: JSON.stringify({
         userId: userId,
         description: description,

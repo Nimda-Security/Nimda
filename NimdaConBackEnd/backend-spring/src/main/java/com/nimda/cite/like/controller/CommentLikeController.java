@@ -3,9 +3,10 @@ package com.nimda.cite.like.controller;
 import com.nimda.cite.common.response.ApiResponse;
 import com.nimda.cite.like.dto.CommentLikeResponse;
 import com.nimda.cite.like.service.CommentLikeService;
-import com.nimda.cup.common.util.JwtUtil;
+import com.nimda.cup.user.security.CustomUserDetails;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 
 @RestController
@@ -14,14 +15,13 @@ import org.springframework.web.bind.annotation.*;
 public class CommentLikeController {
 
     private final CommentLikeService commentLikeService;
-    private final JwtUtil jwtUtil;
 
     @PostMapping("/{commentId}")
     public ResponseEntity<?> toggleLike(
-            @RequestHeader("Authorization") String authHeader,
+            @AuthenticationPrincipal CustomUserDetails userDetails,
             @PathVariable Long commentId) {
 
-        Long userId = jwtUtil.extractUserId(authHeader.substring(7));
+        Long userId = userDetails.getUser().getId();
         String message = commentLikeService.toggleCommentLike(userId, commentId);
         long likeCount = commentLikeService.getLikeCount(commentId);
         boolean isLiked = !message.contains("취소");
