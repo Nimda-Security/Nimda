@@ -41,7 +41,6 @@ function BoardListPage({ slug: propSlug }: BoardListPageProps) {
   const [availableTags, setAvailableTags] = useState<string[]>([]);
 
   // ★ 해결 포인트 1: 의존성 배열의 참조값 고정
-  // boards나 pinnedPosts가 실제로 변하지 않으면 새로운 배열을 만들지 않음
   const allPostsForLikes = useMemo(() => {
     return [...noticePosts, ...pinnedPosts, ...boards];
   }, [noticePosts, pinnedPosts, boards]);
@@ -129,7 +128,6 @@ function BoardListPage({ slug: propSlug }: BoardListPageProps) {
       }
 
       const newTags = Array.from(tagSet).sort();
-      // 불필요한 상태 업데이트 방지 (내용이 같으면 업데이트 안 함)
       setAvailableTags(prev => JSON.stringify(prev) === JSON.stringify(newTags) ? prev : newTags);
     };
     collectTags();
@@ -280,6 +278,8 @@ function BoardListPage({ slug: propSlug }: BoardListPageProps) {
     return pages;
   };
 
+  void allPostsForLikes;
+
   return (
     <Layout>
       <div className="board-list">
@@ -331,7 +331,6 @@ function BoardListPage({ slug: propSlug }: BoardListPageProps) {
             {/* 글로벌 공지 */}
             {displayGlobalNotices.map((post) => (
               <div key={`notice-${post.id}`} className="board-list__row board-list__row--pinned" onClick={() => navigate(`/board/notice/${post.id}`)}>
-
                 <div className="board-list__row-content">
                   <span className="board-list__category-tag"># 필독</span>
                   <div className="board-list__title-line">
@@ -361,7 +360,7 @@ function BoardListPage({ slug: propSlug }: BoardListPageProps) {
                     <span className="board-list__comments"><MessageBox /> {post.commentCount ?? 0}</span>
                     <span className="board-list__likes"><Heart filled={post.isLiked} /> {post.likeCount ?? 0}</span>
                   </div>
-                </div >
+                </div>
                 <div className="board-list__meta">
                   <div className="board-list__author-info">
                     <Link to={post.author?.nickname ? `/user/${post.author.nickname}` : '#'} className="board-list__author" onClick={(e) => e.stopPropagation()}>{post.author?.nickname || '익명'}</Link>
@@ -370,52 +369,47 @@ function BoardListPage({ slug: propSlug }: BoardListPageProps) {
                   <Avatar src={post.author?.profileImage} size={32} className="board-list__avatar" />
                 </div>
                 <div className="board-list__row-divider" />
-              </div >
-            ))
-            }
+              </div>
+            ))}
 
             {/* 일반 게시글 */}
-            {
-              boards.length === 0 && pinnedPosts.length === 0 && displayGlobalNotices.length === 0 ? (
-                <div className="board-list__status">게시글이 없습니다.</div>
-              ) : (
-                boards.map((post) => (
-                  <div key={post.id} className="board-list__row" onClick={() => handleBoardClick(post.id)}>
-                    <div className="board-list__row-content">
-                      {getCategoryTagLabel(post) && <span className="board-list__category-tag">{getCategoryTagLabel(post)}</span>}
-                      <div className="board-list__title-line">
-                        <span className="board-list__post-title">{post.title}</span>
-                        <span className="board-list__comments"><MessageBox /> {post.commentCount ?? 0}</span>
-                        <span className="board-list__likes"><Heart filled={post.isLiked} /> {post.likeCount ?? 0}</span>
-                      </div>
+            {boards.length === 0 && pinnedPosts.length === 0 && displayGlobalNotices.length === 0 ? (
+              <div className="board-list__status">게시글이 없습니다.</div>
+            ) : (
+              boards.map((post) => (
+                <div key={post.id} className="board-list__row" onClick={() => handleBoardClick(post.id)}>
+                  <div className="board-list__row-content">
+                    {getCategoryTagLabel(post) && <span className="board-list__category-tag">{getCategoryTagLabel(post)}</span>}
+                    <div className="board-list__title-line">
+                      <span className="board-list__post-title">{post.title}</span>
+                      <span className="board-list__comments"><MessageBox /> {post.commentCount ?? 0}</span>
+                      <span className="board-list__likes"><Heart filled={post.isLiked} /> {post.likeCount ?? 0}</span>
                     </div>
-                    <div className="board-list__meta">
-                      <div className="board-list__author-info">
-                        <Link to={post.author?.nickname ? `/user/${post.author.nickname}` : '#'} className="board-list__author" onClick={(e) => e.stopPropagation()}>{post.author?.nickname || '익명'}</Link>
-                        <span className="board-list__date">{formatDate(post.createdAt)}</span>
-                      </div>
-                      <Avatar src={post.author?.profileImage} size={32} className="board-list__avatar" />
-                    </div>
-                    <div className="board-list__row-divider" />
                   </div>
-                ))
-              )
-            }
+                  <div className="board-list__meta">
+                    <div className="board-list__author-info">
+                      <Link to={post.author?.nickname ? `/user/${post.author.nickname}` : '#'} className="board-list__author" onClick={(e) => e.stopPropagation()}>{post.author?.nickname || '익명'}</Link>
+                      <span className="board-list__date">{formatDate(post.createdAt)}</span>
+                    </div>
+                    <Avatar src={post.author?.profileImage} size={32} className="board-list__avatar" />
+                  </div>
+                  <div className="board-list__row-divider" />
+                </div>
+              ))
+            )}
 
             {/* 페이지네이션 */}
-            {
-              totalPages > 1 && (
-                <div className="board-list__pagination">
-                  <button className="board-list__page-btn" onClick={() => handlePageChange(0)} disabled={currentPage === 0}>«</button>
-                  <button className="board-list__page-btn" onClick={() => handlePageChange(Math.max(0, currentPage - 1))} disabled={currentPage === 0}>‹</button>
-                  {renderPageNumbers().map((page) => (
-                    <button key={page} className={`board-list__page-num ${page === currentPage ? 'board-list__page-num--active' : ''}`} onClick={() => handlePageChange(page)}>{page + 1}</button>
-                  ))}
-                  <button className="board-list__page-btn" onClick={() => handlePageChange(Math.min(totalPages - 1, currentPage + 1))} disabled={currentPage >= totalPages - 1}>›</button>
-                  <button className="board-list__page-btn" onClick={() => handlePageChange(totalPages - 1)} disabled={currentPage >= totalPages - 1}>»</button>
-                </div>
-              )
-            }
+            {totalPages > 1 && (
+              <div className="board-list__pagination">
+                <button className="board-list__page-btn" onClick={() => handlePageChange(0)} disabled={currentPage === 0}>«</button>
+                <button className="board-list__page-btn" onClick={() => handlePageChange(Math.max(0, currentPage - 1))} disabled={currentPage === 0}>‹</button>
+                {renderPageNumbers().map((page) => (
+                  <button key={page} className={`board-list__page-num ${page === currentPage ? 'board-list__page-num--active' : ''}`} onClick={() => handlePageChange(page)}>{page + 1}</button>
+                ))}
+                <button className="board-list__page-btn" onClick={() => handlePageChange(Math.min(totalPages - 1, currentPage + 1))} disabled={currentPage >= totalPages - 1}>›</button>
+                <button className="board-list__page-btn" onClick={() => handlePageChange(totalPages - 1)} disabled={currentPage >= totalPages - 1}>»</button>
+              </div>
+            )}
 
             {/* 검색 */}
             <form className="board-list__search" onSubmit={handleSearch}>
@@ -424,8 +418,8 @@ function BoardListPage({ slug: propSlug }: BoardListPageProps) {
             </form>
           </>
         )}
-      </div >
-    </Layout >
+      </div>
+    </Layout>
   );
 }
 
