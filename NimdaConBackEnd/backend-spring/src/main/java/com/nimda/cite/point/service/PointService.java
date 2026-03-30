@@ -119,6 +119,6 @@ public class PointService {
 
     @Transactional
     public List<PointDetail> findPointDetail(Long userId) {
-        return pointDetailRepository.findByUserBalanceId(userId);
+        return pointDetailRepository.findByUserBalanceIdOrderByCreatedAtDesc(userId);
     }
 }
