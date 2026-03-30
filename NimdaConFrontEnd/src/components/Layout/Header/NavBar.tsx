@@ -22,13 +22,12 @@ const Navbar: React.FC = () => {
     setIsLoggedInState(loggedIn);
 
     if (loggedIn) {
-      // 서버에 세션 유효성 검증 — 만료 시 자동 로그아웃
+      // 서버에 세션 유효성 검증 — 만료 시 로컬 상태만 초기화 (강제 리다이렉트 없음)
       validateSession().then((ok) => {
         if (!ok) {
           setNickname(null);
           setAdminStatus(false);
           setIsLoggedInState(false);
-          window.location.href = '/login';
           return;
         }
         getMyPageInfo().then((result) => {

@@ -38,19 +38,28 @@ const Router = () => {
         <Route path="/signup" element={<SignUp />} />
         <Route path="/403" element={<ForbiddenPage />} />
 
+        {/* 게스트 접근 가능 경로 */}
+        <Route path="/" element={<Home />} />
+        <Route path="/problems" element={<ProblemsPage />} />
+        <Route path="/problems/:id" element={<ProblemDetail />} />
+        <Route path="/judging-status" element={<JudgingStatusPage />} />
+        <Route path="/scoreboard" element={<Scoreboard />} />
+        <Route path="/contest" element={<ContestHome />} />
+        <Route path="/user/:nickname" element={<UserProfilePage />} />
+        <Route path="/board/picture-board" element={<PhotoGalleryBoard boardSlug="picture-board" boardTitle="사진첩" />} />
+        <Route path="/board/banner" element={<PhotoGalleryBoard boardSlug="banner" boardTitle="배너" adminOnlyWrite={true} />} />
+        <Route path="/board/:boardType" element={<BoardListPage />} />
+        <Route path="/board/:boardType/:id" element={<BoardDetailPage />} />
+
         {/* 로그인 필수 경로 */}
-        <Route path="/" element={<ProtectedRoute><Home /></ProtectedRoute>} />
         <Route path="/mypage" element={<ProtectedRoute><MyPageMileage /></ProtectedRoute>} />
-        <Route path="/problems" element={<ProtectedRoute><ProblemsPage /></ProtectedRoute>} />
         <Route path="/problem-submit" element={<ProtectedRoute><ProblemSubmitPage /></ProtectedRoute>} />
         <Route path="/problem-create" element={<ProtectedRoute><ProblemCreatePage /></ProtectedRoute>} />
         <Route path="/problem-edit/:id" element={<ProtectedRoute><ProblemEditPage /></ProtectedRoute>} />
-        <Route path="/problems/:id" element={<ProtectedRoute><ProblemDetail /></ProtectedRoute>} />
-        <Route path="/judging-status" element={<ProtectedRoute><JudgingStatusPage /></ProtectedRoute>} />
-        <Route path="/scoreboard" element={<ProtectedRoute><Scoreboard /></ProtectedRoute>} />
-        <Route path="/contest" element={<ProtectedRoute><ContestHome /></ProtectedRoute>} />
+        <Route path="/board/:boardType/write" element={<ProtectedRoute><BoardWritePage /></ProtectedRoute>} />
+        <Route path="/board/:boardType/edit/:id" element={<ProtectedRoute><BoardWritePage /></ProtectedRoute>} />
 
-        {/* 관리자 관련 경로 - ProtectedRoute로 보호 */}
+        {/* 관리자 관련 경로 */}
         <Route
           path="/admin"
           element={
@@ -59,8 +68,6 @@ const Router = () => {
             </ProtectedRoute>
           }
         />
-
-        {/* 관리자 마일리지 지급 페이지 경로 추가 */}
         <Route
           path="/admin/mileage"
           element={
@@ -69,17 +76,6 @@ const Router = () => {
             </ProtectedRoute>
           }
         />
-
-        {/* 유저 공개 프로필 */}
-        <Route path="/user/:nickname" element={<ProtectedRoute><UserProfilePage /></ProtectedRoute>} />
-
-        {/* 게시판 관련 경로 */}
-        <Route path="/board/picture-board" element={<ProtectedRoute><PhotoGalleryBoard boardSlug="picture-board" boardTitle="사진첩" /></ProtectedRoute>} />
-        <Route path="/board/banner" element={<ProtectedRoute><PhotoGalleryBoard boardSlug="banner" boardTitle="배너" adminOnlyWrite={true} /></ProtectedRoute>} />
-        <Route path="/board/:boardType" element={<ProtectedRoute><BoardListPage /></ProtectedRoute>} />
-        <Route path="/board/:boardType/:id" element={<ProtectedRoute><BoardDetailPage /></ProtectedRoute>} />
-        <Route path="/board/:boardType/write" element={<ProtectedRoute><BoardWritePage /></ProtectedRoute>} />
-        <Route path="/board/:boardType/edit/:id" element={<ProtectedRoute><BoardWritePage /></ProtectedRoute>} />
       </Routes>
     </BrowserRouter>
   );
