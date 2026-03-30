@@ -300,13 +300,15 @@ function BoardListPage({ slug: propSlug }: BoardListPageProps) {
         ))}
       </div>
 
-        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginTop: '16px', marginBottom: '48px' }}>
-          <div className="board-list__tabs" style={{ marginBottom: 0 }}>
-            <button className={`board-list__tab ${activeTab === 'all' ? 'board-list__tab--active' : ''}`} onClick={() => handleTabClick('all')}>전체</button>
-            {childCategories.map((child) => (
-              <button key={child.id} className={`board-list__tab ${activeTab === child.slug ? 'board-list__tab--active' : ''}`} onClick={() => handleTabClick(child.slug)}>{child.name}</button>
-            ))}
-          </div>
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-end', marginTop: '16px', marginBottom: '8px' }}>
+          {childCategories.length > 0 ? (
+            <div className="board-list__tabs" style={{ marginBottom: 0 }}>
+              <button className={`board-list__tab ${activeTab === 'all' ? 'board-list__tab--active' : ''}`} onClick={() => handleTabClick('all')}>전체</button>
+              {childCategories.map((child) => (
+                <button key={child.id} className={`board-list__tab ${activeTab === child.slug ? 'board-list__tab--active' : ''}`} onClick={() => handleTabClick(child.slug)}>{child.name}</button>
+              ))}
+            </div>
+          ) : <div />}
 
           {canWrite && (
             <button className="board-list__write-btn" onClick={handleWriteClick}>
