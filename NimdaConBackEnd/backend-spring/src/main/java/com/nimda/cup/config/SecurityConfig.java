@@ -31,107 +31,91 @@ public class SecurityConfig {
         return new BCryptPasswordEncoder();
     }
 
-    // Note. URL 기반 접근 제어
+    // CORS 설정: 프론트엔드 도메인 허용 및 쿠키 전송 허용
     @Bean
     public CorsConfigurationSource corsConfigurationSource() {
         CorsConfiguration configuration = new CorsConfiguration();
 
-        // allowCredentials(true) 사용 시 패턴 사용 필요
         configuration.setAllowedOriginPatterns(Arrays.asList(
-                "http://localhost:*", // 로컬 개발 (모든 포트)
-                "https://nimda.kr", // 프로덕션 도메인
-                "https://*.nimda.kr", // 서브도메인 포함
-                "https://*.vercel.app" // Vercel 배포 도메인
+                "http://localhost:*",
+                "https://nimda.kr",
+                "https://*.nimda.kr",
+                "https://*.vercel.app"
         ));
 
         configuration.setAllowedMethods(Arrays.asList("GET", "POST", "PUT", "DELETE", "PATCH", "OPTIONS"));
         configuration.setAllowedHeaders(Arrays.asList("*"));
-        configuration.setAllowCredentials(true); // 쿠키, 인증 헤더, TLS 클라이언트 인증서와 같은 인증 정보를 CORS 요청에 포함하여 전송할 수 있도록 허용하는 설정
+        configuration.setAllowCredentials(true);
 
         UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
         source.registerCorsConfiguration("/**", configuration);
 
         return source;
-
     }
 
-    // Note. Spring Security FilterChain
-    // 등록된 필터 체인 리스트
-    // 1. CORS 필터
-    // 2. CSRF 필터 (비활성화)
-    // 3. Stateless 필터
-    // 4. JWT 인증 필터 (UsernamePasswordAuthenticationFilter 전에 실행)
-    // 5. Authorization 필터 (권한 기반 접근 제어)
     @Bean
     public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
         http
-                // 1. CORS 설정 (프론트엔드와 통신 허용)
+                // 1. CORS 설정 연동
                 .cors(cors -> cors.configurationSource(corsConfigurationSource()))
 
-                // 2. CSRF 비활성화 (JWT 사용 시 필수)
+                // 2. CSRF 비활성화 (JWT 사용)
                 .csrf(csrf -> csrf.disable())
 
                 // 3. 세션 정책 설정 (Stateless)
                 .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
 
-                // 4. JWT 필터 추가
+                // 4. JWT 인증 필터 추가 (UsernamePasswordAuthenticationFilter 실행 전 검사)
                 .addFilterBefore(jwtAuthenticationFilter, UsernamePasswordAuthenticationFilter.class)
 
                 // 5. 요청별 권한 제어 (순서가 매우 중요함)
                 .authorizeHttpRequests(authz -> authz
-                        // [우선순위 1] OPTIONS 예비 요청은 무조건 전체 허용 (CORS 해결)
+                        // [우선순위 1] OPTIONS 요청은 브라우저 CORS 정책을 위해 전체 허용
                         .requestMatchers(HttpMethod.OPTIONS, "/**").permitAll()
 
-                        // [우선순위 2] 로그인 및 회원가입 (통행증 발급 창구)
+                        // [우선순위 2] 인증 관련 기본 API
                         .requestMatchers("/api/auth/login", "/api/auth/register").permitAll()
-                        .requestMatchers("/api/auth/me").authenticated()
-                        .requestMatchers("/api/auth/email-hide").authenticated()
+                        .requestMatchers("/api/auth/me", "/api/auth/email-hide").authenticated()
 
-                        // 마이페이지/좋아요/출석 API (최상단 보호)
-                        // 다른 permitAll 규칙에 먹히지 않도록 위로 격상
-                        // 메인 페이지 방문자 정보는 누구나 볼 수 있음
-                        .requestMatchers("/api/cite/attendance/today").permitAll()
-                        // 공개 유저 프로필: 좋아요/포인트 조회 (authenticated 보다 먼저 선언해야 함)
-                        .requestMatchers(HttpMethod.GET, "/api/like/board/user/**").permitAll()
-                        .requestMatchers(HttpMethod.GET, "/api/cite/point/user/**").permitAll()
-                        .requestMatchers("/api/like/board/**").authenticated()
-                        .requestMatchers("/api/cite/attendance/**").authenticated()
-                        // 배너용 이미지 presigned URL은 비로그인도 접근 가능
+                        // [우선순위 3] 비로그인 허용 (Public API - 정보성 데이터)
+                        // 메인 페이지 구성에 필요한 기초 정보들은 로그인 없이 GET 허용
+                        .requestMatchers(HttpMethod.GET, "/api/cite/attendance/today").permitAll()
+                        .requestMatchers(HttpMethod.GET, "/api/cite/category/**").permitAll()
                         .requestMatchers(HttpMethod.GET, "/api/cite/attachments/*/download-url").permitAll()
-                        .requestMatchers("/api/cite/attachments/**").authenticated()
-                        .requestMatchers("/api/cite/point/**").authenticated()
 
-                        // [우선순위 4] 관리자 전용 API (구체적인 경로 우선)
+                        // [우선순위 4] 인증 필수 API (로그인하지 않으면 접근 불가)
+                        // 게시판 조회(GET)를 포함한 모든 게시판 활동은 인증 필요
+                        .requestMatchers("/api/cite/board/**").authenticated()
+                        .requestMatchers("/api/cite/attendance/**").authenticated()
+                        .requestMatchers("/api/cite/point/**").authenticated()
+                        .requestMatchers("/api/cite/attachments/**").authenticated()
+                        .requestMatchers("/api/like/board/**").authenticated()
+
+                        // 유저 개인/공개 프로필 관련 정보 보호
+                        .requestMatchers(HttpMethod.GET, "/api/like/board/user/**").authenticated()
+                        .requestMatchers(HttpMethod.GET, "/api/cite/point/user/**").authenticated()
+                        .requestMatchers(HttpMethod.GET, "/api/users/nickname/**").authenticated()
+                        .requestMatchers(HttpMethod.GET, "/api/comments/user/**").authenticated()
+
+                        // [우선순위 5] 관리자(ADMIN) 전용 API
                         .requestMatchers("/api/admin/**").hasRole("ADMIN")
                         .requestMatchers(HttpMethod.DELETE, "/api/users/**").hasRole("ADMIN")
                         .requestMatchers(HttpMethod.PUT, "/api/users/*/role").hasRole("ADMIN")
-                        .requestMatchers(HttpMethod.GET, "/api/groups").hasRole("ADMIN")
-                        .requestMatchers(HttpMethod.POST, "/api/groups").hasRole("ADMIN")
-                        .requestMatchers(HttpMethod.GET, "/api/problems/*/admin").hasRole("ADMIN")
-                        .requestMatchers(HttpMethod.POST, "/api/problems", "/api/contest").hasRole("ADMIN")
+                        .requestMatchers(HttpMethod.GET, "/api/groups", "/api/cite/category/all").hasRole("ADMIN")
+                        .requestMatchers(HttpMethod.POST, "/api/groups", "/api/problems", "/api/contest").hasRole("ADMIN")
                         .requestMatchers(HttpMethod.PUT, "/api/problems/**", "/api/contest/**").hasRole("ADMIN")
                         .requestMatchers(HttpMethod.DELETE, "/api/problems/**", "/api/contest/**").hasRole("ADMIN")
-                        .requestMatchers(HttpMethod.GET, "/api/cite/category/all").hasRole("ADMIN")
                         .requestMatchers(HttpMethod.POST, "/api/cite/category/**").hasRole("ADMIN")
                         .requestMatchers(HttpMethod.PUT, "/api/cite/category/**").hasRole("ADMIN")
                         .requestMatchers(HttpMethod.DELETE, "/api/cite/category/**").hasRole("ADMIN")
+                        .requestMatchers(HttpMethod.GET, "/api/problems/*/admin").hasRole("ADMIN")
 
-                        // [우선순위 5] 공개 조회 API (인증 없이 누구나 GET 가능)
-                        // 이 아래에 있는 것들은 오직 GET 요청만 로그인 없이 허용됨
+                        // [우선순위 6] 기타 공개 조회용 (문제/대회 등)
                         .requestMatchers(HttpMethod.GET, "/api/contest/**").permitAll()
                         .requestMatchers(HttpMethod.GET, "/api/problems/**").permitAll()
                         .requestMatchers(HttpMethod.GET, "/api/scoreboard/**").permitAll()
-                        .requestMatchers(HttpMethod.GET, "/api/cite/board/**").permitAll()
-                        .requestMatchers(HttpMethod.GET, "/api/cite/category/**").permitAll()
-                        // 유저 공개 프로필 조회 (닉네임으로 조회, 인증 불필요)
-                        .requestMatchers(HttpMethod.GET, "/api/users/nickname/**").permitAll()
-                        // 유저 공개 댓글 조회
-                        .requestMatchers(HttpMethod.GET, "/api/comments/user/**").permitAll()
 
-                        // [우선순위 6] 게시판 쓰기/수정/삭제 (위의 GET 제외 나머지 메서드 보호)
-                        .requestMatchers("/api/cite/board/**").authenticated()
-
-                        // [우선순위 7] 나머지 모든 요청
+                        // [우선순위 7] 나머지 모든 요청은 기본적으로 인증 필요
                         .anyRequest().authenticated()
                 );
 
