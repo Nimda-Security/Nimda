@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import Logo from '@/components/icons/Logo';
 import { getCurrentNickname, isAdmin } from '@/utils/jwt';
-import { isLoggedIn, logoutAPI, getMyPageInfo } from '@/api/auth';
+import { isLoggedIn, logoutAPI, getMyPageInfo, validateSession } from '@/api/auth';
 import Logout from '@/components/icons/Logout.svg';
 import NotificationBell from '@/components/Notification/NotificationBell';
 
@@ -22,10 +22,20 @@ const Navbar: React.FC = () => {
     setIsLoggedInState(loggedIn);
 
     if (loggedIn) {
-      getMyPageInfo().then((result) => {
-        if (result.success && result.data?.profileImage) {
-          setProfileImage(result.data.profileImage);
+      // 서버에 세션 유효성 검증 — 만료 시 자동 로그아웃
+      validateSession().then((ok) => {
+        if (!ok) {
+          setNickname(null);
+          setAdminStatus(false);
+          setIsLoggedInState(false);
+          window.location.href = '/login';
+          return;
         }
+        getMyPageInfo().then((result) => {
+          if (result.success && result.data?.profileImage) {
+            setProfileImage(result.data.profileImage);
+          }
+        });
       });
     }
   }, []);

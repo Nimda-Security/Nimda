@@ -312,6 +312,29 @@ export const isLoggedIn = (): boolean => {
 };
 
 /**
+ * 서버에 세션(쿠키) 유효성 검증
+ * 쿠키가 실제 인증 수단이므로 localStorage와 무관하게 항상 서버에 확인
+ * 쿠키가 만료되었거나 유효하지 않으면 localStorage를 정리하고 false 반환
+ */
+export const validateSession = async (): Promise<boolean> => {
+  try {
+    const response = await fetch(`${API_BASE_URL}/auth/me`, {
+      method: "GET",
+      headers: { "Content-Type": "application/json" },
+      credentials: "include",
+    });
+    if (response.ok) return true;
+    // 401/403 등 → 쿠키 만료 또는 무효
+    localStorage.removeItem("user");
+    localStorage.removeItem("roles");
+    return false;
+  } catch {
+    // 네트워크 오류 시에는 로그아웃 처리하지 않음 (일시적 오류일 수 있음)
+    return true;
+  }
+};
+
+/**
  * 프로필 정보 수정 API
  * null인 필드는 수정하지 않음 (부분 업데이트)
  */

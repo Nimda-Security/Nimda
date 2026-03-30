@@ -1,5 +1,7 @@
+import { useEffect, useState } from 'react';
 import { Navigate } from 'react-router-dom';
 import { isAdmin } from '@/utils/jwt';
+import { validateSession } from '@/api/auth';
 
 interface ProtectedRouteProps {
     children: React.ReactNode;
@@ -7,18 +9,25 @@ interface ProtectedRouteProps {
 }
 
 const ProtectedRoute = ({ children, requireAdmin = false }: ProtectedRouteProps) => {
-    if (requireAdmin) {
-        const user = localStorage.getItem('user');
+    const [checking, setChecking] = useState(true);
+    const [valid, setValid] = useState(false);
 
-        // 로그인하지 않은 경우 → 로그인 페이지로 리다이렉트
-        if (!user) {
-            return <Navigate to="/login" replace />;
-        }
+    useEffect(() => {
+        // 쿠키가 실제 인증 수단이므로 항상 서버에 검증
+        validateSession().then((ok) => {
+            setValid(ok);
+            setChecking(false);
+        });
+    }, []);
 
-        // 로그인했지만 관리자 권한이 없는 경우 → 403 페이지로 리다이렉트
-        if (!isAdmin()) {
-            return <Navigate to="/403" replace />;
-        }
+    if (checking) return null; // 검증 중에는 아무것도 렌더링하지 않음
+
+    if (!valid) {
+        return <Navigate to="/login" replace />;
+    }
+
+    if (requireAdmin && !isAdmin()) {
+        return <Navigate to="/403" replace />;
     }
 
     return <>{children}</>;
