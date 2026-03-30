@@ -445,8 +445,6 @@
   cursor: pointer;
   transition: all 0.2s ease;
   flex-shrink: 0;
-  margin-top: -50px;
-  margin-bottom: 8px;
 }
 
 .board-list__write-btn:hover {
