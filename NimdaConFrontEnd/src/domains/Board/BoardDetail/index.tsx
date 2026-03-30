@@ -25,6 +25,7 @@ function BoardDetailPage() {
   const [likeCount, setLikeCount] = useState(0);
   const [isLiked, setIsLiked] = useState(false);
   const [menuOpen, setMenuOpen] = useState(false);
+  const [showAttachments, setShowAttachments] = useState(false);
 
   useEffect(() => { if (id) fetchBoard(parseInt(id)); }, [id]);
 
@@ -212,38 +213,66 @@ function BoardDetailPage() {
         {/* Body */}
         <div className="board-detail__body" dangerouslySetInnerHTML={{ __html: board.content }} />
 
-        {/* S3·Attachment 연동 — 첨부파일은 파일명 링크로 일관되게 표시 */}
-        {board.attachments && board.attachments.length > 0 && (
-          <section className="board-detail__attachments" aria-label="첨부파일">
-            <h2 className="board-detail__attachments-title">첨부파일</h2>
-            <ul className="board-detail__attachments-list">
-              {board.attachments.map((att) => (
-                <li key={att.id}>
-                  <a
-                    href="#"
-                    className="board-detail__attachments-link"
-                    onClick={(e) => {
-                      e.preventDefault();
-                      void openAttachmentDownloadInNewTab(att.id).then((r) => {
-                        if (!r.ok) alert(r.message);
-                      });
-                    }}
-                  >
-                    📎 {att.originFilename ?? `첨부 #${att.id}`}
-                  </a>
-                </li>
-              ))}
-            </ul>
-          </section>
-        )}
-
-        {/* 레거시 단일 첨부(board-uploads 등) — attachments가 없을 때만 표시 */}
-        {(!board.attachments || board.attachments.length === 0) && board.filename && board.filepath && (
-          <section className="board-detail__attachments board-detail__attachments--legacy" aria-label="첨부파일">
-            <button type="button" onClick={handleLegacyFileDownload} className="board-detail__file-btn">
-              📎 첨부파일 ({board.filename.includes('_') ? board.filename.split('_').slice(1).join('_') : board.filename})
+        {/* 첨부파일 버튼 — S3 또는 레거시 첨부가 있을 때만 표시 */}
+        {((board.attachments && board.attachments.length > 0) ||
+          ((!board.attachments || board.attachments.length === 0) && board.filename && board.filepath)) && (
+          <div className="board-detail__attachment-wrap">
+            <button
+              type="button"
+              className="board-detail__attachment-toggle"
+              onClick={() => setShowAttachments(prev => !prev)}
+            >
+              📎 첨부파일
+              {board.attachments && board.attachments.length > 0
+                ? ` (${board.attachments.length})`
+                : ' (1)'}
+              <span className={`board-detail__attachment-arrow ${showAttachments ? 'board-detail__attachment-arrow--open' : ''}`}>▾</span>
             </button>
-          </section>
+
+            {showAttachments && (
+              <div className="board-detail__attachment-dropdown">
+                {/* S3·Attachment 연동 */}
+                {board.attachments && board.attachments.length > 0 && (
+                  <ul className="board-detail__attachments-list">
+                    {board.attachments.map((att) => (
+                      <li key={att.id}>
+                        <a
+                          href="#"
+                          className="board-detail__attachments-link"
+                          onClick={(e) => {
+                            e.preventDefault();
+                            void openAttachmentDownloadInNewTab(att.id).then((r) => {
+                              if (!r.ok) alert(r.message);
+                            });
+                          }}
+                        >
+                          📎 {att.originFilename ?? `첨부 #${att.id}`}
+                        </a>
+                      </li>
+                    ))}
+                  </ul>
+                )}
+
+                {/* 레거시 단일 첨부 */}
+                {(!board.attachments || board.attachments.length === 0) && board.filename && board.filepath && (
+                  <ul className="board-detail__attachments-list">
+                    <li>
+                      <a
+                        href="#"
+                        className="board-detail__attachments-link"
+                        onClick={(e) => {
+                          e.preventDefault();
+                          handleLegacyFileDownload();
+                        }}
+                      >
+                        📎 {board.filename.includes('_') ? board.filename.split('_').slice(1).join('_') : board.filename}
+                      </a>
+                    </li>
+                  </ul>
+                )}
+              </div>
+            )}
+          </div>
         )}
 
         {/* 좋아요 */}
