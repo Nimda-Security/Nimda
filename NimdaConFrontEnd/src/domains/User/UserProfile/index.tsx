@@ -414,7 +414,6 @@ export default function UserProfilePage() {
           <div
             style={{
               width: '100%',
-              minHeight: '640px',
               borderRadius: '4px',
               border: '1px solid #D4D4D4',
               display: 'flex',
@@ -485,7 +484,6 @@ export default function UserProfilePage() {
             </div>
             {/* 거래 내역 */}
             <div
-              className="flex-1 overflow-y-auto"
               style={{
                 paddingLeft: '24px',
                 paddingRight: '24px',

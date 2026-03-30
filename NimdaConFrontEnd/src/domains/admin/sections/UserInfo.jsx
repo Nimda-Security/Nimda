@@ -94,21 +94,18 @@ const UserInfo = ({
                     }}
                   />
                 ) : (
-                  <div style={{
-                    width: '120px',
-                    height: '120px',
-                    borderRadius: '50%',
-                    backgroundColor: '#f0f0f0',
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                    margin: '0 auto',
-                    border: '2px solid #e0e0e0',
-                    fontSize: '48px',
-                    color: '#999'
-                  }}>
-                    👤
-                  </div>
+                  <img
+                    src="/default_user_profile.png"
+                    alt="기본 프로필"
+                    style={{
+                      width: '120px',
+                      height: '120px',
+                      borderRadius: '50%',
+                      objectFit: 'cover',
+                      border: '2px solid #e0e0e0',
+                      margin: '0 auto'
+                    }}
+                  />
                 )}
               </div>
               <div>
