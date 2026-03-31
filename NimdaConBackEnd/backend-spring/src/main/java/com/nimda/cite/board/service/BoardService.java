@@ -6,6 +6,8 @@ import com.nimda.cite.board.entity.Board;
 import com.nimda.cite.board.entity.Category;
 import com.nimda.cite.board.enums.BoardStatus;
 import com.nimda.cite.board.repository.BoardRepository;
+import com.nimda.cite.comment.repository.CommentRepository;
+import com.nimda.cite.like.repository.BoardLikeRepository;
 import com.nimda.cup.user.entity.User;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
@@ -21,6 +23,10 @@ public class BoardService {
 
     @Autowired
     private BoardRepository boardRepository;
+    @Autowired
+    private CommentRepository commentRepository;
+    @Autowired
+    private BoardLikeRepository boardLikeRepository;
     @Autowired
     private AlarmService alarmService;
 
@@ -137,8 +143,12 @@ Long categoryId = board.getCategory() != null ? board.getCategory().getId() : nu
     public void boardDelete(Long id) {
         Board board = boardRepository.findById(id)
                 .orElseThrow(() -> new RuntimeException("게시글을 찾을 수 없습니다: " + id));
+
         board.setStatus(BoardStatus.DELETED);
         boardRepository.save(board);
+
+        commentRepository.deleteAllByBoardId(id);
+        boardLikeRepository.deleteAllByBoardId(id);
     }
 
     // Note. toggleBoardPin - 게시글 고정/해제 토글

@@ -4,6 +4,7 @@ import com.nimda.cite.board.entity.Board;
 import com.nimda.cite.like.entity.BoardLike;
 import com.nimda.cup.user.entity.User;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
@@ -27,6 +28,11 @@ public interface BoardLikeRepository extends JpaRepository<BoardLike, Long> {
 
         @Query("SELECT bl FROM BoardLike bl JOIN FETCH bl.board WHERE bl.liker.id = :userId")
         List<BoardLike> findAllByLikerId(@Param("userId") Long userId);
+
+        // 게시글 삭제 시 해당 게시글의 모든 좋아요 데이터를 물리적으로 삭제
+        @Modifying
+        @Query("DELETE FROM BoardLike bl WHERE bl.board.id = :boardId")
+        void deleteAllByBoardId(@Param("boardId") Long boardId);
 
     long countByLikerId(Long userId);
 }

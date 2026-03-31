@@ -67,7 +67,10 @@ public interface CommentRepository extends JpaRepository<Comment, Long> {
 
     // 게시글 삭제 시 하위 댓글 전체 삭제
     // [사용] DELETE /api/cite/board/{boardId}
-    void deleteAllByBoardId(Long boardId);
+    @Modifying
+    @Query("UPDATE Comment c SET c.status = com.nimda.cite.comment.enums.STATUS.DELETED " +
+            "WHERE c.board.id = :boardId AND c.status != com.nimda.cite.comment.enums.STATUS.DELETED")
+    void deleteAllByBoardId(@Param("boardId") Long boardId);
 
     // 내가 작성한 유지 중인 댓글 수 조회
     long countByAuthorIdAndStatusNot(Long userId, STATUS status);
