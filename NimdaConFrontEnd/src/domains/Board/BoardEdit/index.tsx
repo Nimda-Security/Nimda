@@ -961,6 +961,7 @@ function BoardEditPage() {
                 ref={contentRef}
                 id="content"
                 contentEditable
+                dir="ltr"
                 spellCheck={false}
                 className="w-full px-4 py-2 border border-gray-300 rounded-b focus:outline-none focus:ring-2 focus:ring-black min-h-[360px] whitespace-pre-wrap"
                 data-placeholder="내용을 입력하세요"
