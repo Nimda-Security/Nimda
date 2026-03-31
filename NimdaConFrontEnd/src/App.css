@@ -1,4 +1,4 @@
-@import "tailwindcss";
+@import 'tailwindcss';
 
 /* ===========================
    Layout Variables
@@ -44,7 +44,7 @@ body {
   min-height: 100vh;
   background-color: var(--color-white);
   color: var(--color-black);
-  font-family: "Pretendard", sans-serif;
+  font-family: 'Pretendard', sans-serif;
 }
 
 #root {
@@ -124,7 +124,10 @@ body {
   display: flex;
   align-items: center;
   justify-content: center;
-  min-height: calc(100vh - var(--header-height) - var(--header-gap) - var(--footer-height) - 48px);
+  min-height: calc(
+    100vh - var(--header-height) - var(--header-gap) - var(--footer-height) -
+      48px
+  );
 }
 
 /* Footer */
@@ -155,13 +158,11 @@ body {
   padding-bottom: 0;
 }
 
-
-
 /* 사이드바 프로필 아바타 영역 */
 .sidebar-profile__avatar {
-  width: 100%;           /* 사이드바 너비에 맞춤 */
-  aspect-ratio: 1 / 1;   /* 가로세로 1:1 비율 유지 */
-  border-radius: 50%;    /* 완벽한 원형 */
+  width: 100%; /* 사이드바 너비에 맞춤 */
+  aspect-ratio: 1 / 1; /* 가로세로 1:1 비율 유지 */
+  border-radius: 50%; /* 완벽한 원형 */
   background-color: var(--color-gray-100);
   margin: 0 auto 12px;
 
@@ -169,15 +170,15 @@ body {
   align-items: center;
   justify-content: center;
 
-  overflow: hidden;      /* 중요: 원 밖으로 나가는 이미지 커팅 */
-  position: relative;    /* 이미지 배치를 위한 기준점 */
+  overflow: hidden; /* 중요: 원 밖으로 나가는 이미지 커팅 */
+  position: relative; /* 이미지 배치를 위한 기준점 */
 }
 
 /* 추가: 아바타 내부의 이미지 스타일 */
 .sidebar-profile__avatar img {
-  width: 100% !important;  /* 부모 너비에 꽉 채움 */
+  width: 100% !important; /* 부모 너비에 꽉 채움 */
   height: 100% !important; /* 부모 높이에 꽉 채움 */
-  object-fit: cover;       /* 비율 유지하며 꽉 채우기 (다람쥐가 찌그러지지 않음) */
+  object-fit: cover; /* 비율 유지하며 꽉 채우기 (다람쥐가 찌그러지지 않음) */
   display: block;
 }
 
@@ -247,7 +248,7 @@ body {
   font-weight: 400;
   color: var(--color-black);
   line-height: 1.5;
-  font-family: "Pretendard", sans-serif;
+  font-family: 'Pretendard', sans-serif;
 }
 
 .sidebar-profile__stat-icon {
@@ -303,7 +304,7 @@ body {
   background: none;
   border: none;
   cursor: pointer;
-  font-family: "Pretendard", sans-serif;
+  font-family: 'Pretendard', sans-serif;
 }
 
 .sidebar-section__title {
@@ -483,7 +484,7 @@ body {
   font-size: 13px;
   font-weight: 500; /* Medium */
   color: #737373;
-  font-family: "Pretendard", sans-serif;
+  font-family: 'Pretendard', sans-serif;
   border-radius: 6px;
   transition: all 0.2s ease;
   white-space: nowrap;
@@ -555,10 +556,19 @@ body {
   flex-shrink: 0;
 }
 
-.sidebar-visitors__rank--1 { color: #f2c94c; }
-.sidebar-visitors__rank--2 { color: #bdbdbd; }
-.sidebar-visitors__rank--3 { color: #f2994a; }
-.sidebar-visitors__rank--4, .sidebar-visitors__rank--5 { color: #828282; }
+.sidebar-visitors__rank--1 {
+  color: #f2c94c;
+}
+.sidebar-visitors__rank--2 {
+  color: #bdbdbd;
+}
+.sidebar-visitors__rank--3 {
+  color: #f2994a;
+}
+.sidebar-visitors__rank--4,
+.sidebar-visitors__rank--5 {
+  color: #828282;
+}
 
 .sidebar-visitors__score {
   margin-left: auto;
@@ -642,7 +652,9 @@ body {
   justify-content: center;
   cursor: pointer;
   z-index: 10;
-  transition: color 0.2s, transform 0.2s;
+  transition:
+    color 0.2s,
+    transform 0.2s;
 }
 
 .home-banner__btn:hover {
@@ -687,7 +699,9 @@ body {
   background-color: rgba(255, 255, 255, 0.4);
   cursor: pointer;
   padding: 0;
-  transition: background-color 0.2s, transform 0.2s;
+  transition:
+    background-color 0.2s,
+    transform 0.2s;
 }
 
 .home-banner__dot--active {
@@ -1017,17 +1031,29 @@ body {
   pointer-events: none;
   animation: toast-fade 2s ease-in-out forwards;
   border: 1px solid var(--color-pink);
-  font-family: "Pretendard", sans-serif;
+  font-family: 'Pretendard', sans-serif;
   display: flex;
   align-items: center;
   justify-content: center;
 }
 
 @keyframes toast-fade {
-  0% { opacity: 0; transform: translate(-50%, 10px); }
-  15% { opacity: 1; transform: translate(-50%, 0); }
-  85% { opacity: 1; transform: translate(-50%, 0); }
-  100% { opacity: 0; transform: translate(-50%, -5px); }
+  0% {
+    opacity: 0;
+    transform: translate(-50%, 10px);
+  }
+  15% {
+    opacity: 1;
+    transform: translate(-50%, 0);
+  }
+  85% {
+    opacity: 1;
+    transform: translate(-50%, 0);
+  }
+  100% {
+    opacity: 0;
+    transform: translate(-50%, -5px);
+  }
 }
 
 /* ============================================
@@ -1148,7 +1174,7 @@ body {
   padding: 24px 32px;
   font-size: 24px;
   font-weight: 700;
-  font-family: "Pretendard", sans-serif;
+  font-family: 'Pretendard', sans-serif;
   color: #0c0c0c;
   border: none;
   outline: none;
@@ -1180,7 +1206,9 @@ body {
   border-radius: 4px;
   cursor: pointer;
   color: #525252;
-  transition: background 0.15s, color 0.15s;
+  transition:
+    background 0.15s,
+    color 0.15s;
   padding: 0;
   flex-shrink: 0;
 }
@@ -1203,6 +1231,10 @@ body {
   position: relative;
 }
 
+.bw-tool-dropdown-wrap--right {
+  margin-left: auto;
+}
+
 .bw-tool-dropdown {
   position: absolute;
   top: 100%;
@@ -1217,6 +1249,11 @@ body {
   overflow: hidden;
 }
 
+.bw-tool-dropdown--right {
+  left: auto;
+  right: 0;
+}
+
 .bw-tool-dropdown-item {
   display: block;
   width: 100%;
@@ -1226,7 +1263,7 @@ body {
   text-align: left;
   cursor: pointer;
   color: #0c0c0c;
-  font-family: "Pretendard", sans-serif;
+  font-family: 'Pretendard', sans-serif;
   white-space: nowrap;
   transition: background 0.12s;
 }
@@ -1250,7 +1287,9 @@ body {
   border-radius: 50%;
   border: 2px solid #e5e5e5;
   cursor: pointer;
-  transition: transform 0.12s, border-color 0.12s;
+  transition:
+    transform 0.12s,
+    border-color 0.12s;
   padding: 0;
 }
 
@@ -1269,7 +1308,7 @@ body {
   font-size: 12px;
   color: #525252;
   cursor: pointer;
-  font-family: "Pretendard", sans-serif;
+  font-family: 'Pretendard', sans-serif;
 }
 
 .bw-color-custom:hover {
@@ -1291,7 +1330,7 @@ body {
   padding: 28px 32px;
   font-size: 16px;
   font-weight: 400;
-  font-family: "Pretendard", sans-serif;
+  font-family: 'Pretendard', sans-serif;
   color: #0c0c0c;
   border: none;
   outline: none;
@@ -1299,6 +1338,38 @@ body {
   resize: none;
   line-height: 1.7;
   box-sizing: border-box;
+}
+
+.bw-content-input pre {
+  margin: 10px 0;
+  padding: 12px 14px;
+  border-radius: 8px;
+  border: 1px solid #e5e5e5;
+  background: #f5f5f5;
+  font-family:
+    ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, 'Liberation Mono',
+    'Courier New', monospace;
+  font-size: 13px;
+  line-height: 1.6;
+  white-space: pre-wrap;
+  position: relative;
+}
+
+.bw-content-input pre.bw-code-block::before {
+  content: attr(data-language);
+  position: absolute;
+  top: 6px;
+  right: 10px;
+  font-size: 11px;
+  color: #737373;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+.bw-content-input code {
+  font-family:
+    ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, 'Liberation Mono',
+    'Courier New', monospace;
 }
 
 .bw-content-input::placeholder {
@@ -1342,7 +1413,7 @@ body {
   background: #ffffff;
   cursor: pointer;
   transition: all 0.15s;
-  font-family: "Pretendard", sans-serif;
+  font-family: 'Pretendard', sans-serif;
 }
 
 .bw-tag-chip:hover {
@@ -1402,7 +1473,9 @@ body {
   justify-content: center;
   gap: 8px;
   cursor: pointer;
-  transition: border-color 0.2s, background 0.2s;
+  transition:
+    border-color 0.2s,
+    background 0.2s;
 }
 
 .bw-dropzone:hover,
@@ -1471,7 +1544,9 @@ body {
   align-items: center;
   justify-content: center;
   border-radius: 50%;
-  transition: background 0.15s, color 0.15s;
+  transition:
+    background 0.15s,
+    color 0.15s;
   padding: 0;
 }
 
@@ -1504,9 +1579,11 @@ body {
   border-radius: 8px;
   font-size: 16px;
   font-weight: 500;
-  font-family: "Pretendard", sans-serif;
+  font-family: 'Pretendard', sans-serif;
   cursor: pointer;
-  transition: opacity 0.15s, background 0.15s;
+  transition:
+    opacity 0.15s,
+    background 0.15s;
   border: none;
 }
 
@@ -1533,4 +1610,3 @@ body {
   opacity: 0.5;
   cursor: not-allowed;
 }
-

@@ -15,7 +15,7 @@
   border: none;
   background: none;
   cursor: pointer;
-  font-family: "Pretendard", sans-serif;
+  font-family: 'Pretendard', sans-serif;
 }
 
 .board-detail__back:hover {
@@ -67,7 +67,6 @@
   font-size: 12px;
   font-weight: 700;
   line-height: 1.5;
-
 }
 
 .board-detail__avatar {
@@ -156,7 +155,7 @@
   background: #fff;
   border: 1px solid var(--color-gray-200);
   border-radius: 8px;
-  box-shadow: 0 4px 12px rgba(0,0,0,0.12);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.12);
   min-width: 88px;
 }
 
@@ -192,9 +191,53 @@
   font-weight: 400;
   color: var(--color-black);
   line-height: 1.5;
-  white-space: pre-wrap;
+  white-space: normal;
   word-break: break-word;
   margin-bottom: 24px;
+}
+
+.board-detail__body p {
+  margin: 0;
+}
+
+.board-detail__body p + p {
+  margin-top: 6px;
+}
+
+.board-detail__body br {
+  line-height: 1.5;
+}
+
+.board-detail__body pre {
+  margin: 10px 0;
+  padding: 12px 14px;
+  border-radius: 8px;
+  background: #f5f5f5;
+  border: 1px solid #e5e5e5;
+  font-family:
+    ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, 'Liberation Mono',
+    'Courier New', monospace;
+  font-size: 13px;
+  line-height: 1.6;
+  white-space: pre-wrap;
+  position: relative;
+}
+
+.board-detail__body pre.bw-code-block::before {
+  content: attr(data-language);
+  position: absolute;
+  top: 6px;
+  right: 10px;
+  font-size: 11px;
+  color: #737373;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+.board-detail__body code {
+  font-family:
+    ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, 'Liberation Mono',
+    'Courier New', monospace;
 }
 
 /* 첨부파일 토글 버튼 + 드롭다운 */
@@ -215,8 +258,10 @@
   border: 1px solid var(--color-gray-200, #e5e5e5);
   border-radius: 8px;
   cursor: pointer;
-  font-family: "Pretendard", sans-serif;
-  transition: background 0.15s, border-color 0.15s;
+  font-family: 'Pretendard', sans-serif;
+  transition:
+    background 0.15s,
+    border-color 0.15s;
 }
 
 .board-detail__attachment-toggle:hover {
@@ -287,7 +332,7 @@
   border-radius: 8px;
   border: none;
   cursor: pointer;
-  font-family: "Pretendard", sans-serif;
+  font-family: 'Pretendard', sans-serif;
 }
 
 .board-detail__btn--edit {
