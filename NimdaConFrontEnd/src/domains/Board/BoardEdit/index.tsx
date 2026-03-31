@@ -61,6 +61,7 @@ function BoardEditPage() {
 
   const applyFontSize = (size: string) => {
     contentRef.current?.focus();
+    const selectedColor = readCurrentColor();
     document.execCommand('fontSize', false, '7');
     const editor = contentRef.current;
     if (editor) {
@@ -68,6 +69,7 @@ function BoardEditPage() {
       fonts.forEach((font) => {
         const span = document.createElement('span');
         span.style.fontSize = size;
+        span.style.color = selectedColor;
         span.innerHTML = font.innerHTML;
         font.parentNode?.replaceChild(span, font);
       });
@@ -141,6 +143,12 @@ function BoardEditPage() {
       pre.innerHTML = '';
       pre.appendChild(code);
     }
+    pre.setAttribute('dir', 'ltr');
+    code.setAttribute('dir', 'ltr');
+    pre.style.direction = 'ltr';
+    code.style.direction = 'ltr';
+    pre.style.textAlign = 'left';
+    code.style.textAlign = 'left';
     return code;
   };
 
@@ -812,8 +820,9 @@ function BoardEditPage() {
                         type="button"
                         className="bw-color-swatch"
                         style={{
-                          background: 'linear-gradient(to top right, #fff 0%, #fff 46%, #d64454 46%, #d64454 54%, #fff 54%, #fff 100%)',
-                          border: '1px solid #e5e5e5'
+                          background:
+                            'linear-gradient(to top right, #fff 0%, #fff 46%, #d64454 46%, #d64454 54%, #fff 54%, #fff 100%)',
+                          border: '1px solid #e5e5e5',
                         }}
                         onClick={() => applyColor('#0C0C0C')}
                         title="기본 색상"

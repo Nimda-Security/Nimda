@@ -1363,6 +1363,9 @@ body {
   font-size: 13px;
   line-height: 1.6;
   white-space: pre-wrap;
+  direction: ltr;
+  unicode-bidi: plaintext;
+  text-align: left;
   position: relative;
   box-sizing: border-box;
   overflow-x: auto;
@@ -1386,6 +1389,9 @@ body {
     ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, 'Liberation Mono',
     'Courier New', monospace;
   white-space: pre;
+  direction: ltr;
+  unicode-bidi: plaintext;
+  text-align: left;
 }
 
 .hljs {

@@ -98,14 +98,20 @@ const PointContent: React.FC<PointContentProps> = ({
                 key={f.key}
                 onClick={() => handleFilterChange(f.key)}
                 className={`text-[14px] font-[600] leading-[150%] text-center transition-all flex items-center justify-center ${
-                  activeFilter === f.key ? 'text-[#F5F5F5]' : 'border-[1.5px] border-[#D97399] text-[#D97399]'
+                  activeFilter === f.key
+                    ? 'text-[#F5F5F5]'
+                    : 'border-[1.5px] border-[#D97399] text-[#D97399]'
                 }`}
                 style={{
                   width: '49px',
                   height: '28px',
                   borderRadius: '8px',
-                  background: activeFilter === f.key ? '#D97399' : 'transparent',
-                  border: activeFilter === f.key ? '1px solid #D97399' : '1.5px solid #D97399',
+                  background:
+                    activeFilter === f.key ? '#D97399' : 'transparent',
+                  border:
+                    activeFilter === f.key
+                      ? '1px solid #D97399'
+                      : '1.5px solid #D97399',
                 }}
               >
                 {f.label}
@@ -138,10 +144,7 @@ const PointContent: React.FC<PointContentProps> = ({
                     height: '72px',
                     flexShrink: 0,
                     borderTop: '1px solid #D4D4D4',
-                    borderBottom:
-                      index === filteredTransactions.length - 1
-                        ? '1px solid #D4D4D4'
-                        : 'none',
+                    borderBottom: 'none',
                     display: 'flex',
                     alignItems: 'center',
                     gap: '16px',
@@ -160,7 +163,9 @@ const PointContent: React.FC<PointContentProps> = ({
                         if (match) {
                           return (
                             <>
-                              <span style={{ marginRight: '5px' }}>{match[1]}</span>
+                              <span style={{ marginRight: '5px' }}>
+                                {match[1]}
+                              </span>
                               <span>{match[2]}</span>
                             </>
                           );

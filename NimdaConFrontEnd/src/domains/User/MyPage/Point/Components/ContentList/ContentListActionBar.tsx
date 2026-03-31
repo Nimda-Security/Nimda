@@ -19,7 +19,7 @@ const ContentListActionBar: React.FC<ContentListActionBarProps> = ({
       <div className="flex items-center">
         <CheckBox checked={allSelected} onChange={onToggleAll} />
         <span
-          className="ml-[20px] text-[14px] font-medium text-[#737373] select-none cursor-pointer"
+          className="ml-1 text-[14px] font-medium text-[#737373] select-none cursor-pointer"
           onClick={onToggleAll}
         >
           전체선택
@@ -29,7 +29,7 @@ const ContentListActionBar: React.FC<ContentListActionBarProps> = ({
       {hasSelected && (
         <button
           onClick={onDelete}
-          className="h-[24px] px-3 rounded-[4px] border border-[#d97399] bg-[#f5f5f5] text-[14px] font-medium text-[#d97399] leading-[150%]"
+          className="h-[32px] min-w-[68px] px-4 rounded-[4px] border border-[#d97399] bg-[#f5f5f5] text-[14px] font-medium text-[#d97399] leading-[150%]"
         >
           삭제
         </button>
