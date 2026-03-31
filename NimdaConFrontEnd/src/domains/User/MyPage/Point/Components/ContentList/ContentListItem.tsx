@@ -1,6 +1,6 @@
-import React from "react";
-import Avatar from "@/components/Avatar/Avatar";
-import CheckBox from "./CheckBox";
+import React from 'react';
+import Avatar from '@/components/Avatar/Avatar';
+import CheckBox from './CheckBox';
 
 export interface ContentListItemData {
   id: number;
@@ -20,7 +20,7 @@ interface ContentListItemProps {
   isLast?: boolean;
   onClick?: () => void;
   /** "checkbox" = 체크박스(삭제용), "arrow" = 화살표(이동용) */
-  mode?: "checkbox" | "arrow";
+  mode?: 'checkbox' | 'arrow';
 }
 
 const ContentListItem: React.FC<ContentListItemProps> = ({
@@ -29,18 +29,18 @@ const ContentListItem: React.FC<ContentListItemProps> = ({
   onToggle,
   isLast,
   onClick,
-  mode = "arrow",
+  mode = 'arrow',
 }) => {
   return (
     <div
-      className={`w-full h-[80px] flex items-center gap-3 px-4 transition-colors ${
-        checked ? "bg-[#fdf2f4]" : "bg-[#f5f5f5]"
-      } ${!isLast ? "border-b border-[#d4d4d4]" : ""}`}
-      onClick={mode === "arrow" ? onClick : undefined}
-      style={mode === "arrow" ? { cursor: "pointer" } : undefined}
+      className={`w-full h-[80px] flex items-center gap-3 transition-colors ${
+        checked ? 'bg-[#fdf2f4]' : 'bg-[#f5f5f5]'
+      } ${!isLast ? 'border-b border-[#d4d4d4]' : ''}`}
+      onClick={mode === 'arrow' ? onClick : undefined}
+      style={mode === 'arrow' ? { cursor: 'pointer' } : undefined}
     >
       {/* 1. 좌측: 체크박스 또는 화살표 */}
-      {mode === "checkbox" ? (
+      {mode === 'checkbox' ? (
         <div
           className="flex-shrink-0 flex items-center justify-center w-[28px] h-[28px]"
           onClick={(e) => {
@@ -63,7 +63,11 @@ const ContentListItem: React.FC<ContentListItemProps> = ({
       {/* 2. 썸네일 */}
       {item.thumbnailUrl && (
         <div className="flex-shrink-0 w-[24px] h-[24px] rounded overflow-hidden">
-          <img src={item.thumbnailUrl} alt="" className="w-full h-full object-cover" />
+          <img
+            src={item.thumbnailUrl}
+            alt=""
+            className="w-full h-full object-cover"
+          />
         </div>
       )}
 
@@ -71,18 +75,20 @@ const ContentListItem: React.FC<ContentListItemProps> = ({
       <div
         className="flex-1 flex flex-col justify-center min-w-0 gap-[6px]"
         onClick={
-          mode === "checkbox" && onClick
+          mode === 'checkbox' && onClick
             ? (e) => {
                 e.stopPropagation();
                 onClick();
               }
             : undefined
         }
-        style={mode === "checkbox" && onClick ? { cursor: "pointer" } : undefined}
+        style={
+          mode === 'checkbox' && onClick ? { cursor: 'pointer' } : undefined
+        }
       >
         <p
           className="truncate text-[14px] font-[500] text-[#0C0C0C] leading-[150%]"
-          style={{ fontFamily: "Pretendard" }}
+          style={{ fontFamily: 'Pretendard' }}
         >
           {item.text}
         </p>
@@ -94,7 +100,10 @@ const ContentListItem: React.FC<ContentListItemProps> = ({
                   src="/NotificationComment.svg"
                   alt="댓글"
                   className="absolute w-[14px] h-[14px] max-w-none"
-                  style={{ left: "-20px", filter: "drop-shadow(#4A7FCC 20px 0)" }}
+                  style={{
+                    left: '-20px',
+                    filter: 'drop-shadow(#4A7FCC 20px 0)',
+                  }}
                 />
               </div>
               <span className="text-[12px] font-bold text-[#4A7FCC] leading-none">
@@ -128,7 +137,7 @@ const ContentListItem: React.FC<ContentListItemProps> = ({
           </div>
           <span
             className="text-[14px] font-medium text-[#0C0C0C] whitespace-nowrap"
-            style={{ fontFamily: "Pretendard" }}
+            style={{ fontFamily: 'Pretendard' }}
           >
             {item.authorNickname}
           </span>
@@ -138,7 +147,7 @@ const ContentListItem: React.FC<ContentListItemProps> = ({
       {/* 5. 날짜 */}
       <div
         className="flex-shrink-0 text-right text-[12px] font-[400] text-[#A3A3A3] whitespace-nowrap"
-        style={{ fontFamily: "Pretendard", lineHeight: "150%" }}
+        style={{ fontFamily: 'Pretendard', lineHeight: '150%' }}
       >
         {item.date}
       </div>
