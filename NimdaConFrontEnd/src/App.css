@@ -1352,6 +1352,8 @@ body {
 .bw-content-input pre {
   margin: 10px 0;
   padding: 12px 14px;
+  width: 100%;
+  min-height: 72px;
   border-radius: 8px;
   border: 1px solid #e5e5e5;
   background: #ffffff;
@@ -1362,6 +1364,8 @@ body {
   line-height: 1.6;
   white-space: pre-wrap;
   position: relative;
+  box-sizing: border-box;
+  overflow-x: auto;
 }
 
 .bw-content-input pre.bw-code-block::before {
@@ -1376,9 +1380,12 @@ body {
 }
 
 .bw-content-input code {
+  display: block;
+  min-height: 1.4em;
   font-family:
     ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, 'Liberation Mono',
     'Courier New', monospace;
+  white-space: pre;
 }
 
 .hljs {

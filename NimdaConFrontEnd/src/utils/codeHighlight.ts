@@ -36,41 +36,56 @@ const ensureLanguages = () => {
 
 export const highlightCodeBlocks = (root: ParentNode) => {
   ensureLanguages();
-  const blocks = root.querySelectorAll('pre code');
+  const preBlocks = root.querySelectorAll('pre');
 
-  blocks.forEach((block) => {
-    const element = block as HTMLElement;
-    if (element.classList.contains('language-plaintext')) {
-      element.classList.remove('hljs');
-      return;
+  const aliasMap: Record<string, string> = {
+    cxx: 'cpp',
+    'c++': 'cpp',
+    hpp: 'cpp',
+    h: 'c',
+    js: 'javascript',
+    ts: 'typescript',
+    py: 'python',
+    html: 'xml',
+    text: 'plaintext',
+  };
+
+  preBlocks.forEach((preNode) => {
+    const pre = preNode as HTMLElement;
+    let code = pre.querySelector('code') as HTMLElement | null;
+
+    if (!code) {
+      code = document.createElement('code');
+      code.textContent = pre.textContent || '';
+      pre.innerHTML = '';
+      pre.appendChild(code);
     }
 
-    element.removeAttribute('data-highlighted');
-
-    const aliasMap: Record<string, string> = {
-      cxx: 'cpp',
-      'c++': 'cpp',
-      hpp: 'cpp',
-      h: 'c',
-      js: 'javascript',
-      ts: 'typescript',
-      py: 'python',
-      html: 'xml',
-    };
-
-    const langClass = Array.from(element.classList).find((cls) =>
+    const preLanguageClass = Array.from(pre.classList).find((cls) =>
+      cls.startsWith('language-')
+    );
+    const codeLanguageClass = Array.from(code.classList).find((cls) =>
       cls.startsWith('language-')
     );
 
-    if (langClass) {
-      const raw = langClass.replace('language-', '').toLowerCase();
-      const normalized = aliasMap[raw] ?? raw;
-      if (normalized !== raw) {
-        element.classList.remove(langClass);
-        element.classList.add(`language-${normalized}`);
-      }
+    const rawLanguage =
+      codeLanguageClass?.replace('language-', '') ||
+      preLanguageClass?.replace('language-', '') ||
+      (pre.getAttribute('data-language') || '').toLowerCase();
+
+    const normalizedLanguage = aliasMap[rawLanguage] ?? rawLanguage;
+
+    if (!normalizedLanguage || normalizedLanguage === 'plaintext') {
+      code.classList.remove('hljs');
+      return;
     }
 
-    hljs.highlightElement(element);
+    Array.from(code.classList)
+      .filter((cls) => cls.startsWith('language-'))
+      .forEach((cls) => code?.classList.remove(cls));
+    code.classList.add(`language-${normalizedLanguage}`);
+    code.removeAttribute('data-highlighted');
+
+    hljs.highlightElement(code);
   });
 };
