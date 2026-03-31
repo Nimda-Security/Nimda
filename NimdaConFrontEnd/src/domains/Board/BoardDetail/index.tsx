@@ -4,7 +4,12 @@ import { MessageBox } from '@/components/icons/MessageBox';
 import { VerticalDots } from '@/components/icons/VerticalDots';
 import Layout from '@/components/Layout';
 import { openAttachmentDownloadInNewTab } from '@/api/attachments';
-import { getBoardDetailAPI, deleteBoardAPI, getFileDownloadURL, getBoardLikeStatusAPI } from '@/api/board';
+import {
+  getBoardDetailAPI,
+  deleteBoardAPI,
+  getFileDownloadURL,
+  getBoardLikeStatusAPI,
+} from '@/api/board';
 import { getAllCategoriesAPI } from '@/api/category';
 import { hasRole, isAdmin, getCurrentNickname } from '@/utils/jwt';
 import type { Board } from '../types';
@@ -12,6 +17,7 @@ import CommentSection from '@/domains/Comment';
 import BoardLikeButton from './BoardLikeButton';
 import Avatar from '@/components/Avatar/Avatar';
 import { Heart } from '@/components/icons/Heart';
+import { highlightCodeBlocks } from '@/utils/codeHighlight';
 import './BoardDetail.css';
 
 function BoardDetailPage() {
@@ -27,7 +33,16 @@ function BoardDetailPage() {
   const [menuOpen, setMenuOpen] = useState(false);
   const [showAttachments, setShowAttachments] = useState(false);
 
-  useEffect(() => { if (id) fetchBoard(parseInt(id)); }, [id]);
+  useEffect(() => {
+    if (id) fetchBoard(parseInt(id));
+  }, [id]);
+
+  useEffect(() => {
+    const body = document.querySelector('.board-detail__body');
+    if (body) {
+      highlightCodeBlocks(body);
+    }
+  }, [board?.content]);
 
   const fetchBoard = async (boardId: number) => {
     try {
@@ -42,7 +57,9 @@ function BoardDetailPage() {
           let isCartel = boardData.category.name === '카르텔';
           if (!isCartel && boardData.category.parentId) {
             const allCats = await getAllCategoriesAPI();
-            const parent = allCats.find(c => c.id === boardData.category.parentId);
+            const parent = allCats.find(
+              (c) => c.id === boardData.category.parentId
+            );
             if (parent && parent.name === '카르텔') isCartel = true;
           }
           if (isCartel && !hasRole('ROLE_CARTEL') && !isAdmin()) {
@@ -63,8 +80,11 @@ function BoardDetailPage() {
         }
         setError(res.message);
       }
-    } catch { setError('게시글을 불러오는 중 오류가 발생했습니다.'); }
-    finally { setLoading(false); }
+    } catch {
+      setError('게시글을 불러오는 중 오류가 발생했습니다.');
+    } finally {
+      setLoading(false);
+    }
   };
 
   const fetchLikeStatus = async (boardId: number) => {
@@ -74,7 +94,9 @@ function BoardDetailPage() {
         setLikeCount(res.data.likeCount);
         setIsLiked(res.data.isLiked ?? (res.data as any).liked ?? false);
       }
-    } catch { /* 비로그인 상태 */ }
+    } catch {
+      /* 비로그인 상태 */
+    }
   };
 
   const handleGoBack = () => {
@@ -84,7 +106,8 @@ function BoardDetailPage() {
   };
 
   const handleEdit = () => {
-    if (board) navigate(`/board/${board.category?.slug || boardType}/edit/${board.id}`);
+    if (board)
+      navigate(`/board/${board.category?.slug || boardType}/edit/${board.id}`);
   };
 
   const handleDelete = async () => {
@@ -92,10 +115,15 @@ function BoardDetailPage() {
     try {
       setIsDeleting(true);
       const res = await deleteBoardAPI(board.id);
-      if (res.success) { alert('게시글이 삭제되었습니다.'); handleGoBack(); }
-      else alert(res.message || '게시글 삭제에 실패했습니다.');
-    } catch { alert('게시글 삭제 중 오류가 발생했습니다.'); }
-    finally { setIsDeleting(false); }
+      if (res.success) {
+        alert('게시글이 삭제되었습니다.');
+        handleGoBack();
+      } else alert(res.message || '게시글 삭제에 실패했습니다.');
+    } catch {
+      alert('게시글 삭제 중 오류가 발생했습니다.');
+    } finally {
+      setIsDeleting(false);
+    }
   };
 
   /** 레거시(로컬 filepath) 첨부만 사용 — S3·Attachment 첨부는 attachments[].downloadUrl 사용 */
@@ -106,7 +134,10 @@ function BoardDetailPage() {
     }
   };
 
-  const isAuthor = () => !!board && !!board.author?.nickname && board.author.nickname === getCurrentNickname();
+  const isAuthor = () =>
+    !!board &&
+    !!board.author?.nickname &&
+    board.author.nickname === getCurrentNickname();
 
   const fmtDate = (s: string) => {
     const d = new Date(s);
@@ -120,7 +151,9 @@ function BoardDetailPage() {
   if (loading) {
     return (
       <Layout>
-        <div className="board-detail__status board-detail__status--loading">로딩 중...</div>
+        <div className="board-detail__status board-detail__status--loading">
+          로딩 중...
+        </div>
       </Layout>
     );
   }
@@ -129,8 +162,16 @@ function BoardDetailPage() {
     return (
       <Layout>
         <div className="board-detail__status">
-          <p className="board-detail__status--error">{error || '게시글을 찾을 수 없습니다.'}</p>
-          <button type="button" onClick={handleGoBack} className="board-detail__btn board-detail__btn--edit">목록으로</button>
+          <p className="board-detail__status--error">
+            {error || '게시글을 찾을 수 없습니다.'}
+          </p>
+          <button
+            type="button"
+            onClick={handleGoBack}
+            className="board-detail__btn board-detail__btn--edit"
+          >
+            목록으로
+          </button>
         </div>
       </Layout>
     );
@@ -141,7 +182,11 @@ function BoardDetailPage() {
       <div>
         {/* Head */}
         <header className="board-detail__head">
-          <button type="button" onClick={handleGoBack} className="board-detail__back">
+          <button
+            type="button"
+            onClick={handleGoBack}
+            className="board-detail__back"
+          >
             ← {board.category?.name ?? boardType ?? '게시판'}
           </button>
 
@@ -154,7 +199,7 @@ function BoardDetailPage() {
                   type="button"
                   className="board-detail__more-btn"
                   aria-label="더보기"
-                  onClick={() => setMenuOpen(prev => !prev)}
+                  onClick={() => setMenuOpen((prev) => !prev)}
                 >
                   <VerticalDots size={24} />
                 </button>
@@ -162,13 +207,26 @@ function BoardDetailPage() {
                   <ul className="board-detail__menu">
                     {isAuthor() && (
                       <li>
-                        <button type="button" onClick={() => { setMenuOpen(false); handleEdit(); }}>
+                        <button
+                          type="button"
+                          onClick={() => {
+                            setMenuOpen(false);
+                            handleEdit();
+                          }}
+                        >
                           수정
                         </button>
                       </li>
                     )}
                     <li>
-                      <button type="button" onClick={() => { setMenuOpen(false); void handleDelete(); }} disabled={isDeleting}>
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setMenuOpen(false);
+                          void handleDelete();
+                        }}
+                        disabled={isDeleting}
+                      >
                         {isDeleting ? '삭제 중...' : '삭제'}
                       </button>
                     </li>
@@ -177,7 +235,7 @@ function BoardDetailPage() {
               </div>
             )}
           </div>
-          
+
           <div className="board-detail__meta">
             <Avatar
               src={board.author?.profileImage}
@@ -186,7 +244,11 @@ function BoardDetailPage() {
             />
             <div className="board-detail__meta-info">
               <Link
-                to={board.author?.nickname ? `/user/${board.author.nickname}` : '#'}
+                to={
+                  board.author?.nickname
+                    ? `/user/${board.author.nickname}`
+                    : '#'
+                }
                 className="board-detail__author"
               >
                 {board.author?.nickname ?? '알 수 없음'}
@@ -211,22 +273,31 @@ function BoardDetailPage() {
         <hr className="board-detail__divider" />
 
         {/* Body */}
-        <div className="board-detail__body" dangerouslySetInnerHTML={{ __html: board.content }} />
+        <div
+          className="board-detail__body"
+          dangerouslySetInnerHTML={{ __html: board.content }}
+        />
 
         {/* 첨부파일 버튼 — S3 또는 레거시 첨부가 있을 때만 표시 */}
         {((board.attachments && board.attachments.length > 0) ||
-          ((!board.attachments || board.attachments.length === 0) && board.filename && board.filepath)) && (
+          ((!board.attachments || board.attachments.length === 0) &&
+            board.filename &&
+            board.filepath)) && (
           <div className="board-detail__attachment-wrap">
             <button
               type="button"
               className="board-detail__attachment-toggle"
-              onClick={() => setShowAttachments(prev => !prev)}
+              onClick={() => setShowAttachments((prev) => !prev)}
             >
               📎 첨부파일
               {board.attachments && board.attachments.length > 0
                 ? ` (${board.attachments.length})`
                 : ' (1)'}
-              <span className={`board-detail__attachment-arrow ${showAttachments ? 'board-detail__attachment-arrow--open' : ''}`}>▾</span>
+              <span
+                className={`board-detail__attachment-arrow ${showAttachments ? 'board-detail__attachment-arrow--open' : ''}`}
+              >
+                ▾
+              </span>
             </button>
 
             {showAttachments && (
@@ -241,9 +312,11 @@ function BoardDetailPage() {
                           className="board-detail__attachments-link"
                           onClick={(e) => {
                             e.preventDefault();
-                            void openAttachmentDownloadInNewTab(att.id).then((r) => {
-                              if (!r.ok) alert(r.message);
-                            });
+                            void openAttachmentDownloadInNewTab(att.id).then(
+                              (r) => {
+                                if (!r.ok) alert(r.message);
+                              }
+                            );
                           }}
                         >
                           📎 {att.originFilename ?? `첨부 #${att.id}`}
@@ -254,22 +327,27 @@ function BoardDetailPage() {
                 )}
 
                 {/* 레거시 단일 첨부 */}
-                {(!board.attachments || board.attachments.length === 0) && board.filename && board.filepath && (
-                  <ul className="board-detail__attachments-list">
-                    <li>
-                      <a
-                        href="#"
-                        className="board-detail__attachments-link"
-                        onClick={(e) => {
-                          e.preventDefault();
-                          handleLegacyFileDownload();
-                        }}
-                      >
-                        📎 {board.filename.includes('_') ? board.filename.split('_').slice(1).join('_') : board.filename}
-                      </a>
-                    </li>
-                  </ul>
-                )}
+                {(!board.attachments || board.attachments.length === 0) &&
+                  board.filename &&
+                  board.filepath && (
+                    <ul className="board-detail__attachments-list">
+                      <li>
+                        <a
+                          href="#"
+                          className="board-detail__attachments-link"
+                          onClick={(e) => {
+                            e.preventDefault();
+                            handleLegacyFileDownload();
+                          }}
+                        >
+                          📎{' '}
+                          {board.filename.includes('_')
+                            ? board.filename.split('_').slice(1).join('_')
+                            : board.filename}
+                        </a>
+                      </li>
+                    </ul>
+                  )}
               </div>
             )}
           </div>
@@ -288,8 +366,6 @@ function BoardDetailPage() {
 
         {/* 댓글 */}
         <CommentSection boardId={board.id} />
-
-
       </div>
     </Layout>
   );

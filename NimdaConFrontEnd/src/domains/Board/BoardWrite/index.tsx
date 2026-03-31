@@ -6,6 +6,7 @@ import { uploadBoardFileViaS3 } from '@/api/attachments';
 import { getAllCategoriesAPI } from '@/api/category';
 import ChevronDown from '@/components/icons/ChevronDown';
 import { isAdmin, hasRole } from '@/utils/jwt';
+import { highlightCodeBlocks } from '@/utils/codeHighlight';
 import type { Category } from '../types';
 
 function BoardWritePage() {
@@ -37,8 +38,10 @@ function BoardWritePage() {
   const [error, setError] = useState<string | null>(null);
   const [showFontSize, setShowFontSize] = useState(false);
   const [showColorPicker, setShowColorPicker] = useState(false);
-  const [showAlignMenu, setShowAlignMenu] = useState(false);
   const [showCodeLangMenu, setShowCodeLangMenu] = useState(false);
+  const [currentAlignment, setCurrentAlignment] = useState<
+    'left' | 'center' | 'right'
+  >('left');
   const [isPinned, setIsPinned] = useState(false);
   const colorInputRef = useRef<HTMLInputElement>(null);
 
@@ -50,6 +53,12 @@ function BoardWritePage() {
   const getEditorContent = () => {
     return contentRef.current?.innerHTML || '';
   };
+
+  useEffect(() => {
+    if (contentRef.current) {
+      highlightCodeBlocks(contentRef.current);
+    }
+  }, [content]);
 
   // 모든 카테고리 로드
   useEffect(() => {
@@ -421,6 +430,21 @@ function BoardWritePage() {
     setShowColorPicker(false);
   };
 
+  const readCurrentColor = () => {
+    contentRef.current?.focus();
+    const raw = document.queryCommandValue('foreColor');
+    if (typeof raw === 'string') {
+      const hex = raw.match(/#([0-9a-fA-F]{6})/);
+      if (hex) return `#${hex[1]}`.toUpperCase();
+      const rgb = raw.match(/rgb\s*\((\d+),\s*(\d+),\s*(\d+)\)/i);
+      if (rgb) {
+        const toHex = (n: number) => n.toString(16).padStart(2, '0');
+        return `#${toHex(Number(rgb[1]))}${toHex(Number(rgb[2]))}${toHex(Number(rgb[3]))}`.toUpperCase();
+      }
+    }
+    return '#0C0C0C';
+  };
+
   const applyAlignment = (align: 'left' | 'center' | 'right') => {
     contentRef.current?.focus();
     const command =
@@ -430,7 +454,17 @@ function BoardWritePage() {
           ? 'justifyCenter'
           : 'justifyRight';
     document.execCommand(command, false);
-    setShowAlignMenu(false);
+    setCurrentAlignment(align);
+  };
+
+  const cycleAlignment = () => {
+    const next =
+      currentAlignment === 'left'
+        ? 'center'
+        : currentAlignment === 'center'
+          ? 'right'
+          : 'left';
+    applyAlignment(next);
   };
 
   const getCurrentPreElement = () => {
@@ -571,10 +605,13 @@ function BoardWritePage() {
     if (!targetPre) {
       const range = selection.getRangeAt(0);
       const selectedText = range.toString();
+      const normalizedLanguage =
+        language === 'plaintext' ? 'plaintext' : language;
       const pre = document.createElement('pre');
-      pre.className = `bw-code-block language-${language}`;
+      pre.className = `bw-code-block language-${normalizedLanguage}`;
       pre.setAttribute('data-language', language);
       const code = document.createElement('code');
+      code.className = `language-${normalizedLanguage}`;
       code.textContent = selectedText || '';
       pre.appendChild(code);
 
@@ -600,14 +637,28 @@ function BoardWritePage() {
       if (prevLanguageClass) {
         targetPre.classList.remove(prevLanguageClass);
       }
-      targetPre.classList.add('bw-code-block', `language-${language}`);
+      const normalizedLanguage =
+        language === 'plaintext' ? 'plaintext' : language;
+      targetPre.classList.add(
+        'bw-code-block',
+        `language-${normalizedLanguage}`
+      );
       targetPre.setAttribute('data-language', language);
 
-      getCodeElementInPre(targetPre);
+      const codeElement = getCodeElementInPre(targetPre);
+      Array.from(codeElement.classList)
+        .filter((cls) => cls.startsWith('language-'))
+        .forEach((cls) => codeElement.classList.remove(cls));
+      codeElement.classList.add(`language-${normalizedLanguage}`);
+      codeElement.removeAttribute('data-highlighted');
     }
 
     setShowCodeLangMenu(false);
     setContent(getEditorContent());
+    const editor = contentRef.current;
+    if (editor) {
+      setTimeout(() => highlightCodeBlocks(editor), 0);
+    }
   };
 
   const handleEditorKeyDown = (e: React.KeyboardEvent<HTMLDivElement>) => {
@@ -623,6 +674,56 @@ function BoardWritePage() {
 
       const text = codeElement.textContent || '';
       const { start, end } = offsets;
+      const lineStart = text.lastIndexOf('\n', start - 1) + 1;
+      const lineEndIndex = text.indexOf('\n', start);
+      const lineEnd = lineEndIndex === -1 ? text.length : lineEndIndex;
+      const currentLine = text.slice(lineStart, lineEnd);
+      const isLastLine = lineEnd === text.length;
+
+      if (e.key === 'Home') {
+        e.preventDefault();
+        const indentLength = (currentLine.match(/^[ \t]*/) || [''])[0].length;
+        const firstTextOffset = lineStart + indentLength;
+        const targetOffset =
+          start === firstTextOffset ? lineStart : firstTextOffset;
+        setSelectionInElementByOffset(codeElement, targetOffset);
+        return;
+      }
+
+      if (e.key === 'Backspace' && start === end) {
+        if (text.length === 0) {
+          e.preventDefault();
+          const paragraph = document.createElement('p');
+          paragraph.innerHTML = '<br>';
+          currentPre.replaceWith(paragraph);
+
+          const selection = window.getSelection();
+          if (selection) {
+            const range = document.createRange();
+            range.selectNodeContents(paragraph);
+            range.collapse(true);
+            selection.removeAllRanges();
+            selection.addRange(range);
+          }
+          setContent(getEditorContent());
+          setTimeout(() => {
+            if (contentRef.current) highlightCodeBlocks(contentRef.current);
+          }, 0);
+          return;
+        }
+
+        if (start === lineStart && currentLine.length === 0 && lineStart > 0) {
+          e.preventDefault();
+          codeElement.textContent =
+            text.slice(0, lineStart - 1) + text.slice(lineStart);
+          setSelectionInElementByOffset(codeElement, lineStart - 1);
+          setContent(getEditorContent());
+          setTimeout(() => {
+            if (contentRef.current) highlightCodeBlocks(contentRef.current);
+          }, 0);
+          return;
+        }
+      }
 
       if (e.key === 'Tab') {
         e.preventDefault();
@@ -686,13 +787,45 @@ function BoardWritePage() {
         }
 
         setContent(getEditorContent());
+        setTimeout(() => {
+          if (contentRef.current) highlightCodeBlocks(contentRef.current);
+        }, 0);
         return;
       }
 
       if (e.key === 'Enter') {
         e.preventDefault();
 
-        const lineStart = text.lastIndexOf('\n', start - 1) + 1;
+        if (
+          !e.shiftKey &&
+          start === end &&
+          isLastLine &&
+          currentLine.trim() === ''
+        ) {
+          codeElement.textContent = text.endsWith('\n')
+            ? text.slice(0, -1)
+            : text;
+
+          const paragraph = document.createElement('p');
+          paragraph.innerHTML = '<br>';
+          currentPre.insertAdjacentElement('afterend', paragraph);
+
+          const selection = window.getSelection();
+          if (selection) {
+            const range = document.createRange();
+            range.selectNodeContents(paragraph);
+            range.collapse(true);
+            selection.removeAllRanges();
+            selection.addRange(range);
+          }
+
+          setContent(getEditorContent());
+          setTimeout(() => {
+            if (contentRef.current) highlightCodeBlocks(contentRef.current);
+          }, 0);
+          return;
+        }
+
         const linePrefix = text.slice(lineStart, start);
         const indent = (linePrefix.match(/^[ \t]*/) || [''])[0];
         const insertText = e.shiftKey ? '\n' : `\n${indent}`;
@@ -702,6 +835,9 @@ function BoardWritePage() {
         const newOffset = start + insertText.length;
         setSelectionInElementByOffset(codeElement, newOffset);
         setContent(getEditorContent());
+        setTimeout(() => {
+          if (contentRef.current) highlightCodeBlocks(contentRef.current);
+        }, 0);
         return;
       }
     }
@@ -998,7 +1134,7 @@ function BoardWritePage() {
                 onClick={() => {
                   setShowFontSize((p) => !p);
                   setShowColorPicker(false);
-                  setShowAlignMenu(false);
+                  setShowCodeLangMenu(false);
                 }}
               >
                 <svg
@@ -1046,7 +1182,7 @@ function BoardWritePage() {
                 onClick={() => {
                   setShowColorPicker((p) => !p);
                   setShowFontSize(false);
-                  setShowAlignMenu(false);
+                  setShowCodeLangMenu(false);
                 }}
               >
                 <svg
@@ -1066,6 +1202,7 @@ function BoardWritePage() {
               {showColorPicker && (
                 <div className="bw-tool-dropdown bw-color-grid">
                   {[
+                    '#0C0C0C',
                     '#D64454',
                     '#E17654',
                     '#E8B446',
@@ -1087,7 +1224,7 @@ function BoardWritePage() {
                   <button
                     type="button"
                     className="bw-color-custom"
-                    onClick={() => colorInputRef.current?.click()}
+                    onClick={() => colorInputRef.current?.showPicker()}
                   >
                     직접 선택
                   </button>
@@ -1095,6 +1232,7 @@ function BoardWritePage() {
                     ref={colorInputRef}
                     type="color"
                     className="bw-hidden-input"
+                    value={readCurrentColor()}
                     onChange={(e) => applyColor(e.target.value)}
                   />
                 </div>
@@ -1154,7 +1292,6 @@ function BoardWritePage() {
                   setShowCodeLangMenu((prev) => !prev);
                   setShowFontSize(false);
                   setShowColorPicker(false);
-                  setShowAlignMenu(false);
                 }}
               >
                 <svg
@@ -1172,20 +1309,21 @@ function BoardWritePage() {
                 </svg>
               </button>
               {showCodeLangMenu && (
-                <div className="bw-tool-dropdown">
+                <div className="bw-tool-dropdown bw-tool-dropdown--code">
                   {[
-                    { label: 'Plain text', value: 'text' },
+                    { label: 'Plain text', value: 'plaintext' },
                     { label: 'JavaScript', value: 'javascript' },
                     { label: 'TypeScript', value: 'typescript' },
+                    { label: 'HTML', value: 'html' },
+                    { label: 'CSS', value: 'css' },
                     { label: 'Python', value: 'python' },
                     { label: 'C++', value: 'cpp' },
                     { label: 'Java', value: 'java' },
-                    { label: 'Bash', value: 'bash' },
                   ].map((lang) => (
                     <button
                       key={lang.value}
                       type="button"
-                      className="bw-tool-dropdown-item"
+                      className="bw-tool-dropdown-item bw-tool-dropdown-item--code"
                       onClick={() => applyCodeLanguage(lang.value)}
                     >
                       {lang.label}
@@ -1193,7 +1331,7 @@ function BoardWritePage() {
                   ))}
                   <button
                     type="button"
-                    className="bw-tool-dropdown-item"
+                    className="bw-tool-dropdown-item bw-tool-dropdown-item--code"
                     onClick={() => applyCodeLanguage('none')}
                   >
                     코드블럭 해제
@@ -1206,12 +1344,7 @@ function BoardWritePage() {
                 type="button"
                 className="bw-tool-btn"
                 title="정렬"
-                onClick={() => {
-                  setShowAlignMenu((prev) => !prev);
-                  setShowFontSize(false);
-                  setShowColorPicker(false);
-                  setShowCodeLangMenu(false);
-                }}
+                onClick={cycleAlignment}
               >
                 <svg
                   width="18"
@@ -1223,37 +1356,32 @@ function BoardWritePage() {
                   strokeLinecap="round"
                   strokeLinejoin="round"
                 >
-                  <line x1="17" y1="10" x2="3" y2="10" />
-                  <line x1="21" y1="6" x2="3" y2="6" />
-                  <line x1="21" y1="14" x2="3" y2="14" />
-                  <line x1="17" y1="18" x2="3" y2="18" />
+                  {currentAlignment === 'left' && (
+                    <>
+                      <line x1="4" y1="6" x2="20" y2="6" />
+                      <line x1="4" y1="10" x2="14" y2="10" />
+                      <line x1="4" y1="14" x2="20" y2="14" />
+                      <line x1="4" y1="18" x2="14" y2="18" />
+                    </>
+                  )}
+                  {currentAlignment === 'center' && (
+                    <>
+                      <line x1="4" y1="6" x2="20" y2="6" />
+                      <line x1="7" y1="10" x2="17" y2="10" />
+                      <line x1="4" y1="14" x2="20" y2="14" />
+                      <line x1="7" y1="18" x2="17" y2="18" />
+                    </>
+                  )}
+                  {currentAlignment === 'right' && (
+                    <>
+                      <line x1="4" y1="6" x2="20" y2="6" />
+                      <line x1="10" y1="10" x2="20" y2="10" />
+                      <line x1="4" y1="14" x2="20" y2="14" />
+                      <line x1="10" y1="18" x2="20" y2="18" />
+                    </>
+                  )}
                 </svg>
               </button>
-              {showAlignMenu && (
-                <div className="bw-tool-dropdown bw-tool-dropdown--right">
-                  <button
-                    type="button"
-                    className="bw-tool-dropdown-item"
-                    onClick={() => applyAlignment('left')}
-                  >
-                    좌측 정렬
-                  </button>
-                  <button
-                    type="button"
-                    className="bw-tool-dropdown-item"
-                    onClick={() => applyAlignment('center')}
-                  >
-                    가운데 정렬
-                  </button>
-                  <button
-                    type="button"
-                    className="bw-tool-dropdown-item"
-                    onClick={() => applyAlignment('right')}
-                  >
-                    우측 정렬
-                  </button>
-                </div>
-              )}
             </div>
           </div>
 
@@ -1267,7 +1395,15 @@ function BoardWritePage() {
             className="bw-content-input"
             data-placeholder="내용을 입력하세요."
             onKeyDown={handleEditorKeyDown}
-            onInput={() => setContent(getEditorContent())}
+            onInput={() => {
+              setContent(getEditorContent());
+              if (contentRef.current) {
+                setTimeout(
+                  () => highlightCodeBlocks(contentRef.current as HTMLElement),
+                  0
+                );
+              }
+            }}
           />
 
           <div className="bw-divider" />

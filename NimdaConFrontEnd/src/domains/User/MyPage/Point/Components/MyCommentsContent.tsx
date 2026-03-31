@@ -74,7 +74,7 @@ const MyCommentsContent: React.FC = () => {
   return (
     <div className="flex flex-col w-full px-4">
       {comments.length > 0 ? (
-        <div className="border border-[#d4d4d4] rounded-[4px] bg-transparent overflow-hidden px-4">
+        <div className="border border-[#d4d4d4] rounded-[4px] bg-transparent overflow-hidden">
           {displayedComments.map((comment, idx) => (
             <ContentListItem
               key={comment.id}

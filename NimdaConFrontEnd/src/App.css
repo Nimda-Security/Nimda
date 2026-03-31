@@ -1249,6 +1249,10 @@ body {
   overflow: hidden;
 }
 
+.bw-tool-dropdown--code {
+  min-width: 108px;
+}
+
 .bw-tool-dropdown--right {
   left: auto;
   right: 0;
@@ -1257,7 +1261,7 @@ body {
 .bw-tool-dropdown-item {
   display: block;
   width: 100%;
-  padding: 8px 14px;
+  padding: 7px 12px;
   background: none;
   border: none;
   text-align: left;
@@ -1266,6 +1270,11 @@ body {
   font-family: 'Pretendard', sans-serif;
   white-space: nowrap;
   transition: background 0.12s;
+}
+
+.bw-tool-dropdown-item--code {
+  font-size: 13px;
+  padding: 6px 10px;
 }
 
 .bw-tool-dropdown-item:hover {
@@ -1370,6 +1379,51 @@ body {
   font-family:
     ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, 'Liberation Mono',
     'Courier New', monospace;
+}
+
+.hljs {
+  background: transparent;
+  color: #0c0c0c;
+}
+
+.hljs-keyword,
+.hljs-selector-tag,
+.hljs-meta,
+.hljs-meta-keyword {
+  color: #8b6bb7;
+}
+
+.hljs-title,
+.hljs-title.function_,
+.hljs-function .hljs-title,
+.hljs-attr,
+.hljs-property {
+  color: #4a7fcc;
+}
+
+.hljs-variable,
+.hljs-params,
+.hljs-symbol {
+  color: #d97399;
+}
+
+.hljs-number,
+.hljs-literal,
+.hljs-built_in,
+.hljs-type {
+  color: #e17654;
+}
+
+.hljs-string,
+.hljs-regexp,
+.hljs-selector-class,
+.hljs-selector-id {
+  color: #5cb85c;
+}
+
+.hljs-comment,
+.hljs-quote {
+  color: #8e8e8e;
 }
 
 .bw-content-input::placeholder {

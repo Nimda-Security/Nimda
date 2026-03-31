@@ -240,6 +240,51 @@
     'Courier New', monospace;
 }
 
+.board-detail__body .hljs {
+  background: transparent;
+  color: #0c0c0c;
+}
+
+.board-detail__body .hljs-keyword,
+.board-detail__body .hljs-selector-tag,
+.board-detail__body .hljs-meta,
+.board-detail__body .hljs-meta-keyword {
+  color: #8b6bb7;
+}
+
+.board-detail__body .hljs-title,
+.board-detail__body .hljs-title.function_,
+.board-detail__body .hljs-function .hljs-title,
+.board-detail__body .hljs-attr,
+.board-detail__body .hljs-property {
+  color: #4a7fcc;
+}
+
+.board-detail__body .hljs-variable,
+.board-detail__body .hljs-params,
+.board-detail__body .hljs-symbol {
+  color: #d97399;
+}
+
+.board-detail__body .hljs-number,
+.board-detail__body .hljs-literal,
+.board-detail__body .hljs-built_in,
+.board-detail__body .hljs-type {
+  color: #e17654;
+}
+
+.board-detail__body .hljs-string,
+.board-detail__body .hljs-regexp,
+.board-detail__body .hljs-selector-class,
+.board-detail__body .hljs-selector-id {
+  color: #5cb85c;
+}
+
+.board-detail__body .hljs-comment,
+.board-detail__body .hljs-quote {
+  color: #8e8e8e;
+}
+
 /* 첨부파일 토글 버튼 + 드롭다운 */
 .board-detail__attachment-wrap {
   position: relative;

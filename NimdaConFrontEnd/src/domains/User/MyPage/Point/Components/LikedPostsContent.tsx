@@ -83,7 +83,7 @@ const LikedPostsContent: React.FC = () => {
 
   return (
     <div className="flex flex-col w-full px-4">
-      <div className="border border-[#d4d4d4] rounded-[4px] bg-transparent overflow-hidden px-4">
+      <div className="border border-[#d4d4d4] rounded-[4px] bg-transparent overflow-hidden">
         {displayedBoards.map((board, idx) => (
           <ContentListItem
             key={board.id}
