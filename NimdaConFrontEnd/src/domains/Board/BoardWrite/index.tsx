@@ -1413,6 +1413,7 @@ function BoardWritePage() {
             ref={contentRef}
             id="bw-content"
             contentEditable
+            spellCheck={false}
             className="bw-content-input"
             data-placeholder="내용을 입력하세요."
             onKeyDown={handleEditorKeyDown}

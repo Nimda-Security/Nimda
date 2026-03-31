@@ -56,6 +56,7 @@ const MyPostsContent: React.FC = () => {
 
   const handleDelete = async () => {
     if (selectedIds.size === 0) return;
+    if (!window.confirm('정말 삭제하시겠습니까?')) return;
     const ids = Array.from(selectedIds);
     const res = await deleteMyBoardsAPI(ids);
     if (res.success) {
@@ -82,7 +83,7 @@ const MyPostsContent: React.FC = () => {
   return (
     <div className="flex flex-col w-full px-4">
       {boards.length > 0 ? (
-        <div className="border border-[#d4d4d4] rounded-[4px] bg-[#f5f5f5] overflow-hidden py-2">
+        <div className="border border-[#d4d4d4] rounded-[4px] bg-[#f5f5f5] overflow-hidden py-2 px-4">
           {displayedBoards.map((board, idx) => (
             <ContentListItem
               key={board.id}
