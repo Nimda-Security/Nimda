@@ -34,6 +34,7 @@ function BoardEditPage() {
   const [error, setError] = useState<string | null>(null);
   const [showFontSize, setShowFontSize] = useState(false);
   const [showColorPicker, setShowColorPicker] = useState(false);
+  const [selectedColor, setSelectedColor] = useState<string>('currentColor');
   const [showCodeLangMenu, setShowCodeLangMenu] = useState(false);
   const [currentAlignment, setCurrentAlignment] = useState<
     'left' | 'center' | 'right'
@@ -77,6 +78,7 @@ function BoardEditPage() {
   const applyColor = (color: string) => {
     contentRef.current?.focus();
     document.execCommand('foreColor', false, color);
+    setSelectedColor(color === '#0C0C0C' ? 'currentColor' : color);
     setShowColorPicker(false);
   };
 
@@ -794,7 +796,7 @@ function BoardEditPage() {
                   >
                     <span
                       style={{
-                        borderBottom: '3px solid #DC2626',
+                        borderBottom: `3px solid ${selectedColor === 'currentColor' ? '#DC2626' : selectedColor}`,
                         paddingBottom: 1,
                       }}
                     >
@@ -806,6 +808,16 @@ function BoardEditPage() {
                       className="bw-tool-dropdown bw-color-grid"
                       style={{ left: 0 }}
                     >
+                      <button
+                        type="button"
+                        className="bw-color-swatch"
+                        style={{
+                          background: 'linear-gradient(to top right, #fff 0%, #fff 46%, #d64454 46%, #d64454 54%, #fff 54%, #fff 100%)',
+                          border: '1px solid #e5e5e5'
+                        }}
+                        onClick={() => applyColor('#0C0C0C')}
+                        title="기본 색상"
+                      />
                       {[
                         '#0C0C0C',
                         '#D64454',
