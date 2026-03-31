@@ -7,7 +7,10 @@ import type { Board } from '../types';
 
 function BoardEditPage() {
   const navigate = useNavigate();
-  const { boardType: paramBoardType, id } = useParams<{ boardType: string; id: string }>();
+  const { boardType: paramBoardType, id } = useParams<{
+    boardType: string;
+    id: string;
+  }>();
 
   const slug = paramBoardType?.toLowerCase() || 'news';
 
@@ -22,12 +25,16 @@ function BoardEditPage() {
    * null = 상세에 attachments 필드가 없던 응답(옛 API) → PUT 시 attachmentIds 생략·첨부 동기화 안 함.
    * 배열 = 동기화(빈 배열이면 서버에서 해당 글 첨부 전부 제거).
    */
-  const [attachmentIdList, setAttachmentIdList] = useState<number[] | null>(null);
+  const [attachmentIdList, setAttachmentIdList] = useState<number[] | null>(
+    null
+  );
   const [loading, setLoading] = useState(true);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [showFontSize, setShowFontSize] = useState(false);
   const [showColorPicker, setShowColorPicker] = useState(false);
+  const [showAlignMenu, setShowAlignMenu] = useState(false);
+  const [showCodeLangMenu, setShowCodeLangMenu] = useState(false);
   const contentRef = useRef<HTMLDivElement>(null);
   const colorInputRef = useRef<HTMLInputElement>(null);
 
@@ -35,7 +42,9 @@ function BoardEditPage() {
     return contentRef.current?.innerHTML || '';
   };
 
-  const applyFormat = (format: 'bold' | 'italic' | 'underline' | 'strikeThrough') => {
+  const applyFormat = (
+    format: 'bold' | 'italic' | 'underline' | 'strikeThrough'
+  ) => {
     contentRef.current?.focus();
     document.execCommand(format, false);
   };
@@ -60,6 +69,301 @@ function BoardEditPage() {
     contentRef.current?.focus();
     document.execCommand('foreColor', false, color);
     setShowColorPicker(false);
+  };
+
+  const applyAlignment = (align: 'left' | 'center' | 'right') => {
+    contentRef.current?.focus();
+    const command =
+      align === 'left'
+        ? 'justifyLeft'
+        : align === 'center'
+          ? 'justifyCenter'
+          : 'justifyRight';
+    document.execCommand(command, false);
+    setShowAlignMenu(false);
+  };
+
+  const getCurrentPreElement = () => {
+    const selection = window.getSelection();
+    let node: Node | null = selection?.anchorNode ?? null;
+
+    while (node && node !== contentRef.current) {
+      if (node instanceof HTMLElement && node.tagName === 'PRE') {
+        return node;
+      }
+      node = node.parentNode;
+    }
+
+    return null;
+  };
+
+  const getCodeElementInPre = (pre: HTMLElement) => {
+    let code = pre.querySelector('code');
+    if (!code) {
+      code = document.createElement('code');
+      code.textContent = pre.textContent || '';
+      pre.innerHTML = '';
+      pre.appendChild(code);
+    }
+    return code;
+  };
+
+  const getSelectionOffsetsInElement = (element: HTMLElement) => {
+    const selection = window.getSelection();
+    if (!selection || selection.rangeCount === 0) return null;
+
+    const range = selection.getRangeAt(0);
+    if (
+      !element.contains(range.startContainer) ||
+      !element.contains(range.endContainer)
+    ) {
+      return null;
+    }
+
+    const startRange = document.createRange();
+    startRange.selectNodeContents(element);
+    startRange.setEnd(range.startContainer, range.startOffset);
+    const start = startRange.toString().length;
+
+    const endRange = document.createRange();
+    endRange.selectNodeContents(element);
+    endRange.setEnd(range.endContainer, range.endOffset);
+    const end = endRange.toString().length;
+
+    return { start, end };
+  };
+
+  const setSelectionInElementByOffset = (
+    element: HTMLElement,
+    startOffset: number,
+    endOffset = startOffset
+  ) => {
+    const selection = window.getSelection();
+    if (!selection) return;
+
+    const walker = document.createTreeWalker(element, NodeFilter.SHOW_TEXT);
+    const textNodes: Text[] = [];
+    let totalLength = 0;
+
+    while (walker.nextNode()) {
+      const node = walker.currentNode as Text;
+      textNodes.push(node);
+      totalLength += node.data.length;
+    }
+
+    if (textNodes.length === 0) {
+      const emptyNode = document.createTextNode(element.textContent || '');
+      element.innerHTML = '';
+      element.appendChild(emptyNode);
+      textNodes.push(emptyNode);
+      totalLength = emptyNode.data.length;
+    }
+
+    const clamp = (value: number) => Math.max(0, Math.min(value, totalLength));
+    const targetStart = clamp(startOffset);
+    const targetEnd = clamp(endOffset);
+
+    const resolve = (target: number) => {
+      let consumed = 0;
+      for (const node of textNodes) {
+        const nodeLength = node.data.length;
+        if (target <= consumed + nodeLength) {
+          return { node, offset: target - consumed };
+        }
+        consumed += nodeLength;
+      }
+      const last = textNodes[textNodes.length - 1];
+      return { node: last, offset: last.data.length };
+    };
+
+    const startPos = resolve(targetStart);
+    const endPos = resolve(targetEnd);
+
+    const range = document.createRange();
+    range.setStart(startPos.node, startPos.offset);
+    range.setEnd(endPos.node, endPos.offset);
+    selection.removeAllRanges();
+    selection.addRange(range);
+  };
+
+  const applyCodeLanguage = (language: string) => {
+    contentRef.current?.focus();
+
+    const selection = window.getSelection();
+    if (!selection || selection.rangeCount === 0 || !contentRef.current) {
+      setShowCodeLangMenu(false);
+      return;
+    }
+
+    const currentPre = getCurrentPreElement();
+
+    if (language === 'none') {
+      if (currentPre) {
+        const codeElement = getCodeElementInPre(currentPre);
+        const text = codeElement.textContent || '';
+        const paragraph = document.createElement('p');
+        paragraph.innerHTML = text ? text.replace(/\n/g, '<br>') : '<br>';
+        currentPre.replaceWith(paragraph);
+
+        const range = document.createRange();
+        range.selectNodeContents(paragraph);
+        range.collapse(false);
+        selection.removeAllRanges();
+        selection.addRange(range);
+      }
+      setShowCodeLangMenu(false);
+      setContent(getEditorContent());
+      return;
+    }
+
+    let targetPre = currentPre;
+
+    if (!targetPre) {
+      const range = selection.getRangeAt(0);
+      const selectedText = range.toString();
+      const pre = document.createElement('pre');
+      pre.className = `bw-code-block language-${language}`;
+      pre.setAttribute('data-language', language);
+      const code = document.createElement('code');
+      code.textContent = selectedText || '';
+      pre.appendChild(code);
+
+      const paragraph = document.createElement('p');
+      paragraph.innerHTML = '<br>';
+
+      range.deleteContents();
+      range.insertNode(paragraph);
+      range.insertNode(pre);
+
+      targetPre = pre;
+      const newRange = document.createRange();
+      newRange.selectNodeContents(code);
+      newRange.collapse(false);
+      selection.removeAllRanges();
+      selection.addRange(newRange);
+    }
+
+    if (targetPre) {
+      const prevLanguageClass = Array.from(targetPre.classList).find((c) =>
+        c.startsWith('language-')
+      );
+      if (prevLanguageClass) {
+        targetPre.classList.remove(prevLanguageClass);
+      }
+      targetPre.classList.add('bw-code-block', `language-${language}`);
+      targetPre.setAttribute('data-language', language);
+
+      getCodeElementInPre(targetPre);
+    }
+
+    setShowCodeLangMenu(false);
+    setContent(getEditorContent());
+  };
+
+  const handleEditorKeyDown = (e: React.KeyboardEvent<HTMLDivElement>) => {
+    const currentPre = getCurrentPreElement();
+
+    if (currentPre) {
+      const codeElement = getCodeElementInPre(currentPre);
+      const offsets = getSelectionOffsetsInElement(codeElement);
+
+      if (!offsets) {
+        return;
+      }
+
+      const text = codeElement.textContent || '';
+      const { start, end } = offsets;
+
+      if (e.key === 'Tab') {
+        e.preventDefault();
+
+        if (start !== end) {
+          const blockStart = text.lastIndexOf('\n', start - 1) + 1;
+          const selected = text.slice(blockStart, end);
+          const lines = selected.split('\n');
+
+          if (e.shiftKey) {
+            let removedTotal = 0;
+            const unindented = lines
+              .map((line) => {
+                if (line.startsWith('  ')) {
+                  removedTotal += 2;
+                  return line.slice(2);
+                }
+                if (line.startsWith(' ')) {
+                  removedTotal += 1;
+                  return line.slice(1);
+                }
+                return line;
+              })
+              .join('\n');
+            codeElement.textContent =
+              text.slice(0, blockStart) + unindented + text.slice(end);
+            setSelectionInElementByOffset(
+              codeElement,
+              blockStart,
+              end - removedTotal
+            );
+          } else {
+            const indented = lines.map((line) => `  ${line}`).join('\n');
+            codeElement.textContent =
+              text.slice(0, blockStart) + indented + text.slice(end);
+            const addedTotal = lines.length * 2;
+            setSelectionInElementByOffset(
+              codeElement,
+              blockStart + 2,
+              end + addedTotal
+            );
+          }
+        } else {
+          if (e.shiftKey) {
+            const lineStart = text.lastIndexOf('\n', start - 1) + 1;
+            const beforeCaret = text.slice(lineStart, start);
+            let removeCount = 0;
+            if (beforeCaret.endsWith('  ')) removeCount = 2;
+            else if (beforeCaret.endsWith(' ')) removeCount = 1;
+
+            if (removeCount > 0) {
+              codeElement.textContent =
+                text.slice(0, start - removeCount) + text.slice(start);
+              setSelectionInElementByOffset(codeElement, start - removeCount);
+            }
+          } else {
+            codeElement.textContent =
+              text.slice(0, start) + '  ' + text.slice(end);
+            setSelectionInElementByOffset(codeElement, start + 2);
+          }
+        }
+
+        setContent(getEditorContent());
+        return;
+      }
+
+      if (e.key === 'Enter') {
+        e.preventDefault();
+
+        const lineStart = text.lastIndexOf('\n', start - 1) + 1;
+        const linePrefix = text.slice(lineStart, start);
+        const indent = (linePrefix.match(/^[ \t]*/) || [''])[0];
+        const insertText = e.shiftKey ? '\n' : `\n${indent}`;
+
+        codeElement.textContent =
+          text.slice(0, start) + insertText + text.slice(end);
+        const newOffset = start + insertText.length;
+        setSelectionInElementByOffset(codeElement, newOffset);
+        setContent(getEditorContent());
+        return;
+      }
+    }
+
+    if (e.key === 'Enter') {
+      e.preventDefault();
+      if (e.shiftKey) {
+        document.execCommand('insertLineBreak', false);
+      } else {
+        document.execCommand('insertParagraph', false);
+      }
+    }
   };
 
   useEffect(() => {
@@ -99,7 +403,13 @@ function BoardEditPage() {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
-    if (!board || !title.trim() || !getEditorContent().replace(/<[^>]*>/g, '').trim()) {
+    if (
+      !board ||
+      !title.trim() ||
+      !getEditorContent()
+        .replace(/<[^>]*>/g, '')
+        .trim()
+    ) {
       setError('제목과 내용을 입력해주세요.');
       return;
     }
@@ -171,7 +481,9 @@ function BoardEditPage() {
 
   /** 목록에서 첨부 ID 제거(서버 동기화는 저장 시). */
   const handleRemoveAttachmentId = (id: number) => {
-    setAttachmentIdList((prev) => (prev === null ? null : prev.filter((x) => x !== id)));
+    setAttachmentIdList((prev) =>
+      prev === null ? null : prev.filter((x) => x !== id)
+    );
   };
 
   // 카테고리의 availableTags를 파싱하여 배열로 변환
@@ -235,7 +547,10 @@ function BoardEditPage() {
           <form onSubmit={handleSubmit} className="space-y-6">
             {/* 제목 */}
             <div>
-              <label htmlFor="title" className="block text-sm font-medium text-gray-700 mb-2">
+              <label
+                htmlFor="title"
+                className="block text-sm font-medium text-gray-700 mb-2"
+              >
                 제목
               </label>
               <input
@@ -252,25 +567,78 @@ function BoardEditPage() {
 
             {/* 내용 */}
             <div>
-              <label htmlFor="content" className="block text-sm font-medium text-gray-700 mb-2">
+              <label
+                htmlFor="content"
+                className="block text-sm font-medium text-gray-700 mb-2"
+              >
                 내용
               </label>
               {/* 포맷팅 툴바 */}
               <div className="flex items-center gap-1 mb-2 p-1 border border-gray-300 rounded-t bg-gray-50">
-                <button type="button" onClick={() => applyFormat('bold')} className="px-2 py-1 text-sm font-bold hover:bg-gray-200 rounded" title="굵게">B</button>
-                <button type="button" onClick={() => applyFormat('italic')} className="px-2 py-1 text-sm italic hover:bg-gray-200 rounded" title="기울임">I</button>
-                <button type="button" onClick={() => applyFormat('underline')} className="px-2 py-1 text-sm underline hover:bg-gray-200 rounded" title="밑줄">U</button>
-                <button type="button" onClick={() => applyFormat('strikeThrough')} className="px-2 py-1 text-sm line-through hover:bg-gray-200 rounded" title="취소선">S</button>
+                <button
+                  type="button"
+                  onClick={() => applyFormat('bold')}
+                  className="px-2 py-1 text-sm font-bold hover:bg-gray-200 rounded"
+                  title="굵게"
+                >
+                  B
+                </button>
+                <button
+                  type="button"
+                  onClick={() => applyFormat('italic')}
+                  className="px-2 py-1 text-sm italic hover:bg-gray-200 rounded"
+                  title="기울임"
+                >
+                  I
+                </button>
+                <button
+                  type="button"
+                  onClick={() => applyFormat('underline')}
+                  className="px-2 py-1 text-sm underline hover:bg-gray-200 rounded"
+                  title="밑줄"
+                >
+                  U
+                </button>
+                <button
+                  type="button"
+                  onClick={() => applyFormat('strikeThrough')}
+                  className="px-2 py-1 text-sm line-through hover:bg-gray-200 rounded"
+                  title="취소선"
+                >
+                  S
+                </button>
                 <span className="w-px h-5 bg-gray-300 mx-1" />
                 {/* 폰트 크기 */}
                 <div className="relative">
-                  <button type="button" onClick={() => { setShowFontSize(p => !p); setShowColorPicker(false); }} className="px-2 py-1 text-sm hover:bg-gray-200 rounded" title="글자 크기">
-                    <span style={{ fontSize: 11 }}>A</span><span style={{ fontSize: 15 }}>A</span>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setShowFontSize((p) => !p);
+                      setShowColorPicker(false);
+                      setShowAlignMenu(false);
+                      setShowCodeLangMenu(false);
+                    }}
+                    className="px-2 py-1 text-sm hover:bg-gray-200 rounded"
+                    title="글자 크기"
+                  >
+                    <span style={{ fontSize: 11 }}>A</span>
+                    <span style={{ fontSize: 15 }}>A</span>
                   </button>
                   {showFontSize && (
                     <div className="bw-tool-dropdown" style={{ left: 0 }}>
-                      {[{ label: '작게', value: '12px' }, { label: '보통', value: '16px' }, { label: '크게', value: '20px' }, { label: '아주 크게', value: '28px' }].map(opt => (
-                        <button key={opt.value} type="button" className="bw-tool-dropdown-item" style={{ fontSize: opt.value }} onClick={() => applyFontSize(opt.value)}>
+                      {[
+                        { label: '작게', value: '12px' },
+                        { label: '보통', value: '16px' },
+                        { label: '크게', value: '20px' },
+                        { label: '아주 크게', value: '28px' },
+                      ].map((opt) => (
+                        <button
+                          key={opt.value}
+                          type="button"
+                          className="bw-tool-dropdown-item"
+                          style={{ fontSize: opt.value }}
+                          onClick={() => applyFontSize(opt.value)}
+                        >
                           {opt.label}
                         </button>
                       ))}
@@ -279,16 +647,148 @@ function BoardEditPage() {
                 </div>
                 {/* 글자 색상 */}
                 <div className="relative">
-                  <button type="button" onClick={() => { setShowColorPicker(p => !p); setShowFontSize(false); }} className="px-2 py-1 text-sm hover:bg-gray-200 rounded" title="글자 색상">
-                    <span style={{ borderBottom: '3px solid #DC2626', paddingBottom: 1 }}>A</span>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setShowColorPicker((p) => !p);
+                      setShowFontSize(false);
+                      setShowAlignMenu(false);
+                      setShowCodeLangMenu(false);
+                    }}
+                    className="px-2 py-1 text-sm hover:bg-gray-200 rounded"
+                    title="글자 색상"
+                  >
+                    <span
+                      style={{
+                        borderBottom: '3px solid #DC2626',
+                        paddingBottom: 1,
+                      }}
+                    >
+                      A
+                    </span>
                   </button>
                   {showColorPicker && (
-                    <div className="bw-tool-dropdown bw-color-grid" style={{ left: 0 }}>
-                      {['#0C0C0C','#DC2626','#EA580C','#CA8A04','#16A34A','#2563EB','#7C3AED','#DB2777','#525252','#A3A3A3'].map(c => (
-                        <button key={c} type="button" className="bw-color-swatch" style={{ background: c }} onClick={() => applyColor(c)} title={c} />
+                    <div
+                      className="bw-tool-dropdown bw-color-grid"
+                      style={{ left: 0 }}
+                    >
+                      {[
+                        '#D64454',
+                        '#E17654',
+                        '#E8B446',
+                        '#5CB85C',
+                        '#5BC0DE',
+                        '#4A7FCC',
+                        '#8B6BB7',
+                        '#D97399',
+                      ].map((c) => (
+                        <button
+                          key={c}
+                          type="button"
+                          className="bw-color-swatch"
+                          style={{ background: c }}
+                          onClick={() => applyColor(c)}
+                          title={c}
+                        />
                       ))}
-                      <button type="button" className="bw-color-custom" onClick={() => colorInputRef.current?.click()}>직접 선택</button>
-                      <input ref={colorInputRef} type="color" className="bw-hidden-input" onChange={(e) => applyColor(e.target.value)} />
+                      <button
+                        type="button"
+                        className="bw-color-custom"
+                        onClick={() => colorInputRef.current?.click()}
+                      >
+                        직접 선택
+                      </button>
+                      <input
+                        ref={colorInputRef}
+                        type="color"
+                        className="bw-hidden-input"
+                        onChange={(e) => applyColor(e.target.value)}
+                      />
+                    </div>
+                  )}
+                </div>
+                <span className="w-px h-5 bg-gray-300 mx-1" />
+                <div className="relative">
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setShowCodeLangMenu((prev) => !prev);
+                      setShowFontSize(false);
+                      setShowColorPicker(false);
+                      setShowAlignMenu(false);
+                    }}
+                    className="px-2 py-1 text-sm hover:bg-gray-200 rounded"
+                    title="코드 블록"
+                  >
+                    {'</>'}
+                  </button>
+                  {showCodeLangMenu && (
+                    <div className="bw-tool-dropdown" style={{ left: 0 }}>
+                      {[
+                        { label: 'Plain text', value: 'text' },
+                        { label: 'JavaScript', value: 'javascript' },
+                        { label: 'TypeScript', value: 'typescript' },
+                        { label: 'Python', value: 'python' },
+                        { label: 'C++', value: 'cpp' },
+                        { label: 'Java', value: 'java' },
+                        { label: 'Bash', value: 'bash' },
+                      ].map((lang) => (
+                        <button
+                          key={lang.value}
+                          type="button"
+                          className="bw-tool-dropdown-item"
+                          onClick={() => applyCodeLanguage(lang.value)}
+                        >
+                          {lang.label}
+                        </button>
+                      ))}
+                      <button
+                        type="button"
+                        className="bw-tool-dropdown-item"
+                        onClick={() => applyCodeLanguage('none')}
+                      >
+                        코드블럭 해제
+                      </button>
+                    </div>
+                  )}
+                </div>
+                <div className="relative">
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setShowAlignMenu((prev) => !prev);
+                      setShowFontSize(false);
+                      setShowColorPicker(false);
+                      setShowCodeLangMenu(false);
+                    }}
+                    className="px-2 py-1 text-sm hover:bg-gray-200 rounded"
+                    title="정렬"
+                  >
+                    ≡
+                  </button>
+                  {showAlignMenu && (
+                    <div className="bw-tool-dropdown" style={{ left: 0 }}>
+                      <button
+                        type="button"
+                        className="bw-tool-dropdown-item"
+                        onClick={() => applyAlignment('left')}
+                      >
+                        좌측 정렬
+                      </button>
+                      <button
+                        type="button"
+                        className="bw-tool-dropdown-item"
+                        onClick={() => applyAlignment('center')}
+                      >
+                        가운데 정렬
+                      </button>
+                      <button
+                        type="button"
+                        className="bw-tool-dropdown-item"
+                        onClick={() => applyAlignment('right')}
+                      >
+                        우측 정렬
+                      </button>
                     </div>
                   )}
                 </div>
@@ -300,6 +800,7 @@ function BoardEditPage() {
                 className="w-full px-4 py-2 border border-gray-300 rounded-b focus:outline-none focus:ring-2 focus:ring-black min-h-[360px] whitespace-pre-wrap"
                 data-placeholder="내용을 입력하세요"
                 dangerouslySetInnerHTML={{ __html: content }}
+                onKeyDown={handleEditorKeyDown}
                 onInput={() => setContent(getEditorContent())}
               />
             </div>
@@ -307,7 +808,10 @@ function BoardEditPage() {
             {/* 태그 선택 (카테고리에 availableTags가 있을 때만 표시) */}
             {availableTags.length > 0 && (
               <div>
-                <label htmlFor="tag" className="block text-sm font-medium text-gray-700 mb-2">
+                <label
+                  htmlFor="tag"
+                  className="block text-sm font-medium text-gray-700 mb-2"
+                >
                   세부 카테고리 (선택사항)
                 </label>
                 <select
@@ -328,7 +832,9 @@ function BoardEditPage() {
 
             {/* 첨부: S3 연동 시 attachments 목록 / 옛 글은 filename만 있을 수 있음 */}
             <div>
-              <span className="block text-sm font-medium text-gray-700 mb-2">첨부파일</span>
+              <span className="block text-sm font-medium text-gray-700 mb-2">
+                첨부파일
+              </span>
               {attachmentIdList !== null && attachmentIdList.length > 0 && (
                 <ul className="mb-3 space-y-1 text-sm text-gray-700">
                   {attachmentIdList.map((aid) => {
@@ -350,11 +856,16 @@ function BoardEditPage() {
               )}
               {board?.attachments === undefined && board?.filename && (
                 <p className="text-xs text-gray-500 mb-2">
-                  (레거시 서버 저장 파일명: {board.filename.split('_').slice(1).join('_')} — S3 첨부 목록이 없을 때만 표시)
+                  (레거시 서버 저장 파일명:{' '}
+                  {board.filename.split('_').slice(1).join('_')} — S3 첨부
+                  목록이 없을 때만 표시)
                 </p>
               )}
 
-              <label htmlFor="file" className="block text-sm font-medium text-gray-700 mb-1">
+              <label
+                htmlFor="file"
+                className="block text-sm font-medium text-gray-700 mb-1"
+              >
                 새 첨부 추가
               </label>
               {file ? (
@@ -377,7 +888,8 @@ function BoardEditPage() {
                 />
               )}
               <p className="text-xs text-gray-500 mt-1">
-                저장 시 S3에 업로드 후 글에 연결됩니다. 위 목록에서 제거한 항목은 저장 시 삭제됩니다.
+                저장 시 S3에 업로드 후 글에 연결됩니다. 위 목록에서 제거한
+                항목은 저장 시 삭제됩니다.
               </p>
             </div>
 
@@ -411,4 +923,3 @@ function BoardEditPage() {
 }
 
 export default BoardEditPage;
-

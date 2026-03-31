@@ -447,24 +447,152 @@ function BoardWritePage() {
     return null;
   };
 
+  const getCodeElementInPre = (pre: HTMLElement) => {
+    let code = pre.querySelector('code');
+    if (!code) {
+      code = document.createElement('code');
+      code.textContent = pre.textContent || '';
+      pre.innerHTML = '';
+      pre.appendChild(code);
+    }
+    return code;
+  };
+
+  const getSelectionOffsetsInElement = (element: HTMLElement) => {
+    const selection = window.getSelection();
+    if (!selection || selection.rangeCount === 0) return null;
+
+    const range = selection.getRangeAt(0);
+    if (
+      !element.contains(range.startContainer) ||
+      !element.contains(range.endContainer)
+    ) {
+      return null;
+    }
+
+    const startRange = document.createRange();
+    startRange.selectNodeContents(element);
+    startRange.setEnd(range.startContainer, range.startOffset);
+    const start = startRange.toString().length;
+
+    const endRange = document.createRange();
+    endRange.selectNodeContents(element);
+    endRange.setEnd(range.endContainer, range.endOffset);
+    const end = endRange.toString().length;
+
+    return { start, end };
+  };
+
+  const setSelectionInElementByOffset = (
+    element: HTMLElement,
+    startOffset: number,
+    endOffset = startOffset
+  ) => {
+    const selection = window.getSelection();
+    if (!selection) return;
+
+    const walker = document.createTreeWalker(element, NodeFilter.SHOW_TEXT);
+    const textNodes: Text[] = [];
+    let totalLength = 0;
+
+    while (walker.nextNode()) {
+      const node = walker.currentNode as Text;
+      textNodes.push(node);
+      totalLength += node.data.length;
+    }
+
+    if (textNodes.length === 0) {
+      const emptyNode = document.createTextNode(element.textContent || '');
+      element.innerHTML = '';
+      element.appendChild(emptyNode);
+      textNodes.push(emptyNode);
+      totalLength = emptyNode.data.length;
+    }
+
+    const clamp = (value: number) => Math.max(0, Math.min(value, totalLength));
+    const targetStart = clamp(startOffset);
+    const targetEnd = clamp(endOffset);
+
+    const resolve = (target: number) => {
+      let consumed = 0;
+      for (const node of textNodes) {
+        const nodeLength = node.data.length;
+        if (target <= consumed + nodeLength) {
+          return { node, offset: target - consumed };
+        }
+        consumed += nodeLength;
+      }
+      const last = textNodes[textNodes.length - 1];
+      return { node: last, offset: last.data.length };
+    };
+
+    const startPos = resolve(targetStart);
+    const endPos = resolve(targetEnd);
+
+    const range = document.createRange();
+    range.setStart(startPos.node, startPos.offset);
+    range.setEnd(endPos.node, endPos.offset);
+    selection.removeAllRanges();
+    selection.addRange(range);
+  };
+
   const applyCodeLanguage = (language: string) => {
     contentRef.current?.focus();
+
+    const selection = window.getSelection();
+    if (!selection || selection.rangeCount === 0 || !contentRef.current) {
+      setShowCodeLangMenu(false);
+      return;
+    }
 
     const currentPre = getCurrentPreElement();
 
     if (language === 'none') {
       if (currentPre) {
-        document.execCommand('formatBlock', false, 'div');
+        const codeElement = getCodeElementInPre(currentPre);
+        const text = codeElement.textContent || '';
+        const paragraph = document.createElement('p');
+        paragraph.innerHTML = text ? text.replace(/\n/g, '<br>') : '<br>';
+        currentPre.replaceWith(paragraph);
+
+        const range = document.createRange();
+        range.selectNodeContents(paragraph);
+        range.collapse(false);
+        selection.removeAllRanges();
+        selection.addRange(range);
       }
       setShowCodeLangMenu(false);
+      setContent(getEditorContent());
       return;
     }
 
-    if (!currentPre) {
-      document.execCommand('formatBlock', false, 'pre');
+    let targetPre = currentPre;
+
+    if (!targetPre) {
+      const range = selection.getRangeAt(0);
+      const selectedText = range.toString();
+      const pre = document.createElement('pre');
+      pre.className = `bw-code-block language-${language}`;
+      pre.setAttribute('data-language', language);
+      const code = document.createElement('code');
+      code.textContent = selectedText || '';
+      pre.appendChild(code);
+
+      const paragraph = document.createElement('p');
+      paragraph.innerHTML = '<br>';
+
+      range.deleteContents();
+      range.insertNode(paragraph);
+      range.insertNode(pre);
+
+      targetPre = pre;
+      const newRange = document.createRange();
+      newRange.selectNodeContents(code);
+      newRange.collapse(false);
+      selection.removeAllRanges();
+      selection.addRange(newRange);
     }
 
-    const targetPre = getCurrentPreElement();
     if (targetPre) {
       const prevLanguageClass = Array.from(targetPre.classList).find((c) =>
         c.startsWith('language-')
@@ -474,12 +602,110 @@ function BoardWritePage() {
       }
       targetPre.classList.add('bw-code-block', `language-${language}`);
       targetPre.setAttribute('data-language', language);
+
+      getCodeElementInPre(targetPre);
     }
 
     setShowCodeLangMenu(false);
+    setContent(getEditorContent());
   };
 
   const handleEditorKeyDown = (e: React.KeyboardEvent<HTMLDivElement>) => {
+    const currentPre = getCurrentPreElement();
+
+    if (currentPre) {
+      const codeElement = getCodeElementInPre(currentPre);
+      const offsets = getSelectionOffsetsInElement(codeElement);
+
+      if (!offsets) {
+        return;
+      }
+
+      const text = codeElement.textContent || '';
+      const { start, end } = offsets;
+
+      if (e.key === 'Tab') {
+        e.preventDefault();
+
+        if (start !== end) {
+          const blockStart = text.lastIndexOf('\n', start - 1) + 1;
+          const selected = text.slice(blockStart, end);
+          const lines = selected.split('\n');
+
+          if (e.shiftKey) {
+            let removedTotal = 0;
+            const unindented = lines
+              .map((line) => {
+                if (line.startsWith('  ')) {
+                  removedTotal += 2;
+                  return line.slice(2);
+                }
+                if (line.startsWith(' ')) {
+                  removedTotal += 1;
+                  return line.slice(1);
+                }
+                return line;
+              })
+              .join('\n');
+            codeElement.textContent =
+              text.slice(0, blockStart) + unindented + text.slice(end);
+            setSelectionInElementByOffset(
+              codeElement,
+              blockStart,
+              end - removedTotal
+            );
+          } else {
+            const indented = lines.map((line) => `  ${line}`).join('\n');
+            codeElement.textContent =
+              text.slice(0, blockStart) + indented + text.slice(end);
+            const addedTotal = lines.length * 2;
+            setSelectionInElementByOffset(
+              codeElement,
+              blockStart + 2,
+              end + addedTotal
+            );
+          }
+        } else {
+          if (e.shiftKey) {
+            const lineStart = text.lastIndexOf('\n', start - 1) + 1;
+            const beforeCaret = text.slice(lineStart, start);
+            let removeCount = 0;
+            if (beforeCaret.endsWith('  ')) removeCount = 2;
+            else if (beforeCaret.endsWith(' ')) removeCount = 1;
+
+            if (removeCount > 0) {
+              codeElement.textContent =
+                text.slice(0, start - removeCount) + text.slice(start);
+              setSelectionInElementByOffset(codeElement, start - removeCount);
+            }
+          } else {
+            codeElement.textContent =
+              text.slice(0, start) + '  ' + text.slice(end);
+            setSelectionInElementByOffset(codeElement, start + 2);
+          }
+        }
+
+        setContent(getEditorContent());
+        return;
+      }
+
+      if (e.key === 'Enter') {
+        e.preventDefault();
+
+        const lineStart = text.lastIndexOf('\n', start - 1) + 1;
+        const linePrefix = text.slice(lineStart, start);
+        const indent = (linePrefix.match(/^[ \t]*/) || [''])[0];
+        const insertText = e.shiftKey ? '\n' : `\n${indent}`;
+
+        codeElement.textContent =
+          text.slice(0, start) + insertText + text.slice(end);
+        const newOffset = start + insertText.length;
+        setSelectionInElementByOffset(codeElement, newOffset);
+        setContent(getEditorContent());
+        return;
+      }
+    }
+
     if (e.key === 'Enter') {
       e.preventDefault();
       if (e.shiftKey) {
@@ -840,16 +1066,14 @@ function BoardWritePage() {
               {showColorPicker && (
                 <div className="bw-tool-dropdown bw-color-grid">
                   {[
-                    '#0C0C0C',
-                    '#DC2626',
-                    '#EA580C',
-                    '#CA8A04',
-                    '#16A34A',
-                    '#2563EB',
-                    '#7C3AED',
-                    '#DB2777',
-                    '#525252',
-                    '#A3A3A3',
+                    '#D64454',
+                    '#E17654',
+                    '#E8B446',
+                    '#5CB85C',
+                    '#5BC0DE',
+                    '#4A7FCC',
+                    '#8B6BB7',
+                    '#D97399',
                   ].map((c) => (
                     <button
                       key={c}
@@ -921,61 +1145,63 @@ function BoardWritePage() {
               </svg>
             </button>
             <span className="bw-tool-dot" />
-            <button
-              type="button"
-              className="bw-tool-btn"
-              title="코드 블록"
-              onClick={() => {
-                setShowCodeLangMenu((prev) => !prev);
-                setShowFontSize(false);
-                setShowColorPicker(false);
-                setShowAlignMenu(false);
-              }}
-            >
-              <svg
-                width="18"
-                height="18"
-                viewBox="0 0 24 24"
-                fill="none"
-                stroke="currentColor"
-                strokeWidth="2"
-                strokeLinecap="round"
-                strokeLinejoin="round"
+            <div className="bw-tool-dropdown-wrap">
+              <button
+                type="button"
+                className="bw-tool-btn"
+                title="코드 블록"
+                onClick={() => {
+                  setShowCodeLangMenu((prev) => !prev);
+                  setShowFontSize(false);
+                  setShowColorPicker(false);
+                  setShowAlignMenu(false);
+                }}
               >
-                <polyline points="16 18 22 12 16 6" />
-                <polyline points="8 6 2 12 8 18" />
-              </svg>
-            </button>
-            {showCodeLangMenu && (
-              <div className="bw-tool-dropdown">
-                {[
-                  { label: 'Plain text', value: 'text' },
-                  { label: 'JavaScript', value: 'javascript' },
-                  { label: 'TypeScript', value: 'typescript' },
-                  { label: 'Python', value: 'python' },
-                  { label: 'C++', value: 'cpp' },
-                  { label: 'Java', value: 'java' },
-                  { label: 'Bash', value: 'bash' },
-                ].map((lang) => (
+                <svg
+                  width="18"
+                  height="18"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  strokeWidth="2"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                >
+                  <polyline points="16 18 22 12 16 6" />
+                  <polyline points="8 6 2 12 8 18" />
+                </svg>
+              </button>
+              {showCodeLangMenu && (
+                <div className="bw-tool-dropdown">
+                  {[
+                    { label: 'Plain text', value: 'text' },
+                    { label: 'JavaScript', value: 'javascript' },
+                    { label: 'TypeScript', value: 'typescript' },
+                    { label: 'Python', value: 'python' },
+                    { label: 'C++', value: 'cpp' },
+                    { label: 'Java', value: 'java' },
+                    { label: 'Bash', value: 'bash' },
+                  ].map((lang) => (
+                    <button
+                      key={lang.value}
+                      type="button"
+                      className="bw-tool-dropdown-item"
+                      onClick={() => applyCodeLanguage(lang.value)}
+                    >
+                      {lang.label}
+                    </button>
+                  ))}
                   <button
-                    key={lang.value}
                     type="button"
                     className="bw-tool-dropdown-item"
-                    onClick={() => applyCodeLanguage(lang.value)}
+                    onClick={() => applyCodeLanguage('none')}
                   >
-                    {lang.label}
+                    코드블럭 해제
                   </button>
-                ))}
-                <button
-                  type="button"
-                  className="bw-tool-dropdown-item"
-                  onClick={() => applyCodeLanguage('none')}
-                >
-                  코드블럭 해제
-                </button>
-              </div>
-            )}
-            <div className="bw-tool-dropdown-wrap bw-tool-dropdown-wrap--right">
+                </div>
+              )}
+            </div>
+            <div className="bw-tool-dropdown-wrap">
               <button
                 type="button"
                 className="bw-tool-btn"
@@ -984,6 +1210,7 @@ function BoardWritePage() {
                   setShowAlignMenu((prev) => !prev);
                   setShowFontSize(false);
                   setShowColorPicker(false);
+                  setShowCodeLangMenu(false);
                 }}
               >
                 <svg
