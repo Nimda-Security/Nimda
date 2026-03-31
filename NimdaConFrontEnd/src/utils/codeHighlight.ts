@@ -24,6 +24,12 @@ const ensureLanguages = () => {
   if (!hljs.getLanguage('python')) hljs.registerLanguage('python', python);
   if (!hljs.getLanguage('xml')) hljs.registerLanguage('xml', xml);
   if (!hljs.getLanguage('html')) hljs.registerLanguage('html', xml);
+  if (!hljs.getLanguage('js')) hljs.registerLanguage('js', javascript);
+  if (!hljs.getLanguage('ts')) hljs.registerLanguage('ts', typescript);
+  if (!hljs.getLanguage('py')) hljs.registerLanguage('py', python);
+  if (!hljs.getLanguage('c++')) hljs.registerLanguage('c++', cpp);
+  if (!hljs.getLanguage('hpp')) hljs.registerLanguage('hpp', cpp);
+  if (!hljs.getLanguage('h')) hljs.registerLanguage('h', c);
 
   registered = true;
 };
@@ -35,8 +41,36 @@ export const highlightCodeBlocks = (root: ParentNode) => {
   blocks.forEach((block) => {
     const element = block as HTMLElement;
     if (element.classList.contains('language-plaintext')) {
+      element.classList.remove('hljs');
       return;
     }
+
+    element.removeAttribute('data-highlighted');
+
+    const aliasMap: Record<string, string> = {
+      cxx: 'cpp',
+      'c++': 'cpp',
+      hpp: 'cpp',
+      h: 'c',
+      js: 'javascript',
+      ts: 'typescript',
+      py: 'python',
+      html: 'xml',
+    };
+
+    const langClass = Array.from(element.classList).find((cls) =>
+      cls.startsWith('language-')
+    );
+
+    if (langClass) {
+      const raw = langClass.replace('language-', '').toLowerCase();
+      const normalized = aliasMap[raw] ?? raw;
+      if (normalized !== raw) {
+        element.classList.remove(langClass);
+        element.classList.add(`language-${normalized}`);
+      }
+    }
+
     hljs.highlightElement(element);
   });
 };

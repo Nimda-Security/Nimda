@@ -34,7 +34,7 @@ const ContentListItem: React.FC<ContentListItemProps> = ({
   return (
     <div
       className={`w-full h-[80px] flex items-center gap-3 px-4 transition-colors ${
-        checked ? 'bg-[#fdf2f4]' : 'bg-[#f5f5f5]'
+        checked ? 'bg-[#fdf2f4]' : 'bg-white'
       } ${!isLast ? 'border-b border-[#d4d4d4]' : ''}`}
       onClick={mode === 'arrow' ? onClick : undefined}
       style={mode === 'arrow' ? { cursor: 'pointer' } : undefined}
