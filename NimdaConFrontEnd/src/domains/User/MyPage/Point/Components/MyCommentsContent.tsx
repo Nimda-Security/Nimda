@@ -79,25 +79,33 @@ const MyCommentsContent: React.FC = () => {
   }
 
   return (
-    <div className="flex flex-col w-full px-4">
+    <div className="flex flex-col w-full">
       {comments.length > 0 ? (
-        <div className="border border-[#d4d4d4] rounded-[4px] bg-[#f5f5f5] overflow-hidden">
-          {displayedComments.map((comment, idx) => (
-            <ContentListItem
-              key={comment.id}
-              item={{
-                id: comment.id,
-                text: comment.context,
-                likeCount: comment.likeCount,
-                date: comment.createdAt,
-              }}
-              checked={selectedIds.has(comment.id)}
-              onToggle={() => toggleSelect(comment.id)}
-              isLast={idx === displayedComments.length - 1}
-              onClick={() => navigate(`/board/view/${comment.boardId}`)}
-              mode="checkbox"
-            />
-          ))}
+        <div
+          className="border border-[#d4d4d4] rounded-[4px] bg-[#f5f5f5]"
+          style={{
+            padding: '0',
+            boxSizing: 'border-box',
+          }}
+        >
+          <div className="overflow-hidden">
+            {displayedComments.map((comment, idx) => (
+              <ContentListItem
+                key={comment.id}
+                item={{
+                  id: comment.id,
+                  text: comment.context,
+                  likeCount: comment.likeCount,
+                  date: comment.createdAt,
+                }}
+                checked={selectedIds.has(comment.id)}
+                onToggle={() => toggleSelect(comment.id)}
+                isLast={idx === displayedComments.length - 1}
+                onClick={() => navigate(`/board/view/${comment.boardId}`)}
+                mode="checkbox"
+              />
+            ))}
+          </div>
         </div>
       ) : (
         <div

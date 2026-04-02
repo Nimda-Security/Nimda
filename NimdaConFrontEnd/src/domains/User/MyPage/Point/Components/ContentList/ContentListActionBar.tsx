@@ -16,10 +16,10 @@ const ContentListActionBar: React.FC<ContentListActionBarProps> = ({
 }) => {
   return (
     <div className="flex items-center justify-between h-[40px] px-8 mt-2">
-      <div className="flex items-center">
+      <div className="flex items-center gap-[12px]">
         <CheckBox checked={allSelected} onChange={onToggleAll} />
         <span
-          className="ml-1 text-[14px] font-medium text-[#737373] select-none cursor-pointer"
+          className="text-[14px] font-medium text-[#737373] select-none cursor-pointer"
           onClick={onToggleAll}
         >
           전체선택

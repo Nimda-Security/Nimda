@@ -45,7 +45,7 @@ const LikedPostsContent: React.FC = () => {
 
   if (boards.length === 0) {
     return (
-      <div className="flex flex-col w-full px-4">
+      <div className="flex flex-col w-full">
         <div
           className="border border-[#d4d4d4] rounded-[4px] bg-[#f5f5f5]"
           style={{
@@ -82,27 +82,35 @@ const LikedPostsContent: React.FC = () => {
   }
 
   return (
-    <div className="flex flex-col w-full px-4">
-      <div className="border border-[#d4d4d4] rounded-[4px] bg-[#f5f5f5] overflow-hidden">
-        {displayedBoards.map((board, idx) => (
-          <ContentListItem
-            key={board.id}
-            item={{
-              id: board.id,
-              text: board.title,
-              likeCount: board.likeCount ?? 0,
-              commentCount: board.commentCount ?? 0,
-              date: formatDate(board.createdAt ?? ''),
-              thumbnailUrl: board.filepath || undefined,
-              authorNickname: board.authorNickname,
-              authorProfileImage: board.authorProfileImage,
-            }}
-            checked={false}
-            onToggle={() => {}}
-            isLast={idx === displayedBoards.length - 1}
-            onClick={() => navigate(`/board/view/${board.id}`)}
-          />
-        ))}
+    <div className="flex flex-col w-full">
+      <div
+        className="border border-[#d4d4d4] rounded-[4px] bg-[#f5f5f5]"
+        style={{
+          padding: '0',
+          boxSizing: 'border-box',
+        }}
+      >
+        <div className="overflow-hidden">
+          {displayedBoards.map((board, idx) => (
+            <ContentListItem
+              key={board.id}
+              item={{
+                id: board.id,
+                text: board.title,
+                likeCount: board.likeCount ?? 0,
+                commentCount: board.commentCount ?? 0,
+                date: formatDate(board.createdAt ?? ''),
+                thumbnailUrl: board.filepath || undefined,
+                authorNickname: board.authorNickname,
+                authorProfileImage: board.authorProfileImage,
+              }}
+              checked={false}
+              onToggle={() => {}}
+              isLast={idx === displayedBoards.length - 1}
+              onClick={() => navigate(`/board/view/${board.id}`)}
+            />
+          ))}
+        </div>
       </div>
 
       <Pagination
