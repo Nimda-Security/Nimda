@@ -24,7 +24,7 @@ import type {
 import EmoticonPicker, { parseEmoticons, getEmoticonSrc } from './EmoticonPicker';
 import './Comment.css';
 import { formatDate } from '@/utils/formatDate';
-
+import { isAdmin } from '@/utils/jwt';
 
 interface CommentSectionProps {
   boardId: number;
@@ -204,7 +204,7 @@ function CommentInput({
 function StatusBadge({ status }: { status: CommentStatus }) {
   const map: Record<CommentStatus, { label: string; mod: string }> = {
     PUBLIC: { label: '공개', mod: '--public' },
-    DELETED: { label: '삭제됨', mod: '--deleted' },
+    DELETED: { label: '삭제', mod: '--deleted' },
     HIDDEN: { label: '숨김', mod: '--hidden' },
   };
   const { label, mod } = map[status] ?? map.PUBLIC;
@@ -366,7 +366,7 @@ function CommentItem({
             {comment.updatedAt && comment.updatedAt !== comment.createdAt && (
               <span className="comment-item__edited">(수정됨)</span>
             )}
-            {hideable && <StatusBadge status={comment.status} />}
+            {(isAdmin() && <StatusBadge status={comment.status} />)}
             <CommentMoreDropdown
               editable={editable}
               deletable={deletable}
