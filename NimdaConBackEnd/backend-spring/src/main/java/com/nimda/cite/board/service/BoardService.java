@@ -201,6 +201,9 @@ Long categoryId = board.getCategory() != null ? board.getCategory().getId() : nu
                 .forEach(b -> {
                     b.setStatus(BoardStatus.DELETED);
                     boardRepository.save(b);
+
+                    commentRepository.deleteAllByBoardId(b.getId());
+                    boardLikeRepository.deleteAllByBoardId(b.getId());
                 });
     }
 }
