@@ -63,9 +63,9 @@ public class PointController {
     public ResponseEntity<?> updateUserBalanceManual(
             @AuthenticationPrincipal CustomUserDetails userDetails, @RequestBody ManualBalanceUpdateRequest req) {
 
-        String studentNum = userDetails.getUser().getStudentNum();
+        String studentNum = req.getStudentNum();
         BalanceResponse dto = BalanceResponse.from(
-                pointService.updateBalanceManual(studentNum, req.getDescription(),req.getAmount())
+                pointService.updateBalanceManual(studentNum, req.getDescription(), req.getAmount())
                 );
         return ApiResponse.ok("마일리지 지급이 완료되었습니다.",dto).toResponse();
     }

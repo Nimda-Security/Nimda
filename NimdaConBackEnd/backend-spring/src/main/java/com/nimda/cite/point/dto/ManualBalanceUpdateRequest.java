@@ -6,7 +6,7 @@ import lombok.Getter;
 @Getter
 @Builder
 public class ManualBalanceUpdateRequest {
-    private Long userId;
+    private String studentNum;
     private String description;
     private Long amount;
 }

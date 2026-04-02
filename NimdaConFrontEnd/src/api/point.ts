@@ -88,9 +88,35 @@ export const getPointDetailsAPI = async (): Promise<PointHistoryItem[]> => {
   }
 };
 /**
- * 3. [관리자용] 마일리지 수동 지급 (POST /api/cite/point)
+ * 3. [관리자용] 전체 유저 마일리지 잔액 조회 (GET /api/cite/point/allBalance)
  */
-export const updatePointManual = async (userId: number, description: string, amount: number) => {
+export const getAllBalance = async () => {
+  try {
+    const response = await fetch(`${API_BASE_URL}/allBalance`, {
+      method: "GET",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      credentials: "include",
+    });
+
+    const result = await response.json();
+
+    if (response.ok && result.success) {
+      return { success: true, data: result.data as { totalAmount: number; updatedAt: string }[] };
+    }
+    return { success: false, message: result.message || "전체 잔액 조회 실패" };
+  } catch (error) {
+    console.error("전체 잔액 조회 오류:", error);
+    return { success: false, message: "서버 통신 중 오류가 발생했습니다." };
+  }
+};
+
+/**
+ * 4. [관리자용] 마일리지 수동 지급 (POST /api/cite/point)
+ * studentNum: 지급 대상 학번
+ */
+export const updatePointManual = async (studentNum: string, description: string, amount: number) => {
   try {
     const response = await fetch(`${API_BASE_URL}`, {
       method: "POST",
@@ -99,7 +125,7 @@ export const updatePointManual = async (userId: number, description: string, amo
       },
       credentials: "include",
       body: JSON.stringify({
-        userId: userId,
+        studentNum: studentNum,
         description: description,
         amount: amount
       }),
