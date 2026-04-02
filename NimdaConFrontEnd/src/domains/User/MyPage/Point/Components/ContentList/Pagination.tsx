@@ -1,4 +1,4 @@
-import React from "react";
+import React from 'react';
 
 interface PaginationProps {
   currentPage: number;
@@ -6,7 +6,11 @@ interface PaginationProps {
   onPageChange: (page: number) => void;
 }
 
-const Pagination: React.FC<PaginationProps> = ({ currentPage, totalPages, onPageChange }) => {
+const Pagination: React.FC<PaginationProps> = ({
+  currentPage,
+  totalPages,
+  onPageChange,
+}) => {
   if (totalPages <= 1) return null;
 
   const maxVisible = 5;
@@ -22,7 +26,7 @@ const Pagination: React.FC<PaginationProps> = ({ currentPage, totalPages, onPage
   }
 
   return (
-    <div className="mt-10 flex justify-center items-center gap-2">
+    <div className="mt-10 mb-6 flex justify-center items-center gap-2">
       <div className="flex gap-1.5">
         {pages.map((p) => (
           <button
@@ -30,8 +34,8 @@ const Pagination: React.FC<PaginationProps> = ({ currentPage, totalPages, onPage
             onClick={() => onPageChange(p)}
             className={`w-9 h-9 rounded-lg text-[14px] font-bold transition-all flex items-center justify-center ${
               currentPage === p
-                ? "bg-[#D97399] text-white"
-                : "text-[#A3A3A3] hover:bg-white border border-transparent hover:border-[#D4D4D4]"
+                ? 'bg-[#D97399] text-white'
+                : 'text-[#A3A3A3] hover:bg-white border border-transparent hover:border-[#D4D4D4]'
             }`}
           >
             {p}

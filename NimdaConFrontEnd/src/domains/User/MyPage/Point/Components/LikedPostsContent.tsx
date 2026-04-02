@@ -45,7 +45,7 @@ const LikedPostsContent: React.FC = () => {
 
   if (boards.length === 0) {
     return (
-      <div className="flex flex-col w-full">
+      <div className="flex flex-col w-full pb-6">
         <div
           className="border border-[#d4d4d4] rounded-[4px] bg-[#f5f5f5]"
           style={{
@@ -72,17 +72,20 @@ const LikedPostsContent: React.FC = () => {
             좋아요한 게시글이 없습니다.
           </span>
         </div>
-        <Pagination
-          currentPage={currentPage}
-          totalPages={totalPages}
-          onPageChange={setCurrentPage}
-        />
+        <div style={{ marginBottom: '24px' }}>
+          <Pagination
+            currentPage={currentPage}
+            totalPages={totalPages}
+            onPageChange={setCurrentPage}
+          />
+          <div className="h-[24px] w-full" aria-hidden="true" />
+        </div>
       </div>
     );
   }
 
   return (
-    <div className="flex flex-col w-full">
+    <div className="flex flex-col w-full pb-6">
       <div
         className="border border-[#d4d4d4] rounded-[4px] bg-[#f5f5f5]"
         style={{
@@ -113,11 +116,14 @@ const LikedPostsContent: React.FC = () => {
         </div>
       </div>
 
-      <Pagination
-        currentPage={currentPage}
-        totalPages={totalPages}
-        onPageChange={setCurrentPage}
-      />
+      <div style={{ marginBottom: '24px' }}>
+        <Pagination
+          currentPage={currentPage}
+          totalPages={totalPages}
+          onPageChange={setCurrentPage}
+        />
+        <div className="h-[24px] w-full" aria-hidden="true" />
+      </div>
     </div>
   );
 };
