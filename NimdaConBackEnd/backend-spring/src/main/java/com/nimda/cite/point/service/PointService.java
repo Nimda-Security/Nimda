@@ -78,12 +78,13 @@ public class PointService {
     }
 
     @Transactional
-    public UserBalance updateBalanceManual(Long userId, String description, Long pointAmount) {
-        User user = userRepository.findById(userId).orElseThrow(
+    public UserBalance updateBalanceManual(String studentNum ,String description, Long pointAmount) {
+        User user = userRepository.findByStudentNum(studentNum).orElseThrow(
                 () -> new ResponseStatusException(HttpStatus.NOT_FOUND, "유저가 존재하지 않습니다.")
         );
 
-        UserBalance balance = userBalanceRepository.findById(userId).orElseThrow(
+
+        UserBalance balance = userBalanceRepository.findById(user.getId()).orElseThrow(
                 () -> new ResponseStatusException(HttpStatus.NOT_FOUND,"포인트 계좌가 존재하지 않습니다! 승인 대기 중일 수 있습니다.")
         );
 

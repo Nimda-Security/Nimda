@@ -20,6 +20,9 @@ public interface UserRepository extends JpaRepository<User, Long> {
     @EntityGraph(attributePaths = { "authorities" })
     Optional<User> findByNickname(String nickname);
 
+    // 학번으로 유저 정보 조회
+    Optional<User> findByStudentNum(String studentNum);
+
     /**
      * user_id로 사용자 찾기
      */
