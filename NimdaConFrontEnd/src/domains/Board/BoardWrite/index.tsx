@@ -58,7 +58,6 @@ function BoardWritePage() {
   const [subCategoryId, setSubCategoryId] = useState<number | null>(null);
   const [showParentDropdown, setShowParentDropdown] = useState(false);
   const [showSubDropdown, setShowSubDropdown] = useState(false);
-  const [showTagDropdown, setShowTagDropdown] = useState(false);
 
   const [title, setTitle] = useState('');
   const [content, setContent] = useState('');
@@ -88,6 +87,7 @@ function BoardWritePage() {
   const fileInputRef = useRef<HTMLInputElement>(null);
   const imageInputRef = useRef<HTMLInputElement>(null);
   const contentRef = useRef<HTMLDivElement>(null);
+  const detailCategoryWarningRef = useRef<HTMLParagraphElement>(null);
   const isComposingRef = useRef(false);
   const justEndedCompositionRef = useRef(false);
 
@@ -425,6 +425,17 @@ function BoardWritePage() {
     }
     if (!targetCategoryId) {
       setError('카테고리를 선택해주세요.');
+      return;
+    }
+    if (!tag.trim()) {
+      setError(null);
+      requestAnimationFrame(() => {
+        detailCategoryWarningRef.current?.focus();
+        detailCategoryWarningRef.current?.scrollIntoView({
+          behavior: 'smooth',
+          block: 'center',
+        });
+      });
       return;
     }
 
@@ -1342,7 +1353,6 @@ function BoardWritePage() {
               onClick={() => {
                 setShowParentDropdown((p) => !p);
                 setShowSubDropdown(false);
-                setShowTagDropdown(false);
               }}
             >
               <span className="bw-category-selected">
@@ -1392,7 +1402,6 @@ function BoardWritePage() {
                   onClick={() => {
                     setShowSubDropdown((p) => !p);
                     setShowParentDropdown(false);
-                    setShowTagDropdown(false);
                   }}
                 >
                   <span className="bw-category-selected">
@@ -1427,63 +1436,6 @@ function BoardWritePage() {
           </div>
 
           <div className="bw-divider" />
-
-          {/* 태그 드롭다운 (available tags가 있을 때만) */}
-          {currentTagList.length > 0 && (
-            <div
-              className="bw-top-bar"
-              style={{ paddingTop: '12px', paddingBottom: '12px' }}
-            >
-              <span className="bw-label">태그</span>
-              <div
-                className="bw-category-selector"
-                onClick={() => {
-                  setShowTagDropdown((p) => !p);
-                  setShowParentDropdown(false);
-                  setShowSubDropdown(false);
-                }}
-              >
-                <span
-                  className="bw-category-selected"
-                  style={{ color: tag ? '#d97399' : undefined }}
-                >
-                  {tag ? `# ${tag}` : '선택 안 함'}
-                </span>
-                <span
-                  className={`bw-chevron ${showTagDropdown ? 'bw-chevron--open' : ''}`}
-                >
-                  <ChevronDown />
-                </span>
-                {showTagDropdown && (
-                  <div className="bw-category-dropdown">
-                    <div
-                      className={`bw-category-option ${tag === '' ? 'bw-category-option--active' : ''}`}
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        setTag('');
-                        setShowTagDropdown(false);
-                      }}
-                    >
-                      선택 안 함
-                    </div>
-                    {currentTagList.map((t) => (
-                      <div
-                        key={t}
-                        className={`bw-category-option ${tag === t ? 'bw-category-option--active' : ''}`}
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          setTag(t);
-                          setShowTagDropdown(false);
-                        }}
-                      >
-                        # {t}
-                      </div>
-                    ))}
-                  </div>
-                )}
-              </div>
-            </div>
-          )}
           <div className="bw-title-area">
             <input
               id="bw-title"
@@ -2028,6 +1980,21 @@ function BoardWritePage() {
               </div>
             ) : (
               <p className="bw-tag-hint">카테고리가 없습니다.</p>
+            )}
+            {!tag.trim() && (
+              <p
+                ref={detailCategoryWarningRef}
+                tabIndex={-1}
+                style={{
+                  marginTop: '8px',
+                  color: '#D64454',
+                  fontSize: '13px',
+                  lineHeight: '150%',
+                  outline: 'none',
+                }}
+              >
+                게시글 분류를 위한 카테고리를 선택해 주세요.
+              </p>
             )}
           </div>
 
