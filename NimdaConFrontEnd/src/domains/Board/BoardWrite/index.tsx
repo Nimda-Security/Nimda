@@ -7,6 +7,7 @@ import { getAllCategoriesAPI } from '@/api/category';
 import ChevronDown from '@/components/icons/ChevronDown';
 import { isAdmin, hasRole } from '@/utils/jwt';
 import { highlightCodeBlocks } from '@/utils/codeHighlight';
+import InlineColorPicker from '@/components/InlineColorPicker';
 import type { Category } from '../types';
 
 const CODE_LANGUAGE_OPTIONS = [
@@ -24,6 +25,24 @@ const CODE_LANGUAGE_OPTIONS = [
 const getCodeLanguageLabel = (language: string) =>
   CODE_LANGUAGE_OPTIONS.find((option) => option.value === language)?.label ||
   language.toUpperCase();
+
+const COLOR_PALETTE = [
+  '#0C0C0C',
+  '#D64454',
+  '#E17654',
+  '#E8B446',
+  '#5CB85C',
+  '#5BC0DE',
+  '#4A7FCC',
+  '#8B6BB7',
+  '#D97399',
+];
+const MAX_RECENT_COLORS = 5;
+type ColorPickerTab = 'palette' | 'custom';
+
+type EyeDropperApi = {
+  open: () => Promise<{ sRGBHex: string }>;
+};
 
 function BoardWritePage() {
   const navigate = useNavigate();
@@ -54,12 +73,17 @@ function BoardWritePage() {
   const [error, setError] = useState<string | null>(null);
   const [showFontSize, setShowFontSize] = useState(false);
   const [showColorPicker, setShowColorPicker] = useState(false);
+  const [colorPickerTab, setColorPickerTab] =
+    useState<ColorPickerTab>('palette');
   const [selectedColor, setSelectedColor] = useState<string>('currentColor');
+  const [pendingColor, setPendingColor] = useState<string>('#0C0C0C');
+  const [pendingCustomColor, setPendingCustomColor] =
+    useState<string>('#0C0C0C');
+  const [recentColors, setRecentColors] = useState<string[]>([]);
   const [currentAlignment, setCurrentAlignment] = useState<
     'left' | 'center' | 'right'
   >('left');
   const [isPinned, setIsPinned] = useState(false);
-  const colorInputRef = useRef<HTMLInputElement>(null);
 
   const fileInputRef = useRef<HTMLInputElement>(null);
   const imageInputRef = useRef<HTMLInputElement>(null);
@@ -641,6 +665,31 @@ function BoardWritePage() {
     document.execCommand('foreColor', false, color);
     setSelectedColor(color === '#0C0C0C' ? 'currentColor' : color);
     setShowColorPicker(false);
+  };
+
+  const pushRecentColor = (color: string) => {
+    setRecentColors((prev) => {
+      const normalized = color.toUpperCase();
+      return [normalized, ...prev.filter((item) => item !== normalized)].slice(
+        0,
+        MAX_RECENT_COLORS
+      );
+    });
+  };
+
+  const handlePickScreenColor = async () => {
+    const EyeDropperCtor = (
+      window as unknown as { EyeDropper?: new () => EyeDropperApi }
+    ).EyeDropper;
+    if (!EyeDropperCtor) return;
+
+    try {
+      const eyeDropper = new EyeDropperCtor();
+      const result = await eyeDropper.open();
+      const picked = result.sRGBHex.toUpperCase();
+      setPendingCustomColor(picked);
+      setPendingColor(picked);
+    } catch {}
   };
 
   const readCurrentColor = () => {
@@ -1607,7 +1656,16 @@ function BoardWritePage() {
                 className="bw-tool-btn"
                 title="글자 색상"
                 onClick={() => {
-                  setShowColorPicker((p) => !p);
+                  setShowColorPicker((p) => {
+                    const next = !p;
+                    if (next) {
+                      const current = readCurrentColor();
+                      setPendingColor(current);
+                      setPendingCustomColor(current);
+                      setColorPickerTab('palette');
+                    }
+                    return next;
+                  });
                   setShowFontSize(false);
                 }}
               >
@@ -1627,51 +1685,181 @@ function BoardWritePage() {
               </button>
               {showColorPicker && (
                 <div className="bw-tool-dropdown bw-color-grid">
-                  <button
-                    type="button"
-                    className="bw-color-swatch"
-                    style={{
-                      background:
-                        'linear-gradient(to top right, #fff 0%, #fff 46%, #d64454 46%, #d64454 54%, #fff 54%, #fff 100%)',
-                      border: '1px solid #e5e5e5',
-                    }}
-                    onClick={() => applyColor('#0C0C0C')}
-                    title="기본 색상"
-                  />
-                  {[
-                    '#0C0C0C',
-                    '#D64454',
-                    '#E17654',
-                    '#E8B446',
-                    '#5CB85C',
-                    '#5BC0DE',
-                    '#4A7FCC',
-                    '#8B6BB7',
-                    '#D97399',
-                  ].map((c) => (
+                  <div className="bw-color-tabs">
                     <button
-                      key={c}
                       type="button"
-                      className="bw-color-swatch"
-                      style={{ background: c }}
-                      onClick={() => applyColor(c)}
-                      title={c}
-                    />
-                  ))}
-                  <button
-                    type="button"
-                    className="bw-color-custom"
-                    onClick={() => colorInputRef.current?.showPicker()}
-                  >
-                    직접 선택
-                  </button>
-                  <input
-                    ref={colorInputRef}
-                    type="color"
-                    className="bw-hidden-input"
-                    value={readCurrentColor()}
-                    onChange={(e) => applyColor(e.target.value)}
-                  />
+                      className={`bw-color-tab ${colorPickerTab === 'palette' ? 'is-active' : ''}`}
+                      onClick={() => setColorPickerTab('palette')}
+                    >
+                      팔레트
+                    </button>
+                    <button
+                      type="button"
+                      className={`bw-color-tab ${colorPickerTab === 'custom' ? 'is-active' : ''}`}
+                      onClick={() => setColorPickerTab('custom')}
+                    >
+                      직접 선택
+                    </button>
+                  </div>
+
+                  {colorPickerTab === 'palette' && (
+                    <>
+                      <button
+                        type="button"
+                        className="bw-color-swatch"
+                        style={{
+                          background:
+                            'linear-gradient(to top right, #fff 0%, #fff 46%, #d64454 46%, #d64454 54%, #fff 54%, #fff 100%)',
+                          border:
+                            pendingColor === '#0C0C0C'
+                              ? '2px solid #0c0c0c'
+                              : '1px solid #e5e5e5',
+                        }}
+                        onClick={() => {
+                          setPendingColor('#0C0C0C');
+                          setPendingCustomColor('#0C0C0C');
+                        }}
+                        title="기본 색상"
+                      />
+                      {COLOR_PALETTE.map((c) => (
+                        <button
+                          key={c}
+                          type="button"
+                          className="bw-color-swatch"
+                          style={{
+                            background: c,
+                            border:
+                              pendingColor === c
+                                ? '2px solid #0c0c0c'
+                                : '2px solid #e5e5e5',
+                          }}
+                          onClick={() => {
+                            setPendingColor(c);
+                            setPendingCustomColor(c);
+                          }}
+                          title={c}
+                        />
+                      ))}
+                    </>
+                  )}
+
+                  {colorPickerTab === 'custom' && (
+                    <div className="bw-color-custom-panel bw-color-custom-panel--full">
+                      <div className="bw-color-custom-layout">
+                        <InlineColorPicker
+                          value={pendingCustomColor}
+                          onChange={(hex) => {
+                            setPendingCustomColor(hex);
+                            setPendingColor(hex);
+                          }}
+                        />
+                        <div className="bw-color-custom-controls">
+                          <input
+                            type="text"
+                            className="bw-color-hex-input"
+                            value={pendingCustomColor.toUpperCase()}
+                            onChange={(e) => {
+                              const next = e.target.value.toUpperCase();
+                              setPendingCustomColor(next);
+                              if (/^#[0-9A-F]{6}$/.test(next)) {
+                                setPendingColor(next);
+                              }
+                            }}
+                            maxLength={7}
+                            placeholder="#RRGGBB"
+                          />
+                          <div className="bw-color-preview-row">
+                            <span
+                              className="bw-color-preview-box"
+                              style={{ background: pendingColor }}
+                              aria-label={`현재 선택 색상 ${pendingColor.toUpperCase()}`}
+                            />
+                            <button
+                              type="button"
+                              className="bw-color-eyedropper"
+                              onClick={handlePickScreenColor}
+                              title="화면에서 색상 추출"
+                              aria-label="스포이드"
+                            >
+                              <svg
+                                width="16"
+                                height="16"
+                                viewBox="0 0 24 24"
+                                fill="none"
+                                stroke="currentColor"
+                                strokeWidth="2"
+                                strokeLinecap="round"
+                                strokeLinejoin="round"
+                              >
+                                <path d="M19 11l-6-6" />
+                                <path d="M5 21l4-4" />
+                                <path d="M2 22l3-1 7-7-2-2-7 7-1 3z" />
+                                <path d="M14 4l6 6" />
+                              </svg>
+                            </button>
+                          </div>
+                          <div className="bw-color-recent-wrap bw-color-recent-wrap--compact">
+                            {Array.from({ length: MAX_RECENT_COLORS }).map(
+                              (_, idx) => {
+                                const color = recentColors[idx];
+                                const isEmpty = !color;
+
+                                return (
+                                  <button
+                                    key={color ?? `custom-empty-${idx}`}
+                                    type="button"
+                                    className={`bw-color-swatch ${isEmpty ? 'is-empty-slot' : ''}`}
+                                    style={
+                                      color
+                                        ? {
+                                            background: color,
+                                            border:
+                                              pendingColor === color
+                                                ? '2px solid #0c0c0c'
+                                                : '2px solid #e5e5e5',
+                                          }
+                                        : undefined
+                                    }
+                                    onClick={() => {
+                                      if (!color) return;
+                                      setPendingColor(color);
+                                      setPendingCustomColor(color);
+                                    }}
+                                    title={color ?? '비어있는 최근 색상 슬롯'}
+                                  />
+                                );
+                              }
+                            )}
+                          </div>
+                          <button
+                            type="button"
+                            className="bw-color-confirm"
+                            onClick={() => {
+                              const confirmed = pendingColor.toUpperCase();
+                              applyColor(confirmed);
+                              pushRecentColor(confirmed);
+                            }}
+                          >
+                            확인
+                          </button>
+                        </div>
+                      </div>
+                    </div>
+                  )}
+
+                  {colorPickerTab !== 'custom' && (
+                    <button
+                      type="button"
+                      className="bw-color-confirm"
+                      onClick={() => {
+                        const confirmed = pendingColor.toUpperCase();
+                        applyColor(confirmed);
+                        pushRecentColor(confirmed);
+                      }}
+                    >
+                      확인
+                    </button>
+                  )}
                 </div>
               )}
             </div>
