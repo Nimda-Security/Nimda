@@ -1,9 +1,9 @@
-import React, { useState, useEffect } from "react";
-import { useNavigate } from "react-router-dom";
-import { getPopularPostsAPI } from "@/api/board";
-import type { Board } from "@/domains/Board/types";
-import { Heart } from "@/components/icons/Heart";
-import { MessageBox } from "@/components/icons/MessageBox";
+import React, { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
+import { getPopularPostsAPI } from '@/api/board';
+import type { Board } from '@/domains/Board/types';
+import { Heart } from '@/components/icons/Heart';
+import { MessageBox } from '@/components/icons/MessageBox';
 
 const PopularPostsSection: React.FC = () => {
   const navigate = useNavigate();
@@ -22,7 +22,7 @@ const PopularPostsSection: React.FC = () => {
           setPopularPosts(response.posts.slice(0, 10));
         }
       } catch (error) {
-        console.error("인기글 로드 오류:", error);
+        console.error('인기글 로드 오류:', error);
       } finally {
         setLoading(false);
       }
@@ -35,15 +35,19 @@ const PopularPostsSection: React.FC = () => {
     const date = new Date(dateString);
     const now = new Date();
     const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
-    const postDate = new Date(date.getFullYear(), date.getMonth(), date.getDate());
+    const postDate = new Date(
+      date.getFullYear(),
+      date.getMonth(),
+      date.getDate()
+    );
 
     if (postDate.getTime() === today.getTime()) {
       // 오늘인 경우 시간만 표시
-      return `${String(date.getHours()).padStart(2, "0")}:${String(date.getMinutes()).padStart(2, "0")}`;
+      return `${String(date.getHours()).padStart(2, '0')}:${String(date.getMinutes()).padStart(2, '0')}`;
     } else {
       // 오늘이 아닌 경우 날짜만 표시
-      const month = String(date.getMonth() + 1).padStart(2, "0");
-      const day = String(date.getDate()).padStart(2, "0");
+      const month = String(date.getMonth() + 1).padStart(2, '0');
+      const day = String(date.getDate()).padStart(2, '0');
       const year = date.getFullYear();
       // 연도가 현재 연도와 다르면 연도 포함
       if (year !== now.getFullYear()) {
@@ -54,7 +58,7 @@ const PopularPostsSection: React.FC = () => {
   };
 
   const getCategorySlug = (board: Board): string => {
-    return board.category?.slug || "";
+    return board.category?.slug || '';
   };
 
   if (loading) {
@@ -63,7 +67,7 @@ const PopularPostsSection: React.FC = () => {
         <h2 className="home-section-title">전체 인기글</h2>
         <div className="home-popular__divider" />
         <div className="home-popular__list">
-          <div style={{ padding: "16px", textAlign: "center", color: "#999" }}>
+          <div style={{ padding: '16px', textAlign: 'center', color: '#999' }}>
             로딩 중...
           </div>
         </div>
@@ -77,7 +81,7 @@ const PopularPostsSection: React.FC = () => {
         <h2 className="home-section-title">전체 인기글</h2>
         <div className="home-popular__divider" />
         <div className="home-popular__list">
-          <div style={{ padding: "16px", textAlign: "center", color: "#999" }}>
+          <div style={{ padding: '16px', textAlign: 'center', color: '#999' }}>
             인기글이 없습니다.
           </div>
         </div>
@@ -96,18 +100,25 @@ const PopularPostsSection: React.FC = () => {
             <div
               key={post.id}
               className="home-popular__row"
+              style={{ padding: '0 16px' }}
               onClick={() => navigate(`/board/${categorySlug}/${post.id}`)}
             >
               <p className="home-popular__title">{post.title}</p>
               <div className="home-popular__comments">
                 <MessageBox />
-                <span className="home-popular__comments-count">{post.commentCount ?? 0}</span>
+                <span className="home-popular__comments-count">
+                  {post.commentCount ?? 0}
+                </span>
               </div>
               <div className="home-popular__likes">
                 <Heart filled={post.isLiked} />
-                <span className="home-popular__likes-count">{post.likeCount || 0}</span>
+                <span className="home-popular__likes-count">
+                  {post.likeCount || 0}
+                </span>
               </div>
-              <span className="home-popular__date">{formatDate(post.createdAt)}</span>
+              <span className="home-popular__date">
+                {formatDate(post.createdAt)}
+              </span>
               <div className="home-popular__row-divider" />
             </div>
           );

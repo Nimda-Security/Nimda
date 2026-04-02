@@ -193,7 +193,16 @@ const PointContent: React.FC<PointContentProps> = ({
               ))}
             </div>
           ) : (
-            <div className="flex flex-col justify-center items-center py-10 text-[#A3A3A3]">
+            <div
+              className="flex flex-col items-center justify-center text-[#A3A3A3]"
+              style={{
+                minHeight: '300px',
+                marginTop: '20px',
+                paddingTop: '48px',
+                paddingBottom: '48px',
+                boxSizing: 'border-box',
+              }}
+            >
               <p className="text-[14px] font-medium">거래 내역이 없습니다.</p>
             </div>
           )}

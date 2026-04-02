@@ -87,7 +87,7 @@ const MyPostsContent: React.FC = () => {
   }
 
   return (
-    <div className="flex flex-col w-full">
+    <div className="flex flex-col w-full pb-6">
       {boards.length > 0 ? (
         <div
           className="border border-[#d4d4d4] rounded-[4px] bg-[#f5f5f5]"
@@ -163,11 +163,14 @@ const MyPostsContent: React.FC = () => {
         </div>
       )}
 
-      <Pagination
-        currentPage={currentPage}
-        totalPages={totalPages}
-        onPageChange={setCurrentPage}
-      />
+      <div style={{ marginBottom: '24px' }}>
+        <Pagination
+          currentPage={currentPage}
+          totalPages={totalPages}
+          onPageChange={setCurrentPage}
+        />
+        <div className="h-[24px] w-full" aria-hidden="true" />
+      </div>
     </div>
   );
 };
