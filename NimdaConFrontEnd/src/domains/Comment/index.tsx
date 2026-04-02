@@ -21,6 +21,7 @@ import type {
   CommentStatusUpdateRequest,
   CommentStatus,
 } from '@/domains/Comment/types';
+import EmoticonPicker, { parseEmoticons, getEmoticonSrc } from './EmoticonPicker';
 import './Comment.css';
 import { formatDate } from '@/utils/formatDate';
 
@@ -48,7 +49,7 @@ function CommentInput({
   onSubmit,
   placeholder,
   isSubmitting,
-  profileImage, // [추가] 내 프로필 이미지 URL
+  profileImage,
   buttonLabel = '작성',
   showAvatar = true,
 }: {
@@ -57,27 +58,135 @@ function CommentInput({
   onSubmit: () => void;
   placeholder?: string;
   isSubmitting: boolean;
-  profileImage?: string | null; // [추가]
+  profileImage?: string | null;
   buttonLabel?: string;
   showAvatar?: boolean;
 }) {
+  const editorRef = useRef<HTMLDivElement>(null);
+  const lastEmittedRef = useRef('');
+  const [isEmpty, setIsEmpty] = useState(true);
+
+  // DOM → 마커 텍스트 직렬화
+  const serialize = (el: HTMLElement): string => {
+    let result = '';
+    el.childNodes.forEach((node) => {
+      if (node.nodeType === Node.TEXT_NODE) {
+        result += node.textContent ?? '';
+      } else if (node.nodeName === 'IMG') {
+        const id = (node as HTMLImageElement).dataset.emoticonId;
+        if (id) result += `[nimda:${id}]`;
+      } else if (node.nodeName === 'BR') {
+        result += '\n';
+      } else if (node.nodeType === Node.ELEMENT_NODE) {
+        const tag = (node as HTMLElement).tagName.toUpperCase();
+        const inner = serialize(node as HTMLElement);
+        result += ['DIV', 'P'].includes(tag) ? '\n' + inner : inner;
+      }
+    });
+    return result;
+  };
+
+  // 마커 텍스트 → innerHTML 역직렬화
+  const toHTML = (text: string): string =>
+    text
+      .replace(/&/g, '&amp;')
+      .replace(/</g, '&lt;')
+      .replace(/>/g, '&gt;')
+      .replace(/\[nimda:(\d{2})\]/g, (_, id) =>
+        `<img src="${getEmoticonSrc(id)}" alt="[nimda:${id}]" data-emoticon-id="${id}" class="comment-emoticon-inline" draggable="false" />`
+      )
+      .replace(/\n/g, '<br>');
+
+  // 외부에서 value가 바뀔 때(제출 후 초기화, 수정 모드) 에디터 동기화
+  useEffect(() => {
+    const editor = editorRef.current;
+    if (!editor) return;
+    if (value === lastEmittedRef.current) return;
+    editor.innerHTML = value ? toHTML(value) : '';
+    lastEmittedRef.current = value;
+    setIsEmpty(!value.trim());
+  }, [value]);
+
+  const handleInput = () => {
+    const editor = editorRef.current;
+    if (!editor) return;
+    const text = serialize(editor);
+    lastEmittedRef.current = text;
+    setIsEmpty(!text.trim());
+    onChange(text);
+  };
+
+  const handlePaste = (e: React.ClipboardEvent<HTMLDivElement>) => {
+    e.preventDefault();
+    const text = e.clipboardData.getData('text/plain');
+    const sel = window.getSelection();
+    if (!sel || sel.rangeCount === 0) return;
+    const range = sel.getRangeAt(0);
+    range.deleteContents();
+    const textNode = document.createTextNode(text);
+    range.insertNode(textNode);
+    range.setStartAfter(textNode);
+    range.collapse(true);
+    sel.removeAllRanges();
+    sel.addRange(range);
+    handleInput();
+  };
+
+  const handleEmoticonSelect = (marker: string) => {
+    const editor = editorRef.current;
+    if (!editor) return;
+    const id = marker.match(/\[nimda:(\d{2})\]/)?.[1];
+    if (!id) return;
+    const img = document.createElement('img');
+    img.src = getEmoticonSrc(id);
+    img.alt = marker;
+    img.dataset.emoticonId = id;
+    img.className = 'comment-emoticon-inline';
+    img.draggable = false;
+    const insertAfter = (node: Node) => {
+      const range = document.createRange();
+      range.setStartAfter(node);
+      range.collapse(true);
+      const sel = window.getSelection();
+      if (sel) { sel.removeAllRanges(); sel.addRange(range); }
+    };
+    const sel = window.getSelection();
+    if (sel && sel.rangeCount > 0 && editor.contains(sel.getRangeAt(0).commonAncestorContainer)) {
+      const range = sel.getRangeAt(0);
+      range.deleteContents();
+      range.insertNode(img);
+      insertAfter(img);
+    } else {
+      editor.appendChild(img);
+      insertAfter(img);
+    }
+    const text = serialize(editor);
+    lastEmittedRef.current = text;
+    setIsEmpty(!text.trim());
+    onChange(text);
+  };
+
   return (
     <div className="comment-input">
-      {/* [수정] 하드코딩된 '?'를 지우고 내 프로필 이미지를 렌더링하도록 변경 */}
       {showAvatar && (
         <div className="comment-input__avatar">
           <Avatar src={profileImage} size="100%" />
         </div>
       )}
       <div className="comment-input__body">
-        <textarea
-          value={value}
-          onChange={(e) => onChange(e.target.value)}
-          placeholder={placeholder ?? '댓글을 입력하세요.'}
-          rows={4}
-          className="comment-input__textarea"
+        <div
+          ref={editorRef}
+          contentEditable
+          suppressContentEditableWarning
+          onInput={handleInput}
+          onPaste={handlePaste}
+          data-placeholder={placeholder ?? '댓글을 입력하세요.'}
+          className={`comment-input__textarea comment-input__editor${isEmpty ? ' comment-input__editor--empty' : ''}`}
+          role="textbox"
+          aria-multiline="true"
         />
         <div className="comment-input__footer">
+          <EmoticonPicker onSelect={handleEmoticonSelect} />
           <button
             type="button"
             onClick={onSubmit}
@@ -274,7 +383,7 @@ function CommentItem({
               ? ' comment-item__content--muted'
               : ''
           }`}>
-            {comment.context}
+            {parseEmoticons(comment.context)}
           </p>
 
 

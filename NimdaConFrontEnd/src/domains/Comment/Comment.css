@@ -74,9 +74,24 @@
   border: 2px solid var(--color-pink);
 }
 
+/* contenteditable 에디터 */
+.comment-input__editor {
+  overflow-y: auto;
+  cursor: text;
+  white-space: pre-wrap;
+}
+
+.comment-input__editor--empty::before {
+  content: attr(data-placeholder);
+  color: var(--color-gray-500);
+  pointer-events: none;
+  display: block;
+}
+
 .comment-input__footer {
   display: flex;
-  justify-content: flex-end;
+  justify-content: space-between;
+  align-items: center;
 }
 
 .comment-input__submit {
@@ -446,6 +461,91 @@
 
 .comment-more__item--danger:hover {
   background-color: rgba(239, 68, 68, 0.06);
+}
+
+/* ===========================
+   이모티콘 피커
+   =========================== */
+.emoticon-picker {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+}
+
+.emoticon-picker__trigger {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 28px;
+  height: 28px;
+  padding: 0;
+  border: none;
+  border-radius: 6px;
+  background: none;
+  color: var(--color-gray-500);
+  cursor: pointer;
+  transition: color 0.15s, background-color 0.15s;
+}
+
+.emoticon-picker__trigger:hover {
+  color: var(--color-pink);
+  background-color: var(--color-gray-100);
+}
+
+.emoticon-picker__panel {
+  position: absolute;
+  bottom: calc(100% + 8px);
+  left: 0;
+  z-index: 200;
+  padding: 8px;
+  background: #ffffff;
+  border: 1px solid var(--color-gray-200);
+  border-radius: 12px;
+  box-shadow:
+    0 8px 16px -4px rgba(0, 0, 0, 0.12),
+    0 4px 8px -2px rgba(0, 0, 0, 0.06);
+  animation: dropdown-in 0.12s ease-out;
+}
+
+.emoticon-picker__grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 4px;
+}
+
+.emoticon-picker__item {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 80px;
+  height: 80px;
+  padding: 4px;
+  border: none;
+  border-radius: 8px;
+  background: none;
+  cursor: pointer;
+  transition: background-color 0.15s, transform 0.1s;
+}
+
+.emoticon-picker__item:hover {
+  background-color: var(--color-gray-100);
+  transform: scale(1.08);
+}
+
+.emoticon-picker__item img {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+}
+
+/* 댓글 본문 내 인라인 이모티콘 */
+.comment-emoticon-inline {
+  display: inline-block;
+  width: 112px;
+  height: 112px;
+  vertical-align: bottom;
+  margin: 0 1px;
+  object-fit: contain;
 }
 
 /* 구분선 (삭제 항목 위) */
