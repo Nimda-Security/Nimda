@@ -36,7 +36,13 @@ const ensureLanguages = () => {
 
 export const highlightCodeBlocks = (root: ParentNode) => {
   ensureLanguages();
-  const preBlocks = root.querySelectorAll('pre');
+  const preBlocks: HTMLElement[] = [];
+  if (root instanceof HTMLElement && root.tagName === 'PRE') {
+    preBlocks.push(root);
+  }
+  preBlocks.push(
+    ...(Array.from(root.querySelectorAll('pre')) as HTMLElement[])
+  );
 
   const aliasMap: Record<string, string> = {
     cxx: 'cpp',
@@ -50,8 +56,7 @@ export const highlightCodeBlocks = (root: ParentNode) => {
     text: 'plaintext',
   };
 
-  preBlocks.forEach((preNode) => {
-    const pre = preNode as HTMLElement;
+  preBlocks.forEach((pre) => {
     let code = pre.querySelector('code') as HTMLElement | null;
 
     if (!code) {

@@ -15,7 +15,7 @@ const ContentListActionBar: React.FC<ContentListActionBarProps> = ({
   hasSelected,
 }) => {
   return (
-    <div className="flex items-center justify-between h-[40px] px-4 mt-2">
+    <div className="flex items-center justify-between h-[40px] px-8 mt-2">
       <div className="flex items-center">
         <CheckBox checked={allSelected} onChange={onToggleAll} />
         <span

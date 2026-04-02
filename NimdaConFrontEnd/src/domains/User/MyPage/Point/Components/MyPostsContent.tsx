@@ -21,6 +21,7 @@ const MyPostsContent: React.FC = () => {
   const [loading, setLoading] = useState(true);
   const [selectedIds, setSelectedIds] = useState<Set<number>>(new Set());
   const [currentPage, setCurrentPage] = useState(1);
+  const [isDeleting, setIsDeleting] = useState(false);
   const navigate = useNavigate();
 
   useEffect(() => {
@@ -55,20 +56,25 @@ const MyPostsContent: React.FC = () => {
   };
 
   const handleDelete = async () => {
-    if (selectedIds.size === 0) return;
+    if (selectedIds.size === 0 || isDeleting) return;
     if (!window.confirm('정말 삭제하시겠습니까?')) return;
-    const ids = Array.from(selectedIds);
-    const res = await deleteMyBoardsAPI(ids);
-    if (res.success) {
-      setBoards((prev) => prev.filter((b) => !selectedIds.has(b.id)));
-      setSelectedIds(new Set());
-      const newTotalPages = Math.ceil(
-        (boards.length - ids.length) / ITEMS_PER_PAGE
-      );
-      if (currentPage > newTotalPages && newTotalPages > 0)
-        setCurrentPage(newTotalPages);
-    } else {
-      alert(res.message);
+    setIsDeleting(true);
+    try {
+      const ids = Array.from(selectedIds);
+      const res = await deleteMyBoardsAPI(ids);
+      if (res.success) {
+        setBoards((prev) => prev.filter((b) => !selectedIds.has(b.id)));
+        setSelectedIds(new Set());
+        const newTotalPages = Math.ceil(
+          (boards.length - ids.length) / ITEMS_PER_PAGE
+        );
+        if (currentPage > newTotalPages && newTotalPages > 0)
+          setCurrentPage(newTotalPages);
+      } else {
+        alert(res.message);
+      }
+    } finally {
+      setIsDeleting(false);
     }
   };
 
@@ -83,7 +89,7 @@ const MyPostsContent: React.FC = () => {
   return (
     <div className="flex flex-col w-full px-4">
       {boards.length > 0 ? (
-        <div className="border border-[#d4d4d4] rounded-[4px] bg-[#f5f5f5] overflow-hidden py-2 px-4">
+        <div className="border border-[#d4d4d4] rounded-[4px] bg-[#f5f5f5] overflow-hidden">
           {displayedBoards.map((board, idx) => (
             <ContentListItem
               key={board.id}

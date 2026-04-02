@@ -1347,6 +1347,9 @@ body {
   resize: none;
   line-height: 1.7;
   box-sizing: border-box;
+  direction: ltr;
+  unicode-bidi: normal;
+  text-align: left;
 }
 
 .bw-content-input pre {
@@ -1363,23 +1366,12 @@ body {
   font-size: 13px;
   line-height: 1.6;
   white-space: pre-wrap;
-  direction: ltr;
-  unicode-bidi: isolate;
-  text-align: left;
+  direction: ltr !important;
+  unicode-bidi: embed !important;
+  text-align: left !important;
   position: relative;
   box-sizing: border-box;
   overflow-x: auto;
-}
-
-.bw-content-input pre.bw-code-block::before {
-  content: attr(data-language);
-  position: absolute;
-  top: 6px;
-  right: 10px;
-  font-size: 11px;
-  color: #737373;
-  text-transform: uppercase;
-  letter-spacing: 0.04em;
 }
 
 .bw-content-input code {
@@ -1389,9 +1381,67 @@ body {
     ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, 'Liberation Mono',
     'Courier New', monospace;
   white-space: pre;
-  direction: ltr;
-  unicode-bidi: isolate;
-  text-align: left;
+  direction: ltr !important;
+  unicode-bidi: embed !important;
+  text-align: left !important;
+}
+
+.bw-content-input pre.bw-code-block {
+  padding-top: 6px;
+}
+
+.bw-content-input pre.bw-code-block code {
+  padding-top: 8px;
+}
+
+.bw-content-input pre.bw-code-block[data-code-empty='true'] code::before {
+  content: '코드 입력... (↑/↓ 이동, 삭제는 우측 상단 X 버튼)';
+  color: #a3a3a3;
+  font-size: 12px;
+  pointer-events: none;
+}
+
+.bw-code-lang-wrapper {
+  position: absolute;
+  top: 4px;
+  right: 8px;
+  z-index: 5;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.bw-code-lang-select {
+  font-size: 10px;
+  line-height: 1.2;
+  border-radius: 4px;
+  border: 1px solid #d4d4d4;
+  background: #fff;
+  color: #525252;
+  padding: 2px 18px 2px 6px;
+  outline: none;
+}
+
+.bw-code-delete-btn {
+  width: 18px;
+  height: 18px;
+  border: 1px solid #d4d4d4;
+  border-radius: 4px;
+  background: #ffffff;
+  color: #737373;
+  font-size: 13px;
+  line-height: 1;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  padding: 0;
+}
+
+.bw-code-delete-btn:hover {
+  border-color: #d97399;
+  color: #d97399;
+  background: #fff7fa;
 }
 
 .hljs {
@@ -1443,9 +1493,15 @@ body {
   color: #bcbcbc;
 }
 
-.bw-content-input:empty::before {
+.bw-content-input[data-empty='true']::before {
   content: attr(data-placeholder);
   color: #bcbcbc;
+  pointer-events: none;
+}
+
+.bw-edit-content-input[data-empty='true']::before {
+  content: attr(data-placeholder);
+  color: #9ca3af;
   pointer-events: none;
 }
 

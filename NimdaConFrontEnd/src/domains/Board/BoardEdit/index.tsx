@@ -6,6 +6,22 @@ import { uploadBoardFileViaS3 } from '@/api/attachments';
 import { highlightCodeBlocks } from '@/utils/codeHighlight';
 import type { Board } from '../types';
 
+const CODE_LANGUAGE_OPTIONS = [
+  { label: 'Plain text', value: 'plaintext' },
+  { label: 'JavaScript', value: 'javascript' },
+  { label: 'TypeScript', value: 'typescript' },
+  { label: 'HTML', value: 'html' },
+  { label: 'CSS', value: 'css' },
+  { label: 'Python', value: 'python' },
+  { label: 'C', value: 'c' },
+  { label: 'C++', value: 'cpp' },
+  { label: 'Java', value: 'java' },
+];
+
+const getCodeLanguageLabel = (language: string) =>
+  CODE_LANGUAGE_OPTIONS.find((option) => option.value === language)?.label ||
+  language.toUpperCase();
+
 function BoardEditPage() {
   const navigate = useNavigate();
   const { boardType: paramBoardType, id } = useParams<{
@@ -35,22 +51,215 @@ function BoardEditPage() {
   const [showFontSize, setShowFontSize] = useState(false);
   const [showColorPicker, setShowColorPicker] = useState(false);
   const [selectedColor, setSelectedColor] = useState<string>('currentColor');
-  const [showCodeLangMenu, setShowCodeLangMenu] = useState(false);
   const [currentAlignment, setCurrentAlignment] = useState<
     'left' | 'center' | 'right'
   >('left');
   const contentRef = useRef<HTMLDivElement>(null);
   const colorInputRef = useRef<HTMLInputElement>(null);
+  const isComposingRef = useRef(false);
+  const justEndedCompositionRef = useRef(false);
 
   const getEditorContent = () => {
     return contentRef.current?.innerHTML || '';
   };
 
+  const isEditorVisuallyEmpty = (editor: HTMLElement) => {
+    const hasMeaningfulNode = (node: Node): boolean => {
+      if (node.nodeType === Node.TEXT_NODE) {
+        const text = node.textContent?.replace(/\u00A0/g, '').trim() ?? '';
+        return text.length > 0;
+      }
+
+      if (node.nodeType !== Node.ELEMENT_NODE) {
+        return false;
+      }
+
+      const element = node as HTMLElement;
+      const tag = element.tagName;
+
+      if (tag === 'BR') return false;
+      if (element.classList.contains('bw-code-lang-wrapper')) return false;
+
+      if (
+        [
+          'PRE',
+          'IMG',
+          'VIDEO',
+          'IFRAME',
+          'TABLE',
+          'HR',
+          'CANVAS',
+          'SVG',
+        ].includes(tag)
+      ) {
+        return true;
+      }
+
+      return Array.from(element.childNodes).some(hasMeaningfulNode);
+    };
+
+    return !Array.from(editor.childNodes).some(hasMeaningfulNode);
+  };
+
+  const syncEditorEmptyState = () => {
+    const editor = contentRef.current;
+    if (!editor) return;
+    editor.setAttribute(
+      'data-empty',
+      isEditorVisuallyEmpty(editor) ? 'true' : 'false'
+    );
+    editor
+      .querySelectorAll('pre.bw-code-block')
+      .forEach((pre) => syncCodeBlockEmptyState(pre as HTMLElement));
+  };
+
   useEffect(() => {
-    if (contentRef.current) {
+    syncEditorEmptyState();
+    if (isComposingRef.current || justEndedCompositionRef.current) {
+      return;
+    }
+    if (contentRef.current && !getCurrentPreElement()) {
       highlightCodeBlocks(contentRef.current);
     }
   }, [content]);
+
+  // Native beforeinput handler to fix RTL text input in code blocks
+  useEffect(() => {
+    const editor = contentRef.current;
+    if (!editor) return;
+
+    const emptyStateObserver = new MutationObserver(() => {
+      syncEditorEmptyState();
+    });
+    emptyStateObserver.observe(editor, {
+      childList: true,
+      subtree: true,
+      characterData: true,
+    });
+    syncEditorEmptyState();
+
+    const handleCompositionStart = () => {
+      isComposingRef.current = true;
+      justEndedCompositionRef.current = false;
+    };
+
+    const handleCompositionEnd = () => {
+      isComposingRef.current = false;
+      justEndedCompositionRef.current = true;
+      requestAnimationFrame(() => {
+        justEndedCompositionRef.current = false;
+      });
+    };
+
+    const handleBeforeInput = (e: InputEvent) => {
+      if (e.isComposing || isComposingRef.current) return;
+      if (e.inputType !== 'insertText' || !e.data) return;
+
+      const currentPre = getCurrentPreElement();
+      if (!currentPre) return;
+
+      e.preventDefault();
+
+      const codeElement = getCodeElementInPre(currentPre);
+      const offsets = getSelectionOffsetsInElement(codeElement);
+      if (!offsets) return;
+
+      const text = codeElement.textContent || '';
+      const { start, end } = offsets;
+      codeElement.textContent = text.slice(0, start) + e.data + text.slice(end);
+      const nextOffset = start + e.data.length;
+      setSelectionInElementByOffset(codeElement, nextOffset);
+      setContent(getEditorContent());
+      requestAnimationFrame(() => {
+        refreshCodeBlockHighlight(currentPre, nextOffset);
+      });
+    };
+
+    const handleLanguageChange = (e: Event) => {
+      const target = e.target;
+      if (!(target instanceof HTMLSelectElement)) return;
+      if (!target.classList.contains('bw-code-lang-select')) return;
+
+      const pre = target.closest('pre') as HTMLElement | null;
+      if (!pre) return;
+
+      updateCodeBlockLanguage(pre, target.value);
+      const code = getCodeElementInPre(pre);
+      const offsets = getSelectionOffsetsInElement(code);
+      const cursorStart = offsets?.start ?? code.textContent?.length ?? 0;
+      const cursorEnd = offsets?.end ?? cursorStart;
+
+      setContent(getEditorContent());
+      requestAnimationFrame(() => {
+        refreshCodeBlockHighlight(pre, cursorStart, cursorEnd);
+      });
+    };
+
+    const handleCodeDeleteClick = (e: MouseEvent) => {
+      const rawTarget = e.target;
+      if (!(rawTarget instanceof HTMLElement)) return;
+
+      const deleteButton = rawTarget.closest('.bw-code-delete-btn');
+      if (!(deleteButton instanceof HTMLElement)) return;
+
+      e.preventDefault();
+      e.stopPropagation();
+
+      const pre = deleteButton.closest('pre') as HTMLElement | null;
+      if (!pre || !editor.contains(pre)) return;
+
+      const next = pre.nextElementSibling as HTMLElement | null;
+      const prev = pre.previousElementSibling as HTMLElement | null;
+
+      let targetNode: HTMLElement;
+      let collapseToEnd = false;
+
+      if (next) {
+        targetNode = next;
+      } else if (prev) {
+        targetNode = prev;
+        collapseToEnd = true;
+      } else {
+        const paragraph = document.createElement('p');
+        paragraph.innerHTML = '<br>';
+        pre.insertAdjacentElement('afterend', paragraph);
+        targetNode = paragraph;
+      }
+
+      pre.remove();
+
+      const selection = window.getSelection();
+      if (selection) {
+        const range = document.createRange();
+        range.selectNodeContents(targetNode);
+        range.collapse(!collapseToEnd);
+        selection.removeAllRanges();
+        selection.addRange(range);
+      }
+
+      setContent(getEditorContent());
+      syncEditorEmptyState();
+      if (!getCurrentPreElement()) {
+        requestAnimationFrame(() => {
+          highlightCodeBlocks(editor);
+        });
+      }
+    };
+
+    editor.addEventListener('compositionstart', handleCompositionStart);
+    editor.addEventListener('compositionend', handleCompositionEnd);
+    editor.addEventListener('beforeinput', handleBeforeInput);
+    editor.addEventListener('change', handleLanguageChange);
+    editor.addEventListener('click', handleCodeDeleteClick);
+    return () => {
+      emptyStateObserver.disconnect();
+      editor.removeEventListener('compositionstart', handleCompositionStart);
+      editor.removeEventListener('compositionend', handleCompositionEnd);
+      editor.removeEventListener('beforeinput', handleBeforeInput);
+      editor.removeEventListener('change', handleLanguageChange);
+      editor.removeEventListener('click', handleCodeDeleteClick);
+    };
+  }, []);
 
   const applyFormat = (
     format: 'bold' | 'italic' | 'underline' | 'strikeThrough'
@@ -152,6 +361,101 @@ function BoardEditPage() {
     return code;
   };
 
+  const syncCodeBlockEmptyState = (pre: HTMLElement) => {
+    const code = pre.querySelector('code') as HTMLElement | null;
+    const normalizedText = (code?.textContent ?? '')
+      .replace(/\u00A0/g, '')
+      .trim();
+    pre.setAttribute(
+      'data-code-empty',
+      normalizedText.length === 0 ? 'true' : 'false'
+    );
+  };
+
+  const ensureCodeLanguageSelector = (pre: HTMLElement, language: string) => {
+    let wrapper = pre.querySelector(
+      '.bw-code-lang-wrapper'
+    ) as HTMLElement | null;
+
+    if (!wrapper) {
+      wrapper = document.createElement('div');
+      wrapper.contentEditable = 'false';
+      wrapper.className = 'bw-code-lang-wrapper';
+      pre.insertBefore(wrapper, pre.firstChild);
+    }
+
+    let select = wrapper.querySelector('select') as HTMLSelectElement | null;
+    if (!select) {
+      select = document.createElement('select');
+      select.className = 'bw-code-lang-select';
+      CODE_LANGUAGE_OPTIONS.forEach((option) => {
+        const optionElement = document.createElement('option');
+        optionElement.value = option.value;
+        optionElement.textContent = option.label;
+        select?.appendChild(optionElement);
+      });
+      wrapper.appendChild(select);
+    }
+
+    let deleteButton = wrapper.querySelector(
+      '.bw-code-delete-btn'
+    ) as HTMLButtonElement | null;
+    if (!deleteButton) {
+      deleteButton = document.createElement('button');
+      deleteButton.type = 'button';
+      deleteButton.className = 'bw-code-delete-btn';
+      deleteButton.textContent = '×';
+      deleteButton.title = '코드블럭 삭제';
+      deleteButton.setAttribute('aria-label', '코드블럭 삭제');
+      wrapper.appendChild(deleteButton);
+    }
+
+    if (select) {
+      select.value = language;
+    }
+  };
+
+  const refreshCodeBlockHighlight = (
+    pre: HTMLElement,
+    cursorStart: number,
+    cursorEnd = cursorStart
+  ) => {
+    highlightCodeBlocks(pre);
+    syncCodeBlockEmptyState(pre);
+    const code = pre.querySelector('code') as HTMLElement | null;
+    if (code) {
+      setSelectionInElementByOffset(code, cursorStart, cursorEnd);
+    }
+  };
+
+  const updateCodeBlockLanguage = (pre: HTMLElement, language: string) => {
+    const normalizedLanguage =
+      language === 'plaintext' ? 'plaintext' : language;
+
+    const prevLanguageClass = Array.from(pre.classList).find((c) =>
+      c.startsWith('language-')
+    );
+    if (prevLanguageClass) {
+      pre.classList.remove(prevLanguageClass);
+    }
+
+    pre.classList.add('bw-code-block', `language-${normalizedLanguage}`);
+    pre.setAttribute('data-language', normalizedLanguage);
+    pre.setAttribute(
+      'data-language-label',
+      getCodeLanguageLabel(normalizedLanguage)
+    );
+    ensureCodeLanguageSelector(pre, normalizedLanguage);
+
+    const code = getCodeElementInPre(pre);
+    Array.from(code.classList)
+      .filter((cls) => cls.startsWith('language-'))
+      .forEach((cls) => code.classList.remove(cls));
+    code.classList.add(`language-${normalizedLanguage}`);
+    code.removeAttribute('data-highlighted');
+    syncCodeBlockEmptyState(pre);
+  };
+
   const getSelectionOffsetsInElement = (element: HTMLElement) => {
     const selection = window.getSelection();
     if (!selection || selection.rangeCount === 0) return null;
@@ -235,7 +539,6 @@ function BoardEditPage() {
 
     const selection = window.getSelection();
     if (!selection || selection.rangeCount === 0 || !contentRef.current) {
-      setShowCodeLangMenu(false);
       return;
     }
 
@@ -255,7 +558,6 @@ function BoardEditPage() {
         selection.removeAllRanges();
         selection.addRange(range);
       }
-      setShowCodeLangMenu(false);
       setContent(getEditorContent());
       return;
     }
@@ -270,10 +572,21 @@ function BoardEditPage() {
       const pre = document.createElement('pre');
       pre.className = `bw-code-block language-${normalizedLanguage}`;
       pre.setAttribute('data-language', language);
+      pre.setAttribute('data-language-label', getCodeLanguageLabel(language));
+      pre.setAttribute('dir', 'ltr');
+      pre.style.direction = 'ltr';
+      pre.style.unicodeBidi = 'embed';
+      pre.style.textAlign = 'left';
       const code = document.createElement('code');
       code.className = `language-${normalizedLanguage}`;
+      code.setAttribute('dir', 'ltr');
+      code.style.direction = 'ltr';
+      code.style.unicodeBidi = 'embed';
+      code.style.textAlign = 'left';
       code.textContent = selectedText || '';
+      ensureCodeLanguageSelector(pre, normalizedLanguage);
       pre.appendChild(code);
+      syncCodeBlockEmptyState(pre);
 
       const paragraph = document.createElement('p');
       paragraph.innerHTML = '<br>';
@@ -291,29 +604,9 @@ function BoardEditPage() {
     }
 
     if (targetPre) {
-      const prevLanguageClass = Array.from(targetPre.classList).find((c) =>
-        c.startsWith('language-')
-      );
-      if (prevLanguageClass) {
-        targetPre.classList.remove(prevLanguageClass);
-      }
-      const normalizedLanguage =
-        language === 'plaintext' ? 'plaintext' : language;
-      targetPre.classList.add(
-        'bw-code-block',
-        `language-${normalizedLanguage}`
-      );
-      targetPre.setAttribute('data-language', language);
-
-      const codeElement = getCodeElementInPre(targetPre);
-      Array.from(codeElement.classList)
-        .filter((cls) => cls.startsWith('language-'))
-        .forEach((cls) => codeElement.classList.remove(cls));
-      codeElement.classList.add(`language-${normalizedLanguage}`);
-      codeElement.removeAttribute('data-highlighted');
+      updateCodeBlockLanguage(targetPre, language);
     }
 
-    setShowCodeLangMenu(false);
     setContent(getEditorContent());
     const editor = contentRef.current;
     if (editor) {
@@ -322,6 +615,16 @@ function BoardEditPage() {
   };
 
   const handleEditorKeyDown = (e: React.KeyboardEvent<HTMLDivElement>) => {
+    const nativeEvent = e.nativeEvent as KeyboardEvent;
+    const isImeComposingNow =
+      nativeEvent.isComposing ||
+      isComposingRef.current ||
+      nativeEvent.keyCode === 229;
+
+    if (e.key === 'Enter' && isImeComposingNow) {
+      return;
+    }
+
     const currentPre = getCurrentPreElement();
 
     if (currentPre) {
@@ -337,8 +640,49 @@ function BoardEditPage() {
       const lineStart = text.lastIndexOf('\n', start - 1) + 1;
       const lineEndIndex = text.indexOf('\n', start);
       const lineEnd = lineEndIndex === -1 ? text.length : lineEndIndex;
+
+      if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 'a') {
+        e.preventDefault();
+        const selection = window.getSelection();
+        if (selection) {
+          const range = document.createRange();
+          range.selectNodeContents(codeElement);
+          selection.removeAllRanges();
+          selection.addRange(range);
+        }
+        return;
+      }
+
+      if (e.key === 'ArrowDown') {
+        const isAtEnd =
+          end === text.length ||
+          (end === text.length - 1 && text.endsWith('\n'));
+        if (isAtEnd) {
+          e.preventDefault();
+
+          const next = currentPre.nextElementSibling as HTMLElement | null;
+          let target = next;
+          if (!target) {
+            const paragraph = document.createElement('p');
+            paragraph.innerHTML = '<br>';
+            currentPre.insertAdjacentElement('afterend', paragraph);
+            target = paragraph;
+          }
+
+          const selection = window.getSelection();
+          if (selection) {
+            const range = document.createRange();
+            range.selectNodeContents(target);
+            range.collapse(true);
+            selection.removeAllRanges();
+            selection.addRange(range);
+          }
+          setContent(getEditorContent());
+          return;
+        }
+      }
+
       const currentLine = text.slice(lineStart, lineEnd);
-      const isLastLine = lineEnd === text.length;
 
       if (e.key === 'Home') {
         e.preventDefault();
@@ -353,22 +697,6 @@ function BoardEditPage() {
       if (e.key === 'Backspace' && start === end) {
         if (text.length === 0) {
           e.preventDefault();
-          const paragraph = document.createElement('p');
-          paragraph.innerHTML = '<br>';
-          currentPre.replaceWith(paragraph);
-
-          const selection = window.getSelection();
-          if (selection) {
-            const range = document.createRange();
-            range.selectNodeContents(paragraph);
-            range.collapse(true);
-            selection.removeAllRanges();
-            selection.addRange(range);
-          }
-          setContent(getEditorContent());
-          setTimeout(() => {
-            if (contentRef.current) highlightCodeBlocks(contentRef.current);
-          }, 0);
           return;
         }
 
@@ -378,9 +706,6 @@ function BoardEditPage() {
             text.slice(0, lineStart - 1) + text.slice(lineStart);
           setSelectionInElementByOffset(codeElement, lineStart - 1);
           setContent(getEditorContent());
-          setTimeout(() => {
-            if (contentRef.current) highlightCodeBlocks(contentRef.current);
-          }, 0);
           return;
         }
       }
@@ -447,37 +772,99 @@ function BoardEditPage() {
         }
 
         setContent(getEditorContent());
-        setTimeout(() => {
-          if (contentRef.current) highlightCodeBlocks(contentRef.current);
-        }, 0);
+        requestAnimationFrame(() => {
+          refreshCodeBlockHighlight(currentPre, start + 1);
+        });
         return;
       }
 
       if (e.key === 'Enter') {
         e.preventDefault();
 
-        if (
-          !e.shiftKey &&
-          start === end &&
-          isLastLine &&
-          currentLine.trim() === ''
-        ) {
-          codeElement.textContent = text.endsWith('\n')
-            ? text.slice(0, -1)
-            : text;
+        const linePrefix = text.slice(lineStart, start);
+        const indent = (linePrefix.match(/^[ \t]*/) || [''])[0];
+        const insertText = e.shiftKey ? '\n' : `\n${indent}`;
 
-          const paragraph = document.createElement('p');
-          paragraph.innerHTML = '<br>';
-          currentPre.insertAdjacentElement('afterend', paragraph);
+        const isAtEnd =
+          end === text.length ||
+          (end === text.length - 1 && text.endsWith('\n'));
 
-          const selection = window.getSelection();
-          if (selection) {
-            const range = document.createRange();
-            range.selectNodeContents(paragraph);
-            range.collapse(true);
-            selection.removeAllRanges();
-            selection.addRange(range);
+        if (isAtEnd && !text.endsWith('\n\n')) {
+          codeElement.textContent = text.slice(0, start) + insertText + '\n';
+        } else {
+          codeElement.textContent =
+            text.slice(0, start) + insertText + text.slice(end);
+        }
+
+        const newOffset = start + insertText.length;
+        setSelectionInElementByOffset(codeElement, newOffset);
+        setContent(getEditorContent());
+        requestAnimationFrame(() => {
+          refreshCodeBlockHighlight(currentPre, newOffset);
+        });
+        return;
+      }
+    }
+
+    if (!currentPre && (e.key === 'Enter' || e.key === ' ')) {
+      const selection = window.getSelection();
+      if (selection && selection.rangeCount > 0) {
+        const range = selection.getRangeAt(0);
+        const node = range.startContainer;
+        const textContent = node.textContent || '';
+        const textBeforeCursor = textContent.slice(0, range.startOffset);
+        const match = textBeforeCursor.match(/^```([a-zA-Z0-9#+\-.]*)$/);
+
+        if (match) {
+          e.preventDefault();
+          const lang = match[1] || 'plaintext';
+
+          let blockNode: Node | null = node;
+          while (
+            blockNode &&
+            blockNode.parentNode !== contentRef.current &&
+            (blockNode as HTMLElement).classList?.contains(
+              'bw-content-input'
+            ) === false
+          ) {
+            if (blockNode.nodeName === 'DIV' || blockNode.nodeName === 'P')
+              break;
+            blockNode = blockNode.parentNode;
           }
+          if (!blockNode || blockNode === contentRef.current) blockNode = node;
+
+          let cleanLang = lang.toLowerCase();
+          if (cleanLang === '') cleanLang = 'plaintext';
+
+          const pre = document.createElement('pre');
+          pre.className = `bw-code-block language-${cleanLang}`;
+          pre.setAttribute('dir', 'ltr');
+          pre.setAttribute('data-language', cleanLang);
+          pre.setAttribute(
+            'data-language-label',
+            getCodeLanguageLabel(cleanLang)
+          );
+
+          const code = document.createElement('code');
+          code.className = `language-${cleanLang}`;
+          code.textContent = '';
+
+          pre.style.position = 'relative';
+          ensureCodeLanguageSelector(pre, cleanLang);
+          pre.appendChild(code);
+          syncCodeBlockEmptyState(pre);
+
+          if (blockNode.parentNode) {
+            blockNode.parentNode.replaceChild(pre, blockNode);
+          } else {
+            contentRef.current?.appendChild(pre);
+          }
+
+          const newRange = document.createRange();
+          newRange.setStart(code, 0);
+          newRange.collapse(true);
+          selection.removeAllRanges();
+          selection.addRange(newRange);
 
           setContent(getEditorContent());
           setTimeout(() => {
@@ -485,20 +872,44 @@ function BoardEditPage() {
           }, 0);
           return;
         }
+      }
+    }
 
-        const linePrefix = text.slice(lineStart, start);
-        const indent = (linePrefix.match(/^[ \t]*/) || [''])[0];
-        const insertText = e.shiftKey ? '\n' : `\n${indent}`;
-
-        codeElement.textContent =
-          text.slice(0, start) + insertText + text.slice(end);
-        const newOffset = start + insertText.length;
-        setSelectionInElementByOffset(codeElement, newOffset);
-        setContent(getEditorContent());
-        setTimeout(() => {
-          if (contentRef.current) highlightCodeBlocks(contentRef.current);
-        }, 0);
-        return;
+    if (e.key === 'ArrowUp') {
+      const selection = window.getSelection();
+      if (!selection || selection.rangeCount === 0) return;
+      const range = selection.getRangeAt(0);
+      let node: Node | null = range.startContainer;
+      while (node && node !== contentRef.current) {
+        if (node instanceof HTMLElement && node.tagName === 'PRE') {
+          const pre = node;
+          const code = pre.querySelector('code') as HTMLElement | null;
+          if (!code) return;
+          const offsets = getSelectionOffsetsInElement(code);
+          if (offsets && offsets.start === 0 && offsets.end === 0) {
+            e.preventDefault();
+            const prev = pre.previousElementSibling;
+            if (prev instanceof HTMLElement) {
+              const newRange = document.createRange();
+              newRange.selectNodeContents(prev);
+              newRange.collapse(false);
+              selection.removeAllRanges();
+              selection.addRange(newRange);
+            } else {
+              const p = document.createElement('p');
+              p.innerHTML = '<br>';
+              pre.parentNode?.insertBefore(p, pre);
+              const newRange = document.createRange();
+              newRange.selectNodeContents(p);
+              newRange.collapse(true);
+              selection.removeAllRanges();
+              selection.addRange(newRange);
+            }
+            setContent(getEditorContent());
+          }
+          return;
+        }
+        node = node.parentNode;
       }
     }
 
@@ -539,7 +950,7 @@ function BoardEditPage() {
       } else {
         setError(response.message);
       }
-    } catch (err) {
+    } catch {
       setError('게시글을 불러오는 중 오류가 발생했습니다.');
     } finally {
       setLoading(false);
@@ -599,7 +1010,7 @@ function BoardEditPage() {
       } else {
         setError(response.message || '게시글 수정에 실패했습니다.');
       }
-    } catch (err) {
+    } catch {
       setError('게시글 수정 중 오류가 발생했습니다.');
     } finally {
       setIsSubmitting(false);
@@ -761,7 +1172,6 @@ function BoardEditPage() {
                     onClick={() => {
                       setShowFontSize((p) => !p);
                       setShowColorPicker(false);
-                      setShowCodeLangMenu(false);
                     }}
                     className="px-2 py-1 text-sm hover:bg-gray-200 rounded"
                     title="글자 크기"
@@ -797,7 +1207,6 @@ function BoardEditPage() {
                     onClick={() => {
                       setShowColorPicker((p) => !p);
                       setShowFontSize(false);
-                      setShowCodeLangMenu(false);
                     }}
                     className="px-2 py-1 text-sm hover:bg-gray-200 rounded"
                     title="글자 색상"
@@ -868,49 +1277,12 @@ function BoardEditPage() {
                 <div className="relative">
                   <button
                     type="button"
-                    onClick={() => {
-                      setShowCodeLangMenu((prev) => !prev);
-                      setShowFontSize(false);
-                      setShowColorPicker(false);
-                    }}
+                    onClick={() => applyCodeLanguage('plaintext')}
                     className="px-2 py-1 text-sm hover:bg-gray-200 rounded"
                     title="코드 블록"
                   >
                     {'</>'}
                   </button>
-                  {showCodeLangMenu && (
-                    <div
-                      className="bw-tool-dropdown bw-tool-dropdown--code"
-                      style={{ left: 0 }}
-                    >
-                      {[
-                        { label: 'Plain text', value: 'plaintext' },
-                        { label: 'JavaScript', value: 'javascript' },
-                        { label: 'TypeScript', value: 'typescript' },
-                        { label: 'HTML', value: 'html' },
-                        { label: 'CSS', value: 'css' },
-                        { label: 'Python', value: 'python' },
-                        { label: 'C++', value: 'cpp' },
-                        { label: 'Java', value: 'java' },
-                      ].map((lang) => (
-                        <button
-                          key={lang.value}
-                          type="button"
-                          className="bw-tool-dropdown-item bw-tool-dropdown-item--code"
-                          onClick={() => applyCodeLanguage(lang.value)}
-                        >
-                          {lang.label}
-                        </button>
-                      ))}
-                      <button
-                        type="button"
-                        className="bw-tool-dropdown-item bw-tool-dropdown-item--code"
-                        onClick={() => applyCodeLanguage('none')}
-                      >
-                        코드블럭 해제
-                      </button>
-                    </div>
-                  )}
                 </div>
                 <div className="relative">
                   <button
@@ -963,13 +1335,23 @@ function BoardEditPage() {
                 contentEditable
                 dir="ltr"
                 spellCheck={false}
-                className="w-full px-4 py-2 border border-gray-300 rounded-b focus:outline-none focus:ring-2 focus:ring-black min-h-[360px] whitespace-pre-wrap"
+                className="bw-edit-content-input w-full px-4 py-2 border border-gray-300 rounded-b focus:outline-none focus:ring-2 focus:ring-black min-h-[360px] whitespace-pre-wrap"
                 data-placeholder="내용을 입력하세요"
+                data-empty="true"
                 dangerouslySetInnerHTML={{ __html: content }}
                 onKeyDown={handleEditorKeyDown}
                 onInput={() => {
                   setContent(getEditorContent());
-                  if (contentRef.current) {
+                  syncEditorEmptyState();
+
+                  if (
+                    isComposingRef.current ||
+                    justEndedCompositionRef.current
+                  ) {
+                    return;
+                  }
+
+                  if (contentRef.current && !getCurrentPreElement()) {
                     setTimeout(
                       () =>
                         highlightCodeBlocks(contentRef.current as HTMLElement),
