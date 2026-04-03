@@ -30,6 +30,7 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.EntityGraph;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
@@ -107,4 +108,24 @@ public interface BoardRepository extends JpaRepository<Board, Long> { // [수정
     // 내가 작성한 게시글 목록 (최신순, 활성 상태만)
     @EntityGraph(attributePaths = { "author", "category" })
     List<Board> findByAuthorAndStatusOrderByCreatedAtDesc(User author, BoardStatus status);
+
+    @Modifying(clearAutomatically = true)
+    @Query("UPDATE Board b SET b.status = :status " +
+            "WHERE b.category.id = :categoryId AND b.tag = :tag AND b.status != :status")
+    int updateStatusByTag(@Param("categoryId") Long categoryId,
+                          @Param("tag") String tag,
+                          @Param("status") BoardStatus status);
+
+    @Modifying(clearAutomatically = true)
+    @Query("UPDATE Board b SET b.status = :newStatus " +
+            "WHERE b.category.id = :categoryId AND b.tag = :tag AND b.status = :oldStatus")
+    int updateStatusByTagAndCurrentStatus(@Param("categoryId") Long categoryId,
+                                          @Param("tag") String tag,
+                                          @Param("oldStatus") BoardStatus oldStatus,
+                                          @Param("newStatus") BoardStatus newStatus);
+
+    @Query("SELECT COUNT(b) FROM Board b WHERE b.category.id = :categoryId AND b.tag = :tag AND b.status = :status")
+    long countByCategoryIdAndTagAndStatus(@Param("categoryId") Long categoryId,
+                                          @Param("tag") String tag,
+                                          @Param("status") BoardStatus status);
 }

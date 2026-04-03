@@ -397,3 +397,87 @@ export const createGroupAPI = async (groupData) => {
     };
   }
 };
+
+/**
+ * 카테고리의 태그별 게시글 통계 조회 API
+ */
+export const getTagStatsAPI = async (categoryId) => {
+  try {
+    const response = await fetch(
+      `${API_BASE_URL}/admin/boards/tag-stats?categoryId=${categoryId}`,
+      {
+        method: "GET",
+        headers: { "Content-Type": "application/json" },
+        credentials: "include",
+      }
+    );
+    const result = await parseJsonSafe(response);
+    if (response.ok) {
+      return result ?? { success: true, tagStats: [] };
+    }
+    return {
+      success: false,
+      status: response.status,
+      message: (result && result.message) || "태그 통계를 불러올 수 없습니다.",
+    };
+  } catch (error) {
+    console.error("태그 통계 조회 API 오류:", error);
+    return { success: false, message: "태그 통계를 불러올 수 없습니다." };
+  }
+};
+
+/**
+ * 태그 기반 게시글 비활성화 API (ACTIVE → HIDDEN)
+ */
+export const deactivateBoardsByTagAPI = async (categoryId, tag) => {
+  try {
+    const response = await fetch(
+      `${API_BASE_URL}/admin/boards/deactivate-by-tag?categoryId=${categoryId}&tag=${encodeURIComponent(tag)}`,
+      {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        credentials: "include",
+      }
+    );
+    const result = await parseJsonSafe(response);
+    if (response.ok) {
+      return result ?? { success: true };
+    }
+    return {
+      success: false,
+      status: response.status,
+      message: (result && result.message) || "비활성화에 실패했습니다.",
+    };
+  } catch (error) {
+    console.error("태그 비활성화 API 오류:", error);
+    return { success: false, message: "비활성화 중 오류가 발생했습니다." };
+  }
+};
+
+/**
+ * 태그 기반 게시글 활성화 API (HIDDEN → ACTIVE)
+ */
+export const activateBoardsByTagAPI = async (categoryId, tag) => {
+  try {
+    const response = await fetch(
+      `${API_BASE_URL}/admin/boards/activate-by-tag?categoryId=${categoryId}&tag=${encodeURIComponent(tag)}`,
+      {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        credentials: "include",
+      }
+    );
+    const result = await parseJsonSafe(response);
+    if (response.ok) {
+      return result ?? { success: true };
+    }
+    return {
+      success: false,
+      status: response.status,
+      message: (result && result.message) || "활성화에 실패했습니다.",
+    };
+  } catch (error) {
+    console.error("태그 활성화 API 오류:", error);
+    return { success: false, message: "활성화 중 오류가 발생했습니다." };
+  }
+};

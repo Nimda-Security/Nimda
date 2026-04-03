@@ -862,18 +862,20 @@ body {
 }
 
 .home-popular__tag {
-  width: 40px;
-  height: 24px;
-  border-radius: 12px;
-  background-color: var(--color-gray-400);
-  display: flex;
-  align-items: center;
-  justify-content: center;
   font-size: 12px;
-  font-weight: 700;
-  color: var(--color-white);
+  font-weight: 600;
+  color: var(--color-pink);
+  line-height: 1;
+  white-space: nowrap;
   flex-shrink: 0;
-  margin-right: 8px;
+  margin-right: 6px;
+}
+
+.home-popular__title-wrap {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  min-width: 0;
 }
 
 .home-popular__title {

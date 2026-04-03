@@ -206,4 +206,25 @@ Long categoryId = board.getCategory() != null ? board.getCategory().getId() : nu
                     boardLikeRepository.deleteAllByBoardId(b.getId());
                 });
     }
+
+    @Transactional
+    public void deleteBoardsByTag(Long categoryId, String tagName) {
+        int deletedCount = boardRepository.updateStatusByTag(categoryId, tagName, BoardStatus.DELETED);
+        System.out.println(tagName + " 태그를 가진 게시글 " + deletedCount + "건을 비활성화했습니다.");
+    }
+
+    @Transactional
+    public int hideBoardsByTag(Long categoryId, String tagName) {
+        return boardRepository.updateStatusByTagAndCurrentStatus(categoryId, tagName, BoardStatus.ACTIVE, BoardStatus.HIDDEN);
+    }
+
+    @Transactional
+    public int activateBoardsByTag(Long categoryId, String tagName) {
+        return boardRepository.updateStatusByTagAndCurrentStatus(categoryId, tagName, BoardStatus.HIDDEN, BoardStatus.ACTIVE);
+    }
+
+    @Transactional(readOnly = true)
+    public long countBoardsByTagAndStatus(Long categoryId, String tagName, BoardStatus status) {
+        return boardRepository.countByCategoryIdAndTagAndStatus(categoryId, tagName, status);
+    }
 }
