@@ -16,9 +16,7 @@ export interface LoginResponse {
     userId: string;
     nickname: string;
     email: string;
-    universityName?: string;
     major?: string;
-    grade?: string;
     birth?: string;
     studentNum?: string;
   };
@@ -32,8 +30,6 @@ export interface RegisterRequest {
   studentNum: string;
   email: string;
   major: string;
-  universityName?: string;
-  grade?: string;
   bojId?: string;
   birth?: string;
 }
@@ -134,8 +130,6 @@ export const registerAPI = async (
       birth: "20000213",
 
       // 선택 필드: 값이 비어있거나 공백만 있다면 서버에 보내지 않도록 처리
-      universityName: registerData.universityName?.trim() || undefined,
-      grade: registerData.grade?.trim() || undefined,
       bojId: registerData.bojId?.trim() || undefined,
     };
 

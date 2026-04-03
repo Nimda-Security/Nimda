@@ -25,9 +25,7 @@ public class MyPageResponseDTO {
     private String name;
     private String nickname;
     private String email;
-    private String universityName;
     private String major;
-    private String grade;
     private String bojId;
     private String birth;
     private String studentNum;

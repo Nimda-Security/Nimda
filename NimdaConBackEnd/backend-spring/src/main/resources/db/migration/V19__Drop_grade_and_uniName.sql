@@ -1,0 +1,2 @@
+ALTER TABLE users DROP COLUMN IF EXISTS grade;
+ALTER TABLE users DROP COLUMN IF EXISTS university_name;
