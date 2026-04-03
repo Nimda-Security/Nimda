@@ -311,6 +311,10 @@ public class CategoryService {
         if (!parent.getIsActive()) {
             throw new RuntimeException("비활성화된 카테고리는 부모로 설정할 수 없습니다.");
         }
+
+        if (parent.getParentId() != null) {
+            throw new RuntimeException("카테고리는 최대 2단계까지만 설정 가능합니다.");
+        }
     }
 
     /**
