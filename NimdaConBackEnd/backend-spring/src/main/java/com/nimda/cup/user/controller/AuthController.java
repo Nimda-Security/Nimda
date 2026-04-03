@@ -102,7 +102,7 @@ public class AuthController {
     /**
      * 회원가입
      * Request Data : Register DTO (userId, name, nickname, password, studentNum,
-     * email, major, universityName, grade)
+     * email, major)
      */
     @PostMapping("/register")
     public ResponseEntity<?> register(@Valid @RequestBody RegisterDTO registerRequest) {
@@ -117,8 +117,6 @@ public class AuthController {
                     registerRequest.getStudentNum(),
                     registerRequest.getEmail(),
                     registerRequest.getMajor(),
-                    registerRequest.getUniversityName(),
-                    registerRequest.getGrade(),
                     registerRequest.getBojId(),
                     registerRequest.getBirth());
 
@@ -163,9 +161,7 @@ public class AuthController {
                     .name(user.getName())
                     .nickname(user.getNickname())
                     .email(user.getEmail())
-                    .universityName(user.getUniversityName())
                     .major(user.getMajor())
-                    .grade(user.getGrade())
                     .bojId(user.getBojId())
                     .birth(user.getBirth())
                     .studentNum(user.getStudentNum())
@@ -210,9 +206,7 @@ public class AuthController {
                     .name(updated.getName())
                     .nickname(updated.getNickname())
                     .email(updated.getEmail())
-                    .universityName(updated.getUniversityName())
                     .major(updated.getMajor())
-                    .grade(updated.getGrade())
                     .bojId(updated.getBojId())
                     .birth(updated.getBirth())
                     .studentNum(updated.getStudentNum())

@@ -6,9 +6,7 @@ export interface UserPublicProfile {
   nickname: string;
   profileImage?: string | null;
   bojId?: string | null;
-  universityName?: string | null;
   major?: string | null;
-  grade?: string | null;
   createdAt?: string;
   email?: string | null;
 }

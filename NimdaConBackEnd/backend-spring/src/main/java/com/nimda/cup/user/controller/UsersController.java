@@ -74,8 +74,6 @@ public class UsersController {
             userMap.put("email", user.getEmail());
             userMap.put("studentNum", user.getStudentNum());
             userMap.put("major", user.getMajor());
-            userMap.put("universityName", user.getUniversityName());
-            userMap.put("grade", user.getGrade());
             userMap.put("status", user.getStatus());
             userMap.put("birth", user.getBirth());
             userMap.put("bojId", user.getBojId());
@@ -147,9 +145,7 @@ public class UsersController {
             profile.put("nickname", user.getNickname());
             profile.put("profileImage", profileImage);
             profile.put("bojId", user.getBojId());
-            profile.put("universityName", user.getUniversityName());
             profile.put("major", user.getMajor());
-            profile.put("grade", user.getGrade());
             profile.put("createdAt", user.getCreatedAt());
             // 이메일 공개 여부에 따라 포함
             if (!user.isEmailHide()) {

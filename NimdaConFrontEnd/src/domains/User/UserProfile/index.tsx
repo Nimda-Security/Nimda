@@ -286,14 +286,8 @@ export default function UserProfilePage() {
             {profile.bojId && (
               <ProfileInfoRow label="BOJ 아이디" value={profile.bojId} />
             )}
-            {profile.universityName && (
-              <ProfileInfoRow label="대학교" value={profile.universityName} />
-            )}
             {profile.major && (
               <ProfileInfoRow label="전공" value={profile.major} />
-            )}
-            {profile.grade && (
-              <ProfileInfoRow label="학년" value={`${profile.grade}학년`} />
             )}
             {profile.email && (
               <ProfileInfoRow label="이메일" value={profile.email} />

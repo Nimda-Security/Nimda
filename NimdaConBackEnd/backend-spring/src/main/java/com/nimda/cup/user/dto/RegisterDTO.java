@@ -42,13 +42,9 @@ public class RegisterDTO {
     @Size(max = 20, message = "Major must be at most 20 characters")
     private String major;
 
-    private String universityName;
-
     @NotBlank(message = "Birth date is required")
     @Size(min = 8, max = 8, message = "Birth date must be 8 characters (YYYYMMDD)")
     private String birth;
-
-    private String grade;
 
     /**
      * 백준 ID (선택)

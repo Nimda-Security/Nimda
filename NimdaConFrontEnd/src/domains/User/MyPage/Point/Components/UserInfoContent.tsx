@@ -13,9 +13,7 @@ interface UserData {
   name?: string;
   nickname?: string;
   email?: string;
-  universityName?: string;
   major?: string;
-  grade?: string;
   studentNum?: string;
   birth?: string;
   bojId?: string;

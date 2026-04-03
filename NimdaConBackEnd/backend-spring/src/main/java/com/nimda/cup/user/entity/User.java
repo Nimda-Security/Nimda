@@ -62,17 +62,11 @@ public class User extends BaseTimeEntity {
     @Column(unique = true, nullable = false, length = 40)
     private String email;
 
-    @Column(name = "university_name", length = 100)
-    private String universityName;
-
     @NotBlank
     @Size(max = 20)
     @Column(name = "major", nullable = false, length = 20)
     private String major;
     // 학과 (department → major로 변경)
-
-    @Column(name = "grade", length = 20)
-    private String grade;
 
     @Enumerated(EnumType.STRING)
     @Column(name = "status", nullable = false, length = 20)
