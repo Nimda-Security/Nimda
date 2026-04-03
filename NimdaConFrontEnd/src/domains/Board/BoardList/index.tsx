@@ -128,7 +128,7 @@ function BoardListPage({ slug: propSlug }: BoardListPageProps) {
         } catch { /* ignore */ }
       }
 
-      const newTags = Array.from(tagSet).sort();
+      const newTags = Array.from(tagSet);
       // 불필요한 상태 업데이트 방지 (내용이 같으면 업데이트 안 함)
       setAvailableTags(prev => JSON.stringify(prev) === JSON.stringify(newTags) ? prev : newTags);
     };
