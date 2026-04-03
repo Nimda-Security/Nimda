@@ -7,6 +7,7 @@ const UserInfo = ({
   loadUsers,
   selectedUser,
   setSelectedUser,
+  onSelectUser,
   hasRole,
   getUserRoles,
   uploadingImage,
@@ -46,7 +47,7 @@ const UserInfo = ({
             </thead>
             <tbody>
               {users.map((user) => (
-                <tr key={user.id} style={{ cursor: 'pointer' }} onClick={() => setSelectedUser(user)}>
+                <tr key={user.id} style={{ cursor: 'pointer' }} onClick={() => onSelectUser ? onSelectUser(user) : setSelectedUser(user)}>
                   <td>{user.id}</td>
                   <td style={{ textAlign: 'left' }}>
                     <span>{user.nickname || user.userId}</span>

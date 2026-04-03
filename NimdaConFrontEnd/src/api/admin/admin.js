@@ -47,6 +47,38 @@ export const getAllUsersAPI = async () => {
 };
 
 /**
+ * 특정 사용자 상세 조회 API (profileImage presigned URL 포함)
+ */
+export const getAdminUserDetailAPI = async (userId) => {
+  try {
+    const response = await fetch(`${API_BASE_URL}/users/${userId}`, {
+      method: "GET",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      credentials: "include",
+    });
+
+    const result = await parseJsonSafe(response);
+
+    if (response.ok) {
+      return { success: true, user: result };
+    }
+
+    return {
+      success: false,
+      status: response.status,
+      message:
+        (result && result.message) ||
+        "사용자 정보를 불러올 수 없습니다.",
+    };
+  } catch (error) {
+    console.error("사용자 상세 조회 API 오류:", error);
+    return { success: false, message: "사용자 정보를 불러올 수 없습니다." };
+  }
+};
+
+/**
  * 사용자 삭제 API
  */
 export const deleteUserAPI = async (userId) => {

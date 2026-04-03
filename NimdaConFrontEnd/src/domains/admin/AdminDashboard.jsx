@@ -4,6 +4,7 @@ import Footer from '@/components/Layout/Footer';
 import { useNavigate, useLocation } from 'react-router-dom';
 import {
   getAllUsersAPI,
+  getAdminUserDetailAPI,
   getAvailableRolesAPI,
   getPendingUsersAPI,
   approveUserAPI,
@@ -104,6 +105,19 @@ function AdminDashboard() {
       alert('사용자 목록을 불러오는 중 오류가 발생했습니다.');
     } finally {
       setLoading(false);
+    }
+  };
+
+  const handleSelectUser = async (user) => {
+    // 목록에서 선택한 유저 정보를 즉시 표시하고, 이후 상세 조회(presigned profileImage 포함)로 갱신
+    setSelectedUser(user);
+    try {
+      const result = await getAdminUserDetailAPI(user.id);
+      if (result.success && result.user) {
+        setSelectedUser(result.user);
+      }
+    } catch (error) {
+      console.error('사용자 상세 정보 로드 오류:', error);
     }
   };
 
@@ -893,6 +907,7 @@ function AdminDashboard() {
             loadUsers={loadUsers}
             selectedUser={selectedUser}
             setSelectedUser={setSelectedUser}
+            onSelectUser={handleSelectUser}
             hasRole={hasRole}
             getUserRoles={getUserRoles}
             uploadingImage={uploadingImage}

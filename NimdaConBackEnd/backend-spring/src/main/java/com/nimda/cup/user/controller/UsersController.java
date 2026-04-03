@@ -52,13 +52,40 @@ public class UsersController {
         try {
             Optional<User> userOpt = userService.findById(id);
 
-            if (userOpt.isPresent()) {
-                return ResponseEntity.ok(userOpt.get());
-            } else {
+            if (userOpt.isEmpty()) {
                 Map<String, String> error = new HashMap<>();
                 error.put("message", "User not found");
                 return ResponseEntity.status(404).body(error);
             }
+
+            User user = userOpt.get();
+
+            // profileImage S3 키 → Presigned URL 변환
+            String profileImage = user.getProfileImage();
+            if (profileImage != null && !profileImage.isBlank() && !profileImage.startsWith("http") && s3Service != null) {
+                profileImage = s3Service.createPresignedGetUrl(profileImage, 60);
+            }
+
+            Map<String, Object> userMap = new LinkedHashMap<>();
+            userMap.put("id", user.getId());
+            userMap.put("userId", user.getUserId());
+            userMap.put("name", user.getName());
+            userMap.put("nickname", user.getNickname());
+            userMap.put("email", user.getEmail());
+            userMap.put("studentNum", user.getStudentNum());
+            userMap.put("major", user.getMajor());
+            userMap.put("universityName", user.getUniversityName());
+            userMap.put("grade", user.getGrade());
+            userMap.put("status", user.getStatus());
+            userMap.put("birth", user.getBirth());
+            userMap.put("bojId", user.getBojId());
+            userMap.put("emailHide", user.isEmailHide());
+            userMap.put("authorities", user.getAuthorities());
+            userMap.put("profileImage", profileImage);
+            userMap.put("createdAt", user.getCreatedAt());
+            userMap.put("updatedAt", user.getUpdatedAt());
+
+            return ResponseEntity.ok(userMap);
         } catch (Exception e) {
             Map<String, String> error = new HashMap<>();
             error.put("message", "Failed to get user: " + e.getMessage());
