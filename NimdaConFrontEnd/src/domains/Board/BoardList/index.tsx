@@ -158,7 +158,7 @@ function BoardListPage({ slug: propSlug }: BoardListPageProps) {
         if (response.success) {
           let filteredPosts = response.posts;
           if (selectedTag !== null) {
-            filteredPosts = response.posts.filter((p) => p.tag === selectedTag);
+            filteredPosts = filteredPosts.filter((p) => p.tag === selectedTag);
           }
 
           const pinned = filteredPosts.filter((p) => p.pinned);
@@ -198,6 +198,10 @@ function BoardListPage({ slug: propSlug }: BoardListPageProps) {
     const tagParam = selectedTag ? `?tag=${encodeURIComponent(selectedTag)}` : '';
     navigate(`/board/${slug}/write${tagParam}`);
   };
+  const handleTagClick = (tag: string | null) => {
+    setSelectedTag(tag);
+    setCurrentPage(0);
+  };
   const handlePageChange = (page: number) => {
     setCurrentPage(page);
     window.scrollTo({ top: 0, behavior: 'smooth' });
@@ -210,10 +214,6 @@ function BoardListPage({ slug: propSlug }: BoardListPageProps) {
     e.preventDefault();
     setCurrentPage(0);
     setSearchTrigger((prev) => prev + 1);
-  };
-  const handleTagClick = (tag: string | null) => {
-    setSelectedTag(tag);
-    setCurrentPage(0);
   };
 
   // 렌더링용 변수들
@@ -299,16 +299,22 @@ function BoardListPage({ slug: propSlug }: BoardListPageProps) {
 
         {/* 태그 필터 */}
         <div className="board-list__tag-filter">
-        {availableTags && availableTags.map((tag) => (
           <button
-            key={tag}
-            className={`board-list__tag-filter-item ${selectedTag === tag ? 'board-list__tag-filter-item--active' : ''}`}
-            onClick={() => handleTagClick(tag)}
+            className={`board-list__tag-filter-item ${selectedTag === null ? 'board-list__tag-filter-item--active' : ''}`}
+            onClick={() => handleTagClick(null)}
           >
-            {tag}
+            전체
           </button>
-        ))}
-      </div>
+          {availableTags && availableTags.map((tag) => (
+            <button
+              key={tag}
+              className={`board-list__tag-filter-item ${selectedTag === tag ? 'board-list__tag-filter-item--active' : ''}`}
+              onClick={() => handleTagClick(tag)}
+            >
+              {tag}
+            </button>
+          ))}
+        </div>
 
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginTop: '16px', marginBottom: '8px' }}>
           {childCategories.length > 0 ? (
