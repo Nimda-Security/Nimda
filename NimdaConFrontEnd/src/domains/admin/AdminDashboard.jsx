@@ -1172,12 +1172,21 @@ function AdminDashboard() {
                   }}
                 >
                   <option value="">최상위 카테고리</option>
-                  {allCategoriesFlat.map((category) => (
-                    <option key={category.id} value={category.id}>
-                      {'  '.repeat(category.level)}
-                      {category.name}
-                    </option>
-                  ))}
+                  {allCategoriesFlat.map((category) => {
+                    const isChild = category.level > 0;
+
+                    return (
+                      <option 
+                        key={category.id} 
+                        value={category.id}
+                        disabled={isChild} // 2단계 카테고리는 부모로 선택 불가
+                        style={isChild ? { color: '#ccc' } : {}}
+                      >
+                        {'  '.repeat(category.level)}
+                        {category.name}
+                      </option>
+                    );
+                  })}                  
                 </select>
               </div>
 

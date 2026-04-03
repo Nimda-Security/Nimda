@@ -212,6 +212,8 @@ export const createCategoryAPI = async (
       body: JSON.stringify(data),
     });
 
+    const result = await response.json();
+
     if (response.ok) {
       const category = await parseJsonSafe(response);
       return {
@@ -221,20 +223,11 @@ export const createCategoryAPI = async (
       };
     }
 
-    // 에러 응답 처리
-    let errorMessage = '카테고리 생성에 실패했습니다.';
-    if (response.status === 401) {
-      errorMessage = '로그인이 필요합니다.';
-    } else if (response.status === 403) {
-      errorMessage = '관리자 권한이 필요합니다.';
-    } else if (response.status === 400) {
-      errorMessage = '입력한 정보를 확인해주세요.';
-    }
-
     return {
       success: false,
-      message: errorMessage,
+      message: result.message || '알 수 없는 오류가 발생했습니다.',
     };
+    
   } catch (error) {
     console.error('카테고리 생성 API 오류:', error);
     return {
