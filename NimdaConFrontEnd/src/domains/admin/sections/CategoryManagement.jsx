@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 
 const CategoryManagement = ({
   activeSection,
@@ -25,6 +25,54 @@ const CategoryManagement = ({
   savingOrder,
   orderChanged,
 }) => {
+  const [editName, setEditName] = useState('');
+  const [editSlug, setEditSlug] = useState('');
+  const [savingNameSlug, setSavingNameSlug] = useState(false);
+
+  useEffect(() => {
+    if (selectedCategoryData) {
+      setEditName(selectedCategoryData.name || '');
+      setEditSlug(selectedCategoryData.slug || '');
+    }
+  }, [selectedCategoryData?.id]);
+
+  const handleSaveNameSlug = async () => {
+    if (!selectedCategoryId || !selectedCategoryData) return;
+    const trimmedName = editName.trim();
+    const trimmedSlug = editSlug.trim();
+    if (!trimmedName) {
+      alert('카테고리명을 입력해주세요.');
+      return;
+    }
+    if (!trimmedSlug) {
+      alert('슬러그를 입력해주세요.');
+      return;
+    }
+    const slugPattern = /^[a-z0-9-]+$/;
+    if (!slugPattern.test(trimmedSlug)) {
+      alert('슬러그는 영문 소문자, 숫자, 하이픈(-)만 사용할 수 있습니다.');
+      return;
+    }
+    setSavingNameSlug(true);
+    try {
+      const result = await updateCategoryAPI(selectedCategoryId, {
+        name: trimmedName,
+        slug: trimmedSlug,
+      });
+      if (result.success) {
+        alert('카테고리명과 슬러그가 저장되었습니다.');
+        await loadCategories();
+      } else {
+        alert(result.message || '저장에 실패했습니다.');
+      }
+    } catch (error) {
+      console.error('카테고리명/슬러그 저장 오류:', error);
+      alert('저장 중 오류가 발생했습니다.');
+    } finally {
+      setSavingNameSlug(false);
+    }
+  };
+
   if (activeSection === 'category-edit') {
     return (
       <div>
@@ -97,16 +145,43 @@ const CategoryManagement = ({
         <div className="admin__catorder-right">
           {selectedCategoryData ? (
             <div className="admin__catorder-form">
-              {/* 카테고리명 */}
+              {/* 카테고리명 + 슬러그 */}
               <div className="admin__catorder-form-row">
                 <label className="admin__catorder-form-label">카테고리명</label>
                 <div className="admin__catorder-form-field">
                   <input
                     type="text"
                     className="admin__catorder-input"
-                    value={selectedCategoryData.name}
-                    readOnly
+                    value={editName}
+                    onChange={(e) => setEditName(e.target.value)}
+                    placeholder="카테고리명"
                   />
+                </div>
+              </div>
+
+              <div className="admin__catorder-form-row">
+                <label className="admin__catorder-form-label">슬러그</label>
+                <div className="admin__catorder-form-field">
+                  <div style={{ display: 'flex', gap: '8px', width: '100%' }}>
+                    <input
+                      type="text"
+                      className="admin__catorder-input"
+                      value={editSlug}
+                      onChange={(e) => setEditSlug(e.target.value.toLowerCase())}
+                      placeholder="예: notice, free-talk"
+                    />
+                    <button
+                      type="button"
+                      className="admin__btn"
+                      onClick={handleSaveNameSlug}
+                      disabled={savingNameSlug}
+                    >
+                      {savingNameSlug ? '저장 중...' : '저장'}
+                    </button>
+                  </div>
+                  <p style={{ marginTop: '4px', fontSize: '11px', color: '#999', fontFamily: 'Pretendard, sans-serif' }}>
+                    영문 소문자, 숫자, 하이픈(-)만 사용 가능합니다. URL에 사용됩니다.
+                  </p>
                 </div>
               </div>
 

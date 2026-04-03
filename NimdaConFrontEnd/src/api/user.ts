@@ -127,4 +127,3 @@ export async function getUserCommentsByNickname(nickname: string): Promise<UserC
   if (data?.success && Array.isArray(data.data?.comments)) return data.data.comments;
   return [];
 }
-
