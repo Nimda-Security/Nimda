@@ -226,10 +226,10 @@ function BoardListPage({ slug: propSlug }: BoardListPageProps) {
 
   const isNewsCategoryGroup = useMemo(() => {
     if (!category) return slug === 'news';
-    if (category.name === '새 소식') return true;
+    if (category.name === '새 소식' || category.slug === 'news') return true;
     if (category.parentId) {
       const parent = allCategories.find((c) => c.id === category.parentId);
-      return parent?.name === '새 소식';
+      return parent?.name === '새 소식' || parent?.slug === 'news';
     }
     return false;
   }, [category, slug, allCategories]);
