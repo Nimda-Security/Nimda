@@ -1225,6 +1225,42 @@ body {
   color: #0c0c0c;
 }
 
+.bw-toolbar .emoticon-picker {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+}
+
+.bw-toolbar .emoticon-picker__trigger {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 28px;
+  height: 28px;
+  padding: 0;
+  border: none;
+  border-radius: 4px;
+  background: none;
+  color: #525252;
+  cursor: pointer;
+  transition:
+    background 0.15s,
+    color 0.15s;
+}
+
+.bw-toolbar .emoticon-picker__trigger:hover {
+  background: #f0f0f0;
+  color: #0c0c0c;
+}
+
+.bw-toolbar .emoticon-picker__panel {
+  position: absolute;
+  top: calc(100% + 6px);
+  left: 0;
+  bottom: auto;
+  z-index: 40;
+}
+
 .bw-tool-dot {
   width: 4px;
   height: 4px;

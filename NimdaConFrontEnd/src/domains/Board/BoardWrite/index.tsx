@@ -8,6 +8,9 @@ import ChevronDown from '@/components/icons/ChevronDown';
 import { isAdmin, hasRole } from '@/utils/jwt';
 import { highlightCodeBlocks } from '@/utils/codeHighlight';
 import InlineColorPicker from '@/components/InlineColorPicker';
+import EmoticonPicker, {
+  getEmoticonSrc,
+} from '@/domains/Comment/EmoticonPicker';
 import type { Category } from '../types';
 
 const CODE_LANGUAGE_OPTIONS = [
@@ -701,6 +704,50 @@ function BoardWritePage() {
       setPendingCustomColor(picked);
       setPendingColor(picked);
     } catch {}
+  };
+
+  const handleToolbarEmoticonSelect = (marker: string) => {
+    const editor = contentRef.current;
+    if (!editor) return;
+
+    const id = marker.match(/\[nimda:(\d{2})\]/)?.[1];
+    if (!id) return;
+
+    const img = document.createElement('img');
+    img.src = getEmoticonSrc(id);
+    img.alt = marker;
+    img.dataset.emoticonId = id;
+    img.className = 'comment-emoticon-inline';
+    img.draggable = false;
+
+    const moveCaretAfter = (node: Node) => {
+      const range = document.createRange();
+      range.setStartAfter(node);
+      range.collapse(true);
+      const sel = window.getSelection();
+      if (sel) {
+        sel.removeAllRanges();
+        sel.addRange(range);
+      }
+    };
+
+    const sel = window.getSelection();
+    if (
+      sel &&
+      sel.rangeCount > 0 &&
+      editor.contains(sel.getRangeAt(0).commonAncestorContainer)
+    ) {
+      const range = sel.getRangeAt(0);
+      range.deleteContents();
+      range.insertNode(img);
+      moveCaretAfter(img);
+    } else {
+      editor.appendChild(img);
+      moveCaretAfter(img);
+    }
+
+    setContent(getEditorContent());
+    syncEditorEmptyState();
   };
 
   const readCurrentColor = () => {
@@ -1453,23 +1500,9 @@ function BoardWritePage() {
 
           {/* ── 툴바 ── */}
           <div className="bw-toolbar">
-            <button type="button" className="bw-tool-btn" title="이모지">
-              <svg
-                width="18"
-                height="18"
-                viewBox="0 0 24 24"
-                fill="none"
-                stroke="currentColor"
-                strokeWidth="1.8"
-                strokeLinecap="round"
-                strokeLinejoin="round"
-              >
-                <circle cx="12" cy="12" r="10" />
-                <path d="M8 14s1.5 2 4 2 4-2 4-2" />
-                <line x1="9" y1="9" x2="9.01" y2="9" />
-                <line x1="15" y1="9" x2="15.01" y2="9" />
-              </svg>
-            </button>
+            <div className="bw-tool-dropdown-wrap">
+              <EmoticonPicker onSelect={handleToolbarEmoticonSelect} />
+            </div>
             <span className="bw-tool-dot" />
             <button
               type="button"
