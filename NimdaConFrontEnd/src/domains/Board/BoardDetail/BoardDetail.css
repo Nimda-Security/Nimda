@@ -204,6 +204,19 @@
   margin-top: 6px;
 }
 
+.board-detail__body a {
+  color: #4a7fcc;
+  text-decoration: underline;
+  text-decoration-thickness: 1px;
+  text-underline-offset: 2px;
+  cursor: pointer;
+}
+
+.board-detail__body a:hover {
+  color: #2f5fa8;
+  text-decoration: none;
+}
+
 .board-detail__body br {
   line-height: 1.5;
 }

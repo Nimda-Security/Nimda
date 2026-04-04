@@ -75,6 +75,10 @@ function BoardWritePage() {
   const [error, setError] = useState<string | null>(null);
   const [showFontSize, setShowFontSize] = useState(false);
   const [showColorPicker, setShowColorPicker] = useState(false);
+  const [showLinkPopover, setShowLinkPopover] = useState(false);
+  const [linkUrl, setLinkUrl] = useState('https://');
+  const [linkText, setLinkText] = useState('');
+  const [isLinkActive, setIsLinkActive] = useState(false);
   const [colorPickerTab, setColorPickerTab] =
     useState<ColorPickerTab>('palette');
   const [selectedColor, setSelectedColor] = useState<string>('currentColor');
@@ -90,6 +94,8 @@ function BoardWritePage() {
   const fileInputRef = useRef<HTMLInputElement>(null);
   const imageInputRef = useRef<HTMLInputElement>(null);
   const contentRef = useRef<HTMLDivElement>(null);
+  const linkPopoverWrapRef = useRef<HTMLDivElement>(null);
+  const savedLinkRangeRef = useRef<Range | null>(null);
   const detailCategoryWarningRef = useRef<HTMLParagraphElement>(null);
   const isComposingRef = useRef(false);
   const justEndedCompositionRef = useRef(false);
@@ -705,6 +711,152 @@ function BoardWritePage() {
       setPendingColor(picked);
     } catch {}
   };
+
+  const findAnchorFromNode = (node: Node | null) => {
+    let current = node;
+    while (current && current !== contentRef.current) {
+      if (current instanceof HTMLAnchorElement) return current;
+      current = current.parentNode;
+    }
+    return null;
+  };
+
+  const updateLinkActiveState = () => {
+    const selection = window.getSelection();
+    if (!selection || selection.rangeCount === 0) {
+      setIsLinkActive(false);
+      return;
+    }
+
+    const range = selection.getRangeAt(0);
+    if (!contentRef.current?.contains(range.commonAncestorContainer)) {
+      setIsLinkActive(false);
+      return;
+    }
+
+    const anchor = findAnchorFromNode(selection.anchorNode);
+    setIsLinkActive(!!anchor);
+  };
+
+  const openLinkPopover = () => {
+    const selection = window.getSelection();
+    if (!selection || selection.rangeCount === 0 || !contentRef.current) {
+      setLinkUrl('https://');
+      setLinkText('');
+      setShowLinkPopover(true);
+      return;
+    }
+
+    const range = selection.getRangeAt(0);
+    if (!contentRef.current.contains(range.commonAncestorContainer)) {
+      contentRef.current.focus();
+      setLinkUrl('https://');
+      setLinkText('');
+      setShowLinkPopover(true);
+      return;
+    }
+
+    savedLinkRangeRef.current = range.cloneRange();
+    const selectedText = range.toString().trim();
+    const anchor = findAnchorFromNode(selection.anchorNode);
+
+    setLinkUrl(anchor?.getAttribute('href') || 'https://');
+    setLinkText(anchor?.textContent || selectedText);
+    setShowLinkPopover(true);
+  };
+
+  const normalizeLinkUrl = (raw: string) => {
+    const trimmed = raw.trim();
+    if (!trimmed) return '';
+    if (/^(https?:|mailto:|tel:)/i.test(trimmed)) return trimmed;
+    return `https://${trimmed}`;
+  };
+
+  const applyLink = () => {
+    const editor = contentRef.current;
+    if (!editor) return;
+
+    const normalizedUrl = normalizeLinkUrl(linkUrl);
+    if (!normalizedUrl) {
+      setShowLinkPopover(false);
+      return;
+    }
+
+    editor.focus();
+
+    const selection = window.getSelection();
+    const savedRange = savedLinkRangeRef.current;
+    if (!selection || !savedRange) {
+      setShowLinkPopover(false);
+      return;
+    }
+
+    selection.removeAllRanges();
+    selection.addRange(savedRange);
+
+    const activeAnchor = findAnchorFromNode(selection.anchorNode);
+    if (activeAnchor && savedRange.collapsed) {
+      activeAnchor.setAttribute('href', normalizedUrl);
+      activeAnchor.setAttribute('target', '_blank');
+      activeAnchor.setAttribute('rel', 'noopener noreferrer');
+      if (linkText.trim()) {
+        activeAnchor.textContent = linkText.trim();
+      }
+      setContent(getEditorContent());
+      setShowLinkPopover(false);
+      updateLinkActiveState();
+      return;
+    }
+
+    const selectedText = savedRange.toString().trim();
+    const label = linkText.trim() || selectedText || normalizedUrl;
+    const a = document.createElement('a');
+    a.href = normalizedUrl;
+    a.target = '_blank';
+    a.rel = 'noopener noreferrer';
+    a.textContent = label;
+
+    savedRange.deleteContents();
+    savedRange.insertNode(a);
+
+    const rangeAfter = document.createRange();
+    rangeAfter.setStartAfter(a);
+    rangeAfter.collapse(true);
+    selection.removeAllRanges();
+    selection.addRange(rangeAfter);
+
+    setContent(getEditorContent());
+    setShowLinkPopover(false);
+    updateLinkActiveState();
+  };
+
+  useEffect(() => {
+    const handleSelectionChange = () => {
+      updateLinkActiveState();
+    };
+    document.addEventListener('selectionchange', handleSelectionChange);
+    return () => {
+      document.removeEventListener('selectionchange', handleSelectionChange);
+    };
+  }, []);
+
+  useEffect(() => {
+    if (!showLinkPopover) return;
+
+    const handleOutsideClick = (e: MouseEvent) => {
+      if (
+        linkPopoverWrapRef.current &&
+        !linkPopoverWrapRef.current.contains(e.target as Node)
+      ) {
+        setShowLinkPopover(false);
+      }
+    };
+
+    document.addEventListener('mousedown', handleOutsideClick);
+    return () => {
+      document.removeEventListener('mousedown', handleOutsideClick);
+    };
+  }, [showLinkPopover]);
 
   const handleToolbarEmoticonSelect = (marker: string) => {
     const editor = contentRef.current;
@@ -1586,6 +1738,87 @@ function BoardWritePage() {
                 <path d="M6.5 16.5C6.5 18.99 8.51 21 11 21h2c2.49 0 4.5-2.01 4.5-4.5 0-1.38-.62-2.61-1.6-3.43" />
               </svg>
             </button>
+            <div className="bw-tool-dropdown-wrap" ref={linkPopoverWrapRef}>
+              <button
+                type="button"
+                className={`bw-tool-btn ${isLinkActive ? 'bw-tool-btn--active' : ''}`}
+                title="링크"
+                onMouseDown={(e) => e.preventDefault()}
+                onClick={() => {
+                  setShowFontSize(false);
+                  setShowColorPicker(false);
+                  if (showLinkPopover) {
+                    setShowLinkPopover(false);
+                  } else {
+                    openLinkPopover();
+                  }
+                }}
+              >
+                <svg
+                  width="18"
+                  height="18"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  strokeWidth="2"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                >
+                  <path d="M10 13a5 5 0 0 0 7.07 0l2.83-2.83a5 5 0 1 0-7.07-7.07L11 4" />
+                  <path d="M14 11a5 5 0 0 0-7.07 0L4.1 13.83a5 5 0 0 0 7.07 7.07L13 19" />
+                </svg>
+              </button>
+              {showLinkPopover && (
+                <div
+                  className="bw-link-popover"
+                  role="dialog"
+                  aria-label="링크 삽입"
+                >
+                  <label className="bw-link-popover__label">
+                    URL 주소
+                    <input
+                      type="text"
+                      className="bw-link-popover__input"
+                      value={linkUrl}
+                      onChange={(e) => setLinkUrl(e.target.value)}
+                      placeholder="https://"
+                    />
+                  </label>
+                  <label className="bw-link-popover__label">
+                    표시 텍스트
+                    <input
+                      type="text"
+                      className="bw-link-popover__input"
+                      value={linkText}
+                      onChange={(e) => setLinkText(e.target.value)}
+                      placeholder="표시할 텍스트"
+                      onKeyDown={(e) => {
+                        if (e.key === 'Enter') {
+                          e.preventDefault();
+                          applyLink();
+                        }
+                      }}
+                    />
+                  </label>
+                  <div className="bw-link-popover__actions">
+                    <button
+                      type="button"
+                      className="bw-link-popover__btn bw-link-popover__btn--cancel"
+                      onClick={() => setShowLinkPopover(false)}
+                    >
+                      취소
+                    </button>
+                    <button
+                      type="button"
+                      className="bw-link-popover__btn bw-link-popover__btn--confirm"
+                      onClick={applyLink}
+                    >
+                      확인
+                    </button>
+                  </div>
+                </div>
+              )}
+            </div>
             <span className="bw-tool-dot" />
             {/* 폰트 크기 */}
             <div className="bw-tool-dropdown-wrap">

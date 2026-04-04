@@ -1225,6 +1225,11 @@ body {
   color: #0c0c0c;
 }
 
+.bw-tool-btn--active {
+  background: #fff2f7;
+  color: #d97399;
+}
+
 .bw-toolbar .emoticon-picker {
   position: relative;
   display: inline-flex;
@@ -1259,6 +1264,70 @@ body {
   left: 0;
   bottom: auto;
   z-index: 40;
+}
+
+.bw-link-popover {
+  position: absolute;
+  top: calc(100% + 6px);
+  left: 0;
+  z-index: 40;
+  width: 280px;
+  padding: 10px;
+  border: 1px solid #e5e5e5;
+  border-radius: 8px;
+  background: #fff;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.12);
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.bw-link-popover__label {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  font-size: 12px;
+  font-weight: 600;
+  color: #525252;
+}
+
+.bw-link-popover__input {
+  width: 100%;
+  height: 32px;
+  border: 1px solid #d4d4d4;
+  border-radius: 6px;
+  padding: 0 10px;
+  font-size: 13px;
+  color: #0c0c0c;
+  box-sizing: border-box;
+}
+
+.bw-link-popover__input:focus {
+  outline: none;
+  border-color: #d97399;
+  box-shadow: 0 0 0 2px rgba(217, 115, 153, 0.15);
+}
+
+.bw-link-popover__actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 6px;
+}
+
+.bw-link-popover__btn {
+  height: 30px;
+  min-width: 56px;
+  border-radius: 6px;
+  border: 1px solid #d4d4d4;
+  background: #fff;
+  font-size: 12px;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.bw-link-popover__btn--confirm {
+  border-color: #d97399;
+  color: #d97399;
 }
 
 .bw-tool-dot {
@@ -1684,6 +1753,19 @@ body {
   direction: ltr !important;
   unicode-bidi: embed !important;
   text-align: left !important;
+}
+
+.bw-content-input a {
+  color: #4a7fcc;
+  text-decoration: underline;
+  text-decoration-thickness: 1px;
+  text-underline-offset: 2px;
+  cursor: pointer;
+}
+
+.bw-content-input a:hover {
+  color: #2f5fa8;
+  text-decoration: none;
 }
 
 .bw-content-input pre.bw-code-block {
