@@ -103,7 +103,12 @@ const PopularPostsSection: React.FC = () => {
               style={{ padding: '0 16px' }}
               onClick={() => navigate(`/board/${categorySlug}/${post.id}`)}
             >
-              <p className="home-popular__title">{post.title}</p>
+              <div className="home-popular__title-wrap">
+                {post.tag && (
+                  <span className="home-popular__tag"># {post.tag}</span>
+                )}
+                <p className="home-popular__title">{post.title}</p>
+              </div>
               <div className="home-popular__comments">
                 <MessageBox />
                 <span className="home-popular__comments-count">

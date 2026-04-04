@@ -1,5 +1,6 @@
 package com.nimda.cup.user.controller;
 
+import com.nimda.cite.board.service.BoardService;
 import com.nimda.cup.user.entity.User;
 import com.nimda.cup.user.enums.ApprovalStatus;
 import com.nimda.cup.user.service.AdminUserService;
@@ -32,6 +33,9 @@ public class AdminUserController {
 
     @Autowired
     private AdminUserService adminUserService;
+
+    @Autowired
+    private BoardService boardService;
 
     /**
      * 모든 사용자 조회
@@ -234,4 +238,16 @@ public class AdminUserController {
         }
     }
 
+    @PostMapping("/tag-delete/{tag}")
+    public ResponseEntity<?> deleteTag(@PathVariable String tag) {
+        try {
+            return ResponseEntity.status(HttpStatus.OK).body(tag);
+
+        }catch(RuntimeException e) {
+            Map<String, Object> error = new HashMap<>();
+            error.put("success", false);
+            error.put("태그 제거 중 오류가 발생했습니다.",e.getMessage());
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(error);
+        }
+    }
 }

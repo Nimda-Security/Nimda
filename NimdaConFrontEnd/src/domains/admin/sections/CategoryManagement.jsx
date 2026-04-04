@@ -1,4 +1,9 @@
 import React, { useState, useEffect } from 'react';
+import {
+  getTagStatsAPI,
+  deactivateBoardsByTagAPI,
+  activateBoardsByTagAPI,
+} from '@/api/admin/admin';
 
 const CategoryManagement = ({
   activeSection,
@@ -28,6 +33,9 @@ const CategoryManagement = ({
   const [editName, setEditName] = useState('');
   const [editSlug, setEditSlug] = useState('');
   const [savingNameSlug, setSavingNameSlug] = useState(false);
+  const [tagStats, setTagStats] = useState([]);
+  const [loadingStats, setLoadingStats] = useState(false);
+  const [processingTag, setProcessingTag] = useState(null);
 
   useEffect(() => {
     if (selectedCategoryData) {
@@ -35,6 +43,31 @@ const CategoryManagement = ({
       setEditSlug(selectedCategoryData.slug || '');
     }
   }, [selectedCategoryData?.id]);
+
+  const loadTagStats = async () => {
+    if (!selectedCategoryId) return;
+    setLoadingStats(true);
+    try {
+      const result = await getTagStatsAPI(selectedCategoryId);
+      if (result.success) {
+        setTagStats(result.tagStats || []);
+      } else {
+        setTagStats([]);
+      }
+    } catch {
+      setTagStats([]);
+    } finally {
+      setLoadingStats(false);
+    }
+  };
+
+  useEffect(() => {
+    if (activeSection === 'category-deactivate' && selectedCategoryId) {
+      loadTagStats();
+    } else {
+      setTagStats([]);
+    }
+  }, [selectedCategoryId, activeSection]);
 
   const handleSaveNameSlug = async () => {
     if (!selectedCategoryId || !selectedCategoryData) return;
@@ -83,10 +116,155 @@ const CategoryManagement = ({
   }
 
   if (activeSection === 'category-deactivate') {
+    const handleDeactivate = async (tag) => {
+      if (!confirm(`'${tag}' 태그의 모든 활성 게시글을 비활성화하시겠습니까?`)) return;
+      setProcessingTag(tag);
+      try {
+        const result = await deactivateBoardsByTagAPI(selectedCategoryId, tag);
+        if (result.success) {
+          alert(result.message || '비활성화되었습니다.');
+          await loadTagStats();
+        } else {
+          alert(result.message || '비활성화에 실패했습니다.');
+        }
+      } catch {
+        alert('비활성화 중 오류가 발생했습니다.');
+      } finally {
+        setProcessingTag(null);
+      }
+    };
+
+    const handleActivate = async (tag) => {
+      if (!confirm(`'${tag}' 태그의 모든 비활성 게시글을 다시 활성화하시겠습니까?`)) return;
+      setProcessingTag(tag);
+      try {
+        const result = await activateBoardsByTagAPI(selectedCategoryId, tag);
+        if (result.success) {
+          alert(result.message || '활성화되었습니다.');
+          await loadTagStats();
+        } else {
+          alert(result.message || '활성화에 실패했습니다.');
+        }
+      } catch {
+        alert('활성화 중 오류가 발생했습니다.');
+      } finally {
+        setProcessingTag(null);
+      }
+    };
+
     return (
       <div>
-        <h2 className="admin__section-title">카테고리 비활성화</h2>
-        <div className="admin__empty">구현 예정</div>
+        <h2 className="admin__section-title">태그별 게시글 비활성화</h2>
+        <div className="admin__catorder-wrap">
+          {/* 왼쪽: 카테고리 트리 */}
+          <div className="admin__catorder-left">
+            <div className="admin__catorder-left-header">
+              <span>카테고리 전체보기 ({getTotalCategoryCount(localCategoryTree)})</span>
+            </div>
+            <div className="admin__catorder-tree">
+              {categoriesLoading ? (
+                <div className="admin__empty" style={{ border: 'none' }}>로딩 중...</div>
+              ) : localCategoryTree.length > 0 ? (
+                localCategoryTree.map(category => renderCategoryOrderItem(category, 0))
+              ) : (
+                <div className="admin__empty" style={{ border: 'none' }}>
+                  <p style={{ marginBottom: 16 }}>카테고리가 없습니다.</p>
+                  <button onClick={loadCategories} className="admin__btn">불러오기</button>
+                </div>
+              )}
+            </div>
+          </div>
+
+          {/* 오른쪽: 태그 비활성화 관리 */}
+          <div className="admin__catorder-right">
+            {selectedCategoryData ? (
+              <div className="admin__catorder-form">
+                <div className="admin__catorder-form-row">
+                  <label className="admin__catorder-form-label" style={{ fontWeight: 600, fontSize: '15px' }}>
+                    {selectedCategoryData.name}
+                  </label>
+                </div>
+
+                {loadingStats ? (
+                  <div className="admin__empty" style={{ border: 'none' }}>통계 로딩 중...</div>
+                ) : tagStats.length > 0 ? (
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
+                    {tagStats.map((stat) => (
+                      <div
+                        key={stat.tag}
+                        style={{
+                          display: 'flex',
+                          alignItems: 'center',
+                          justifyContent: 'space-between',
+                          padding: '12px 16px',
+                          backgroundColor: '#f8f9fa',
+                          borderRadius: '8px',
+                          border: '1px solid #e9ecef',
+                        }}
+                      >
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+                          <span style={{
+                            display: 'inline-block',
+                            padding: '4px 10px',
+                            backgroundColor: '#e9ecef',
+                            borderRadius: '4px',
+                            fontSize: '14px',
+                            fontWeight: 500,
+                          }}>
+                            {stat.tag}
+                          </span>
+                          <span style={{ fontSize: '13px', color: '#666' }}>
+                            활성 <strong style={{ color: '#2b6cb0' }}>{stat.activeCount}</strong>건
+                            {stat.hiddenCount > 0 && (
+                              <> · 비활성 <strong style={{ color: '#c53030' }}>{stat.hiddenCount}</strong>건</>
+                            )}
+                          </span>
+                        </div>
+                        <div style={{ display: 'flex', gap: '8px' }}>
+                          {stat.activeCount > 0 && (
+                            <button
+                              className="admin__btn"
+                              style={{ backgroundColor: '#c53030', color: '#fff', border: 'none', fontSize: '12px', padding: '6px 12px' }}
+                              onClick={() => handleDeactivate(stat.tag)}
+                              disabled={processingTag === stat.tag}
+                            >
+                              {processingTag === stat.tag ? '처리 중...' : '비활성화'}
+                            </button>
+                          )}
+                          {stat.hiddenCount > 0 && (
+                            <button
+                              className="admin__btn"
+                              style={{ backgroundColor: '#2b6cb0', color: '#fff', border: 'none', fontSize: '12px', padding: '6px 12px' }}
+                              onClick={() => handleActivate(stat.tag)}
+                              disabled={processingTag === stat.tag}
+                            >
+                              {processingTag === stat.tag ? '처리 중...' : '활성화'}
+                            </button>
+                          )}
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                ) : categoryTags.length > 0 ? (
+                  <div className="admin__empty" style={{ border: 'none' }}>
+                    <p>태그가 등록되어 있지만 해당 태그로 작성된 게시글이 없습니다.</p>
+                  </div>
+                ) : (
+                  <div className="admin__empty" style={{ border: 'none' }}>
+                    <p>이 카테고리에 등록된 태그가 없습니다.</p>
+                    <p style={{ fontSize: '12px', color: '#999', marginTop: '8px' }}>
+                      순서 설정 메뉴에서 태그를 먼저 추가해주세요.
+                    </p>
+                  </div>
+                )}
+              </div>
+            ) : (
+              <div className="admin__empty" style={{ border: 'none' }}>
+                왼쪽에서 카테고리를 선택하세요.
+              </div>
+            )}
+          </div>
+        </div>
       </div>
     );
   }

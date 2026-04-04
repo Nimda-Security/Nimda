@@ -46,26 +46,30 @@ function BoardListPage({ slug: propSlug }: BoardListPageProps) {
     return [...noticePosts, ...pinnedPosts, ...boards];
   }, [noticePosts, pinnedPosts, boards]);
 
-  // 공지사항 로딩 (최초 1회)
+  // 공지사항 중 '필독' 태그 글만 로딩 (최초 1회)
   useEffect(() => {
     let cancelled = false;
     const fetchNotice = async () => {
       try {
-        const pinnedResponse = await getPinnedPostsAPI(undefined, 'notice', 5);
+        const pinnedResponse = await getPinnedPostsAPI(undefined, 'notice', 20);
         if (cancelled) return;
         if (pinnedResponse.success && pinnedResponse.posts.length > 0) {
-          setNoticePosts(pinnedResponse.posts);
-          return;
+          const mustReadPosts = pinnedResponse.posts.filter((p: Board) => p.tag === '필독');
+          if (mustReadPosts.length > 0) {
+            setNoticePosts(mustReadPosts);
+            return;
+          }
         }
         const listResponse = await getBoardListAPI({
           slug: 'notice',
           page: 0,
-          size: 5,
+          size: 20,
           sort: 'createdAt,desc',
         });
         if (cancelled) return;
         if (listResponse.success && listResponse.posts.length > 0) {
-          setNoticePosts(listResponse.posts);
+          const mustReadPosts = listResponse.posts.filter((p: Board) => p.tag === '필독');
+          setNoticePosts(mustReadPosts);
         }
       } catch {
         /* ignore */
