@@ -161,7 +161,6 @@ export interface CategoryCreateRequest {
   parentId?: number | null;
   sortOrder?: number | null;
   isActive?: boolean | null;
-  availableTags?: string[] | null; // 카테고리별 사용 가능한 태그 목록
 }
 
 /**
@@ -173,7 +172,6 @@ export interface CategoryUpdateRequest {
   parentId?: number | null;
   sortOrder?: number | null;
   isActive?: boolean | null;
-  availableTags?: string[] | null; // 카테고리별 사용 가능한 태그 목록
 }
 
 /**

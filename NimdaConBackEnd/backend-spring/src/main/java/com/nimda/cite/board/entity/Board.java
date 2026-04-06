@@ -34,6 +34,7 @@ import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.nimda.cite.board.entity.Category;
 import com.nimda.cite.board.enums.BoardStatus;
+import com.nimda.cite.tag.entity.Tag;
 import com.nimda.cup.common.entity.BaseTimeEntity;
 import com.nimda.cup.user.entity.User;
 import jakarta.persistence.*;
@@ -101,12 +102,12 @@ public class Board extends BaseTimeEntity {
     private Boolean pinned = false;
 
     // ========== [카테고리별 태그 시스템] ==========
-    // [신규] 게시글 태그 필드 추가
-    // [이유] 카테고리 내부에서 글 종류를 구분하기 위한 태그 (예: "필독", "공지", "가입인사")
-    // [설계 결정] nullable = true로 설정하여 기존 게시글과의 호환성 유지
-    // [설계 결정] length = 20으로 설정하여 짧은 태그명 지원
-    @Column(length = 20, nullable = true)
-    private String tag;
+    // [변경] String tag → Tag 엔티티 ManyToOne 관계로 전환
+    // [이유] V21 마이그레이션에서 board.tag 컬럼 삭제, V22에서 tag_id FK 추가
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "tag_id", nullable = true)
+    @JsonIgnoreProperties({ "hibernateLazyInitializer", "handler" })
+    private Tag tag;
 
     // ========== [기존 코드 유지] ==========
     // [기존] 파일명 - 변경 없음 (파일 업로드 기능 유지)

@@ -1,5 +1,6 @@
 package com.nimda.cite.board.dto;
 
+import com.nimda.cite.tag.entity.Tag;
 import jakarta.validation.constraints.Size;
 import lombok.AllArgsConstructor;
 import lombok.Data;
@@ -9,9 +10,7 @@ import java.util.List;
 
 /**
  * 카테고리 수정 요청 DTO
- * - 카테고리 수정 시 클라이언트에서 전달하는 데이터
- * - 모든 필드는 선택적 (null이면 기존 값 유지)
- * - null이 아닌 경우에만 validation 적용
+ * - 열든 필드는 null이면 기존 값 유지
  */
 @Data
 @NoArgsConstructor
@@ -59,7 +58,7 @@ public class CategoryUpdateDTO {
      * - 선택적 (null이면 기존 값 유지)
      * - 예: ["필독", "공지", "가입인사"]
      */
-    private List<String> availableTags;
+    private List<Tag> availableTags;
 
     /**
      * 바로가기 URL (외부 링크)

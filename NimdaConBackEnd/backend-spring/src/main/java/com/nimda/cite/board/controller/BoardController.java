@@ -1,7 +1,5 @@
 package com.nimda.cite.board.controller;
 
-import com.fasterxml.jackson.core.type.TypeReference;
-import com.fasterxml.jackson.databind.ObjectMapper;
 import com.nimda.cite.attachment.service.AttachmentService;
 import com.nimda.cite.board.dto.BoardDeleteRequest;
 import com.nimda.cite.board.dto.BoardListResponseDTO;
@@ -12,6 +10,7 @@ import com.nimda.cite.board.entity.Category;
 import com.nimda.cite.board.enums.BoardStatus;
 import com.nimda.cite.board.repository.CategoryRepository;
 import com.nimda.cite.board.service.BoardService;
+import com.nimda.cite.tag.entity.Tag;
 import com.nimda.cite.tag.repository.TagRepository;
 import com.nimda.cite.comment.enums.STATUS;
 import com.nimda.cite.comment.repository.CommentRepository;
@@ -53,9 +52,6 @@ public class BoardController {
 
     @Autowired
     private AttachmentService attachmentService;
-
-    @Autowired
-    private ObjectMapper objectMapper;
 
     @Autowired
     private TagRepository tagRepository;
@@ -310,7 +306,7 @@ public class BoardController {
             @RequestParam("categoryId") Long categoryId,
             @RequestParam("title") String title,
             @RequestParam("content") String content,
-            @RequestParam(value = "tag", required = false) String tag,
+            @RequestParam(value = "tagId", required = false) Long tagId,
             @RequestParam(value = "attachmentIds", required = false) List<Long> attachmentIds,
             @RequestParam(value = "pinned", required = false) Boolean pinned) {
         try {
@@ -350,11 +346,13 @@ public class BoardController {
                 }
             }
 
-            // validation. 태그가 존재하는 경우에만 검증을 진행한다.
-            if (tag != null && !tag.trim().isEmpty()) {
-                String validationError = validateTag(category, tag);
-                if (validationError != null) {
-                    return ApiResponse.fail(validationError).toResponse(HttpStatus.BAD_REQUEST);
+            // validation. tagId가 있으면 해당 카테고리 소속인지 검증
+            Tag tagEntity = null;
+            if (tagId != null) {
+                tagEntity = tagRepository.findById(tagId)
+                        .orElseThrow(() -> new RuntimeException("태그를 찾을 수 없습니다: " + tagId));
+                if (!tagEntity.getCategory().getId().equals(category.getId())) {
+                    return ApiResponse.fail("이 태그는 해당 카테고리에 속하지 않습니다.").toResponse(HttpStatus.BAD_REQUEST);
                 }
             }
 
@@ -362,7 +360,7 @@ public class BoardController {
             board.setTitle(title);
             board.setContent(content);
             board.setCategory(category);
-            board.setTag(tag); // 태그 설정 (null 가능)
+            board.setTag(tagEntity);
 
             // 관리자만 고정 여부 설정 가능
             if (pinned != null) {
@@ -433,7 +431,7 @@ public class BoardController {
             @RequestParam("categoryId") Long categoryId,
             @RequestParam("title") String title,
             @RequestParam("content") String content,
-            @RequestParam(value = "tag", required = false) String tag,
+            @RequestParam(value = "tagId", required = false) Long tagId,
             @RequestParam(value = "attachmentIds", required = false) List<Long> attachmentIds,
             @RequestParam(value = "pinned", required = false) Boolean pinned) {
         try {
@@ -465,18 +463,20 @@ public class BoardController {
                 }
             }
 
-            // Validation. 태그가 존재하는 경우에만 검증을 진행한다.
-            if (tag != null && !tag.trim().isEmpty()) {
-                String validationError = validateTag(category, tag);
-                if (validationError != null) {
-                    return ApiResponse.fail(validationError).toResponse(HttpStatus.BAD_REQUEST);
+            // Validation. tagId가 있으면 해당 카테고리 소속인지 검증
+            Tag tagEntity = null;
+            if (tagId != null) {
+                tagEntity = tagRepository.findById(tagId)
+                        .orElseThrow(() -> new RuntimeException("태그를 찾을 수 없습니다: " + tagId));
+                if (!tagEntity.getCategory().getId().equals(category.getId())) {
+                    return ApiResponse.fail("이 태그는 해당 카테고리에 속하지 않습니다.").toResponse(HttpStatus.BAD_REQUEST);
                 }
             }
 
             boardTemp.setTitle(title);
             boardTemp.setContent(content);
             boardTemp.setCategory(category);
-            boardTemp.setTag(tag); // 태그 설정 (null 가능)
+            boardTemp.setTag(tagEntity);
 
             // 관리자만 고정 여부 설정 가능
             if (pinned != null && isAdmin) {
@@ -564,37 +564,6 @@ public class BoardController {
             return ApiResponse.fail("게시글 고정/해제 중 오류가 발생했습니다: " + e.getMessage())
                     .toResponse(HttpStatus.INTERNAL_SERVER_ERROR);
         }
-    }
-
-    /**
-     * 태그 검증 메서드
-     * 카테고리의 availableTags에 지정된 태그가 포함되어 있는지 확인
-     * 
-     * @param category 카테고리 엔티티
-     * @param tag      검증할 태그
-     * @return 검증 실패 시 에러 메시지, 성공 시 null
-     */
-    private String validateTag(Category category, String tag) {
-
-        // Tag 엔티티 기반으로 카테고리에 등록된 태그 목록을 조회한다.
-        List<String> availableTags = tagRepository
-                .findAllByCategoryIdOrderBySortValueAsc(category.getId())
-                .stream()
-                .map(t -> t.getTagName())
-                .toList();
-
-        // 등록된 태그가 없으면 태그 없이 글쓰기 허용 (태그 미설정 카테고리)
-        if (availableTags.isEmpty()) {
-            return null;
-        }
-
-        // 태그가 허용된 목록에 포함되어 있는지 확인
-        if (!availableTags.contains(tag)) {
-            return String.format("'%s' 태그는 이 카테고리에서 사용할 수 없습니다. 사용 가능한 태그: %s",
-                    tag, String.join(", ", availableTags));
-        }
-
-        return null;
     }
 
     @GetMapping("/my/board-count")

@@ -56,14 +56,14 @@ const NoticeSection: React.FC = () => {
           const items: NoticeItem[] = [
             ...pinnedPosts.map((post) => ({
               id: post.id,
-              tag: post.tag || "필독", // post.tag가 있으면 사용, 없으면 기본값 "필독"
+              tag: post.tag?.tagName || "필독", // post.tag가 있으면 사용, 없으면 기본값 "필독"
               tagType: "pinned" as const,
               title: post.title,
               date: formatDate(post.createdAt),
             })),
             ...normalPosts.map((post, index) => ({
               id: post.id,
-              tag: post.tag || "공지", // post.tag가 있으면 사용, 없으면 기본값 "공지"
+              tag: post.tag?.tagName || "공지", // post.tag가 있으면 사용, 없으면 기본값 "공지"
               tagType: index === 0 ? ("notice" as const) : ("normal" as const),
               title: post.title,
               date: formatDate(post.createdAt),

@@ -1,11 +1,11 @@
 package com.nimda.cite.board.controller;
 
-import com.fasterxml.jackson.core.type.TypeReference;
-import com.fasterxml.jackson.databind.ObjectMapper;
 import com.nimda.cite.board.entity.Category;
 import com.nimda.cite.board.enums.BoardStatus;
 import com.nimda.cite.board.repository.CategoryRepository;
 import com.nimda.cite.board.service.BoardService;
+import com.nimda.cite.tag.entity.Tag;
+import com.nimda.cite.tag.repository.TagRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -26,7 +26,7 @@ public class AdminBoardController {
     private CategoryRepository categoryRepository;
 
     @Autowired
-    private ObjectMapper objectMapper;
+    private TagRepository tagRepository;
 
     /**
      * 카테고리의 태그별 게시글 통계 조회
@@ -40,24 +40,16 @@ public class AdminBoardController {
                         .body(Map.of("success", false, "message", "카테고리를 찾을 수 없습니다."));
             }
 
-            Category category = categoryOpt.get();
-            List<String> tags = new ArrayList<>();
-
-            if (category.getAvailableTags() != null && !category.getAvailableTags().isEmpty()) {
-                try {
-                    tags = objectMapper.readValue(category.getAvailableTags(), new TypeReference<List<String>>() {});
-                } catch (Exception e) {
-                    tags = new ArrayList<>();
-                }
-            }
+            List<Tag> tags = tagRepository.findAllByCategoryIdOrderBySortValueAsc(categoryId);
 
             List<Map<String, Object>> tagStats = new ArrayList<>();
-            for (String tag : tags) {
-                long activeCount = boardService.countBoardsByTagAndStatus(categoryId, tag, BoardStatus.ACTIVE);
-                long hiddenCount = boardService.countBoardsByTagAndStatus(categoryId, tag, BoardStatus.HIDDEN);
+            for (Tag tag : tags) {
+                long activeCount = boardService.countBoardsByTagAndStatus(categoryId, tag.getId(), BoardStatus.ACTIVE);
+                long hiddenCount = boardService.countBoardsByTagAndStatus(categoryId, tag.getId(), BoardStatus.HIDDEN);
 
                 Map<String, Object> stat = new LinkedHashMap<>();
-                stat.put("tag", tag);
+                stat.put("tagId", tag.getId());
+                stat.put("tagName", tag.getTagName());
                 stat.put("activeCount", activeCount);
                 stat.put("hiddenCount", hiddenCount);
                 tagStats.add(stat);
@@ -79,7 +71,7 @@ public class AdminBoardController {
      * 태그 기반 게시글 비활성화 (ACTIVE → HIDDEN)
      */
     @PutMapping("/deactivate-by-tag")
-    public ResponseEntity<?> deactivateByTag(@RequestParam Long categoryId, @RequestParam String tag) {
+    public ResponseEntity<?> deactivateByTag(@RequestParam Long categoryId, @RequestParam Long tagId) {
         try {
             Optional<Category> categoryOpt = categoryRepository.findById(categoryId);
             if (categoryOpt.isEmpty()) {
@@ -87,11 +79,11 @@ public class AdminBoardController {
                         .body(Map.of("success", false, "message", "카테고리를 찾을 수 없습니다."));
             }
 
-            int count = boardService.hideBoardsByTag(categoryId, tag);
+            int count = boardService.hideBoardsByTag(categoryId, tagId);
 
             Map<String, Object> response = new LinkedHashMap<>();
             response.put("success", true);
-            response.put("message", "'" + tag + "' 태그의 게시글 " + count + "건이 비활성화되었습니다.");
+            response.put("message", "tagId=" + tagId + " 태그의 게시글 " + count + "건이 비활성화되었습니다.");
             response.put("affectedCount", count);
             return ResponseEntity.ok(response);
 
@@ -105,7 +97,7 @@ public class AdminBoardController {
      * 태그 기반 게시글 활성화 (HIDDEN → ACTIVE)
      */
     @PutMapping("/activate-by-tag")
-    public ResponseEntity<?> activateByTag(@RequestParam Long categoryId, @RequestParam String tag) {
+    public ResponseEntity<?> activateByTag(@RequestParam Long categoryId, @RequestParam Long tagId) {
         try {
             Optional<Category> categoryOpt = categoryRepository.findById(categoryId);
             if (categoryOpt.isEmpty()) {
@@ -113,11 +105,11 @@ public class AdminBoardController {
                         .body(Map.of("success", false, "message", "카테고리를 찾을 수 없습니다."));
             }
 
-            int count = boardService.activateBoardsByTag(categoryId, tag);
+            int count = boardService.activateBoardsByTag(categoryId, tagId);
 
             Map<String, Object> response = new LinkedHashMap<>();
             response.put("success", true);
-            response.put("message", "'" + tag + "' 태그의 게시글 " + count + "건이 활성화되었습니다.");
+            response.put("message", "tagId=" + tagId + " 태그의 게시글 " + count + "건이 활성화되었습니다.");
             response.put("affectedCount", count);
             return ResponseEntity.ok(response);
 

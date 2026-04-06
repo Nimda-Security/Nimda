@@ -2,6 +2,7 @@ package com.nimda.cite.board.dto;
 
 import com.nimda.cite.attachment.dto.AttachmentResponseDto;
 import com.nimda.cite.board.entity.Board;
+import com.nimda.cite.tag.entity.Tag;
 import com.nimda.cup.user.entity.User;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
@@ -35,7 +36,7 @@ public class BoardResponseDTO {
     private Long likeCount;
     private Long commentCount;
     private Boolean pinned;
-    private String tag; // 게시글 태그 (예: "필독", "공지", "가입인사")
+    private TagInfo tag; // 게시글 태그 (Tag 엔티티 관계)
     private String filename;
     private String filepath;
 
@@ -44,6 +45,19 @@ public class BoardResponseDTO {
 
     private LocalDateTime createdAt;
     private LocalDateTime updatedAt;
+
+    /**
+     * 태그 정보 (간소화된 Tag 엔티티)
+     */
+    @Getter
+    @Setter
+    @Builder
+    @NoArgsConstructor
+    @AllArgsConstructor
+    public static class TagInfo {
+        private Long id;
+        private String tagName;
+    }
 
     /**
      * 작성자 정보 (간소화된 정보만 노출)
@@ -96,6 +110,9 @@ public class BoardResponseDTO {
                     .build();
         }
 
+        Tag tag = board.getTag();
+        TagInfo tagInfo = tag != null ? TagInfo.builder().id(tag.getId()).tagName(tag.getTagName()).build() : null;
+
         return BoardResponseDTO.builder()
                 .id(board.getId())
                 .title(board.getTitle())
@@ -107,7 +124,7 @@ public class BoardResponseDTO {
                 .isLiked(isLiked)
                 .commentCount(commentCount)
                 .pinned(board.getPinned())
-                .tag(board.getTag()) // 태그 필드 추가
+                .tag(tagInfo)
                 .filename(board.getFilename())
                 .filepath(board.getFilepath())
                 .attachments(attachments)

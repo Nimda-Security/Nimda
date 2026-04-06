@@ -429,10 +429,10 @@ export const getTagStatsAPI = async (categoryId) => {
 /**
  * 태그 기반 게시글 비활성화 API (ACTIVE → HIDDEN)
  */
-export const deactivateBoardsByTagAPI = async (categoryId, tag) => {
+export const deactivateBoardsByTagAPI = async (categoryId, tagId) => {
   try {
     const response = await fetch(
-      `${API_BASE_URL}/admin/boards/deactivate-by-tag?categoryId=${categoryId}&tag=${encodeURIComponent(tag)}`,
+      `${API_BASE_URL}/admin/boards/deactivate-by-tag?categoryId=${categoryId}&tagId=${tagId}`,
       {
         method: "PUT",
         headers: { "Content-Type": "application/json" },
@@ -457,10 +457,10 @@ export const deactivateBoardsByTagAPI = async (categoryId, tag) => {
 /**
  * 태그 기반 게시글 활성화 API (HIDDEN → ACTIVE)
  */
-export const activateBoardsByTagAPI = async (categoryId, tag) => {
+export const activateBoardsByTagAPI = async (categoryId, tagId) => {
   try {
     const response = await fetch(
-      `${API_BASE_URL}/admin/boards/activate-by-tag?categoryId=${categoryId}&tag=${encodeURIComponent(tag)}`,
+      `${API_BASE_URL}/admin/boards/activate-by-tag?categoryId=${categoryId}&tagId=${tagId}`,
       {
         method: "PUT",
         headers: { "Content-Type": "application/json" },

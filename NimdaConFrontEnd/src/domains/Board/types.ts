@@ -22,7 +22,6 @@ export interface Category {
   slug: string;
   sortOrder: number;
   postCount: number;
-  availableTags?: string | null; // 카테고리별 사용 가능한 태그 목록 (JSON 형식의 문자열)
   redirectUrl?: string | null;  // 바로가기 URL (외부 링크, null이면 일반 게시판)
   createdAt: string;
   updatedAt: string;
@@ -64,7 +63,7 @@ export interface Board {
   likeCount?: number; // 좋아요 개수 (선택적)
   commentCount?: number; // 댓글 개수 (선택적)
   pinned: boolean;
-  tag?: string | null; // 게시글 태그 (예: "필독", "공지", "가입인사")
+  tag?: { id: number; tagName: string } | null; // Tag 엔티티 참조
   filename?: string | null;
   filepath?: string | null;
   /** S3+Attachment 연동 시 상세 조회에 포함 */
@@ -115,15 +114,14 @@ export interface BoardWriteRequest {
   categoryId: number;
   title: string;
   content: string;
-  tag?: string | null; // 게시글 태그 (예: "필독", "공지", "가입인사")
+  tagId?: number | null; // Tag 엔티티 ID
   /**
    * presigned→S3→register로 얻은 첨부 ID 목록. 백엔드 `attachmentIds`와 동일.
    * - 작성: 생략 시 첨부 없음.
-   * - 수정: 생략 시 첨부 동기화 안 함(제목·내용만 변경). 전달 시 최종 ID 목록으로 동기화.
+   * - 수정: 생략 시 첨부 동기화 안 함(제목·내용만 변경). 전달 시 첨부 최종 ID 목록으로 동기화.
    */
   attachmentIds?: number[];
   pinned?: boolean; // 게시글 고정 여부 (관리자만 설정 가능)
-  // 제거됨: file?: File — 백엔드가 multipart `file`을 제거하고 `attachmentIds`만 받음 (이유: S3 직접 업로드).
 }
 
 /**

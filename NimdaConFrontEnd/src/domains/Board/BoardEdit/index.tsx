@@ -4,6 +4,8 @@ import Layout from '@/components/Layout';
 import InlineColorPicker from '@/components/InlineColorPicker';
 import { getBoardDetailAPI, updateBoardAPI } from '@/api/board';
 import { uploadBoardFileViaS3 } from '@/api/attachments';
+import { getTagsByCategoryAPI } from '@/api/tag';
+import type { TagResponse } from '@/api/tag';
 import { highlightCodeBlocks } from '@/utils/codeHighlight';
 import type { Board } from '../types';
 
@@ -53,7 +55,8 @@ function BoardEditPage() {
   const [board, setBoard] = useState<Board | null>(null);
   const [title, setTitle] = useState('');
   const [content, setContent] = useState('');
-  const [tag, setTag] = useState<string>('');
+  const [tagId, setTagId] = useState<number | null>(null);
+  const [availableTags, setAvailableTags] = useState<TagResponse[]>([]);
   /** 새로 선택한 파일(저장 시 S3 업로드). */
   const [file, setFile] = useState<File | null>(null);
   /**
@@ -992,7 +995,7 @@ function BoardEditPage() {
         setBoard(fetchedBoard);
         setTitle(fetchedBoard.title);
         setContent(fetchedBoard.content);
-        setTag(fetchedBoard.tag || '');
+        setTagId(fetchedBoard.tag?.id ?? null);
         if (fetchedBoard.attachments !== undefined) {
           setAttachmentIdList(fetchedBoard.attachments.map((a) => a.id));
         } else {
@@ -1050,7 +1053,7 @@ function BoardEditPage() {
         categoryId: board.category.id,
         title: title.trim(),
         content: getEditorContent(),
-        tag: tag.trim() || undefined,
+        tagId: tagId ?? undefined,
         attachmentIds,
       });
 
@@ -1094,17 +1097,16 @@ function BoardEditPage() {
     );
   };
 
-  // 카테고리의 availableTags를 파싱하여 배열로 변환
-  const getAvailableTags = (): string[] => {
-    if (!board?.category?.availableTags) return [];
-    try {
-      return JSON.parse(board.category.availableTags);
-    } catch {
-      return [];
+  // 카테고리의 Tag API에서 태그 목록 조회
+  useEffect(() => {
+    if (!board?.category?.id) {
+      setAvailableTags([]);
+      return;
     }
-  };
-
-  const availableTags = getAvailableTags();
+    getTagsByCategoryAPI(board.category.id)
+      .then(setAvailableTags)
+      .catch(() => setAvailableTags([]));
+  }, [board?.category?.id]);
 
   if (loading) {
     return (
@@ -1554,7 +1556,7 @@ function BoardEditPage() {
               />
             </div>
 
-            {/* 태그 선택 (카테고리에 availableTags가 있을 때만 표시) */}
+            {/* 태그 선택 (Tag 엔티티 기반) */}
             {availableTags.length > 0 && (
               <div>
                 <label
@@ -1565,14 +1567,14 @@ function BoardEditPage() {
                 </label>
                 <select
                   id="tag"
-                  value={tag}
-                  onChange={(e) => setTag(e.target.value)}
+                  value={tagId ?? ''}
+                  onChange={(e) => setTagId(e.target.value ? Number(e.target.value) : null)}
                   className="w-full px-4 py-2 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-black"
                 >
                   <option value="">세부 카테고리를 선택하세요</option>
-                  {availableTags.map((tagOption) => (
-                    <option key={tagOption} value={tagOption}>
-                      {tagOption}
+                  {availableTags.map((t) => (
+                    <option key={t.id} value={t.id}>
+                      {t.tagName}
                     </option>
                   ))}
                 </select>

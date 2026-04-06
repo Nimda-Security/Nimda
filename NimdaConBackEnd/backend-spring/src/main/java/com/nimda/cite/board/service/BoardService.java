@@ -158,20 +158,7 @@ Long categoryId = board.getCategory() != null ? board.getCategory().getId() : nu
         Board board = boardRepository.findById(id)
                 .orElseThrow(() -> new RuntimeException("게시글을 찾을 수 없습니다: " + id));
 
-        boolean willBePinned = !board.getPinned();
-        board.setPinned(willBePinned);
-
-        // 고정 시 태그가 없으면 "필독" 자동 설정, 해제 시 "필독" 태그 제거
-        if (willBePinned) {
-            if (board.getTag() == null || board.getTag().isBlank()) {
-                board.setTag("필독");
-            }
-        } else {
-            if ("필독".equals(board.getTag())) {
-                board.setTag(null);
-            }
-        }
-
+        board.setPinned(!board.getPinned());
         boardRepository.save(board);
 
         return board;
@@ -208,23 +195,23 @@ Long categoryId = board.getCategory() != null ? board.getCategory().getId() : nu
     }
 
     @Transactional
-    public void deleteBoardsByTag(Long categoryId, String tagName) {
-        int deletedCount = boardRepository.updateStatusByTag(categoryId, tagName, BoardStatus.DELETED);
-        System.out.println(tagName + " 태그를 가진 게시글 " + deletedCount + "건을 비활성화했습니다.");
+    public void deleteBoardsByTag(Long categoryId, Long tagId) {
+        int deletedCount = boardRepository.updateStatusByTagId(categoryId, tagId, BoardStatus.DELETED);
+        System.out.println("tagId=" + tagId + " 태그를 가진 게시글 " + deletedCount + "건을 비활성화했습니다.");
     }
 
     @Transactional
-    public int hideBoardsByTag(Long categoryId, String tagName) {
-        return boardRepository.updateStatusByTagAndCurrentStatus(categoryId, tagName, BoardStatus.ACTIVE, BoardStatus.HIDDEN);
+    public int hideBoardsByTag(Long categoryId, Long tagId) {
+        return boardRepository.updateStatusByTagIdAndCurrentStatus(categoryId, tagId, BoardStatus.ACTIVE, BoardStatus.HIDDEN);
     }
 
     @Transactional
-    public int activateBoardsByTag(Long categoryId, String tagName) {
-        return boardRepository.updateStatusByTagAndCurrentStatus(categoryId, tagName, BoardStatus.HIDDEN, BoardStatus.ACTIVE);
+    public int activateBoardsByTag(Long categoryId, Long tagId) {
+        return boardRepository.updateStatusByTagIdAndCurrentStatus(categoryId, tagId, BoardStatus.HIDDEN, BoardStatus.ACTIVE);
     }
 
     @Transactional(readOnly = true)
-    public long countBoardsByTagAndStatus(Long categoryId, String tagName, BoardStatus status) {
-        return boardRepository.countByCategoryIdAndTagAndStatus(categoryId, tagName, status);
+    public long countBoardsByTagAndStatus(Long categoryId, Long tagId, BoardStatus status) {
+        return boardRepository.countByCategoryIdAndTagIdAndStatus(categoryId, tagId, status);
     }
 }

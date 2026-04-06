@@ -1,7 +1,5 @@
 package com.nimda.cite.board.service;
 
-import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.databind.ObjectMapper;
 import com.nimda.cite.board.dto.CategoryCreateDTO;
 import com.nimda.cite.board.dto.CategorySortOrderDTO;
 import com.nimda.cite.board.dto.CategoryUpdateDTO;
@@ -30,9 +28,6 @@ public class CategoryService {
 
     @Autowired
     private BoardRepository boardRepository;
-
-    @Autowired
-    private ObjectMapper objectMapper;
 
     /**
      * 활성화된 모든 카테고리 조회
@@ -114,17 +109,7 @@ public class CategoryService {
             // 생성 시에는 순환 참조 체크 불필요 (아직 존재하지 않는 카테고리)
         }
 
-        // 3. availableTags를 JSON 문자열로 변환
-        String availableTagsJson = null;
-        if (createDTO.getAvailableTags() != null && !createDTO.getAvailableTags().isEmpty()) {
-            try {
-                availableTagsJson = objectMapper.writeValueAsString(createDTO.getAvailableTags());
-            } catch (JsonProcessingException e) {
-                throw new RuntimeException("태그 목록을 처리하는 중 오류가 발생했습니다.", e);
-            }
-        }
-
-        // 4. Category 생성
+        // 3. Category 생성
         Category category = Category.builder()
                 .name(createDTO.getName())
                 .slug(createDTO.getSlug())
@@ -132,11 +117,10 @@ public class CategoryService {
                 .sortOrder(createDTO.getSortOrder() != null ? createDTO.getSortOrder() : 0)
                 .isActive(createDTO.getIsActive() != null ? createDTO.getIsActive() : true)
                 .postCount(0)
-                .availableTags(availableTagsJson)
                 .redirectUrl(createDTO.getRedirectUrl() != null && !createDTO.getRedirectUrl().isBlank() ? createDTO.getRedirectUrl().trim() : null)
                 .build();
 
-        // 5. 저장 및 반환
+        // 4. 저장 및 반환
         return categoryRepository.save(category);
     }
 
@@ -196,19 +180,6 @@ public class CategoryService {
         }
         if (updateDTO.getIsActive() != null) {
             category.setIsActive(updateDTO.getIsActive());
-        }
-        if (updateDTO.getAvailableTags() != null) {
-            // availableTags를 JSON 문자열로 변환
-            try {
-                if (updateDTO.getAvailableTags().isEmpty()) {
-                    // 빈 배열이면 null로 설정 (태그 사용 불가)
-                    category.setAvailableTags(null);
-                } else {
-                    category.setAvailableTags(objectMapper.writeValueAsString(updateDTO.getAvailableTags()));
-                }
-            } catch (JsonProcessingException e) {
-                throw new RuntimeException("태그 목록을 처리하는 중 오류가 발생했습니다.", e);
-            }
         }
         if (updateDTO.getRedirectUrl() != null) {
             // 빈 문자열이면 null로 설정 (URL 제거), 아니면 트림 후 저장

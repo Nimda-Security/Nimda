@@ -55,7 +55,7 @@ function BoardListPage({ slug: propSlug }: BoardListPageProps) {
         const pinnedResponse = await getPinnedPostsAPI(undefined, 'notice', 20);
         if (cancelled) return;
         if (pinnedResponse.success && pinnedResponse.posts.length > 0) {
-          const mustReadPosts = pinnedResponse.posts.filter((p: Board) => p.tag === '필독');
+          const mustReadPosts = pinnedResponse.posts.filter((p: Board) => p.tag?.tagName === '필독');
           if (mustReadPosts.length > 0) {
             setNoticePosts(mustReadPosts);
             return;
@@ -69,7 +69,7 @@ function BoardListPage({ slug: propSlug }: BoardListPageProps) {
         });
         if (cancelled) return;
         if (listResponse.success && listResponse.posts.length > 0) {
-          const mustReadPosts = listResponse.posts.filter((p: Board) => p.tag === '필독');
+          const mustReadPosts = listResponse.posts.filter((p: Board) => p.tag?.tagName === '필독');
           setNoticePosts(mustReadPosts);
         }
       } catch {
@@ -162,7 +162,7 @@ function BoardListPage({ slug: propSlug }: BoardListPageProps) {
         if (response.success) {
           let filteredPosts = response.posts;
           if (selectedTag !== null) {
-            filteredPosts = filteredPosts.filter((p) => p.tag === selectedTag);
+            filteredPosts = filteredPosts.filter((p) => p.tag?.tagName === selectedTag);
           }
 
           const pinned = filteredPosts.filter((p) => p.pinned);
@@ -223,7 +223,7 @@ function BoardListPage({ slug: propSlug }: BoardListPageProps) {
   // 렌더링용 변수들
   const categoryName = category?.name || CATEGORY_LABELS[slug] || '게시판';
   const getCategoryTagLabel = (post: Board, fallbackLabel?: string): string | null => {
-    if (post.tag) return `# ${post.tag}`;
+    if (post.tag?.tagName) return `# ${post.tag.tagName}`;
     if (fallbackLabel) return `# ${fallbackLabel}`;
     return null;
   };

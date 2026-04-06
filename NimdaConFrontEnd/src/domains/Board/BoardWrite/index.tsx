@@ -66,7 +66,7 @@ function BoardWritePage() {
 
   const [title, setTitle] = useState('');
   const [content, setContent] = useState('');
-  const [tag, setTag] = useState<string>('');
+  const [tagId, setTagId] = useState<number | null>(null);
   const [attachedFiles, setAttachedFiles] = useState<
     { id: number; name: string; size: number; isInline?: boolean }[]
   >([]);
@@ -346,7 +346,7 @@ function BoardWritePage() {
             const b = res.board;
             setEditBoardId(b.id);
             setTitle(b.title);
-            setTag(b.tag || '');
+            setTagId(b.tag?.id ?? null);
             setIsPinned(b.pinned || false);
             if (b.attachments && b.attachments.length > 0) {
               setAttachedFiles(
@@ -447,7 +447,7 @@ function BoardWritePage() {
       setError('카테고리를 선택해주세요.');
       return;
     }
-    if (currentTagList.length > 0 && !tag.trim()) {
+    if (currentTagList.length > 0 && tagId === null) {
       setError(null);
       requestAnimationFrame(() => {
         detailCategoryWarningRef.current?.focus();
@@ -472,7 +472,7 @@ function BoardWritePage() {
           categoryId: targetCategoryId,
           title: title.trim(),
           content,
-          tag: tag.trim() || undefined,
+          tagId: tagId ?? undefined,
           attachmentIds,
           ...(isAdmin() && { pinned: isPinned }),
         });
@@ -490,7 +490,7 @@ function BoardWritePage() {
         categoryId: targetCategoryId,
         title: title.trim(),
         content,
-        tag: tag.trim() || undefined,
+        tagId: tagId ?? undefined,
         attachmentIds,
       });
 
@@ -1590,7 +1590,7 @@ function BoardWritePage() {
                         } else {
                           setSubCategoryId(cat.id);
                         }
-                        setTag('');
+                        setTagId(null);
                         setShowParentDropdown(false);
                       }}
                     >
@@ -1631,7 +1631,7 @@ function BoardWritePage() {
                           onClick={(e) => {
                             e.stopPropagation();
                             setSubCategoryId(sub.id);
-                            setTag('');
+                            setTagId(null);
                             setShowSubDropdown(false);
                           }}
                         >
@@ -2248,8 +2248,8 @@ function BoardWritePage() {
                   <button
                     key={tagOption.id}
                     type="button"
-                    className={`bw-tag-chip ${tag === tagOption.tagName ? 'bw-tag-chip--active' : ''}`}
-                    onClick={() => setTag(tag === tagOption.tagName ? '' : tagOption.tagName)}
+                    className={`bw-tag-chip ${tagId === tagOption.id ? 'bw-tag-chip--active' : ''}`}
+                    onClick={() => setTagId(tagId === tagOption.id ? null : tagOption.id)}
                   >
                     #{tagOption.tagName}
                   </button>
@@ -2258,7 +2258,7 @@ function BoardWritePage() {
             ) : (
               <p className="bw-tag-hint">카테고리가 없습니다.</p>
             )}
-            {!tag.trim() && (
+            {!tagId && (
               <p
                 ref={detailCategoryWarningRef}
                 tabIndex={-1}

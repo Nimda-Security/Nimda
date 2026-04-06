@@ -116,11 +116,11 @@ const CategoryManagement = ({
   }
 
   if (activeSection === 'category-deactivate') {
-    const handleDeactivate = async (tag) => {
-      if (!confirm(`'${tag}' 태그의 모든 활성 게시글을 비활성화하시겠습니까?`)) return;
-      setProcessingTag(tag);
+    const handleDeactivate = async (tagId, tagName) => {
+      if (!confirm(`'${tagName}' 태그의 모든 활성 게시글을 비활성화하시겠습니까?`)) return;
+      setProcessingTag(tagId);
       try {
-        const result = await deactivateBoardsByTagAPI(selectedCategoryId, tag);
+        const result = await deactivateBoardsByTagAPI(selectedCategoryId, tagId);
         if (result.success) {
           alert(result.message || '비활성화되었습니다.');
           await loadTagStats();
@@ -134,11 +134,11 @@ const CategoryManagement = ({
       }
     };
 
-    const handleActivate = async (tag) => {
-      if (!confirm(`'${tag}' 태그의 모든 비활성 게시글을 다시 활성화하시겠습니까?`)) return;
-      setProcessingTag(tag);
+    const handleActivate = async (tagId, tagName) => {
+      if (!confirm(`'${tagName}' 태그의 모든 비활성 게시글을 다시 활성화하시겠습니까?`)) return;
+      setProcessingTag(tagId);
       try {
-        const result = await activateBoardsByTagAPI(selectedCategoryId, tag);
+        const result = await activateBoardsByTagAPI(selectedCategoryId, tagId);
         if (result.success) {
           alert(result.message || '활성화되었습니다.');
           await loadTagStats();
@@ -191,7 +191,7 @@ const CategoryManagement = ({
                   <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
                     {tagStats.map((stat) => (
                       <div
-                        key={stat.tag}
+                        key={stat.tagId}
                         style={{
                           display: 'flex',
                           alignItems: 'center',
@@ -211,7 +211,7 @@ const CategoryManagement = ({
                             fontSize: '14px',
                             fontWeight: 500,
                           }}>
-                            {stat.tag}
+                            {stat.tagName}
                           </span>
                           <span style={{ fontSize: '13px', color: '#666' }}>
                             활성 <strong style={{ color: '#2b6cb0' }}>{stat.activeCount}</strong>건
@@ -225,20 +225,20 @@ const CategoryManagement = ({
                             <button
                               className="admin__btn"
                               style={{ backgroundColor: '#c53030', color: '#fff', border: 'none', fontSize: '12px', padding: '6px 12px' }}
-                              onClick={() => handleDeactivate(stat.tag)}
-                              disabled={processingTag === stat.tag}
+                              onClick={() => handleDeactivate(stat.tagId, stat.tagName)}
+                              disabled={processingTag === stat.tagId}
                             >
-                              {processingTag === stat.tag ? '처리 중...' : '비활성화'}
+                              {processingTag === stat.tagId ? '처리 중...' : '비활성화'}
                             </button>
                           )}
                           {stat.hiddenCount > 0 && (
                             <button
                               className="admin__btn"
                               style={{ backgroundColor: '#2b6cb0', color: '#fff', border: 'none', fontSize: '12px', padding: '6px 12px' }}
-                              onClick={() => handleActivate(stat.tag)}
-                              disabled={processingTag === stat.tag}
+                              onClick={() => handleActivate(stat.tagId, stat.tagName)}
+                              disabled={processingTag === stat.tagId}
                             >
-                              {processingTag === stat.tag ? '처리 중...' : '활성화'}
+                              {processingTag === stat.tagId ? '처리 중...' : '활성화'}
                             </button>
                           )}
                         </div>

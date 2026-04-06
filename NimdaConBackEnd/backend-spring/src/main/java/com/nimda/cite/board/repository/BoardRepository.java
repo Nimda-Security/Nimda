@@ -111,21 +111,21 @@ public interface BoardRepository extends JpaRepository<Board, Long> { // [수정
 
     @Modifying(clearAutomatically = true)
     @Query("UPDATE Board b SET b.status = :status " +
-            "WHERE b.category.id = :categoryId AND b.tag = :tag AND b.status != :status")
-    int updateStatusByTag(@Param("categoryId") Long categoryId,
-                          @Param("tag") String tag,
-                          @Param("status") BoardStatus status);
+            "WHERE b.category.id = :categoryId AND b.tag.id = :tagId AND b.status != :status")
+    int updateStatusByTagId(@Param("categoryId") Long categoryId,
+                            @Param("tagId") Long tagId,
+                            @Param("status") BoardStatus status);
 
     @Modifying(clearAutomatically = true)
     @Query("UPDATE Board b SET b.status = :newStatus " +
-            "WHERE b.category.id = :categoryId AND b.tag = :tag AND b.status = :oldStatus")
-    int updateStatusByTagAndCurrentStatus(@Param("categoryId") Long categoryId,
-                                          @Param("tag") String tag,
-                                          @Param("oldStatus") BoardStatus oldStatus,
-                                          @Param("newStatus") BoardStatus newStatus);
+            "WHERE b.category.id = :categoryId AND b.tag.id = :tagId AND b.status = :oldStatus")
+    int updateStatusByTagIdAndCurrentStatus(@Param("categoryId") Long categoryId,
+                                            @Param("tagId") Long tagId,
+                                            @Param("oldStatus") BoardStatus oldStatus,
+                                            @Param("newStatus") BoardStatus newStatus);
 
-    @Query("SELECT COUNT(b) FROM Board b WHERE b.category.id = :categoryId AND b.tag = :tag AND b.status = :status")
-    long countByCategoryIdAndTagAndStatus(@Param("categoryId") Long categoryId,
-                                          @Param("tag") String tag,
-                                          @Param("status") BoardStatus status);
+    @Query("SELECT COUNT(b) FROM Board b WHERE b.category.id = :categoryId AND b.tag.id = :tagId AND b.status = :status")
+    long countByCategoryIdAndTagIdAndStatus(@Param("categoryId") Long categoryId,
+                                            @Param("tagId") Long tagId,
+                                            @Param("status") BoardStatus status);
 }

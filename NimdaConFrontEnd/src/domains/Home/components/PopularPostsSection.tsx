@@ -104,8 +104,8 @@ const PopularPostsSection: React.FC = () => {
               onClick={() => navigate(`/board/${categorySlug}/${post.id}`)}
             >
               <div className="home-popular__title-wrap">
-                {post.tag && (
-                  <span className="home-popular__tag"># {post.tag}</span>
+                {post.tag?.tagName && (
+                  <span className="home-popular__tag">{post.tag.tagName}</span>
                 )}
                 <p className="home-popular__title">{post.title}</p>
               </div>
