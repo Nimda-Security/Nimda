@@ -24,12 +24,9 @@ const EMOTICON_INDEX_MAP: Record<string, number> = {
   '33': 9,
 };
 
-const NFD_EMOJI_PREFIX = '\u110B\u1175\u11B7\u1110\u1175';
-
 export function getEmoticonSrc(id: string): string {
   const index = EMOTICON_INDEX_MAP[id] || 1;
-  const fileName = `${NFD_EMOJI_PREFIX}${index}.png`;
-  return `/NIMDA_Emoji/${encodeURIComponent(fileName)}`;
+  return `/NIMDA_Emoji/emoji_${index}.png`;
 }
 
 /** 이모티콘 마커 정규식: [nimda:11] 형태 */
