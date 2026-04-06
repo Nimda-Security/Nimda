@@ -43,6 +43,19 @@ type EyeDropperApi = {
   open: () => Promise<{ sRGBHex: string }>;
 };
 
+type ImageResizeHandle = 'nw' | 'ne' | 'sw' | 'se';
+
+type ImageResizeSession = {
+  handle: ImageResizeHandle;
+  startX: number;
+  startY: number;
+  startWidth: number;
+  startHeight: number;
+  startLeft: number;
+  startTop: number;
+  aspectRatio: number;
+};
+
 function BoardEditPage() {
   const navigate = useNavigate();
   const { boardType: paramBoardType, id } = useParams<{
@@ -85,6 +98,88 @@ function BoardEditPage() {
   const contentRef = useRef<HTMLDivElement>(null);
   const isComposingRef = useRef(false);
   const justEndedCompositionRef = useRef(false);
+  const editorSurfaceRef = useRef<HTMLDivElement>(null);
+  const selectedImageRef = useRef<HTMLImageElement | null>(null);
+  const resizeSessionRef = useRef<ImageResizeSession | null>(null);
+  const [selectedImageRect, setSelectedImageRect] = useState<{
+    left: number;
+    top: number;
+    width: number;
+    height: number;
+  } | null>(null);
+  const [resizeTooltip, setResizeTooltip] = useState<string>('');
+
+  const clearSelectedImage = () => {
+    if (selectedImageRef.current) {
+      selectedImageRef.current.classList.remove('bw-resizable-image--selected');
+    }
+    selectedImageRef.current = null;
+    setSelectedImageRect(null);
+    setResizeTooltip('');
+    resizeSessionRef.current = null;
+  };
+
+  const updateSelectedImageRect = () => {
+    const img = selectedImageRef.current;
+    const surface = editorSurfaceRef.current;
+    if (!img || !surface || !surface.contains(img)) {
+      clearSelectedImage();
+      return;
+    }
+
+    const imgRect = img.getBoundingClientRect();
+    const surfaceRect = surface.getBoundingClientRect();
+
+    setSelectedImageRect({
+      left: imgRect.left - surfaceRect.left,
+      top: imgRect.top - surfaceRect.top,
+      width: imgRect.width,
+      height: imgRect.height,
+    });
+
+    const percent = Math.max(
+      1,
+      Math.round((imgRect.width / Math.max(1, surface.clientWidth)) * 100)
+    );
+    setResizeTooltip(
+      `${Math.round(imgRect.width)}×${Math.round(imgRect.height)}px (${percent}%)`
+    );
+  };
+
+  const selectImage = (img: HTMLImageElement) => {
+    if (selectedImageRef.current && selectedImageRef.current !== img) {
+      selectedImageRef.current.classList.remove('bw-resizable-image--selected');
+    }
+    selectedImageRef.current = img;
+    img.classList.add('bw-resizable-image--selected');
+    updateSelectedImageRect();
+  };
+
+  const startImageResize = (
+    handle: ImageResizeHandle,
+    event: React.MouseEvent<HTMLButtonElement>
+  ) => {
+    event.preventDefault();
+    event.stopPropagation();
+
+    const img = selectedImageRef.current;
+    if (!img || !selectedImageRect) return;
+
+    const width = selectedImageRect.width || img.offsetWidth;
+    const height = selectedImageRect.height || img.offsetHeight;
+    if (width <= 0 || height <= 0) return;
+
+    resizeSessionRef.current = {
+      handle,
+      startX: event.clientX,
+      startY: event.clientY,
+      startWidth: width,
+      startHeight: height,
+      startLeft: selectedImageRect.left,
+      startTop: selectedImageRect.top,
+      aspectRatio: width / height,
+    };
+  };
 
   const getEditorContent = () => {
     return contentRef.current?.innerHTML || '';
@@ -149,6 +244,116 @@ function BoardEditPage() {
       highlightCodeBlocks(contentRef.current);
     }
   }, [content]);
+
+  useEffect(() => {
+    const handleGlobalPointerMove = (e: MouseEvent) => {
+      const session = resizeSessionRef.current;
+      const img = selectedImageRef.current;
+      const surface = editorSurfaceRef.current;
+      if (!session || !img || !surface) return;
+
+      e.preventDefault();
+
+      const isWest = session.handle === 'nw' || session.handle === 'sw';
+      const isNorth = session.handle === 'nw' || session.handle === 'ne';
+
+      const dx = e.clientX - session.startX;
+      const dy = e.clientY - session.startY;
+      const signedDx = isWest ? -dx : dx;
+      const signedDy = isNorth ? -dy : dy;
+
+      const minWidth = 80;
+      const maxWidth = Math.max(minWidth, surface.clientWidth);
+
+      const widthFromDx = Math.max(
+        minWidth,
+        Math.min(maxWidth, session.startWidth + signedDx)
+      );
+      const heightFromDy = Math.max(
+        minWidth / session.aspectRatio,
+        session.startHeight + signedDy
+      );
+
+      let nextWidth: number;
+      if (
+        Math.abs(dx / Math.max(1, session.startWidth)) >=
+        Math.abs(dy / Math.max(1, session.startHeight))
+      ) {
+        nextWidth = widthFromDx;
+      } else {
+        nextWidth = Math.max(
+          minWidth,
+          Math.min(maxWidth, heightFromDy * session.aspectRatio)
+        );
+      }
+      const nextHeight = nextWidth / session.aspectRatio;
+
+      const nextLeft = isWest
+        ? session.startLeft + (session.startWidth - nextWidth)
+        : session.startLeft;
+      const nextTop = isNorth
+        ? session.startTop + (session.startHeight - nextHeight)
+        : session.startTop;
+
+      img.style.width = `${Math.round(nextWidth)}px`;
+      img.style.height = `${Math.round(nextHeight)}px`;
+      img.style.maxWidth = '100%';
+      img.setAttribute('width', String(Math.round(nextWidth)));
+      img.setAttribute('height', String(Math.round(nextHeight)));
+
+      setSelectedImageRect({
+        left: nextLeft,
+        top: nextTop,
+        width: nextWidth,
+        height: nextHeight,
+      });
+      const percent = Math.max(
+        1,
+        Math.round((nextWidth / Math.max(1, surface.clientWidth)) * 100)
+      );
+      setResizeTooltip(
+        `${Math.round(nextWidth)}×${Math.round(nextHeight)}px (${percent}%)`
+      );
+    };
+
+    const handleGlobalPointerUp = () => {
+      if (!resizeSessionRef.current) return;
+      resizeSessionRef.current = null;
+      setContent(getEditorContent());
+      updateSelectedImageRect();
+    };
+
+    document.addEventListener('mousemove', handleGlobalPointerMove);
+    document.addEventListener('mouseup', handleGlobalPointerUp);
+    return () => {
+      document.removeEventListener('mousemove', handleGlobalPointerMove);
+      document.removeEventListener('mouseup', handleGlobalPointerUp);
+    };
+  }, []);
+
+  useEffect(() => {
+    const handleOutsideMouseDown = (e: MouseEvent) => {
+      const target = e.target;
+      if (!(target instanceof Node)) return;
+
+      const surface = editorSurfaceRef.current;
+      if (!surface) return;
+      if (surface.contains(target)) return;
+      clearSelectedImage();
+    };
+
+    const handleWindowResize = () => {
+      if (!selectedImageRef.current) return;
+      updateSelectedImageRect();
+    };
+
+    document.addEventListener('mousedown', handleOutsideMouseDown);
+    window.addEventListener('resize', handleWindowResize);
+    return () => {
+      document.removeEventListener('mousedown', handleOutsideMouseDown);
+      window.removeEventListener('resize', handleWindowResize);
+    };
+  }, []);
 
   // Native beforeinput handler to fix RTL text input in code blocks
   useEffect(() => {
@@ -225,6 +430,16 @@ function BoardEditPage() {
     const handleCodeDeleteClick = (e: MouseEvent) => {
       const rawTarget = e.target;
       if (!(rawTarget instanceof HTMLElement)) return;
+
+      const imageTarget = rawTarget.closest('img');
+      if (
+        imageTarget instanceof HTMLImageElement &&
+        editor.contains(imageTarget)
+      ) {
+        selectImage(imageTarget);
+      } else if (!rawTarget.closest('.bw-image-resize-overlay')) {
+        clearSelectedImage();
+      }
 
       const deleteButton = rawTarget.closest('.bw-code-delete-btn');
       if (!(deleteButton instanceof HTMLElement)) return;
@@ -344,7 +559,9 @@ function BoardEditPage() {
       const picked = result.sRGBHex.toUpperCase();
       setPendingCustomColor(picked);
       setPendingColor(picked);
-    } catch {}
+    } catch (error) {
+      console.debug('EyeDropper was dismissed or unavailable.', error);
+    }
   };
 
   const readCurrentColor = () => {
@@ -1235,6 +1452,7 @@ function BoardEditPage() {
                   {showFontSize && (
                     <div className="bw-tool-dropdown" style={{ left: 0 }}>
                       {[
+                        { label: '조금 작게', value: '14px' },
                         { label: '작게', value: '12px' },
                         { label: '보통', value: '16px' },
                         { label: '크게', value: '20px' },
@@ -1523,37 +1741,66 @@ function BoardEditPage() {
                   </button>
                 </div>
               </div>
-              <div
-                ref={contentRef}
-                id="content"
-                contentEditable
-                dir="ltr"
-                spellCheck={false}
-                className="bw-edit-content-input w-full px-4 py-2 border border-gray-300 rounded-b focus:outline-none focus:ring-2 focus:ring-black min-h-[360px] whitespace-pre-wrap"
-                data-placeholder="내용을 입력하세요"
-                data-empty="true"
-                dangerouslySetInnerHTML={{ __html: content }}
-                onKeyDown={handleEditorKeyDown}
-                onInput={() => {
-                  setContent(getEditorContent());
-                  syncEditorEmptyState();
+              <div className="bw-editor-surface" ref={editorSurfaceRef}>
+                <div
+                  ref={contentRef}
+                  id="content"
+                  contentEditable
+                  dir="ltr"
+                  spellCheck={false}
+                  className="bw-edit-content-input w-full px-4 py-2 border border-gray-300 rounded-b focus:outline-none focus:ring-2 focus:ring-black min-h-[360px] whitespace-pre-wrap"
+                  data-placeholder="내용을 입력하세요"
+                  data-empty="true"
+                  dangerouslySetInnerHTML={{ __html: content }}
+                  onKeyDown={handleEditorKeyDown}
+                  onInput={() => {
+                    setContent(getEditorContent());
+                    syncEditorEmptyState();
 
-                  if (
-                    isComposingRef.current ||
-                    justEndedCompositionRef.current
-                  ) {
-                    return;
-                  }
+                    if (
+                      isComposingRef.current ||
+                      justEndedCompositionRef.current
+                    ) {
+                      return;
+                    }
 
-                  if (contentRef.current && !getCurrentPreElement()) {
-                    setTimeout(
-                      () =>
-                        highlightCodeBlocks(contentRef.current as HTMLElement),
-                      0
-                    );
-                  }
-                }}
-              />
+                    if (contentRef.current && !getCurrentPreElement()) {
+                      setTimeout(
+                        () =>
+                          highlightCodeBlocks(
+                            contentRef.current as HTMLElement
+                          ),
+                        0
+                      );
+                    }
+                    updateSelectedImageRect();
+                  }}
+                />
+                {selectedImageRect && selectedImageRef.current && (
+                  <div
+                    className="bw-image-resize-overlay"
+                    style={{
+                      left: selectedImageRect.left,
+                      top: selectedImageRect.top,
+                      width: selectedImageRect.width,
+                      height: selectedImageRect.height,
+                    }}
+                  >
+                    <div className="bw-image-resize-tooltip">
+                      {resizeTooltip}
+                    </div>
+                    {(['nw', 'ne', 'sw', 'se'] as const).map((handle) => (
+                      <button
+                        key={handle}
+                        type="button"
+                        className={`bw-image-resize-handle bw-image-resize-handle--${handle}`}
+                        onMouseDown={(e) => startImageResize(handle, e)}
+                        aria-label={`이미지 크기 조절 (${handle})`}
+                      />
+                    ))}
+                  </div>
+                )}
+              </div>
             </div>
 
             {/* 태그 선택 (Tag 엔티티 기반) */}
@@ -1568,7 +1815,9 @@ function BoardEditPage() {
                 <select
                   id="tag"
                   value={tagId ?? ''}
-                  onChange={(e) => setTagId(e.target.value ? Number(e.target.value) : null)}
+                  onChange={(e) =>
+                    setTagId(e.target.value ? Number(e.target.value) : null)
+                  }
                   className="w-full px-4 py-2 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-black"
                 >
                   <option value="">세부 카테고리를 선택하세요</option>
