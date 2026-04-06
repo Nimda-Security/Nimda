@@ -2079,9 +2079,9 @@ function BoardWritePage() {
               {showFontSize && (
                 <div className="bw-tool-dropdown">
                   {[
-                    { label: '조금 작게', value: '14px' },
                     { label: '작게', value: '12px' },
-                    { label: '보통', value: '16px' },
+                    { label: '보통', value: '14px' },
+                    { label: '조금 크게', value: '16px' },
                     { label: '크게', value: '20px' },
                     { label: '아주 크게', value: '28px' },
                   ].map((opt) => (
