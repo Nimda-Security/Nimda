@@ -66,7 +66,7 @@ public class Board extends BaseTimeEntity {
 
     // ========== [기존 코드 유지] ==========
     // [기존] 게시글 내용 - 변경 없음
-    @Column(columnDefinition = "TEXT", nullable = false)
+    @Column(columnDefinition = "MEDIUMTEXT", nullable = false)
     private String content;
 
     // ========== [통합 포인트 #2] ==========
