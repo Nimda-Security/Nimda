@@ -217,6 +217,14 @@
   text-decoration: none;
 }
 
+.board-detail__body .comment-emoticon-inline {
+  width: 160px;
+  height: 160px;
+  vertical-align: bottom;
+  margin: 0 2px;
+  object-fit: contain;
+}
+
 .board-detail__body br {
   line-height: 1.5;
 }

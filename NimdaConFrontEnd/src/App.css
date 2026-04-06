@@ -1770,6 +1770,14 @@ body {
   text-decoration: none;
 }
 
+.bw-content-input .comment-emoticon-inline {
+  width: 160px;
+  height: 160px;
+  vertical-align: bottom;
+  margin: 0 2px;
+  object-fit: contain;
+}
+
 .bw-content-input pre.bw-code-block {
   padding-top: 6px;
 }
