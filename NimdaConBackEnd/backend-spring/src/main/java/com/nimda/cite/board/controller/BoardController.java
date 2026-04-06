@@ -12,6 +12,7 @@ import com.nimda.cite.board.entity.Category;
 import com.nimda.cite.board.enums.BoardStatus;
 import com.nimda.cite.board.repository.CategoryRepository;
 import com.nimda.cite.board.service.BoardService;
+import com.nimda.cite.tag.repository.TagRepository;
 import com.nimda.cite.comment.enums.STATUS;
 import com.nimda.cite.comment.repository.CommentRepository;
 import com.nimda.cite.common.response.ApiResponse;
@@ -55,6 +56,9 @@ public class BoardController {
 
     @Autowired
     private ObjectMapper objectMapper;
+
+    @Autowired
+    private TagRepository tagRepository;
 
     @Autowired
     private CommentRepository commentRepository;
@@ -572,33 +576,25 @@ public class BoardController {
      */
     private String validateTag(Category category, String tag) {
 
-        // note1. 카테고리에서 availableTags 문자열을 가져온다.
-        String availableTagsStr = category.getAvailableTags();
+        // Tag 엔티티 기반으로 카테고리에 등록된 태그 목록을 조회한다.
+        List<String> availableTags = tagRepository
+                .findAllByCategoryIdOrderBySortValueAsc(category.getId())
+                .stream()
+                .map(t -> t.getTagName())
+                .toList();
 
-        // note2. availableTags가 비어있는지 확인한다.
-        if (availableTagsStr == null || availableTagsStr.trim().isEmpty()) {
-            return "이 카테고리에서는 태그를 사용할 수 없습니다.";
-        }
-
-        try {
-
-            // note3. ObjectMapper로 JSON 문자열을 List<String> 타입으로 파싱한다.
-            List<String> availableTags = objectMapper.readValue(
-                    availableTagsStr,
-                    new TypeReference<List<String>>() {
-                    });
-
-            // note4. 태그가 허용된 목록에 포함되어 있는지 확인
-            if (!availableTags.contains(tag)) {
-                return String.format("'%s' 태그는 이 카테고리에서 사용할 수 없습니다. 사용 가능한 태그: %s",
-                        tag, String.join(", ", availableTags));
-            }
-
+        // 등록된 태그가 없으면 태그 없이 글쓰기 허용 (태그 미설정 카테고리)
+        if (availableTags.isEmpty()) {
             return null;
-
-        } catch (Exception e) {
-            return "카테고리의 태그 설정이 올바르지 않습니다.";
         }
+
+        // 태그가 허용된 목록에 포함되어 있는지 확인
+        if (!availableTags.contains(tag)) {
+            return String.format("'%s' 태그는 이 카테고리에서 사용할 수 없습니다. 사용 가능한 태그: %s",
+                    tag, String.join(", ", availableTags));
+        }
+
+        return null;
     }
 
     @GetMapping("/my/board-count")

@@ -447,7 +447,7 @@ function BoardWritePage() {
       setError('카테고리를 선택해주세요.');
       return;
     }
-    if (!tag.trim()) {
+    if (currentTagList.length > 0 && !tag.trim()) {
       setError(null);
       requestAnimationFrame(() => {
         detailCategoryWarningRef.current?.focus();
