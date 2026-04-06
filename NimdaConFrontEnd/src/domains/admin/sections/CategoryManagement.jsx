@@ -245,15 +245,11 @@ const CategoryManagement = ({
                       </div>
                     ))}
                   </div>
-                ) : categoryTags.length > 0 ? (
-                  <div className="admin__empty" style={{ border: 'none' }}>
-                    <p>태그가 등록되어 있지만 해당 태그로 작성된 게시글이 없습니다.</p>
-                  </div>
                 ) : (
                   <div className="admin__empty" style={{ border: 'none' }}>
-                    <p>이 카테고리에 등록된 태그가 없습니다.</p>
+                    <p>이 카테고리에 해당 태그로 작성된 게시글이 없습니다.</p>
                     <p style={{ fontSize: '12px', color: '#999', marginTop: '8px' }}>
-                      순서 설정 메뉴에서 태그를 먼저 추가해주세요.
+                      태그 관리 메뉴에서 태그를 먼저 추가해주세요.
                     </p>
                   </div>
                 )}
@@ -363,118 +359,13 @@ const CategoryManagement = ({
                 </div>
               </div>
 
-              {/* 태그목록 */}
+              {/* 태그목록 - 태그 관리 페이지로 안내 */}
               <div className="admin__catorder-form-row">
                 <label className="admin__catorder-form-label">태그목록</label>
                 <div className="admin__catorder-form-field">
-                  {/* 현재 태그 목록 표시 */}
-                  {categoryTags.length > 0 && (
-                    <div style={{ display: 'flex', flexWrap: 'wrap', gap: '8px', marginBottom: '12px', width: '100%' }}>
-                      {categoryTags.map((tag, index) => (
-                        <span
-                          key={index}
-                          style={{
-                            display: 'inline-flex',
-                            alignItems: 'center',
-                            padding: '4px 12px',
-                            backgroundColor: '#f0f0f0',
-                            borderRadius: '4px',
-                            fontSize: '14px',
-                            gap: '8px'
-                          }}
-                        >
-                          {tag}
-                          <button
-                            type="button"
-                            onClick={() => {
-                              const newTags = categoryTags.filter((_, i) => i !== index);
-                              setCategoryTags(newTags);
-                            }}
-                            style={{
-                              background: 'none',
-                              border: 'none',
-                              cursor: 'pointer',
-                              color: '#999',
-                              fontSize: '16px',
-                              padding: 0,
-                              lineHeight: 1
-                            }}
-                          >
-                            ×
-                          </button>
-                        </span>
-                      ))}
-                    </div>
-                  )}
-                  {/* 태그 추가 입력 필드 */}
-                  <div style={{ display: 'flex', gap: '8px', width: '100%' }}>
-                    <input
-                      type="text"
-                      className="admin__catorder-input"
-                      placeholder="태그를 입력하세요"
-                      value={newTagInput || ''}
-                      onChange={(e) => {
-                        const value = e.target.value;
-                        setNewTagInput(value);
-                      }}
-                      onKeyDown={(e) => {
-                        if (e.key === 'Enter') {
-                          e.preventDefault();
-                          if (newTagInput && newTagInput.trim() && !categoryTags.includes(newTagInput.trim())) {
-                            setCategoryTags([...categoryTags, newTagInput.trim()]);
-                            setNewTagInput('');
-                          }
-                        }
-                      }}
-                    />
-                    <button
-                      type="button"
-                      className="admin__btn"
-                      onClick={() => {
-                        if (newTagInput.trim() && !categoryTags.includes(newTagInput.trim())) {
-                          setCategoryTags([...categoryTags, newTagInput.trim()]);
-                          setNewTagInput('');
-                        }
-                      }}
-                      disabled={!newTagInput.trim() || categoryTags.includes(newTagInput.trim())}
-                    >
-                      추가
-                    </button>
-                    <button
-                      type="button"
-                      className="admin__btn"
-                      onClick={async () => {
-                        if (!selectedCategoryId) return;
-
-                        setSavingTags(true);
-                        try {
-                          const result = await updateCategoryAPI(selectedCategoryId, {
-                            name: selectedCategoryData.name, // required fields might need real pass, but using the existing code
-                            slug: selectedCategoryData.slug,
-                            parentId: selectedCategoryData.parentId,
-                            sortOrder: selectedCategoryData.sortOrder,
-                            isActive: selectedCategoryData.isActive,
-                            availableTags: categoryTags.length > 0 ? categoryTags : null
-                          });
-
-                          if (result.success) {
-                            alert('태그가 성공적으로 저장되었습니다.');
-                            await loadCategories();
-                          } else {
-                            alert(result.message || '태그 저장에 실패했습니다.');
-                          }
-                        } catch (error) {
-                          console.error('태그 저장 오류:', error);
-                          alert('태그 저장 중 오류가 발생했습니다.');
-                        } finally {
-                          setSavingTags(false);
-                        }
-                      }}
-                      disabled={savingTags}
-                    >
-                      {savingTags ? '저장 중...' : '저장'}
-                    </button>
-                  </div>
+                  <p style={{ fontSize: '13px', color: '#666', fontFamily: 'Pretendard, sans-serif' }}>
+                    태그는 <strong>태그 관리</strong> 메뉴에서 관리할 수 있습니다.
+                  </p>
                 </div>
               </div>
 

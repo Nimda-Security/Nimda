@@ -76,7 +76,7 @@ const AdminSidebar = ({ activeSection, activeSubSection, setActiveSection, setAc
         <div className="admin__nav-section">
           <button
             onClick={() => handleNavClick('category-order', null)}
-            className={`admin__nav-section-title ${activeSection === 'category-order' || activeSection === 'category-edit' || activeSection === 'category-deactivate' ? 'admin__nav-section-title--active' : ''}`}
+            className={`admin__nav-section-title ${activeSection === 'category-order' || activeSection === 'category-edit' || activeSection === 'category-deactivate' || activeSection === 'tag-management' ? 'admin__nav-section-title--active' : ''}`}
           >
             카테고리 관리
           </button>
@@ -86,6 +86,12 @@ const AdminSidebar = ({ activeSection, activeSubSection, setActiveSection, setAc
               className={`admin__nav-item ${activeSection === 'category-order' ? 'admin__nav-item--active' : ''}`}
             >
               순서 설정
+            </button>
+            <button
+              onClick={() => handleNavClick('tag-management', 'tag-management')}
+              className={`admin__nav-item ${activeSection === 'tag-management' ? 'admin__nav-item--active' : ''}`}
+            >
+              태그 관리
             </button>
             <button
               onClick={() => handleNavClick('category-deactivate', 'category-deactivate')}

@@ -3,6 +3,7 @@ import { useNavigate, useParams, useSearchParams, Link } from 'react-router-dom'
 import Layout from '@/components/Layout';
 import { getBoardListAPI, getPinnedPostsAPI } from '@/api/board';
 import { getAllCategoriesAPI } from '@/api/category';
+import { getTagsByCategoryAPI } from '@/api/tag';
 import type { Board, Category } from '../types';
 import { CATEGORY_LABELS } from '../constants';
 import { Heart } from '@/components/icons/Heart';
@@ -112,32 +113,31 @@ function BoardListPage({ slug: propSlug }: BoardListPageProps) {
     return () => { cancelled = true; };
   }, [slug, tabFromUrl]);
 
-  // 태그 목록 수집
+  // 태그 목록을 Tag API에서 조회
   useEffect(() => {
-    const collectTags = () => {
+    let cancelled = false;
+    const fetchTags = async () => {
       const tagSet = new Set<string>();
-      if (childCategories.length > 0) {
-        childCategories.forEach((cat) => {
-          if (cat.availableTags) {
-            try {
-              const tags = JSON.parse(cat.availableTags);
-              if (Array.isArray(tags)) tags.forEach((tag: string) => tagSet.add(tag));
-            } catch { /* ignore */ }
-          }
-        });
-      } else if (category?.availableTags) {
-        try {
-          const tags = JSON.parse(category.availableTags);
-          if (Array.isArray(tags)) tags.forEach((tag: string) => tagSet.add(tag));
-        } catch { /* ignore */ }
-      }
+      try {
+        if (childCategories.length > 0) {
+          const results = await Promise.all(
+            childCategories.map((cat) => getTagsByCategoryAPI(cat.id))
+          );
+          results.forEach((tags) => tags.forEach((t) => tagSet.add(t.tagName)));
+        } else if (category?.id) {
+          const tags = await getTagsByCategoryAPI(category.id);
+          tags.forEach((t) => tagSet.add(t.tagName));
+        }
+      } catch { /* ignore */ }
 
-      const newTags = Array.from(tagSet);
-      // 불필요한 상태 업데이트 방지 (내용이 같으면 업데이트 안 함)
-      setAvailableTags(prev => JSON.stringify(prev) === JSON.stringify(newTags) ? prev : newTags);
+      if (!cancelled) {
+        const newTags = Array.from(tagSet);
+        setAvailableTags(prev => JSON.stringify(prev) === JSON.stringify(newTags) ? prev : newTags);
+      }
     };
-    collectTags();
-  }, [category, childCategories]);
+    fetchTags();
+    return () => { cancelled = true; };
+  }, [category?.id, childCategories]);
 
   // 게시글 목록 불러오기
   useEffect(() => {

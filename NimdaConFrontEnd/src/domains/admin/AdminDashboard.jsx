@@ -29,6 +29,7 @@ import PendingUsers from './sections/PendingUsers';
 import PostManagement from './sections/PostManagement';
 import CategoryManagement from './sections/CategoryManagement';
 import PinPostManagement from './sections/PinPostManagement';
+import TagManagement from './sections/TagManagement';
 import AdminSidebar from './components/AdminSidebar';
 import MileagePaymentForm from './components/MileagePaymentForm';
 import { updatePointManual } from '@/api/point';
@@ -840,7 +841,8 @@ function AdminDashboard() {
     } else if (
       activeSection === 'category-order' ||
       activeSection === 'category-edit' ||
-      activeSection === 'category-deactivate'
+      activeSection === 'category-deactivate' ||
+      activeSection === 'tag-management'
     ) {
       loadCategories();
     } else if (activeSection === 'posts') {
@@ -973,6 +975,19 @@ function AdminDashboard() {
             handleSaveOrder={handleSaveOrder}
             savingOrder={savingOrder}
             orderChanged={orderChanged}
+          />
+        );
+      case 'tag-management':
+        return (
+          <TagManagement
+            categories={categories}
+            categoriesLoading={categoriesLoading}
+            loadCategories={loadCategories}
+            categoryTree={categoryTree}
+            localCategoryTree={localCategoryTree}
+            getTotalCategoryCount={getTotalCategoryCount}
+            renderCategoryOrderItem={renderCategoryOrderItem}
+            selectedCategoryId={selectedCategoryId}
           />
         );
       case 'pin-post':

@@ -4,6 +4,8 @@ import Layout from '@/components/Layout';
 import { createBoardAPI, getBoardDetailAPI, updateBoardAPI } from '@/api/board';
 import { uploadBoardFileViaS3 } from '@/api/attachments';
 import { getAllCategoriesAPI } from '@/api/category';
+import { getTagsByCategoryAPI } from '@/api/tag';
+import type { TagResponse } from '@/api/tag';
 import ChevronDown from '@/components/icons/ChevronDown';
 import { isAdmin, hasRole } from '@/utils/jwt';
 import { highlightCodeBlocks } from '@/utils/codeHighlight';
@@ -90,6 +92,7 @@ function BoardWritePage() {
     'left' | 'center' | 'right'
   >('left');
   const [isPinned, setIsPinned] = useState(false);
+  const [currentTagList, setCurrentTagList] = useState<TagResponse[]>([]);
 
   const fileInputRef = useRef<HTMLInputElement>(null);
   const imageInputRef = useRef<HTMLInputElement>(null);
@@ -411,17 +414,25 @@ function BoardWritePage() {
   );
   const currentSubCat = allCategories.find((c) => c.id === subCategoryId);
 
-  // 현재 선택된 소분류(혹은 대분류)의 availableTags를 파싱
-  const currentTagList: string[] = (() => {
+  // 현재 선택된 카테고리의 태그를 Tag API에서 조회
+  useEffect(() => {
     const targetCat = currentSubCat || currentParentCat;
-    if (!targetCat?.availableTags) return [];
-    try {
-      const parsed = JSON.parse(targetCat.availableTags);
-      return Array.isArray(parsed) ? parsed : [];
-    } catch {
-      return [];
+    if (!targetCat?.id) {
+      setCurrentTagList([]);
+      return;
     }
-  })();
+    let cancelled = false;
+    const fetchTags = async () => {
+      try {
+        const tags = await getTagsByCategoryAPI(targetCat.id);
+        if (!cancelled) setCurrentTagList(tags);
+      } catch {
+        if (!cancelled) setCurrentTagList([]);
+      }
+    };
+    fetchTags();
+    return () => { cancelled = true; };
+  }, [currentSubCat?.id, currentParentCat?.id]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -2228,19 +2239,19 @@ function BoardWritePage() {
 
           <div className="bw-divider" />
 
-          {/* ── 태그 선택 (소분류의 availableTags 기반) ── */}
+          {/* ── 태그 선택 (Tag 엔티티 기반) ── */}
           <div className="bw-section">
             <span className="bw-section-label">세부 카테고리</span>
             {currentTagList.length > 0 ? (
               <div className="bw-tag-list">
                 {currentTagList.map((tagOption) => (
                   <button
-                    key={tagOption}
+                    key={tagOption.id}
                     type="button"
-                    className={`bw-tag-chip ${tag === tagOption ? 'bw-tag-chip--active' : ''}`}
-                    onClick={() => setTag(tag === tagOption ? '' : tagOption)}
+                    className={`bw-tag-chip ${tag === tagOption.tagName ? 'bw-tag-chip--active' : ''}`}
+                    onClick={() => setTag(tag === tagOption.tagName ? '' : tagOption.tagName)}
                   >
-                    #{tagOption}
+                    #{tagOption.tagName}
                   </button>
                 ))}
               </div>

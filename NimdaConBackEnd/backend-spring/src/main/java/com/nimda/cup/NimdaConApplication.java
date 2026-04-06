@@ -17,7 +17,6 @@ import org.springframework.scheduling.annotation.EnableScheduling;
 @EntityScan(basePackages = { "com.nimda.cup", "com.nimda.cite" })
 @EnableJpaRepositories(basePackages = { "com.nimda.cup", "com.nimda.cite" })
 public class NimdaConApplication {
-
     public static void main(String[] args) {
         SpringApplication.run(NimdaConApplication.class, args);
     }

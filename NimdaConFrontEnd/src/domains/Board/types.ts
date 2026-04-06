@@ -1,6 +1,17 @@
 // Board 도메인 타입 정의
 
 /**
+ * 태그 엔티티 (Tag API 응답)
+ */
+export interface Tag {
+  id: number;
+  tagName: string;
+  sortValue: number;
+  categoryName: string;
+  categoryId: number;
+}
+
+/**
  * 카테고리 정보
  */
 export interface Category {
