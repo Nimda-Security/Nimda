@@ -91,8 +91,8 @@ public class SecurityConfig {
                         .requestMatchers("/api/cite/attachments/**").authenticated()
                         .requestMatchers("/api/like/board/**").authenticated()
 
-                        // 태그: GET은 인증 사용자, 수정/추가/삭제는 관리자 전용
-                        .requestMatchers(HttpMethod.GET, "/api/cite/tag/**").authenticated()
+                        // 태그: GET은 카테고리와 동일하게 비로그인 허용, 수정/추가/삭제는 관리자 전용
+                        .requestMatchers(HttpMethod.GET, "/api/cite/tag/**").permitAll()
                         .requestMatchers(HttpMethod.POST, "/api/cite/tag/**").hasRole("ADMIN")
                         .requestMatchers(HttpMethod.PATCH, "/api/cite/tag/**").hasRole("ADMIN")
                         .requestMatchers(HttpMethod.DELETE, "/api/cite/tag/**").hasRole("ADMIN")
