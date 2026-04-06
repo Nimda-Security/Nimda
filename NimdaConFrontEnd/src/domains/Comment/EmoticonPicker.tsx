@@ -12,21 +12,24 @@ const EMOTICONS = [
   { id: '33', label: '님다 이모티콘33' },
 ] as const;
 
-const EMOTICON_FILE_MAP: Record<string, string> = {
-  '11': '임티1.png',
-  '12': '임티2.png',
-  '13': '임티3.png',
-  '21': '임티4.png',
-  '22': '임티5.png',
-  '23': '임티6.png',
-  '31': '임티7.png',
-  '32': '임티8.png',
-  '33': '임티9.png',
+const EMOTICON_INDEX_MAP: Record<string, number> = {
+  '11': 1,
+  '12': 2,
+  '13': 3,
+  '21': 4,
+  '22': 5,
+  '23': 6,
+  '31': 7,
+  '32': 8,
+  '33': 9,
 };
 
+const NFD_EMOJI_PREFIX = '\u110B\u1175\u11B7\u1110\u1175';
+
 export function getEmoticonSrc(id: string): string {
-  const fileName = EMOTICON_FILE_MAP[id] || EMOTICON_FILE_MAP['11'];
-  return `/NIMDA_Emoji/${fileName}`;
+  const index = EMOTICON_INDEX_MAP[id] || 1;
+  const fileName = `${NFD_EMOJI_PREFIX}${index}.png`;
+  return `/NIMDA_Emoji/${encodeURIComponent(fileName)}`;
 }
 
 /** 이모티콘 마커 정규식: [nimda:11] 형태 */
