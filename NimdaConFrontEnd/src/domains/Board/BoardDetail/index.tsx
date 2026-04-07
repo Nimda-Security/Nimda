@@ -20,6 +20,95 @@ import { Heart } from '@/components/icons/Heart';
 import { highlightCodeBlocks } from '@/utils/codeHighlight';
 import './BoardDetail.css';
 
+const MAX_VIEWER_FONT_SIZE_PX = 24;
+
+const normalizeViewerFontSize = (size: string, fallbackPx = 14) => {
+  const match = size
+    .trim()
+    .toLowerCase()
+    .match(/^(-?\d+(?:\.\d+)?)(px|rem|em|%)?$/);
+  if (!match) return `${fallbackPx}px`;
+
+  const value = Number(match[1]);
+  const unit = match[2] ?? 'px';
+  if (!Number.isFinite(value) || value <= 0) return `${fallbackPx}px`;
+
+  const basePx = 16;
+  let px = value;
+  if (unit === 'rem' || unit === 'em') px = value * basePx;
+  if (unit === '%') px = (value / 100) * basePx;
+
+  const clamped = Math.min(
+    MAX_VIEWER_FONT_SIZE_PX,
+    Math.max(1, Math.round(px))
+  );
+  return `${clamped}px`;
+};
+
+const flattenViewerNestedSpans = (root: HTMLElement) => {
+  const sizedSpans = root.querySelectorAll<HTMLSpanElement>('span[style]');
+  sizedSpans.forEach((span) => {
+    if (!span.style.fontSize) return;
+    span.style.fontSize = normalizeViewerFontSize(span.style.fontSize);
+
+    let parent = span.parentElement;
+    while (parent && parent !== root) {
+      if (!(parent instanceof HTMLSpanElement) || !parent.style.fontSize) {
+        parent = parent.parentElement;
+        continue;
+      }
+
+      const parentSize = normalizeViewerFontSize(parent.style.fontSize);
+      const childSize = normalizeViewerFontSize(span.style.fontSize);
+      if (parentSize === childSize) {
+        span.style.removeProperty('font-size');
+      }
+      break;
+    }
+  });
+};
+
+const sanitizeViewerContent = (html: string) => {
+  if (!html || typeof window === 'undefined') return html;
+
+  const template = document.createElement('template');
+  template.innerHTML = html;
+
+  const fonts = template.content.querySelectorAll<HTMLElement>('font[size]');
+  fonts.forEach((font) => {
+    const span = document.createElement('span');
+    span.style.setProperty(
+      'font-size',
+      normalizeViewerFontSize('14px'),
+      'important'
+    );
+    span.innerHTML = font.innerHTML;
+    font.replaceWith(span);
+  });
+
+  const styled = template.content.querySelectorAll<HTMLElement>('[style]');
+  styled.forEach((element) => {
+    if (!element.style.fontSize) return;
+    const normalized = normalizeViewerFontSize(element.style.fontSize);
+    element.style.setProperty('font-size', normalized, 'important');
+  });
+
+  flattenViewerNestedSpans(template.content as unknown as HTMLElement);
+
+  const redundantSpans =
+    template.content.querySelectorAll<HTMLSpanElement>('span');
+  redundantSpans.forEach((span) => {
+    if (span.hasAttribute('style') && span.style.cssText.trim().length === 0) {
+      span.removeAttribute('style');
+    }
+    if (span.attributes.length === 0) {
+      span.replaceWith(...Array.from(span.childNodes));
+    }
+  });
+
+  return template.innerHTML;
+};
+
 function BoardDetailPage() {
   const navigate = useNavigate();
   const { boardType, id } = useParams<{ boardType: string; id: string }>();
@@ -32,6 +121,7 @@ function BoardDetailPage() {
   const [isLiked, setIsLiked] = useState(false);
   const [menuOpen, setMenuOpen] = useState(false);
   const [showAttachments, setShowAttachments] = useState(false);
+  const normalizedViewerContent = sanitizeViewerContent(board?.content ?? '');
 
   useEffect(() => {
     if (id) fetchBoard(parseInt(id));
@@ -274,8 +364,8 @@ function BoardDetailPage() {
 
         {/* Body */}
         <div
-          className="board-detail__body"
-          dangerouslySetInnerHTML={{ __html: board.content }}
+          className="board-detail__body board-detail__content-scope"
+          dangerouslySetInnerHTML={{ __html: normalizedViewerContent }}
         />
 
         {/* 첨부파일 버튼 — S3 또는 레거시 첨부가 있을 때만 표시 */}

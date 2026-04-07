@@ -196,6 +196,20 @@
   margin-bottom: 24px;
 }
 
+.board-detail__content-scope,
+.board-detail__content-scope * {
+  box-sizing: border-box;
+}
+
+.board-detail__content-scope {
+  font-size: 14px;
+  line-height: 1.6;
+}
+
+.board-detail__content-scope * {
+  font-family: inherit;
+}
+
 .board-detail__body p {
   margin: 0;
 }

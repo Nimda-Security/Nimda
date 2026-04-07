@@ -56,6 +56,104 @@ type ImageResizeSession = {
   aspectRatio: number;
 };
 
+const MAX_FONT_SIZE_PX = 24;
+
+const normalizeFontSizeValue = (size: string, fallbackPx = 14) => {
+  const match = size
+    .trim()
+    .toLowerCase()
+    .match(/^(-?\d+(?:\.\d+)?)(px|rem|em|%)?$/);
+  if (!match) return `${fallbackPx}px`;
+
+  const value = Number(match[1]);
+  const unit = match[2] ?? 'px';
+  if (!Number.isFinite(value) || value <= 0) return `${fallbackPx}px`;
+
+  const basePx = 16;
+  let px = value;
+  if (unit === 'rem' || unit === 'em') px = value * basePx;
+  if (unit === '%') px = (value / 100) * basePx;
+
+  const clamped = Math.min(MAX_FONT_SIZE_PX, Math.max(1, Math.round(px)));
+  return `${clamped}px`;
+};
+
+const mapFontTagSizeToPx = (size: string | null) => {
+  const parsed = Number(size ?? '');
+  const map: Record<number, number> = {
+    1: 10,
+    2: 13,
+    3: 16,
+    4: 18,
+    5: 24,
+    6: 24,
+    7: 24,
+  };
+  const px = Number.isFinite(parsed) ? (map[parsed] ?? 14) : 14;
+  return `${px}px`;
+};
+
+const flattenNestedFontSizeSpans = (root: ParentNode) => {
+  const sizedSpans = root.querySelectorAll<HTMLSpanElement>('span[style]');
+  sizedSpans.forEach((span) => {
+    if (!span.style.fontSize) return;
+    span.style.fontSize = normalizeFontSizeValue(span.style.fontSize);
+
+    let parent = span.parentElement;
+    while (parent && parent !== root) {
+      if (!(parent instanceof HTMLSpanElement) || !parent.style.fontSize) {
+        parent = parent.parentElement;
+        continue;
+      }
+
+      const parentSize = normalizeFontSizeValue(parent.style.fontSize);
+      const childSize = normalizeFontSizeValue(span.style.fontSize);
+      if (parentSize === childSize) {
+        span.style.removeProperty('font-size');
+      }
+      break;
+    }
+  });
+};
+
+const pruneRedundantSpans = (root: ParentNode) => {
+  const spans = root.querySelectorAll<HTMLSpanElement>('span');
+  spans.forEach((span) => {
+    if (span.hasAttribute('style') && span.style.cssText.trim().length === 0) {
+      span.removeAttribute('style');
+    }
+    if (span.attributes.length === 0) {
+      span.replaceWith(...Array.from(span.childNodes));
+    }
+  });
+};
+
+const sanitizeEditorDom = (root: HTMLElement) => {
+  const fonts = root.querySelectorAll<HTMLElement>('font[size]');
+  fonts.forEach((font) => {
+    const span = document.createElement('span');
+    span.style.fontSize = mapFontTagSizeToPx(font.getAttribute('size'));
+    span.innerHTML = font.innerHTML;
+    font.replaceWith(span);
+  });
+
+  const styled = root.querySelectorAll<HTMLElement>('[style]');
+  styled.forEach((element) => {
+    if (!element.style.fontSize) return;
+    const normalized = normalizeFontSizeValue(element.style.fontSize);
+    element.style.setProperty('font-size', normalized, 'important');
+  });
+
+  flattenNestedFontSizeSpans(root);
+  pruneRedundantSpans(root);
+};
+
+const getSanitizedEditorHtml = (editor: HTMLElement) => {
+  const clone = editor.cloneNode(true) as HTMLElement;
+  sanitizeEditorDom(clone);
+  return clone.innerHTML;
+};
+
 function BoardEditPage() {
   const navigate = useNavigate();
   const { boardType: paramBoardType, id } = useParams<{
@@ -182,7 +280,9 @@ function BoardEditPage() {
   };
 
   const getEditorContent = () => {
-    return contentRef.current?.innerHTML || '';
+    const editor = contentRef.current;
+    if (!editor) return '';
+    return getSanitizedEditorHtml(editor);
   };
 
   const isEditorVisuallyEmpty = (editor: HTMLElement) => {
@@ -513,17 +613,20 @@ function BoardEditPage() {
   const applyFontSize = (size: string) => {
     contentRef.current?.focus();
     const selectedColor = readCurrentColor();
+    const normalizedSize = normalizeFontSizeValue(size);
     document.execCommand('fontSize', false, '7');
     const editor = contentRef.current;
     if (editor) {
       const fonts = editor.querySelectorAll('font[size="7"]');
       fonts.forEach((font) => {
         const span = document.createElement('span');
-        span.style.fontSize = size;
+        span.style.fontSize = normalizedSize;
         span.style.color = selectedColor;
         span.innerHTML = font.innerHTML;
         font.parentNode?.replaceChild(span, font);
       });
+      sanitizeEditorDom(editor);
+      setContent(getEditorContent());
     }
     setShowFontSize(false);
   };
@@ -1191,6 +1294,15 @@ function BoardEditPage() {
       } else {
         document.execCommand('insertParagraph', false);
       }
+    }
+
+    if (!currentPre && e.key === 'Enter') {
+      requestAnimationFrame(() => {
+        const editor = contentRef.current;
+        if (!editor) return;
+        sanitizeEditorDom(editor);
+        setContent(getEditorContent());
+      });
     }
   };
 
