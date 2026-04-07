@@ -185,23 +185,25 @@ const PhotoGalleryBoard: React.FC<PhotoGalleryBoardProps> = ({
         )}
 
         {/* 연도 필터 탭 */}
-        <div className="board-list__tag-filter">
-          <button
-            className={`board-list__tag-filter-item ${selectedYear === null ? "board-list__tag-filter-item--active" : ""}`}
-            onClick={() => setSelectedYear(null)}
-          >
-            전체
-          </button>
-          {availableYears.map((year) => (
+        {availableYears.length > 0 && (
+          <div className="board-list__tag-filter">
             <button
-              key={year}
-              className={`board-list__tag-filter-item ${selectedYear === year ? "board-list__tag-filter-item--active" : ""}`}
-              onClick={() => setSelectedYear(year)}
+              className={`board-list__tag-filter-item ${selectedYear === null ? "board-list__tag-filter-item--active" : ""}`}
+              onClick={() => setSelectedYear(null)}
             >
-              {year}
+              전체
             </button>
-          ))}
-        </div>
+            {availableYears.map((year) => (
+              <button
+                key={year}
+                className={`board-list__tag-filter-item ${selectedYear === year ? "board-list__tag-filter-item--active" : ""}`}
+                onClick={() => setSelectedYear(year)}
+              >
+                {year}
+              </button>
+            ))}
+          </div>
+        )}
 
         <div className="board-list__divider" />
 
