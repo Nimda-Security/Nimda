@@ -5,6 +5,8 @@ import Avatar from "@/components/Avatar/Avatar";
 import { Heart } from "@/components/icons/Heart";
 import { getBoardListAPI, getBoardDetailAPI } from "@/api/board";
 import { getAttachmentPresignedUrl } from "@/api/attachments";
+import { getTagsByCategoryAPI } from "@/api/tag";
+import { getAllCategoriesAPI } from "@/api/category";
 import type { Board } from "@/domains/Board/types";
 import { isAdmin } from "@/utils/jwt";
 import "./PhotoGalleryBoard.css";
@@ -46,6 +48,8 @@ const PhotoGalleryBoard: React.FC<PhotoGalleryBoardProps> = ({
   const [selectedYear, setSelectedYear] = useState<number | null>(null);
   // 모든 페이지에서 누적한 연도 목록
   const [availableYears, setAvailableYears] = useState<number[]>([]);
+  const [selectedTag, setSelectedTag] = useState<string | null>(null);
+  const [availableTags, setAvailableTags] = useState<string[]>([]);
   const canWrite = !adminOnlyWrite || isAdmin();
 
   const loadPosts = useCallback(async (page: number) => {
@@ -99,14 +103,36 @@ const PhotoGalleryBoard: React.FC<PhotoGalleryBoardProps> = ({
     loadPosts(currentPage);
   }, [currentPage, loadPosts]);
 
+  // 태그 목록을 Tag API에서 조회 (공개 카테고리 API 사용)
+  useEffect(() => {
+    let cancelled = false;
+    const fetchTags = async () => {
+      try {
+        const allCats = await getAllCategoriesAPI();
+        if (cancelled) return;
+        const cat = allCats.find((c) => c.slug === boardSlug);
+        if (!cat?.id) return;
+        const tags = await getTagsByCategoryAPI(cat.id);
+        if (!cancelled) {
+          const tagNames = tags.map((t) => t.tagName);
+          setAvailableTags(tagNames);
+        }
+      } catch { /* ignore */ }
+    };
+    fetchTags();
+    return () => { cancelled = true; };
+  }, [boardSlug]);
+
   const handlePageChange = (page: number) => {
     setCurrentPage(page);
     window.scrollTo({ top: 0, behavior: "smooth" });
   };
 
-  const displayPosts = selectedYear
-    ? posts.filter((p) => new Date(p.createdAt).getFullYear() === selectedYear)
-    : posts;
+  const displayPosts = posts.filter((p) => {
+    if (selectedYear && new Date(p.createdAt).getFullYear() !== selectedYear) return false;
+    if (selectedTag !== null && p.tag?.tagName !== selectedTag) return false;
+    return true;
+  });
 
   const renderPageNumbers = () => {
     const pages: number[] = [];
@@ -136,6 +162,27 @@ const PhotoGalleryBoard: React.FC<PhotoGalleryBoardProps> = ({
             </button>
           )}
         </div>
+
+        {/* 태그 필터 */}
+        {availableTags.length > 0 && (
+          <div className="board-list__tag-filter">
+            <button
+              className={`board-list__tag-filter-item ${selectedTag === null ? "board-list__tag-filter-item--active" : ""}`}
+              onClick={() => setSelectedTag(null)}
+            >
+              전체
+            </button>
+            {availableTags.map((tag) => (
+              <button
+                key={tag}
+                className={`board-list__tag-filter-item ${selectedTag === tag ? "board-list__tag-filter-item--active" : ""}`}
+                onClick={() => setSelectedTag(tag)}
+              >
+                {tag}
+              </button>
+            ))}
+          </div>
+        )}
 
         {/* 연도 필터 탭 */}
         <div className="board-list__tag-filter">
