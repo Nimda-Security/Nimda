@@ -127,7 +127,7 @@ export const registerAPI = async (
       major: registerData.major.trim(),
 
       // 생년월일: 하이픈(-) 제거 후 8자리 숫자로 통일 (예: 20260321)
-      birth: "20000213",
+      birth: (registerData.birth ?? "").replace(/-/g, "").trim(),
 
       // 선택 필드: 값이 비어있거나 공백만 있다면 서버에 보내지 않도록 처리
       bojId: registerData.bojId?.trim() || undefined,
