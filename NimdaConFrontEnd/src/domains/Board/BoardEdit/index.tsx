@@ -27,6 +27,7 @@ const getCodeLanguageLabel = (language: string) =>
 
 const COLOR_PALETTE = [
   '#0C0C0C',
+  '#A3A3A3',
   '#D64454',
   '#E17654',
   '#E8B446',
@@ -152,6 +153,31 @@ const getSanitizedEditorHtml = (editor: HTMLElement) => {
   const clone = editor.cloneNode(true) as HTMLElement;
   sanitizeEditorDom(clone);
   return clone.innerHTML;
+};
+
+const getClosestWithinEditor = (
+  node: Node | null,
+  editor: HTMLElement,
+  selector: string
+) => {
+  let current: Node | null = node;
+  while (current && current !== editor) {
+    if (current instanceof HTMLElement && current.matches(selector)) {
+      return current;
+    }
+    current = current.parentNode;
+  }
+  return null;
+};
+
+const placeCaretAtNodeStart = (node: Node) => {
+  const selection = window.getSelection();
+  if (!selection) return;
+  const range = document.createRange();
+  range.selectNodeContents(node);
+  range.collapse(true);
+  selection.removeAllRanges();
+  selection.addRange(range);
 };
 
 function BoardEditPage() {
@@ -484,8 +510,65 @@ function BoardEditPage() {
     };
 
     const handleBeforeInput = (e: InputEvent) => {
-      if (e.isComposing || isComposingRef.current) return;
+      if (
+        e.isComposing ||
+        isComposingRef.current ||
+        justEndedCompositionRef.current
+      ) {
+        return;
+      }
       if (e.inputType !== 'insertText' || !e.data) return;
+
+      const editor = contentRef.current;
+      const selection = window.getSelection();
+      if (!editor || !selection || selection.rangeCount === 0) return;
+      const range = selection.getRangeAt(0);
+      if (!editor.contains(range.commonAncestorContainer)) return;
+
+      if (e.data === ' ') {
+        const currentBlock = getClosestWithinEditor(
+          range.startContainer,
+          editor,
+          'p,div'
+        ) as HTMLElement | null;
+
+        if (
+          currentBlock &&
+          !getClosestWithinEditor(
+            range.startContainer,
+            editor,
+            'pre,code,table,li'
+          )
+        ) {
+          const nodeText =
+            range.startContainer.nodeType === Node.TEXT_NODE
+              ? (range.startContainer.textContent ?? '')
+              : '';
+          const blockText =
+            currentBlock.textContent?.replace(/\u00A0/g, ' ') ?? '';
+          const isOnlyDashBlock = blockText.trim() === '-';
+          const isDashNode = nodeText === '-' || nodeText === '- ';
+          const isCaretAfterDash =
+            range.startContainer.nodeType === Node.TEXT_NODE
+              ? range.startOffset >= 1
+              : true;
+
+          if (isOnlyDashBlock && isDashNode && isCaretAfterDash) {
+            e.preventDefault();
+            const ul = document.createElement('ul');
+            ul.className = 'list-disc list-inside pl-4 my-1';
+            const li = document.createElement('li');
+            li.className = 'my-0.5';
+            li.innerHTML = '<br>';
+            ul.appendChild(li);
+            currentBlock.replaceWith(ul);
+            placeCaretAtNodeStart(li);
+            setContent(getEditorContent());
+            syncEditorEmptyState();
+            return;
+          }
+        }
+      }
 
       const currentPre = getCurrentPreElement();
       if (!currentPre) return;
@@ -997,6 +1080,76 @@ function BoardEditPage() {
 
     if (e.key === 'Enter' && isImeComposingNow) {
       return;
+    }
+
+    const editor = contentRef.current;
+    if (!editor) return;
+
+    const targetNode = e.target as Node;
+    const currentLi = getClosestWithinEditor(targetNode, editor, 'li');
+    if (currentLi instanceof HTMLLIElement) {
+      const liText = currentLi.textContent?.replace(/\u00A0/g, '').trim() ?? '';
+      const isLiEmpty = liText.length === 0;
+
+      if (e.key === 'Enter') {
+        e.preventDefault();
+        if (isLiEmpty) {
+          const list = currentLi.closest('ul,ol');
+          const paragraph = document.createElement('p');
+          paragraph.innerHTML = '<br>';
+          if (list) {
+            list.insertAdjacentElement('afterend', paragraph);
+            currentLi.remove();
+            if (!list.querySelector('li')) list.remove();
+          } else {
+            currentLi.replaceWith(paragraph);
+          }
+          placeCaretAtNodeStart(paragraph);
+        } else {
+          const nextLi = document.createElement('li');
+          nextLi.innerHTML = '<br>';
+          currentLi.insertAdjacentElement('afterend', nextLi);
+          placeCaretAtNodeStart(nextLi);
+        }
+        setContent(getEditorContent());
+        syncEditorEmptyState();
+        return;
+      }
+
+      if (e.key === 'Backspace') {
+        const selection = window.getSelection();
+        const range =
+          selection && selection.rangeCount > 0
+            ? selection.getRangeAt(0)
+            : null;
+        const isCollapsedAtLiStart =
+          !!range &&
+          range.collapsed &&
+          range.startContainer === currentLi.firstChild &&
+          range.startOffset === 0;
+
+        if (isLiEmpty || isCollapsedAtLiStart) {
+          e.preventDefault();
+
+          const list = currentLi.closest('ul,ol');
+          const paragraph = document.createElement('p');
+          paragraph.innerHTML = '<br>';
+
+          if (list && list.children.length === 1) {
+            list.replaceWith(paragraph);
+          } else if (list) {
+            list.insertAdjacentElement('afterend', paragraph);
+            currentLi.remove();
+          } else {
+            currentLi.replaceWith(paragraph);
+          }
+
+          placeCaretAtNodeStart(paragraph);
+          setContent(getEditorContent());
+          syncEditorEmptyState();
+          return;
+        }
+      }
     }
 
     const currentPre = getCurrentPreElement();
