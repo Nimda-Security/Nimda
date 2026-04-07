@@ -1708,7 +1708,7 @@ body {
   width: 100%;
   min-height: 600px;
   padding: 28px 32px;
-  font-size: 16px;
+  font-size: 14px;
   font-weight: 400;
   font-family: 'Pretendard', sans-serif;
   color: #0c0c0c;
@@ -1776,6 +1776,82 @@ body {
   vertical-align: bottom;
   margin: 0 2px;
   object-fit: contain;
+}
+
+.bw-content-input img,
+.bw-edit-content-input img {
+  max-width: 100%;
+  height: auto;
+  display: inline-block;
+}
+
+.bw-resizable-image--selected {
+  outline: 2px solid rgba(74, 127, 204, 0.8);
+  outline-offset: 2px;
+}
+
+.bw-editor-surface {
+  position: relative;
+}
+
+.bw-image-resize-overlay {
+  position: absolute;
+  border: 1px dashed #4a7fcc;
+  pointer-events: none;
+  z-index: 12;
+}
+
+.bw-image-resize-tooltip {
+  position: absolute;
+  top: -24px;
+  left: 50%;
+  transform: translateX(-50%);
+  min-width: max-content;
+  height: 20px;
+  padding: 0 8px;
+  border-radius: 10px;
+  background: rgba(12, 12, 12, 0.85);
+  color: #fff;
+  font-size: 11px;
+  line-height: 20px;
+  font-weight: 600;
+  text-align: center;
+  pointer-events: none;
+}
+
+.bw-image-resize-handle {
+  position: absolute;
+  width: 10px;
+  height: 10px;
+  border-radius: 999px;
+  border: 1px solid #fff;
+  background: #4a7fcc;
+  pointer-events: auto;
+  padding: 0;
+}
+
+.bw-image-resize-handle--nw {
+  top: -6px;
+  left: -6px;
+  cursor: nwse-resize;
+}
+
+.bw-image-resize-handle--ne {
+  top: -6px;
+  right: -6px;
+  cursor: nesw-resize;
+}
+
+.bw-image-resize-handle--sw {
+  bottom: -6px;
+  left: -6px;
+  cursor: nesw-resize;
+}
+
+.bw-image-resize-handle--se {
+  bottom: -6px;
+  right: -6px;
+  cursor: nwse-resize;
 }
 
 .bw-content-input pre.bw-code-block {

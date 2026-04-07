@@ -190,10 +190,24 @@
   font-size: 14px;
   font-weight: 400;
   color: var(--color-black);
-  line-height: 1.5;
+  line-height: 1.6; /* 기존 1.5에서 1.6으로 약 1px(1.4px) 간격 증가 */
   white-space: normal;
   word-break: break-word;
   margin-bottom: 24px;
+}
+
+.board-detail__content-scope,
+.board-detail__content-scope * {
+  box-sizing: border-box;
+}
+
+.board-detail__content-scope {
+  font-size: 14px;
+  line-height: 1.6;
+}
+
+.board-detail__content-scope * {
+  font-family: inherit;
 }
 
 .board-detail__body p {
@@ -201,7 +215,7 @@
 }
 
 .board-detail__body p + p {
-  margin-top: 6px;
+  margin-top: 8px; /* 문단 사이 간격도 약간 증가 (6px -> 8px) */
 }
 
 .board-detail__body a {

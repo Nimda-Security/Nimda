@@ -1,4 +1,5 @@
 import React from "react";
+import { Link } from "react-router-dom";
 import Logo from "@/components/icons/Logo";
 
 const Footer: React.FC = () => {
@@ -40,10 +41,10 @@ const Footer: React.FC = () => {
               color: "#828282",
             }}
           >
-            <span>서비스 이용약관</span>
-            <span>개인정보 보호정책</span>
-            <span>청소년 보호정책</span>
-            <span>사이트 이용규칙</span>
+            <Link to="/board/notice/5" style={{ color: "inherit", textDecoration: "none", cursor: "pointer" }}>서비스 이용약관</Link>
+            <Link to="/board/notice/6" style={{ color: "inherit", textDecoration: "none", cursor: "pointer" }}>개인정보보호정책</Link>
+            <Link to="/board/notice/7" style={{ color: "inherit", textDecoration: "none", cursor: "pointer" }}>청소년보호정책</Link>
+            <Link to="/board/notice/8" style={{ color: "inherit", textDecoration: "none", cursor: "pointer" }}>사이트 이용규칙</Link>
             <span 
               onClick={handleCopyEmail} 
               style={{ cursor: "pointer" }}
