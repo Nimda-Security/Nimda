@@ -45,9 +45,7 @@ const PhotoGalleryBoard: React.FC<PhotoGalleryBoardProps> = ({
   const [loading, setLoading] = useState(true);
   const [currentPage, setCurrentPage] = useState(0);
   const [totalPages, setTotalPages] = useState(0);
-  const [selectedYear, setSelectedYear] = useState<number | null>(null);
-  // 모든 페이지에서 누적한 연도 목록
-  const [availableYears, setAvailableYears] = useState<number[]>([]);
+
   const [selectedTag, setSelectedTag] = useState<string | null>(null);
   const [availableTags, setAvailableTags] = useState<string[]>([]);
   const canWrite = !adminOnlyWrite || isAdmin();
@@ -65,13 +63,6 @@ const PhotoGalleryBoard: React.FC<PhotoGalleryBoardProps> = ({
       if (result.success) {
         setPosts(result.posts);
         setTotalPages(result.totalPages);
-
-        // 현재 페이지의 연도를 기존 목록에 병합
-        const newYears = result.posts.map((p) => new Date(p.createdAt).getFullYear());
-        setAvailableYears((prev) => {
-          const merged = Array.from(new Set([...prev, ...newYears])).sort((a, b) => b - a);
-          return merged;
-        });
 
         // 썸네일 presigned URL 병렬 로드
         const thumbMap: Record<number, string | null> = {};
@@ -129,7 +120,6 @@ const PhotoGalleryBoard: React.FC<PhotoGalleryBoardProps> = ({
   };
 
   const displayPosts = posts.filter((p) => {
-    if (selectedYear && new Date(p.createdAt).getFullYear() !== selectedYear) return false;
     if (selectedTag !== null && p.tag?.tagName !== selectedTag) return false;
     return true;
   });
@@ -184,26 +174,7 @@ const PhotoGalleryBoard: React.FC<PhotoGalleryBoardProps> = ({
           </div>
         )}
 
-        {/* 연도 필터 탭 */}
-        {availableYears.length > 0 && (
-          <div className="board-list__tag-filter">
-            <button
-              className={`board-list__tag-filter-item ${selectedYear === null ? "board-list__tag-filter-item--active" : ""}`}
-              onClick={() => setSelectedYear(null)}
-            >
-              전체
-            </button>
-            {availableYears.map((year) => (
-              <button
-                key={year}
-                className={`board-list__tag-filter-item ${selectedYear === year ? "board-list__tag-filter-item--active" : ""}`}
-                onClick={() => setSelectedYear(year)}
-              >
-                {year}
-              </button>
-            ))}
-          </div>
-        )}
+
 
         <div className="board-list__divider" />
 
