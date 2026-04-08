@@ -7,6 +7,8 @@ import com.nimda.cite.common.s3.S3Service;
 import com.nimda.cup.user.repository.UserRepository;
 import com.nimda.cup.user.security.CustomUserDetails;
 import jakarta.validation.Valid;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -21,6 +23,8 @@ import java.util.Map;
 @RestController
 @RequestMapping("/api")
 public class CommentController {
+
+    private static final Logger log = LoggerFactory.getLogger(CommentController.class);
 
     @Autowired
     private CommentService commentService;

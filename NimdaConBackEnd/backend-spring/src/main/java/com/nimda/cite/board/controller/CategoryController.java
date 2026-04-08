@@ -1,4 +1,4 @@
-﻿package com.nimda.cite.board.controller;
+package com.nimda.cite.board.controller;
 
 import com.nimda.cite.board.dto.CategoryCreateDTO;
 import com.nimda.cite.board.dto.CategoryResponseDTO;
@@ -11,6 +11,8 @@ import com.nimda.cup.user.entity.User;
 import com.nimda.cup.user.security.CustomUserDetails;
 
 import jakarta.validation.Valid;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -22,6 +24,8 @@ import java.util.List;
 @RestController
 @RequestMapping("/api/cite/category")
 public class CategoryController {
+
+    private static final Logger log = LoggerFactory.getLogger(CategoryController.class);
 
     @Autowired
     private CategoryService categoryService;
@@ -68,9 +72,11 @@ public class CategoryController {
             if (e.getMessage() != null && (e.getMessage().contains("권한") || e.getMessage().contains("로그인"))) {
                 return ApiResponse.fail(e.getMessage()).toResponse(HttpStatus.FORBIDDEN);
             }
-            return ApiResponse.fail(e.getMessage()).toResponse(HttpStatus.BAD_REQUEST);
+            log.warn("카테고리 조회 중 오류 발생", e);
+            return ApiResponse.fail("요청을 처리할 수 없습니다.").toResponse(HttpStatus.BAD_REQUEST);
 
         } catch (Exception e) {
+            log.error("카테고리 조회 중 예기치 않은 오류 발생", e);
             return ApiResponse.fail("오류가 발생했습니다.")
                     .toResponse(HttpStatus.INTERNAL_SERVER_ERROR);
         }
@@ -117,9 +123,11 @@ public class CategoryController {
             if (e.getMessage() != null && (e.getMessage().contains("권한") || e.getMessage().contains("로그인"))) {
                 return ApiResponse.fail(e.getMessage()).toResponse(HttpStatus.FORBIDDEN);
             }
-            return ApiResponse.fail(e.getMessage()).toResponse(HttpStatus.BAD_REQUEST);
+            log.warn("카테고리 생성 중 오류 발생", e);
+            return ApiResponse.fail("요청을 처리할 수 없습니다.").toResponse(HttpStatus.BAD_REQUEST);
 
         } catch (Exception e) {
+            log.error("카테고리 생성 중 예기치 않은 오류 발생", e);
             return ApiResponse.fail("오류가 발생했습니다.")
                     .toResponse(HttpStatus.INTERNAL_SERVER_ERROR);
         }
@@ -150,9 +158,11 @@ public class CategoryController {
             if (e.getMessage() != null && (e.getMessage().contains("권한") || e.getMessage().contains("로그인"))) {
                 return ApiResponse.fail(e.getMessage()).toResponse(HttpStatus.FORBIDDEN);
             }
-            return ApiResponse.fail(e.getMessage()).toResponse(HttpStatus.BAD_REQUEST);
+            log.warn("카테고리 수정 중 오류 발생", e);
+            return ApiResponse.fail("요청을 처리할 수 없습니다.").toResponse(HttpStatus.BAD_REQUEST);
 
         } catch (Exception e) {
+            log.error("카테고리 수정 중 예기치 않은 오류 발생", e);
             return ApiResponse.fail("오류가 발생했습니다.")
                     .toResponse(HttpStatus.INTERNAL_SERVER_ERROR);
         }
@@ -182,9 +192,11 @@ public class CategoryController {
             if (e.getMessage() != null && (e.getMessage().contains("권한") || e.getMessage().contains("로그인"))) {
                 return ApiResponse.fail(e.getMessage()).toResponse(HttpStatus.FORBIDDEN);
             }
-            return ApiResponse.fail(e.getMessage()).toResponse(HttpStatus.BAD_REQUEST);
+            log.warn("카테고리 삭제 중 오류 발생", e);
+            return ApiResponse.fail("요청을 처리할 수 없습니다.").toResponse(HttpStatus.BAD_REQUEST);
 
         } catch (Exception e) {
+            log.error("카테고리 삭제 중 예기치 않은 오류 발생", e);
             return ApiResponse.fail("오류가 발생했습니다.")
                     .toResponse(HttpStatus.INTERNAL_SERVER_ERROR);
         }
@@ -212,9 +224,11 @@ public class CategoryController {
             if (e.getMessage() != null && (e.getMessage().contains("권한") || e.getMessage().contains("로그인"))) {
                 return ApiResponse.fail(e.getMessage()).toResponse(HttpStatus.FORBIDDEN);
             }
-            return ApiResponse.fail(e.getMessage()).toResponse(HttpStatus.BAD_REQUEST);
+            log.warn("카테고리 순서 업데이트 중 오류 발생", e);
+            return ApiResponse.fail("요청을 처리할 수 없습니다.").toResponse(HttpStatus.BAD_REQUEST);
 
         } catch (Exception e) {
+            log.error("카테고리 순서 업데이트 중 예기치 않은 오류 발생", e);
             return ApiResponse.fail("오류가 발생했습니다.")
                     .toResponse(HttpStatus.INTERNAL_SERVER_ERROR);
         }
