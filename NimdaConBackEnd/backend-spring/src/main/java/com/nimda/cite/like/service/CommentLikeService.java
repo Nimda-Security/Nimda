@@ -53,7 +53,7 @@ public class CommentLikeService {
                         .message(user.getNickname() + "님이 내 댓글을 좋아합니다.")
                         .relatedEntityId(commentId)
                         // 해당 게시글로 이동
-                        .relatedUrl("api/cite/board/view/" + comment.getBoard().getId())
+                        .relatedUrl("/board/view/" + comment.getBoard().getId())
                         .isRead(false)
                         .build();
 
