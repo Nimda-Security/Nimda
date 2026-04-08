@@ -6,6 +6,7 @@ import com.nimda.cup.user.service.AdminUserService;
 import com.nimda.cup.user.service.UserService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.HashMap;
@@ -27,8 +28,9 @@ public class UsersController {
     @Autowired(required = false)
     private S3Service s3Service;
 
-    // Note. getAllUsers() - 모든 사용자 목록 조회
+    // Note. getAllUsers() - 모든 사용자 목록 조회 (관리자 전용)
     @GetMapping
+    @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<?> getAllUsers() {
         try {
             List<User> users = adminUserService.findAll();
@@ -78,7 +80,6 @@ public class UsersController {
             userMap.put("birth", user.getBirth());
             userMap.put("bojId", user.getBojId());
             userMap.put("emailHide", user.isEmailHide());
-            userMap.put("authorities", user.getAuthorities());
             userMap.put("profileImage", profileImage);
             userMap.put("createdAt", user.getCreatedAt());
             userMap.put("updatedAt", user.getUpdatedAt());
