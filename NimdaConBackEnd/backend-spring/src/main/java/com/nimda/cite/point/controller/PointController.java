@@ -11,6 +11,7 @@ import com.nimda.cup.user.security.CustomUserDetails;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.server.ResponseStatusException;
@@ -39,8 +40,9 @@ public class PointController {
         return ApiResponse.ok("계좌 조회에 성공했습니다.", dto).toResponse();
     }
 
-    // 계좌 전체 조회
+    // 계좌 전체 조회 (관리자 전용)
     @GetMapping("/allBalance")
+    @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<?> totalBalance(@AuthenticationPrincipal CustomUserDetails userDetails) {
         Long userId = userDetails.getUser().getId();
         List<BalanceResponse> dto = pointService.findAllUserBalance().stream().map(BalanceResponse::from)
@@ -60,6 +62,7 @@ public class PointController {
     }
 
     @PostMapping
+    @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<?> updateUserBalanceManual(
             @AuthenticationPrincipal CustomUserDetails userDetails, @RequestBody ManualBalanceUpdateRequest req) {
 
@@ -90,7 +93,7 @@ public class PointController {
                         () -> new IllegalArgumentException("사용자를 찾을 수 없습니다.")
                     );
         } catch (Exception e) {
-            return ApiResponse.fail("조회 중 오류가 발생했습니다: " + e.getMessage())
+            return ApiResponse.fail("조회 중 오류가 발생했습니다.")
                     .toResponse(HttpStatus.INTERNAL_SERVER_ERROR);
         }
     }
@@ -111,7 +114,7 @@ public class PointController {
                     .orElseThrow(() ->
                             new ResponseStatusException(HttpStatus.NOT_FOUND));
         } catch (Exception e) {
-            return ApiResponse.fail("조회 중 오류가 발생했습니다: " + e.getMessage())
+            return ApiResponse.fail("조회 중 오류가 발생했습니다.")
                     .toResponse(HttpStatus.INTERNAL_SERVER_ERROR);
         }
     }
