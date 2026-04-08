@@ -1,4 +1,4 @@
-package com.nimda.cite.like.controller;
+﻿package com.nimda.cite.like.controller;
 
 import com.nimda.cite.board.dto.BoardResponseDTO;
 import com.nimda.cite.board.entity.Board;
@@ -51,7 +51,7 @@ public class BoardLikeController {
                     .orElseThrow(() ->
                             new ResponseStatusException(HttpStatus.NOT_FOUND));
         } catch (Exception e) {
-            return ApiResponse.fail("조회 중 오류가 발생했습니다: " + e.getMessage())
+            return ApiResponse.fail("조회 중 오류가 발생했습니다.")
                     .toResponse(HttpStatus.INTERNAL_SERVER_ERROR);
         }
     }
