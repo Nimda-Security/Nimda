@@ -1,4 +1,4 @@
-﻿package com.nimda.cite.like.controller;
+package com.nimda.cite.like.controller;
 
 import com.nimda.cite.board.dto.BoardResponseDTO;
 import com.nimda.cite.board.entity.Board;

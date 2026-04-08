@@ -1,4 +1,4 @@
-﻿package com.nimda.cite.board.controller;
+package com.nimda.cite.board.controller;
 
 import com.nimda.cite.board.entity.Category;
 import com.nimda.cite.board.enums.BoardStatus;
