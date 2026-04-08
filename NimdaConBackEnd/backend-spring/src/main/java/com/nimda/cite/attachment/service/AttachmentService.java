@@ -22,6 +22,19 @@ import java.util.stream.Collectors;
 @Transactional
 public class AttachmentService {
 
+    private static final Set<String> ALLOWED_EXTENSIONS = Set.of(
+            // 이미지
+            "jpg", "jpeg", "png", "gif", "webp", "bmp", "svg",
+            // 문서
+            "pdf", "doc", "docx", "xls", "xlsx", "ppt", "pptx",
+            // 텍스트
+            "txt", "md", "csv",
+            // 압축
+            "zip", "7z", "rar",
+            // 미디어
+            "mp4", "avi", "mov", "mp3", "wav"
+    );
+
     private final AttachmentRepository attachmentRepository;
     private final FileStore fileStore;
 
@@ -38,7 +51,12 @@ public class AttachmentService {
         String originName = file.getOriginalFilename();
         String ext = extractExt(originName);
         if (ext.isBlank()) {
-            ext = "bin"; // 확장자 없을 때 기본값
+            throw new RuntimeException("파일 확장자가 없습니다. 업로드를 허용하지 않습니다.");
+        }
+
+        // 2. 허용된 확장자 검증 (화이트리스트)
+        if (!ALLOWED_EXTENSIONS.contains(ext.toLowerCase())) {
+            throw new RuntimeException("허용되지 않는 파일 형식입니다: " + ext);
         }
 
         // 2. 서버 저장용 중복 없는 이름 생성 (UUID)

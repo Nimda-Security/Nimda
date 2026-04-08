@@ -1,4 +1,4 @@
-package com.nimda.cite.board.controller;
+﻿package com.nimda.cite.board.controller;
 
 import com.nimda.cite.board.dto.CategoryCreateDTO;
 import com.nimda.cite.board.dto.CategoryResponseDTO;
@@ -37,7 +37,7 @@ public class CategoryController {
                     .toList();
             return ApiResponse.ok(categoryDTOList).toResponse();
         } catch (Exception e) {
-            return ApiResponse.fail(e.getMessage() != null ? e.getMessage() : "카테고리 조회 중 오류가 발생했습니다.")
+            return ApiResponse.fail("카테고리 조회 중 오류가 발생했습니다.")
                     .toResponse(HttpStatus.INTERNAL_SERVER_ERROR);
         }
     }
@@ -71,7 +71,7 @@ public class CategoryController {
             return ApiResponse.fail(e.getMessage()).toResponse(HttpStatus.BAD_REQUEST);
 
         } catch (Exception e) {
-            return ApiResponse.fail(e.getMessage() != null ? e.getMessage() : "서버 오류가 발생했습니다.")
+            return ApiResponse.fail("오류가 발생했습니다.")
                     .toResponse(HttpStatus.INTERNAL_SERVER_ERROR);
         }
     }
@@ -85,10 +85,10 @@ public class CategoryController {
             CategoryResponseDTO categoryDTO = CategoryResponseDTO.from(category);
             return ApiResponse.ok(categoryDTO).toResponse();
         } catch (RuntimeException e) {
-            return ApiResponse.fail(e.getMessage() != null ? e.getMessage() : "카테고리를 찾을 수 없습니다.")
+            return ApiResponse.fail("오류가 발생했습니다.")
                     .toResponse(HttpStatus.NOT_FOUND);
         } catch (Exception e) {
-            return ApiResponse.fail(e.getMessage() != null ? e.getMessage() : "서버 오류가 발생했습니다.")
+            return ApiResponse.fail("오류가 발생했습니다.")
                     .toResponse(HttpStatus.INTERNAL_SERVER_ERROR);
         }
     }
@@ -120,7 +120,7 @@ public class CategoryController {
             return ApiResponse.fail(e.getMessage()).toResponse(HttpStatus.BAD_REQUEST);
 
         } catch (Exception e) {
-            return ApiResponse.fail(e.getMessage() != null ? e.getMessage() : "서버 오류가 발생했습니다.")
+            return ApiResponse.fail("오류가 발생했습니다.")
                     .toResponse(HttpStatus.INTERNAL_SERVER_ERROR);
         }
     }
@@ -153,7 +153,7 @@ public class CategoryController {
             return ApiResponse.fail(e.getMessage()).toResponse(HttpStatus.BAD_REQUEST);
 
         } catch (Exception e) {
-            return ApiResponse.fail(e.getMessage() != null ? e.getMessage() : "서버 오류가 발생했습니다.")
+            return ApiResponse.fail("오류가 발생했습니다.")
                     .toResponse(HttpStatus.INTERNAL_SERVER_ERROR);
         }
     }
@@ -185,7 +185,7 @@ public class CategoryController {
             return ApiResponse.fail(e.getMessage()).toResponse(HttpStatus.BAD_REQUEST);
 
         } catch (Exception e) {
-            return ApiResponse.fail(e.getMessage() != null ? e.getMessage() : "서버 오류가 발생했습니다.")
+            return ApiResponse.fail("오류가 발생했습니다.")
                     .toResponse(HttpStatus.INTERNAL_SERVER_ERROR);
         }
     }
@@ -215,8 +215,9 @@ public class CategoryController {
             return ApiResponse.fail(e.getMessage()).toResponse(HttpStatus.BAD_REQUEST);
 
         } catch (Exception e) {
-            return ApiResponse.fail(e.getMessage() != null ? e.getMessage() : "서버 오류가 발생했습니다.")
+            return ApiResponse.fail("오류가 발생했습니다.")
                     .toResponse(HttpStatus.INTERNAL_SERVER_ERROR);
         }
     }
 }
+

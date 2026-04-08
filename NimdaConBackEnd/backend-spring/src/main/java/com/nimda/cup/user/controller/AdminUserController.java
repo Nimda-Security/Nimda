@@ -1,4 +1,4 @@
-package com.nimda.cup.user.controller;
+﻿package com.nimda.cup.user.controller;
 
 import com.nimda.cite.board.service.BoardService;
 import com.nimda.cup.user.entity.User;
@@ -57,7 +57,7 @@ public class AdminUserController {
         catch (Exception e) {
             Map<String, Object> error = new HashMap<>();
             error.put("success", false);
-            error.put("message", "사용자 목록 조회 중 오류가 발생했습니다: " + e.getMessage());
+            error.put("message", "사용자 목록 조회 중 오류가 발생했습니다.");
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(error);
         }
     }
@@ -81,7 +81,7 @@ public class AdminUserController {
         } catch (Exception e) {
             Map<String, Object> error = new HashMap<>();
             error.put("success", false);
-            error.put("message", "승인 대기 사용자 목록 조회 중 오류가 발생했습니다: " + e.getMessage());
+            error.put("message", "승인 대기 사용자 목록 조회 중 오류가 발생했습니다.");
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(error);
         }
     }
@@ -113,7 +113,7 @@ public class AdminUserController {
         } catch (Exception e) {
             Map<String, Object> error = new HashMap<>();
             error.put("success", false);
-            error.put("message", "사용자 승인 중 오류가 발생했습니다: " + e.getMessage());
+            error.put("message", "사용자 승인 중 오류가 발생했습니다.");
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(error);
         }
     }
@@ -144,7 +144,7 @@ public class AdminUserController {
         } catch (Exception e) {
             Map<String, Object> error = new HashMap<>();
             error.put("success", false);
-            error.put("message", "사용자 거부 중 오류가 발생했습니다: " + e.getMessage());
+            error.put("message", "사용자 거부 중 오류가 발생했습니다.");
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(error);
         }
     }
@@ -165,7 +165,7 @@ public class AdminUserController {
         } catch (Exception e) {
             Map<String, Object> error = new HashMap<>();
             error.put("success", false);
-            error.put("message", "권한 목록 조회 중 오류가 발생했습니다: " + e.getMessage());
+            error.put("message", "권한 목록 조회 중 오류가 발생했습니다.");
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(error);
         }
     }
@@ -199,7 +199,7 @@ public class AdminUserController {
         } catch (Exception e) {
             Map<String, Object> error = new HashMap<>();
             error.put("success", false);
-            error.put("message", "권한 부여 중 오류가 발생했습니다: " + e.getMessage());
+            error.put("message", "권한 부여 중 오류가 발생했습니다.");
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(error);
         }
     }
@@ -233,7 +233,7 @@ public class AdminUserController {
         } catch (Exception e) {
             Map<String, Object> error = new HashMap<>();
             error.put("success", false);
-            error.put("message", "권한 제거 중 오류가 발생했습니다: " + e.getMessage());
+            error.put("message", "권한 제거 중 오류가 발생했습니다.");
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(error);
         }
     }
@@ -251,3 +251,4 @@ public class AdminUserController {
         }
     }
 }
+

@@ -4,6 +4,8 @@ import com.nimda.cite.common.s3.S3Service;
 import com.nimda.cup.user.entity.User;
 import com.nimda.cup.user.service.AdminUserService;
 import com.nimda.cup.user.service.UserService;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
@@ -18,6 +20,8 @@ import java.util.Optional;
 @RestController
 @RequestMapping("/api/users")
 public class UsersController {
+
+    private static final Logger log = LoggerFactory.getLogger(UsersController.class);
 
     @Autowired
     private UserService userService;
@@ -40,10 +44,10 @@ public class UsersController {
             return ResponseEntity.ok(response);
 
         } catch (Exception e) {
-            e.printStackTrace();
+            log.error("사용자 목록 조회 중 오류 발생", e);
             Map<String, Object> error = new HashMap<>();
             error.put("success", false);
-            error.put("message", "사용자 목록 조회 중 오류가 발생했습니다: " + e.getMessage());
+            error.put("message", "사용자 목록 조회 중 오류가 발생했습니다.");
             return ResponseEntity.status(500).body(error);
         }
     }
@@ -86,8 +90,9 @@ public class UsersController {
 
             return ResponseEntity.ok(userMap);
         } catch (Exception e) {
+            log.error("사용자 조회 중 오류 발생", e);
             Map<String, String> error = new HashMap<>();
-            error.put("message", "Failed to get user: " + e.getMessage());
+            error.put("message", "사용자 조회 중 오류가 발생했습니다.");
             return ResponseEntity.status(500).body(error);
         }
     }
@@ -111,8 +116,9 @@ public class UsersController {
                 return ResponseEntity.status(404).body(error);
             }
         } catch (Exception e) {
+            log.error("사용자 조회 중 오류 발생", e);
             Map<String, String> error = new HashMap<>();
-            error.put("message", "Failed to get user: " + e.getMessage());
+            error.put("message", "사용자 조회 중 오류가 발생했습니다.");
             return ResponseEntity.status(500).body(error);
         }
     }
@@ -155,8 +161,9 @@ public class UsersController {
 
             return ResponseEntity.ok(profile);
         } catch (Exception e) {
+            log.error("사용자 조회 중 오류 발생", e);
             Map<String, String> error = new HashMap<>();
-            error.put("message", "Failed to get user: " + e.getMessage());
+            error.put("message", "사용자 조회 중 오류가 발생했습니다.");
             return ResponseEntity.status(500).body(error);
         }
     }
