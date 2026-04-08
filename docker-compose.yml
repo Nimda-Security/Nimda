@@ -13,8 +13,6 @@ services:
       MYSQL_PASSWORD: ${MYSQL_PASSWORD}
       # 메모리 제한 설정 (1GB RAM 환경)
       MYSQL_INNODB_BUFFER_POOL_SIZE: 256M
-    ports:
-      - "3306:3306" # 외부 접근이 필요하면 포트 열기 (보안상 필요없으면 제거 가능)
     volumes:
       - mysql_data:/var/lib/mysql
     healthcheck:
