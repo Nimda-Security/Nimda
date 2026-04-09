@@ -33,10 +33,39 @@ import org.springframework.web.bind.annotation.*;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
+import java.util.stream.Collectors;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 @RestController
 @RequestMapping("/api/cite/board")
 public class BoardController {
+
+    private static final Logger log = LoggerFactory.getLogger(BoardController.class);
+
+    /** sort 파라미터로 허용된 Board 엔티티 필드명 화이트리스트 */
+    private static final Set<String> ALLOWED_SORT_FIELDS = Set.of(
+            "createdAt", "updatedAt", "title", "postView", "pinned"
+    );
+
+    /** 클라이언트 sort 파라미터를 화이트리스트 기준으로 정제하고 페이지 크기를 제한 */
+    private Pageable sanitizedPageable(Pageable pageable, int maxSize) {
+        List<Sort.Order> safeOrders = pageable.getSort().stream()
+                .filter(o -> ALLOWED_SORT_FIELDS.contains(o.getProperty()))
+                .collect(Collectors.toList());
+        Sort safeSort = safeOrders.isEmpty()
+                ? Sort.by(Sort.Direction.DESC, "createdAt")
+                : Sort.by(safeOrders);
+        int size = Math.min(pageable.getPageSize(), maxSize);
+        return PageRequest.of(pageable.getPageNumber(), size, safeSort);
+    }
+
+    /** slug 형식 검증: 영문·숫자·하이픈·언더스코어만 허용, 최대 50자 */
+    private boolean isValidSlug(String slug) {
+        return slug != null && !slug.isEmpty() && slug.length() <= 50
+                && slug.matches("^[a-zA-Z0-9_-]+$");
+    }
 
     @Autowired
     private BoardService boardService;
@@ -116,13 +145,17 @@ public class BoardController {
             @RequestParam(value = "includeChildren", required = false, defaultValue = "false") Boolean includeChildren,
             @PageableDefault(size = 10, sort = "createdAt", direction = Sort.Direction.DESC) Pageable pageable) {
         try {
+            Pageable safePageable = sanitizedPageable(pageable, 100);
             Category category = null;
             if (categoryId != null) {
                 category = categoryRepository.findById(categoryId)
-                        .orElseThrow(() -> new RuntimeException("카테고리를 찾을 수 없습니다: " + categoryId));
+                        .orElseThrow(() -> new RuntimeException("카테고리를 찾을 수 없습니다."));
             } else if (slug != null) {
+                if (!isValidSlug(slug)) {
+                    return ApiResponse.fail("유효하지 않은 카테고리 slug입니다.").toResponse(HttpStatus.BAD_REQUEST);
+                }
                 category = categoryRepository.findBySlugAndIsActiveTrue(slug)
-                        .orElseThrow(() -> new RuntimeException("카테고리를 찾을 수 없습니다: " + slug));
+                        .orElseThrow(() -> new RuntimeException("카테고리를 찾을 수 없습니다."));
             } else {
                 return ApiResponse.fail("categoryId 또는 slug 파라미터가 필요합니다.").toResponse(HttpStatus.BAD_REQUEST);
             }
@@ -154,15 +187,15 @@ public class BoardController {
                 }
 
                 if (searchKeyword == null || searchKeyword.isEmpty()) {
-                    boards = boardService.boardListByCategories(categories, pageable);
+                    boards = boardService.boardListByCategories(categories, safePageable);
                 } else {
-                    boards = boardService.boardSearchListByCategories(categories, searchKeyword, pageable);
+                    boards = boardService.boardSearchListByCategories(categories, searchKeyword, safePageable);
                 }
             } else {
                 if (searchKeyword == null || searchKeyword.isEmpty()) {
-                    boards = boardService.boardListByCategory(category, pageable);
+                    boards = boardService.boardListByCategory(category, safePageable);
                 } else {
-                    boards = boardService.boardSearchListByCategory(category, searchKeyword, pageable);
+                    boards = boardService.boardSearchListByCategory(category, searchKeyword, safePageable);
                 }
             }
 
@@ -186,8 +219,11 @@ public class BoardController {
 
             return ApiResponse.ok("게시글 목록을 성공적으로 조회했습니다.", responseDTO).toResponse();
 
+        } catch (RuntimeException e) {
+            return ApiResponse.fail(e.getMessage()).toResponse(HttpStatus.BAD_REQUEST);
         } catch (Exception e) {
-            return ApiResponse.fail("게시글 목록 조회 중 오류가 발생했습니다: " + e.getMessage())
+            log.error("게시글 목록 조회 오류", e);
+            return ApiResponse.fail("게시글 목록 조회 중 오류가 발생했습니다.")
                     .toResponse(HttpStatus.INTERNAL_SERVER_ERROR);
         }
     }
@@ -199,19 +235,23 @@ public class BoardController {
             @RequestParam(value = "slug", required = false) String slug,
             @PageableDefault(size = 4, sort = "createdAt", direction = Sort.Direction.DESC) Pageable pageable) {
         try {
+            Pageable safePageable = sanitizedPageable(pageable, 20);
             Category category = null;
             if (categoryId != null) {
                 category = categoryRepository.findById(categoryId)
-                        .orElseThrow(() -> new RuntimeException("카테고리를 찾을 수 없습니다: " + categoryId));
+                        .orElseThrow(() -> new RuntimeException("카테고리를 찾을 수 없습니다."));
             } else if (slug != null) {
+                if (!isValidSlug(slug)) {
+                    return ApiResponse.fail("유효하지 않은 카테고리 slug입니다.").toResponse(HttpStatus.BAD_REQUEST);
+                }
                 category = categoryRepository.findBySlugAndIsActiveTrue(slug)
-                        .orElseThrow(() -> new RuntimeException("카테고리를 찾을 수 없습니다: " + slug));
+                        .orElseThrow(() -> new RuntimeException("카테고리를 찾을 수 없습니다."));
             } else {
                 return ApiResponse.fail("categoryId 또는 slug 파라미터가 필요합니다.").toResponse(HttpStatus.BAD_REQUEST);
             }
 
             User user = userDetails != null ? userDetails.getUser() : null;
-            Page<Board> boards = boardService.boardListByCategoryWithPinned(category, pageable);
+            Page<Board> boards = boardService.boardListByCategoryWithPinned(category, safePageable);
 
             // 고정글 목록에 좋아요 개수 추가하여 DTO로 변환
             List<BoardResponseDTO> postsDTO = boards.getContent().stream()
@@ -233,8 +273,11 @@ public class BoardController {
 
             return ApiResponse.ok("고정글 목록을 성공적으로 조회했습니다.", responseDTO).toResponse();
 
+        } catch (RuntimeException e) {
+            return ApiResponse.fail(e.getMessage()).toResponse(HttpStatus.BAD_REQUEST);
         } catch (Exception e) {
-            return ApiResponse.fail("고정글 목록 조회 중 오류가 발생했습니다: " + e.getMessage())
+            log.error("고정글 목록 조회 오류", e);
+            return ApiResponse.fail("고정글 목록 조회 중 오류가 발생했습니다.")
                     .toResponse(HttpStatus.INTERNAL_SERVER_ERROR);
         }
     }
@@ -246,12 +289,8 @@ public class BoardController {
             @RequestParam(value = "slug", required = false) String slug,
             @PageableDefault(size = 10, sort = "createdAt", direction = Sort.Direction.DESC) Pageable pageable) {
         try {
-            // 인기글은 최대 10개로 제한
-            int maxSize = Math.min(pageable.getPageSize(), 10);
-            Pageable limitedPageable = PageRequest.of(
-                    pageable.getPageNumber(),
-                    maxSize,
-                    pageable.getSort());
+            // 인기글은 최대 10개로 제한, sort 화이트리스트 적용
+            Pageable limitedPageable = sanitizedPageable(pageable, 10);
 
             User user = userDetails != null ? userDetails.getUser() : null;
             Page<Board> boards;
@@ -260,14 +299,13 @@ public class BoardController {
             if (categoryId != null || slug != null) {
                 if (categoryId != null) {
                     category = categoryRepository.findById(categoryId)
-                            .orElseThrow(() -> new RuntimeException("카테고리를 찾을 수 없습니다: " + categoryId));
+                            .orElseThrow(() -> new RuntimeException("카테고리를 찾을 수 없습니다."));
                 } else {
-                    // slug 검증: 영문, 숫자, 하이픈, 언더스코어만 허용 (최대 50자)
-                    if (slug == null || slug.isEmpty() || slug.length() > 50 || !slug.matches("^[a-zA-Z0-9_-]+$")) {
+                    if (!isValidSlug(slug)) {
                         return ApiResponse.fail("유효하지 않은 카테고리 slug입니다.").toResponse(HttpStatus.BAD_REQUEST);
                     }
                     category = categoryRepository.findBySlugAndIsActiveTrue(slug)
-                            .orElseThrow(() -> new RuntimeException("카테고리를 찾을 수 없습니다: " + slug));
+                            .orElseThrow(() -> new RuntimeException("카테고리를 찾을 수 없습니다."));
                 }
                 boards = boardService.boardListPopularByCategory(category, limitedPageable);
             } else {
@@ -294,8 +332,11 @@ public class BoardController {
 
             return ApiResponse.ok("인기글 목록을 성공적으로 조회했습니다.", responseDTO).toResponse();
 
+        } catch (RuntimeException e) {
+            return ApiResponse.fail(e.getMessage()).toResponse(HttpStatus.BAD_REQUEST);
         } catch (Exception e) {
-            return ApiResponse.fail("인기글 목록 조회 중 오류가 발생했습니다: " + e.getMessage())
+            log.error("인기글 목록 조회 오류", e);
+            return ApiResponse.fail("인기글 목록 조회 중 오류가 발생했습니다.")
                     .toResponse(HttpStatus.INTERNAL_SERVER_ERROR);
         }
     }
@@ -381,8 +422,11 @@ public class BoardController {
             return ApiResponse.ok("게시글이 성공적으로 작성되었습니다.", Map.of("board", boardDto))
                     .toResponse(HttpStatus.CREATED);
 
+        } catch (RuntimeException e) {
+            return ApiResponse.fail(e.getMessage()).toResponse(HttpStatus.BAD_REQUEST);
         } catch (Exception e) {
-            return ApiResponse.fail("게시글 작성 중 오류가 발생했습니다: " + e.getMessage())
+            log.error("게시글 작성 오류", e);
+            return ApiResponse.fail("게시글 작성 중 오류가 발생했습니다.")
                     .toResponse(HttpStatus.INTERNAL_SERVER_ERROR);
         }
     }
@@ -419,7 +463,8 @@ public class BoardController {
             return ApiResponse.fail(e.getMessage()).toResponse(HttpStatus.NOT_FOUND);
 
         } catch (Exception e) {
-            return ApiResponse.fail("게시글 조회 중 오류가 발생했습니다: " + e.getMessage())
+            log.error("게시글 조회 오류", e);
+            return ApiResponse.fail("게시글 조회 중 오류가 발생했습니다.")
                     .toResponse(HttpStatus.INTERNAL_SERVER_ERROR);
         }
     }
@@ -497,7 +542,8 @@ public class BoardController {
             return ApiResponse.fail(e.getMessage()).toResponse(HttpStatus.NOT_FOUND);
 
         } catch (Exception e) {
-            return ApiResponse.fail("게시글 수정 중 오류가 발생했습니다: " + e.getMessage())
+            log.error("게시글 수정 오류", e);
+            return ApiResponse.fail("게시글 수정 중 오류가 발생했습니다.")
                     .toResponse(HttpStatus.INTERNAL_SERVER_ERROR);
         }
     }
@@ -529,7 +575,8 @@ public class BoardController {
             return ApiResponse.fail(e.getMessage()).toResponse(HttpStatus.NOT_FOUND);
 
         } catch (Exception e) {
-            return ApiResponse.fail("게시글 삭제 중 오류가 발생했습니다: " + e.getMessage())
+            log.error("게시글 삭제 오류", e);
+            return ApiResponse.fail("게시글 삭제 중 오류가 발생했습니다.")
                     .toResponse(HttpStatus.INTERNAL_SERVER_ERROR);
         }
     }
@@ -561,7 +608,8 @@ public class BoardController {
             return ApiResponse.fail(e.getMessage()).toResponse(HttpStatus.NOT_FOUND);
 
         } catch (Exception e) {
-            return ApiResponse.fail("게시글 고정/해제 중 오류가 발생했습니다: " + e.getMessage())
+            log.error("게시글 고정/해제 오류", e);
+            return ApiResponse.fail("게시글 고정/해제 중 오류가 발생했습니다.")
                     .toResponse(HttpStatus.INTERNAL_SERVER_ERROR);
         }
     }
@@ -582,7 +630,8 @@ public class BoardController {
             )).toResponse();
 
         } catch (Exception e) {
-            return ApiResponse.fail("통계 정보 조회 중 오류가 발생했습니다: " + e.getMessage())
+            log.error("통계 정보 조회 오류", e);
+            return ApiResponse.fail("통계 정보 조회 중 오류가 발생했습니다.")
                     .toResponse(HttpStatus.INTERNAL_SERVER_ERROR);
         }
     }
@@ -612,7 +661,8 @@ public class BoardController {
 
             return ApiResponse.ok("게시글 목록을 조회했습니다.", dtos).toResponse();
         } catch (Exception e) {
-            return ApiResponse.fail("게시글 조회 중 오류가 발생했습니다: " + e.getMessage())
+            log.error("사용자 게시글 목록 조회 오류", e);
+            return ApiResponse.fail("게시글 조회 중 오류가 발생했습니다.")
                     .toResponse(HttpStatus.INTERNAL_SERVER_ERROR);
         }
     }
@@ -640,7 +690,8 @@ public class BoardController {
 
             return ApiResponse.ok("내 게시글 목록을 조회했습니다.", dtos).toResponse();
         } catch (Exception e) {
-            return ApiResponse.fail("내 게시글 조회 중 오류가 발생했습니다: " + e.getMessage())
+            log.error("내 게시글 목록 조회 오류", e);
+            return ApiResponse.fail("내 게시글 조회 중 오류가 발생했습니다.")
                     .toResponse(HttpStatus.INTERNAL_SERVER_ERROR);
         }
     }
@@ -666,7 +717,8 @@ public class BoardController {
             boardService.deleteMyBoards(boardIds, currentUser);
             return ApiResponse.ok("게시글이 삭제되었습니다.", null).toResponse();
         } catch (Exception e) {
-            return ApiResponse.fail("게시글 삭제 중 오류가 발생했습니다: " + e.getMessage())
+            log.error("내 게시글 삭제 오류", e);
+            return ApiResponse.fail("게시글 삭제 중 오류가 발생했습니다.")
                     .toResponse(HttpStatus.INTERNAL_SERVER_ERROR);
         }
     }
@@ -699,7 +751,8 @@ public class BoardController {
             resolveProfileImages(dtos);
             return ApiResponse.ok("댓글 단 게시글 목록을 조회했습니다.", dtos).toResponse();
         } catch (Exception e) {
-            return ApiResponse.fail("댓글 단 게시글 조회 중 오류가 발생했습니다: " + e.getMessage())
+            log.error("댓글 단 게시글 조회 오류", e);
+            return ApiResponse.fail("댓글 단 게시글 조회 중 오류가 발생했습니다.")
                     .toResponse(HttpStatus.INTERNAL_SERVER_ERROR);
         }
     }

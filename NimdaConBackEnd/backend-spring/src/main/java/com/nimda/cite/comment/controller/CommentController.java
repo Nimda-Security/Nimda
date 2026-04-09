@@ -7,6 +7,8 @@ import com.nimda.cite.common.s3.S3Service;
 import com.nimda.cup.user.repository.UserRepository;
 import com.nimda.cup.user.security.CustomUserDetails;
 import jakarta.validation.Valid;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -21,6 +23,8 @@ import java.util.Map;
 @RestController
 @RequestMapping("/api")
 public class CommentController {
+
+    private static final Logger log = LoggerFactory.getLogger(CommentController.class);
 
     @Autowired
     private CommentService commentService;
@@ -69,7 +73,8 @@ public class CommentController {
                     Map.of("comment", response)).toResponse(HttpStatus.CREATED);
 
         } catch(Exception e) {
-            return ApiResponse.fail("댓글 작성 중 오류가 발생했습니다: " + e.getMessage())
+            log.error("댓글 작성 중 오류 발생", e);
+            return ApiResponse.fail("댓글 작성 중 오류가 발생했습니다.")
                     .toResponse(HttpStatus.INTERNAL_SERVER_ERROR);
         }
 
@@ -96,7 +101,8 @@ public class CommentController {
                     Map.of("comments", comments)).toResponse();
 
         } catch (Exception e) {
-            return ApiResponse.fail("댓글 조회 중 오류가 발생했습니다: " + e.getMessage())
+            log.error("댓글 조회 중 오류 발생", e);
+            return ApiResponse.fail("댓글 조회 중 오류가 발생했습니다.")
                     .toResponse(HttpStatus.INTERNAL_SERVER_ERROR);
         }
     }
@@ -115,7 +121,8 @@ public class CommentController {
                     Map.of("comments", commentService.getMyComments(userId))).toResponse();
 
         } catch (Exception e) {
-            return ApiResponse.fail("마이 페이지 작성 댓글 조회 중 오류가 발생했습니다: " + e.getMessage())
+            log.error("마이페이지 댓글 조회 중 오류 발생", e);
+            return ApiResponse.fail("댓글 조회 중 오류가 발생했습니다.")
                     .toResponse(HttpStatus.INTERNAL_SERVER_ERROR);
         }
     }
@@ -139,7 +146,8 @@ public class CommentController {
                     Map.of("comment", response)).toResponse();
 
         } catch (Exception e) {
-            return ApiResponse.fail("댓글 수정 중 오류가 발생했습니다: " + e.getMessage())
+            log.error("댓글 수정 중 오류 발생", e);
+            return ApiResponse.fail("댓글 수정 중 오류가 발생했습니다.")
                     .toResponse(HttpStatus.INTERNAL_SERVER_ERROR);
         }
     }
@@ -162,7 +170,8 @@ public class CommentController {
                     Map.of("comment", response)).toResponse();
 
         } catch (Exception e) {
-            return ApiResponse.fail("댓글 숨김 중 오류가 발생했습니다: " + e.getMessage())
+            log.error("댓글 숨김 중 오류 발생", e);
+            return ApiResponse.fail("댓글 숨김 중 오류가 발생했습니다.")
                     .toResponse(HttpStatus.INTERNAL_SERVER_ERROR);
         }
     }
@@ -184,7 +193,8 @@ public class CommentController {
             return ApiResponse.ok("댓글이 성공적으로 삭제되었습니다.").toResponse();
 
         } catch (Exception e) {
-            return ApiResponse.fail("댓글 삭제 중 오류가 발생했습니다: " + e.getMessage())
+            log.error("댓글 삭제 중 오류 발생", e);
+            return ApiResponse.fail("댓글 삭제 중 오류가 발생했습니다.")
                     .toResponse(HttpStatus.INTERNAL_SERVER_ERROR);
         }
 
@@ -209,7 +219,8 @@ public class CommentController {
                     Map.of("commentCount", commentCount)).toResponse();
 
         } catch (Exception e) {
-            return ApiResponse.fail("댓글 개수 조회 중 오류가 발생했습니다: " + e.getMessage())
+            log.error("댓글 개수 조회 중 오류 발생", e);
+            return ApiResponse.fail("댓글 개수 조회 중 오류가 발생했습니다.")
                     .toResponse(HttpStatus.INTERNAL_SERVER_ERROR);
         }
     }
@@ -229,7 +240,8 @@ public class CommentController {
             return ApiResponse.ok("선택한 댓글이 성공적으로 삭제되었습니다.").toResponse();
 
         } catch (Exception e) {
-            return ApiResponse.fail("댓글 삭제 중 오류가 발생했습니다: " + e.getMessage())
+            log.error("댓글 선택 삭제 중 오류 발생", e);
+            return ApiResponse.fail("댓글 삭제 중 오류가 발생했습니다.")
                     .toResponse(HttpStatus.INTERNAL_SERVER_ERROR);
         }
     }
@@ -251,7 +263,8 @@ public class CommentController {
                             () -> new ResponseStatusException(HttpStatus.NOT_FOUND)
                     );
         } catch (Exception e) {
-            return ApiResponse.fail("댓글 조회 중 오류가 발생했습니다: " + e.getMessage())
+            log.error("댓글 목록 조회 중 오류 발생", e);
+            return ApiResponse.fail("댓글 조회 중 오류가 발생했습니다.")
                     .toResponse(HttpStatus.INTERNAL_SERVER_ERROR);
         }
     }

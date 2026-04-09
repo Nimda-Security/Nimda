@@ -124,7 +124,7 @@ public class FileDownloadController {
 
         } catch (Exception e) {
             logger.error("파일 다운로드 중 오류 발생: {}", fileName, e);
-            return ApiResponse.fail("파일 다운로드 중 오류가 발생했습니다: " + e.getMessage())
+            return ApiResponse.fail("파일 다운로드 중 오류가 발생했습니다.")
                     .toResponse(HttpStatus.INTERNAL_SERVER_ERROR);
         }
     }
@@ -182,4 +182,5 @@ public class FileDownloadController {
         return fileName;
     }
 }
+
 

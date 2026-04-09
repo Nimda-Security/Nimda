@@ -4,8 +4,11 @@ import com.nimda.cite.common.s3.S3Service;
 import com.nimda.cup.user.entity.User;
 import com.nimda.cup.user.service.AdminUserService;
 import com.nimda.cup.user.service.UserService;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.HashMap;
@@ -18,6 +21,8 @@ import java.util.Optional;
 @RequestMapping("/api/users")
 public class UsersController {
 
+    private static final Logger log = LoggerFactory.getLogger(UsersController.class);
+
     @Autowired
     private UserService userService;
 
@@ -27,8 +32,9 @@ public class UsersController {
     @Autowired(required = false)
     private S3Service s3Service;
 
-    // Note. getAllUsers() - 모든 사용자 목록 조회
+    // Note. getAllUsers() - 모든 사용자 목록 조회 (관리자 전용)
     @GetMapping
+    @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<?> getAllUsers() {
         try {
             List<User> users = adminUserService.findAll();
@@ -38,10 +44,10 @@ public class UsersController {
             return ResponseEntity.ok(response);
 
         } catch (Exception e) {
-            e.printStackTrace();
+            log.error("사용자 목록 조회 중 오류 발생", e);
             Map<String, Object> error = new HashMap<>();
             error.put("success", false);
-            error.put("message", "사용자 목록 조회 중 오류가 발생했습니다: " + e.getMessage());
+            error.put("message", "사용자 목록 조회 중 오류가 발생했습니다.");
             return ResponseEntity.status(500).body(error);
         }
     }
@@ -78,15 +84,15 @@ public class UsersController {
             userMap.put("birth", user.getBirth());
             userMap.put("bojId", user.getBojId());
             userMap.put("emailHide", user.isEmailHide());
-            userMap.put("authorities", user.getAuthorities());
             userMap.put("profileImage", profileImage);
             userMap.put("createdAt", user.getCreatedAt());
             userMap.put("updatedAt", user.getUpdatedAt());
 
             return ResponseEntity.ok(userMap);
         } catch (Exception e) {
+            log.error("사용자 조회 중 오류 발생", e);
             Map<String, String> error = new HashMap<>();
-            error.put("message", "Failed to get user: " + e.getMessage());
+            error.put("message", "사용자 조회 중 오류가 발생했습니다.");
             return ResponseEntity.status(500).body(error);
         }
     }
@@ -110,8 +116,9 @@ public class UsersController {
                 return ResponseEntity.status(404).body(error);
             }
         } catch (Exception e) {
+            log.error("사용자 조회 중 오류 발생", e);
             Map<String, String> error = new HashMap<>();
-            error.put("message", "Failed to get user: " + e.getMessage());
+            error.put("message", "사용자 조회 중 오류가 발생했습니다.");
             return ResponseEntity.status(500).body(error);
         }
     }
@@ -154,8 +161,9 @@ public class UsersController {
 
             return ResponseEntity.ok(profile);
         } catch (Exception e) {
+            log.error("사용자 조회 중 오류 발생", e);
             Map<String, String> error = new HashMap<>();
-            error.put("message", "Failed to get user: " + e.getMessage());
+            error.put("message", "사용자 조회 중 오류가 발생했습니다.");
             return ResponseEntity.status(500).body(error);
         }
     }

@@ -63,7 +63,7 @@ public class AdminBoardController {
 
         } catch (Exception e) {
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
-                    .body(Map.of("success", false, "message", "태그 통계 조회 중 오류: " + e.getMessage()));
+                    .body(Map.of("success", false, "message", "태그 통계 조회 중 오류가 발생했습니다."));
         }
     }
 
@@ -89,7 +89,7 @@ public class AdminBoardController {
 
         } catch (Exception e) {
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
-                    .body(Map.of("success", false, "message", "비활성화 중 오류: " + e.getMessage()));
+                    .body(Map.of("success", false, "message", "비활성화 중 오류가 발생했습니다."));
         }
     }
 
@@ -115,7 +115,8 @@ public class AdminBoardController {
 
         } catch (Exception e) {
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
-                    .body(Map.of("success", false, "message", "활성화 중 오류: " + e.getMessage()));
+                    .body(Map.of("success", false, "message", "활성화 중 오류가 발생했습니다."));
         }
     }
 }
+

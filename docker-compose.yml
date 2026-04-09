@@ -44,9 +44,11 @@ services:
       - SERVER_PORT=8080
       # AWS S3 설정
       - AWS_S3_BUCKET=${AWS_S3_BUCKET}
-      - AWS_S3_REGION=${AWS_REGION}
-      - AWS_S3_ACCESS_KEY=${AWS_ACCESS_KEY}
-      - AWS_S3_SECRET_KEY=${AWS_SECRET_KEY}
+      - AWS_REGION=${AWS_REGION}
+      - AWS_ACCESS_KEY=${AWS_ACCESS_KEY}
+      - AWS_SECRET_KEY=${AWS_SECRET_KEY}
+      # JWT 시크릿 (반드시 .env 파일에 안전한 값으로 설정)
+      - JWT_SECRET=${JWT_SECRET}
     restart: always
 
   # Nginx 리버스 프록시 서비스

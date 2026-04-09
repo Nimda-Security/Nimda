@@ -59,7 +59,7 @@ public class BoardLikeService {
                         .notificationType(NotificationType.PushLikeButtonAtBoard)
                         .message(liker.getNickname() + "님이 내 게시글 '" + board.getTitle() + "'을 좋아합니다.")
                         .relatedEntityId(boardId)
-                        .relatedUrl("/api/cite/board/" + boardId)
+                        .relatedUrl("/board/view/" + boardId)
                         .isRead(false)
                         .build();
 

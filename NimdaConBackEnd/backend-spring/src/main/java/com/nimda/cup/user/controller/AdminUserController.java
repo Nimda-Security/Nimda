@@ -10,6 +10,9 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -30,6 +33,8 @@ import java.util.Map;
 @RequestMapping("/api/admin/users")
 @PreAuthorize("hasRole('ADMIN')")
 public class AdminUserController {
+
+    private static final Logger log = LoggerFactory.getLogger(AdminUserController.class);
 
     @Autowired
     private AdminUserService adminUserService;
@@ -57,7 +62,7 @@ public class AdminUserController {
         catch (Exception e) {
             Map<String, Object> error = new HashMap<>();
             error.put("success", false);
-            error.put("message", "사용자 목록 조회 중 오류가 발생했습니다: " + e.getMessage());
+            error.put("message", "사용자 목록 조회 중 오류가 발생했습니다.");
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(error);
         }
     }
@@ -81,7 +86,7 @@ public class AdminUserController {
         } catch (Exception e) {
             Map<String, Object> error = new HashMap<>();
             error.put("success", false);
-            error.put("message", "승인 대기 사용자 목록 조회 중 오류가 발생했습니다: " + e.getMessage());
+            error.put("message", "승인 대기 사용자 목록 조회 중 오류가 발생했습니다.");
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(error);
         }
     }
@@ -106,14 +111,16 @@ public class AdminUserController {
 
             return ResponseEntity.ok(response);
         } catch (RuntimeException e) {
+            log.error("사용자 승인 중 오류 발생", e);
             Map<String, Object> error = new HashMap<>();
             error.put("success", false);
-            error.put("message", e.getMessage());
+            error.put("message", "사용자 승인 중 오류가 발생했습니다.");
             return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(error);
         } catch (Exception e) {
+            log.error("사용자 승인 중 예기치 않은 오류 발생", e);
             Map<String, Object> error = new HashMap<>();
             error.put("success", false);
-            error.put("message", "사용자 승인 중 오류가 발생했습니다: " + e.getMessage());
+            error.put("message", "사용자 승인 중 오류가 발생했습니다.");
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(error);
         }
     }
@@ -137,14 +144,16 @@ public class AdminUserController {
 
             return ResponseEntity.ok(response);
         } catch (RuntimeException e) {
+            log.error("사용자 거부 중 오류 발생", e);
             Map<String, Object> error = new HashMap<>();
             error.put("success", false);
-            error.put("message", e.getMessage());
+            error.put("message", "사용자 거부 중 오류가 발생했습니다.");
             return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(error);
         } catch (Exception e) {
+            log.error("사용자 거부 중 예기치 않은 오류 발생", e);
             Map<String, Object> error = new HashMap<>();
             error.put("success", false);
-            error.put("message", "사용자 거부 중 오류가 발생했습니다: " + e.getMessage());
+            error.put("message", "사용자 거부 중 오류가 발생했습니다.");
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(error);
         }
     }
@@ -165,7 +174,7 @@ public class AdminUserController {
         } catch (Exception e) {
             Map<String, Object> error = new HashMap<>();
             error.put("success", false);
-            error.put("message", "권한 목록 조회 중 오류가 발생했습니다: " + e.getMessage());
+            error.put("message", "권한 목록 조회 중 오류가 발생했습니다.");
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(error);
         }
     }
@@ -192,14 +201,16 @@ public class AdminUserController {
 
             return ResponseEntity.ok(response);
         } catch (RuntimeException e) {
+            log.error("권한 부여 중 오류 발생", e);
             Map<String, Object> error = new HashMap<>();
             error.put("success", false);
-            error.put("message", e.getMessage());
+            error.put("message", "권한 부여 중 오류가 발생했습니다.");
             return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(error);
         } catch (Exception e) {
+            log.error("권한 부여 중 예기치 않은 오류 발생", e);
             Map<String, Object> error = new HashMap<>();
             error.put("success", false);
-            error.put("message", "권한 부여 중 오류가 발생했습니다: " + e.getMessage());
+            error.put("message", "권한 부여 중 오류가 발생했습니다.");
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(error);
         }
     }
@@ -226,14 +237,16 @@ public class AdminUserController {
 
             return ResponseEntity.ok(response);
         } catch (RuntimeException e) {
+            log.error("권한 제거 중 오류 발생", e);
             Map<String, Object> error = new HashMap<>();
             error.put("success", false);
-            error.put("message", e.getMessage());
+            error.put("message", "권한 제거 중 오류가 발생했습니다.");
             return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(error);
         } catch (Exception e) {
+            log.error("권한 제거 중 예기치 않은 오류 발생", e);
             Map<String, Object> error = new HashMap<>();
             error.put("success", false);
-            error.put("message", "권한 제거 중 오류가 발생했습니다: " + e.getMessage());
+            error.put("message", "권한 제거 중 오류가 발생했습니다.");
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(error);
         }
     }
@@ -246,8 +259,9 @@ public class AdminUserController {
         }catch(RuntimeException e) {
             Map<String, Object> error = new HashMap<>();
             error.put("success", false);
-            error.put("태그 제거 중 오류가 발생했습니다.",e.getMessage());
+            error.put("message", "태그 제거 중 오류가 발생했습니다.");
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(error);
         }
     }
 }
+

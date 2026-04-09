@@ -120,9 +120,15 @@ public class AlarmService {
                 .recipient(event.getParentsCommentAuthor())
                 .sender(event.getChildCommentAuthor())
                 .notificationType(NotificationType.AddChildComment)
+                .createdAt(LocalDateTime.now())
+                .expiredAt(LocalDateTime.now().plusDays(15))
+                .relatedEntityId(event.getBoard().getId())
+                .relatedUrl("/board/view/" + event.getBoard().getId())
                 .isRead(false)
                 .message(message)
                 .build();
+
+        notificationRepositroy.save(notification);
 
         this.send(notification);
     }

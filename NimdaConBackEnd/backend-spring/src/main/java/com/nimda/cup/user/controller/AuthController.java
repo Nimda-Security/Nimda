@@ -13,6 +13,8 @@ import com.nimda.cup.user.service.AuthService;
 import com.nimda.cite.common.s3.S3Service;
 import jakarta.servlet.http.HttpServletResponse;
 import jakarta.validation.Valid;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
@@ -28,6 +30,8 @@ import java.util.Optional;
 @RestController
 @RequestMapping("/api/auth")
 public class AuthController {
+
+    private static final Logger log = LoggerFactory.getLogger(AuthController.class);
 
     @Autowired
     private AuthService authService;
@@ -74,8 +78,9 @@ public class AuthController {
             return ResponseEntity.status(HttpStatus.FORBIDDEN)
                     .body(Map.of("message", e.getMessage()));
         } catch (Exception e) {
+            log.error("로그인 처리 중 오류 발생", e);
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
-                    .body(Map.of("message", "Login failed: " + e.getMessage()));
+                    .body(Map.of("message", "로그인 처리 중 오류가 발생했습니다."));
         }
     }
 
@@ -126,8 +131,9 @@ public class AuthController {
             error.put("message", e.getMessage());
             return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(error);
         } catch (Exception e) {
+            log.error("회원가입 처리 중 오류 발생", e);
             Map<String, String> error = new HashMap<>();
-            error.put("message", "Registration failed: " + e.getMessage());
+            error.put("message", "회원가입 처리 중 오류가 발생했습니다.");
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(error);
         }
 
@@ -174,8 +180,9 @@ public class AuthController {
             return ResponseEntity.ok(response);
 
         } catch (Exception e) {
+            log.error("사용자 정보 조회 중 오류 발생", e);
             Map<String, String> error = new HashMap<>();
-            error.put("message", "사용자 정보 조회 실패: " + e.getMessage());
+            error.put("message", "사용자 정보 조회 중 오류가 발생했습니다.");
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(error);
         }
     }
@@ -225,8 +232,9 @@ public class AuthController {
             return ResponseEntity.status(HttpStatus.BAD_REQUEST)
                     .body(Map.of("success", false, "message", e.getMessage()));
         } catch (Exception e) {
+            log.error("프로필 수정 중 오류 발생", e);
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
-                    .body(Map.of("message", "프로필 수정 실패: " + e.getMessage()));
+                    .body(Map.of("message", "프로필 수정 중 오류가 발생했습니다."));
         }
     }
 
@@ -266,8 +274,9 @@ public class AuthController {
                     "profileImageKey", updated.getProfileImage()));
 
         } catch (Exception e) {
+            log.error("프로필 이미지 변경 중 오류 발생", e);
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
-                    .body(Map.of("success", false, "message", "프로필 이미지 변경 실패: " + e.getMessage()));
+                    .body(Map.of("success", false, "message", "프로필 이미지 변경 중 오류가 발생했습니다."));
         }
     }
 
@@ -291,8 +300,9 @@ public class AuthController {
                     "message", "이메일 숨김 설정이 변경되었습니다."));
 
         } catch (Exception e) {
+            log.error("이메일 숨김 설정 중 오류 발생", e);
             Map<String, String> error = new HashMap<>();
-            error.put("message", "사용자 정보 조회 실패: " + e.getMessage());
+            error.put("message", "설정 변경 중 오류가 발생했습니다.");
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(error);
         }
     }
