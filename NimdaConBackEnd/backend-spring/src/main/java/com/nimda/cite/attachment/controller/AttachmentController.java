@@ -108,7 +108,9 @@ public class AttachmentController {
             if (resourceOpt.isEmpty()) {
                 // 로컬 리소스를 열 수 없고, S3Service가 존재하며 filepath(S3 key)가 있다면 Presigned GET URL로 리다이렉트
                 if (s3Service != null && attachment.getFilepath() != null) {
-                    String presignedUrl = s3Service.createPresignedGetUrl(attachment.getFilepath(), 10);
+                    String s3Disposition = "pdf".equalsIgnoreCase(attachment.getExtension())
+                            ? "attachment" : null;
+                    String presignedUrl = s3Service.createPresignedGetUrl(attachment.getFilepath(), 10, s3Disposition);
                     if (presignedUrl != null) {
                         HttpHeaders headers = new HttpHeaders();
                         headers.setLocation(URI.create(presignedUrl));
@@ -141,8 +143,11 @@ public class AttachmentController {
         Attachment attachment = attachmentService.getAttachment(id);
 
         // S3 사용 가능 && filepath(S3 key)가 있는 경우: Presigned GET URL 생성
+        // PDF는 브라우저 내 스크립트 실행 방지를 위해 Content-Disposition: attachment 강제
         if (s3Service != null && attachment.getFilepath() != null) {
-            String url = s3Service.createPresignedGetUrl(attachment.getFilepath(), 10);
+            String disposition = "pdf".equalsIgnoreCase(attachment.getExtension())
+                    ? "attachment" : null;
+            String url = s3Service.createPresignedGetUrl(attachment.getFilepath(), 10, disposition);
             if (url != null) {
                 return ApiResponse.ok(Map.of("downloadUrl", url)).toResponse();
             }

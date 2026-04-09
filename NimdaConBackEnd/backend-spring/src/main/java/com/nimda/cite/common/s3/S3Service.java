@@ -88,13 +88,27 @@ public class S3Service {
      * @param expiryMinutes 유효 시간(분)
      */
     public String createPresignedGetUrl(String key, int expiryMinutes) {
+        return createPresignedGetUrl(key, expiryMinutes, null);
+    }
+
+    /**
+     * 다운로드/보기용 Presigned GET URL 생성 (Content-Disposition 오버라이드 가능).
+     *
+     * @param key S3 객체 키
+     * @param expiryMinutes 유효 시간(분)
+     * @param responseContentDisposition S3 응답에 포함할 Content-Disposition 값 (null이면 미지정)
+     */
+    public String createPresignedGetUrl(String key, int expiryMinutes, String responseContentDisposition) {
         if (key == null || key.isBlank()) {
             return null;
         }
-        GetObjectRequest getRequest = GetObjectRequest.builder()
+        GetObjectRequest.Builder getBuilder = GetObjectRequest.builder()
                 .bucket(s3Properties.getBucket())
-                .key(key)
-                .build();
+                .key(key);
+        if (responseContentDisposition != null && !responseContentDisposition.isBlank()) {
+            getBuilder.responseContentDisposition(responseContentDisposition);
+        }
+        GetObjectRequest getRequest = getBuilder.build();
         GetObjectPresignRequest presignRequest = GetObjectPresignRequest.builder()
                 .signatureDuration(Duration.ofMinutes(expiryMinutes))
                 .getObjectRequest(getRequest)
