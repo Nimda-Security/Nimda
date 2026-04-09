@@ -13,6 +13,8 @@ services:
       MYSQL_PASSWORD: ${MYSQL_PASSWORD}
       # 메모리 제한 설정 (1GB RAM 환경)
       MYSQL_INNODB_BUFFER_POOL_SIZE: 256M
+    ports:
+      - "3306:3306" # 외부 접근이 필요하면 포트 열기 (보안상 필요없으면 제거 가능)
     volumes:
       - mysql_data:/var/lib/mysql
     healthcheck:
@@ -42,9 +44,9 @@ services:
       - SERVER_PORT=8080
       # AWS S3 설정
       - AWS_S3_BUCKET=${AWS_S3_BUCKET}
-      - AWS_S3_REGION=${AWS_REGION}
-      - AWS_S3_ACCESS_KEY=${AWS_ACCESS_KEY}
-      - AWS_S3_SECRET_KEY=${AWS_SECRET_KEY}
+      - AWS_REGION=${AWS_REGION}
+      - AWS_ACCESS_KEY=${AWS_ACCESS_KEY}
+      - AWS_SECRET_KEY=${AWS_SECRET_KEY}
       # JWT 시크릿 (반드시 .env 파일에 안전한 값으로 설정)
       - JWT_SECRET=${JWT_SECRET}
     restart: always
