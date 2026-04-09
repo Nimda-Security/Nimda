@@ -10,6 +10,7 @@ import software.amazon.awssdk.services.s3.presigner.model.GetObjectPresignReques
 import software.amazon.awssdk.services.s3.presigner.model.PutObjectPresignRequest;
 
 import java.time.Duration;
+import java.util.Set;
 import java.util.UUID;
 @Service
 @RequiredArgsConstructor
@@ -27,6 +28,11 @@ public class S3Service {
      * @param fileName 원본 파일명
      */
     public PresignedUpload createPresignedUpload(String type, String fileName) {
+        // 0. 확장자 화이트리스트 검증 (1차 방어선)
+        if (!com.nimda.cite.attachment.service.AttachmentService.isAllowedExtension(extractExt(fileName))) {
+            throw new IllegalArgumentException("허용되지 않는 파일 형식입니다: " + extractExt(fileName));
+        }
+
         // 1. 경로 결정 (null이면 temp/)
         String path = switch (type) {
             case "profile" -> s3Properties.getProfileImagePath();
@@ -66,6 +72,12 @@ public class S3Service {
      */
     public String createPresignedUrl(String type, String fileName) {
         return createPresignedUpload(type, fileName).getUrl();
+    }
+
+    private static String extractExt(String filename) {
+        if (filename == null || !filename.contains(".")) return "";
+        String ext = filename.substring(filename.lastIndexOf('.') + 1);
+        return ext.isBlank() ? "" : ext.toLowerCase();
     }
 
     /**

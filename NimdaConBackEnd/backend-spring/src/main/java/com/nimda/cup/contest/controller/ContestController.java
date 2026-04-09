@@ -84,7 +84,7 @@ public class ContestController {
         } catch (Exception e) {
             Map<String, Object> errorResponse = new HashMap<>();
             errorResponse.put("success", false);
-            errorResponse.put("message", "대회 생성 중 오류가 발생했습니다: " + e.getMessage());
+            errorResponse.put("message", "대회 생성 중 오류가 발생했습니다.");
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(errorResponse);
         }
     }
@@ -114,7 +114,7 @@ public class ContestController {
         } catch (Exception e) {
             Map<String, Object> errorResponse = new HashMap<>();
             errorResponse.put("success", false);
-            errorResponse.put("message", "대회 목록 조회 중 오류가 발생했습니다: " + e.getMessage());
+            errorResponse.put("message", "대회 목록 조회 중 오류가 발생했습니다.");
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(errorResponse);
         }
     }
@@ -143,7 +143,7 @@ public class ContestController {
         } catch (Exception e) {
             Map<String, Object> errorResponse = new HashMap<>();
             errorResponse.put("success", false);
-            errorResponse.put("message", "대회 조회 중 오류가 발생했습니다: " + e.getMessage());
+            errorResponse.put("message", "대회 조회 중 오류가 발생했습니다.");
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(errorResponse);
         }
     }
@@ -190,7 +190,7 @@ public class ContestController {
         } catch (Exception e) {
             Map<String, Object> errorResponse = new HashMap<>();
             errorResponse.put("success", false);
-            errorResponse.put("message", "대회 수정 중 오류가 발생했습니다: " + e.getMessage());
+            errorResponse.put("message", "대회 수정 중 오류가 발생했습니다.");
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(errorResponse);
         }
     }
@@ -235,7 +235,7 @@ public class ContestController {
         } catch (Exception e) {
             Map<String, Object> errorResponse = new HashMap<>();
             errorResponse.put("success", false);
-            errorResponse.put("message", "대회 삭제 중 오류가 발생했습니다: " + e.getMessage());
+            errorResponse.put("message", "대회 삭제 중 오류가 발생했습니다.");
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(errorResponse);
         }
     }
@@ -284,7 +284,7 @@ public class ContestController {
         } catch (Exception e) {
             Map<String, Object> errorResponse = new HashMap<>();
             errorResponse.put("success", false);
-            errorResponse.put("message", "문제 추가 중 오류가 발생했습니다: " + e.getMessage());
+            errorResponse.put("message", "문제 추가 중 오류가 발생했습니다.");
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(errorResponse);
         }
     }
@@ -326,7 +326,7 @@ public class ContestController {
         } catch (Exception e) {
             Map<String, Object> errorResponse = new HashMap<>();
             errorResponse.put("success", false);
-            errorResponse.put("message", "문제 제거 중 오류가 발생했습니다: " + e.getMessage());
+            errorResponse.put("message", "문제 제거 중 오류가 발생했습니다.");
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(errorResponse);
         }
     }
@@ -355,7 +355,7 @@ public class ContestController {
         } catch (Exception e) {
             Map<String, Object> errorResponse = new HashMap<>();
             errorResponse.put("success", false);
-            errorResponse.put("message", "대회 문제 목록 조회 중 오류가 발생했습니다: " + e.getMessage());
+            errorResponse.put("message", "대회 문제 목록 조회 중 오류가 발생했습니다.");
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(errorResponse);
         }
     }
@@ -393,7 +393,7 @@ public class ContestController {
         } catch (Exception e) {
             Map<String, Object> errorResponse = new HashMap<>();
             errorResponse.put("success", false);
-            errorResponse.put("message", "대회 참가 등록 중 오류가 발생했습니다: " + e.getMessage());
+            errorResponse.put("message", "대회 참가 등록 중 오류가 발생했습니다.");
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(errorResponse);
         }
     }
@@ -428,7 +428,7 @@ public class ContestController {
         } catch (Exception e) {
             Map<String, Object> errorResponse = new HashMap<>();
             errorResponse.put("success", false);
-            errorResponse.put("message", "대회 참가자 목록 조회 중 오류가 발생했습니다: " + e.getMessage());
+            errorResponse.put("message", "대회 참가자 목록 조회 중 오류가 발생했습니다.");
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(errorResponse);
         }
     }
@@ -469,7 +469,7 @@ public class ContestController {
         } catch (Exception e) {
             Map<String, Object> errorResponse = new HashMap<>();
             errorResponse.put("success", false);
-            errorResponse.put("message", "점수판 조회 중 오류가 발생했습니다: " + e.getMessage());
+            errorResponse.put("message", "점수판 조회 중 오류가 발생했습니다.");
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(errorResponse);
         }
     }

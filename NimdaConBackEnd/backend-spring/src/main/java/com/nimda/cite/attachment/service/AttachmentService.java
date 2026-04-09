@@ -23,8 +23,8 @@ import java.util.stream.Collectors;
 public class AttachmentService {
 
     private static final Set<String> ALLOWED_EXTENSIONS = Set.of(
-            // 이미지
-            "jpg", "jpeg", "png", "gif", "webp", "bmp", "svg",
+            // 이미지 (svg 제외 — 내부 스크립트 삽입으로 XSS 가능)
+            "jpg", "jpeg", "png", "gif", "webp", "bmp",
             // 문서
             "pdf", "doc", "docx", "xls", "xlsx", "ppt", "pptx",
             // 텍스트
@@ -34,6 +34,11 @@ public class AttachmentService {
             // 미디어
             "mp4", "avi", "mov", "mp3", "wav"
     );
+
+    public static boolean isAllowedExtension(String ext) {
+        if (ext == null || ext.isBlank()) return false;
+        return ALLOWED_EXTENSIONS.contains(ext.toLowerCase());
+    }
 
     private final AttachmentRepository attachmentRepository;
     private final FileStore fileStore;
@@ -173,7 +178,10 @@ public class AttachmentService {
         String nameForExt = originFilename != null && !originFilename.isBlank() ? originFilename : storedFilename;
         String ext = extractExt(nameForExt);
         if (ext.isBlank()) {
-            ext = "bin";
+            throw new RuntimeException("파일 확장자가 없습니다. 업로드를 허용하지 않습니다.");
+        }
+        if (!ALLOWED_EXTENSIONS.contains(ext.toLowerCase())) {
+            throw new RuntimeException("허용되지 않는 파일 형식입니다: " + ext);
         }
 
         String safeOrigin = (originFilename == null || originFilename.isBlank()) ? storedFilename : originFilename;
