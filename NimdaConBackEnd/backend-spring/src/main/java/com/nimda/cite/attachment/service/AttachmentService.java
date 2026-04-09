@@ -122,6 +122,10 @@ public class AttachmentService {
         if (CategoryConstants.GALLERY_ID.equals(attachment.getCategoryId())) {
             disposition = "inline"; // 갤러리 등은 바로보기
         }
+        // PDF는 내장 JavaScript 실행 방지를 위해 항상 다운로드 강제
+        if ("pdf".equalsIgnoreCase(attachment.getExtension())) {
+            disposition = "attachment";
+        }
 
         return AttachmentResponseDto.from(attachment, disposition);
     }

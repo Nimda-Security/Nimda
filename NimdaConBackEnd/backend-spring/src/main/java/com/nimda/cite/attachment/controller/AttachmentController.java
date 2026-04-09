@@ -99,6 +99,11 @@ public class AttachmentController {
             String disposition = dispositionParam != null && "inline".equalsIgnoreCase(dispositionParam)
                     ? "inline" : (attachment.getCategoryId() != null && CategoryConstants.GALLERY_ID.equals(attachment.getCategoryId()) ? "inline" : "attachment");
 
+            // PDF는 브라우저 내 스크립트 실행 방지를 위해 항상 다운로드 강제
+            if ("pdf".equalsIgnoreCase(attachment.getExtension())) {
+                disposition = "attachment";
+            }
+
             Optional<Resource> resourceOpt = fileStore.getResource(attachment.getStoredFilename());
             if (resourceOpt.isEmpty()) {
                 // 로컬 리소스를 열 수 없고, S3Service가 존재하며 filepath(S3 key)가 있다면 Presigned GET URL로 리다이렉트
