@@ -1,5 +1,6 @@
 import { useState, useEffect, useRef } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
+import DOMPurify, { type Config as DOMPurifyConfig } from 'dompurify';
 import Layout from '@/components/Layout';
 import { createBoardAPI, getBoardDetailAPI, updateBoardAPI } from '@/api/board';
 import { uploadBoardFileViaS3 } from '@/api/attachments';
@@ -155,10 +156,35 @@ const sanitizeEditorDom = (root: HTMLElement) => {
   pruneRedundantSpans(root);
 };
 
+const EDITOR_PURIFY_CONFIG: DOMPurifyConfig = {
+  ALLOWED_TAGS: [
+    'p', 'div', 'span', 'br',
+    'h1', 'h2', 'h3', 'h4', 'h5', 'h6',
+    'strong', 'em', 'u', 's', 'b', 'i', 'strike', 'del', 'ins',
+    'ul', 'ol', 'li',
+    'a', 'img',
+    'pre', 'code',
+    'table', 'thead', 'tbody', 'tr', 'td', 'th',
+    'hr', 'blockquote',
+    'select', 'option', 'button',
+  ],
+  ALLOWED_ATTR: [
+    'href', 'src', 'alt', 'style', 'class',
+    'target', 'rel',
+    'width', 'height',
+    'data-language', 'data-language-label', 'data-code-empty', 'data-empty',
+    'data-emoticon-id',
+    'dir', 'type', 'value', 'title', 'aria-label', 'contenteditable',
+  ],
+  ALLOW_DATA_ATTR: false,
+  FORCE_BODY: false,
+};
+
 const getSanitizedEditorHtml = (editor: HTMLElement) => {
   const clone = editor.cloneNode(true) as HTMLElement;
   sanitizeEditorDom(clone);
-  return clone.innerHTML;
+  // DOMPurify: script/iframe/이벤트 핸들러 제거
+  return DOMPurify.sanitize(clone.innerHTML, EDITOR_PURIFY_CONFIG) as unknown as string;
 };
 
 const getClosestWithinEditor = (

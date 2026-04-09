@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react';
 import { useNavigate, useParams, Link } from 'react-router-dom';
+import DOMPurify, { type Config as DOMPurifyConfig } from 'dompurify';
 import { MessageBox } from '@/components/icons/MessageBox';
 import { VerticalDots } from '@/components/icons/VerticalDots';
 import Layout from '@/components/Layout';
@@ -68,11 +69,38 @@ const flattenViewerNestedSpans = (root: HTMLElement) => {
   });
 };
 
+const PURIFY_CONFIG: DOMPurifyConfig = {
+  ALLOWED_TAGS: [
+    'p', 'div', 'span', 'br',
+    'h1', 'h2', 'h3', 'h4', 'h5', 'h6',
+    'strong', 'em', 'u', 's', 'b', 'i', 'strike', 'del', 'ins',
+    'ul', 'ol', 'li',
+    'a', 'img',
+    'pre', 'code',
+    'table', 'thead', 'tbody', 'tr', 'td', 'th',
+    'hr', 'blockquote',
+    'select', 'option', 'button',
+  ],
+  ALLOWED_ATTR: [
+    'href', 'src', 'alt', 'style', 'class',
+    'target', 'rel',
+    'width', 'height',
+    'data-language', 'data-language-label', 'data-code-empty', 'data-empty',
+    'data-emoticon-id',
+    'dir', 'type', 'value', 'title', 'aria-label', 'contenteditable',
+  ],
+  ALLOW_DATA_ATTR: false,
+  FORCE_BODY: false,
+};
+
 const sanitizeViewerContent = (html: string) => {
   if (!html || typeof window === 'undefined') return html;
 
+  // 1차: DOMPurify — script/iframe/이벤트 핸들러 등 위험 요소 제거
+  const purified = DOMPurify.sanitize(html, PURIFY_CONFIG) as unknown as string;
+
   const template = document.createElement('template');
-  template.innerHTML = html;
+  template.innerHTML = purified;
 
   const fonts = template.content.querySelectorAll<HTMLElement>('font[size]');
   fonts.forEach((font) => {
