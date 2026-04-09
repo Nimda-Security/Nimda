@@ -43,6 +43,19 @@ public class S3FileStore implements FileStore {
         return basePath + storedName;
     }
 
+    @Override
+    public String storeBytes(byte[] data, String storedName) {
+        // S3 Presigned 방식에서는 서버가 직접 올리지 않으므로 키만 반환
+        String basePath = s3Properties.getBoardFilePath();
+        if (basePath == null || basePath.isBlank()) {
+            basePath = "boards/";
+        }
+        if (!basePath.endsWith("/")) {
+            basePath = basePath + "/";
+        }
+        return basePath + storedName;
+    }
+
     /**
      * S3에서 실제 파일을 삭제합니다.
      */

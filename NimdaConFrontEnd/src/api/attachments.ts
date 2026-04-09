@@ -5,6 +5,77 @@
 
 const ATTACHMENTS_BASE = '/api/cite/attachments';
 
+const IMAGE_RE_ENCODE_TYPES = new Set([
+  'image/jpeg',
+  'image/png',
+  'image/gif',
+  'image/webp',
+  'image/bmp',
+]);
+
+/**
+ * Canvas를 통해 이미지를 재인코딩하여 EXIF/메타데이터 및 내부 삽입 코드를 파괴한다.
+ * GIF 애니메이션은 첫 프레임만 유지된다(보안과 트레이드오프).
+ */
+const reEncodeImageFile = (file: File): Promise<File> =>
+  new Promise((resolve, reject) => {
+    if (!IMAGE_RE_ENCODE_TYPES.has(file.type)) {
+      resolve(file);
+      return;
+    }
+
+    const img = new Image();
+    const url = URL.createObjectURL(file);
+
+    img.onload = () => {
+      URL.revokeObjectURL(url);
+
+      const canvas = document.createElement('canvas');
+      canvas.width = img.naturalWidth;
+      canvas.height = img.naturalHeight;
+
+      const ctx = canvas.getContext('2d');
+      if (!ctx) {
+        resolve(file);
+        return;
+      }
+
+      ctx.drawImage(img, 0, 0);
+
+      // PNG 계열은 lossless로, 나머지는 JPEG 92% 품질로 재인코딩
+      const outputType = file.type === 'image/png' ? 'image/png' : 'image/jpeg';
+      const quality = outputType === 'image/jpeg' ? 0.92 : undefined;
+      const outputExt = outputType === 'image/png' ? '.png' : '.jpg';
+
+      canvas.toBlob(
+        (blob) => {
+          if (!blob) {
+            resolve(file);
+            return;
+          }
+
+          // 확장자를 출력 형식에 맞게 정리
+          let name = file.name;
+          const dotIdx = name.lastIndexOf('.');
+          if (dotIdx > 0) {
+            name = name.substring(0, dotIdx) + outputExt;
+          }
+
+          resolve(new File([blob], name, { type: outputType }));
+        },
+        outputType,
+        quality,
+      );
+    };
+
+    img.onerror = () => {
+      URL.revokeObjectURL(url);
+      reject(new Error('이미지 로드에 실패했습니다. 파일이 손상되었을 수 있습니다.'));
+    };
+
+    img.src = url;
+  });
+
 const parseJsonSafe = async (response: Response) => {
   try {
     const text = await response.text();
@@ -134,20 +205,30 @@ export const uploadBoardFileViaS3 = async (
   file: File,
   categoryId: number
 ): Promise<{ ok: true; attachmentId: number } | { ok: false; message: string }> => {
-  const presigned = await requestPresignedUpload('board', file.name);
+  // 이미지 파일은 Canvas로 재인코딩하여 메타데이터/삽입 코드 파괴
+  let safeFile = file;
+  if (IMAGE_RE_ENCODE_TYPES.has(file.type)) {
+    try {
+      safeFile = await reEncodeImageFile(file);
+    } catch {
+      return { ok: false, message: '이미지 처리에 실패했습니다. 파일이 손상되었을 수 있습니다.' };
+    }
+  }
+
+  const presigned = await requestPresignedUpload('board', safeFile.name);
   if (!presigned.ok) {
     return presigned;
   }
 
-  const put = await putFileToPresignedUrl(presigned.data.uploadUrl, file);
+  const put = await putFileToPresignedUrl(presigned.data.uploadUrl, safeFile);
   if (!put.ok) {
     return put;
   }
 
   return registerAttachmentAfterS3({
     key: presigned.data.key,
-    originFilename: file.name,
-    fileSize: file.size,
+    originFilename: safeFile.name,
+    fileSize: safeFile.size,
     categoryId,
     boardId: null,
   });

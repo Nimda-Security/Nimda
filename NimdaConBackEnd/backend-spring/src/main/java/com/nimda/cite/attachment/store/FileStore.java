@@ -22,6 +22,15 @@ public interface FileStore {
     String storeFile(MultipartFile file, String storedName);
 
     /**
+     * 바이트 배열을 직접 저장한다. (이미지 재인코딩 등에서 사용)
+     *
+     * @param data 저장할 바이트 배열
+     * @param storedName 서버 저장용 파일명 (예: uuid.ext)
+     * @return entity.filepath 에 저장할 값
+     */
+    String storeBytes(byte[] data, String storedName);
+
+    /**
      * 저장된 파일을 삭제한다.
      * @param storedFilename 서버 저장명 (storedFilename)
      */

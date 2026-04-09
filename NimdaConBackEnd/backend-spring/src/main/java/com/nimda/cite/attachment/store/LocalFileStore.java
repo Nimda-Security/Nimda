@@ -59,6 +59,22 @@ public class LocalFileStore implements FileStore {
     }
 
     @Override
+    public String storeBytes(byte[] data, String storedName) {
+        Path target = basePath.resolve(storedName).normalize();
+        if (!target.startsWith(basePath)) {
+            throw new SecurityException("저장 경로가 업로드 디렉토리 밖입니다: " + storedName);
+        }
+        try {
+            Files.createDirectories(target.getParent());
+            Files.write(target, data);
+            log.debug("바이트 배열 파일 저장됨: {}", target);
+        } catch (IOException e) {
+            throw new UncheckedIOException("파일 저장 실패: " + storedName, e);
+        }
+        return storedName;
+    }
+
+    @Override
     public void deleteFile(String storedFilename) {
         if (storedFilename == null || storedFilename.isBlank()) {
             return;

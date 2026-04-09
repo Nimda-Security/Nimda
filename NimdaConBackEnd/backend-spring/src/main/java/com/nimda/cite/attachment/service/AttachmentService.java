@@ -5,11 +5,13 @@ import com.nimda.cite.attachment.entity.Attachment;
 import com.nimda.cite.attachment.repository.AttachmentRepository;
 import com.nimda.cite.attachment.store.FileStore;
 import com.nimda.cite.board.constants.CategoryConstants;
+import com.nimda.cite.common.image.ImageSanitizer;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
 
+import java.io.IOException;
 import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
@@ -64,22 +66,34 @@ public class AttachmentService {
             throw new RuntimeException("허용되지 않는 파일 형식입니다: " + ext);
         }
 
-        // 2. 서버 저장용 중복 없는 이름 생성 (UUID)
-        String storedName = UUID.randomUUID().toString() + "." + ext;
+        // 3. 이미지 파일이면 재인코딩하여 메타데이터/삽입 코드 파괴
+        long fileSize = file.getSize();
+        if (ImageSanitizer.isImageExtension(ext)) {
+            try {
+                byte[] sanitized = ImageSanitizer.reEncode(file, ext);
+                ext = ImageSanitizer.getOutputExtension(ext);
+                fileSize = sanitized.length;
 
-        // 3. 물리 파일 저장
+                String storedName = UUID.randomUUID().toString() + "." + ext;
+                String filepath = fileStore.storeBytes(sanitized, storedName);
+
+                Attachment attachment = Attachment.create(
+                        originName, storedName, filepath, ext, fileSize,
+                        boardId, categoryId, userId
+                );
+                return attachmentRepository.save(attachment).getId();
+            } catch (IOException e) {
+                throw new RuntimeException("이미지 처리에 실패했습니다: " + e.getMessage());
+            }
+        }
+
+        // 4. 비이미지 파일: 기존 로직
+        String storedName = UUID.randomUUID().toString() + "." + ext;
         String filepath = fileStore.storeFile(file, storedName);
 
-        // 4. DB 엔티티 생성 및 저장
         Attachment attachment = Attachment.create(
-                originName,
-                storedName,
-                filepath,
-                ext,
-                file.getSize(),
-                boardId,
-                categoryId,
-                userId
+                originName, storedName, filepath, ext, fileSize,
+                boardId, categoryId, userId
         );
 
         return attachmentRepository.save(attachment).getId();
