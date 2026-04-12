@@ -199,19 +199,29 @@ public class AttachmentController {
      * [S3] 업로드용 Presigned URL 발급 API.
      * - type: profile / board / file
      * - fileName: 원본 파일명
+     * - contentType: 업로드 시 사용할 Content-Type (생략 시 확장자로 추론)
      */
     @PostMapping("/presigned")
     public ResponseEntity<?> createPresignedUpload(
             @RequestParam("type") String type,
-            @RequestParam("fileName") String fileName) {
+            @RequestParam("fileName") String fileName,
+            @RequestParam(value = "contentType", required = false) String contentType) {
 
         if (!(fileStore instanceof S3FileStore s3FileStore)) {
             return ApiResponse.fail("파일 업로드 서비스를 사용할 수 없습니다.").toResponse(HttpStatus.SERVICE_UNAVAILABLE);
         }
-        S3Service.PresignedUpload presigned = s3FileStore.getPresignedUpload(type, fileName);
+
+        // contentType이 없으면 확장자로 추론
+        if (contentType == null || contentType.isBlank()) {
+            String ext = extractExtFromFilename(fileName);
+            contentType = getContentType(ext);
+        }
+
+        S3Service.PresignedUpload presigned = s3FileStore.getPresignedUpload(type, fileName, contentType);
         return ApiResponse.ok(Map.of(
                 "uploadUrl", presigned.getUrl(),
-                "key", presigned.getKey()
+                "key", presigned.getKey(),
+                "contentType", presigned.getContentType() != null ? presigned.getContentType() : "application/octet-stream"
         )).toResponse();
     }
 
@@ -253,9 +263,17 @@ public class AttachmentController {
             case "jpg", "jpeg" -> "image/jpeg";
             case "png" -> "image/png";
             case "gif" -> "image/gif";
+            case "webp" -> "image/webp";
+            case "bmp" -> "image/bmp";
             case "txt" -> "text/plain; charset=UTF-8";
             case "zip" -> "application/zip";
             default -> "application/octet-stream";
         };
+    }
+
+    private static String extractExtFromFilename(String filename) {
+        if (filename == null || !filename.contains(".")) return null;
+        String ext = filename.substring(filename.lastIndexOf('.') + 1);
+        return ext.isBlank() ? null : ext.toLowerCase();
     }
 }

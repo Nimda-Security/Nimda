@@ -89,26 +89,26 @@ const parseJsonSafe = async (response: Response) => {
 export type PresignedBoardUploadResult = {
   uploadUrl: string;
   key: string;
+  contentType: string;
 };
 
 /**
  * S3 업로드용 presigned URL 발급 (type=board: 게시판 첨부 경로)
+ * 파라미터를 쿼리 스트링으로 전달하여 @RequestParam과 일치시킴.
  */
 export const requestPresignedUpload = async (
   type: 'board' | 'file' | 'profile',
-  fileName: string
+  fileName: string,
+  contentType?: string
 ): Promise<{ ok: true; data: PresignedBoardUploadResult } | { ok: false; message: string }> => {
   const params = new URLSearchParams();
   params.set('type', type);
   params.set('fileName', fileName);
+  if (contentType) params.set('contentType', contentType);
 
-  const response = await fetch(`${ATTACHMENTS_BASE}/presigned`, {
+  const response = await fetch(`${ATTACHMENTS_BASE}/presigned?${params.toString()}`, {
     method: 'POST',
-    headers: {
-      'Content-Type': 'application/x-www-form-urlencoded',
-    },
     credentials: 'include',
-    body: params.toString(),
   });
 
   const result = await parseJsonSafe(response);
@@ -122,24 +122,27 @@ export const requestPresignedUpload = async (
   const data = result.data ?? result;
   const uploadUrl = data.uploadUrl as string | undefined;
   const key = data.key as string | undefined;
+  const signedContentType = (data.contentType as string | undefined) || 'application/octet-stream';
   if (!uploadUrl || !key) {
     return { ok: false, message: 'Presigned 응답 형식이 올바르지 않습니다.' };
   }
 
-  return { ok: true, data: { uploadUrl, key } };
+  return { ok: true, data: { uploadUrl, key, contentType: signedContentType } };
 };
 
 /**
  * 브라우저에서 S3로 직접 업로드 (PUT)
+ * contentType은 presigned 응답에서 받은 값을 사용하여 S3 서명과 일치시킨다.
  */
 export const putFileToPresignedUrl = async (
   uploadUrl: string,
-  file: File
+  file: File,
+  contentType?: string
 ): Promise<{ ok: true } | { ok: false; message: string }> => {
   const res = await fetch(uploadUrl, {
     method: 'PUT',
     headers: {
-      'Content-Type': file.type || 'application/octet-stream',
+      'Content-Type': contentType || file.type || 'application/octet-stream',
     },
     body: file,
   });
@@ -215,12 +218,12 @@ export const uploadBoardFileViaS3 = async (
     }
   }
 
-  const presigned = await requestPresignedUpload('board', safeFile.name);
+  const presigned = await requestPresignedUpload('board', safeFile.name, safeFile.type || undefined);
   if (!presigned.ok) {
     return presigned;
   }
 
-  const put = await putFileToPresignedUrl(presigned.data.uploadUrl, safeFile);
+  const put = await putFileToPresignedUrl(presigned.data.uploadUrl, safeFile, presigned.data.contentType);
   if (!put.ok) {
     return put;
   }

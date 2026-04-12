@@ -26,8 +26,9 @@ public class S3Service {
      *
      * @param type "profile", "board", "file" 중 선택
      * @param fileName 원본 파일명
+     * @param contentType 업로드 시 사용할 Content-Type (서명에 포함됨)
      */
-    public PresignedUpload createPresignedUpload(String type, String fileName) {
+    public PresignedUpload createPresignedUpload(String type, String fileName, String contentType) {
         // 0. 확장자 화이트리스트 검증 (1차 방어선)
         if (!com.nimda.cite.attachment.service.AttachmentService.isAllowedExtension(extractExt(fileName))) {
             throw new IllegalArgumentException("허용되지 않는 파일 형식입니다: " + extractExt(fileName));
@@ -50,11 +51,14 @@ public class S3Service {
         // 2. S3 키(경로 + UUID 파일명) 생성
         String fileKey = path + UUID.randomUUID() + "_" + fileName;
 
-        // 3. S3 업로드 요청 객체 생성
-        PutObjectRequest objectRequest = PutObjectRequest.builder()
+        // 3. S3 업로드 요청 객체 생성 (contentType을 서명에 포함)
+        PutObjectRequest.Builder putBuilder = PutObjectRequest.builder()
                 .bucket(s3Properties.getBucket())
-                .key(fileKey)
-                .build();
+                .key(fileKey);
+        if (contentType != null && !contentType.isBlank()) {
+            putBuilder.contentType(contentType);
+        }
+        PutObjectRequest objectRequest = putBuilder.build();
 
         // 4. Presigned URL 요청 (유효시간 10분)
         PutObjectPresignRequest presignRequest = PutObjectPresignRequest.builder()
@@ -62,9 +66,16 @@ public class S3Service {
                 .putObjectRequest(objectRequest)
                 .build();
 
-        // 5. 최종 URL + 키 반환
+        // 5. 최종 URL + 키 + contentType 반환
         String url = s3Presigner.presignPutObject(presignRequest).url().toString();
-        return new PresignedUpload(fileKey, url);
+        return new PresignedUpload(fileKey, url, contentType);
+    }
+
+    /**
+     * 하위 호환: contentType 없이 호출하면 null로 전달.
+     */
+    public PresignedUpload createPresignedUpload(String type, String fileName) {
+        return createPresignedUpload(type, fileName, null);
     }
 
     /**
@@ -122,10 +133,12 @@ public class S3Service {
     public static class PresignedUpload {
         private final String key;
         private final String url;
+        private final String contentType;
 
-        public PresignedUpload(String key, String url) {
+        public PresignedUpload(String key, String url, String contentType) {
             this.key = key;
             this.url = url;
+            this.contentType = contentType;
         }
 
         public String getKey() {
@@ -134,6 +147,10 @@ public class S3Service {
 
         public String getUrl() {
             return url;
+        }
+
+        public String getContentType() {
+            return contentType;
         }
     }
 }

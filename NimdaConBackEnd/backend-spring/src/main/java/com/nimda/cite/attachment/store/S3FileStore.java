@@ -84,6 +84,10 @@ public class S3FileStore implements FileStore {
     /**
      * [S3 전용] 클라이언트가 직접 업로드할 수 있는 Presigned URL + 키를 생성합니다.
      */
+    public S3Service.PresignedUpload getPresignedUpload(String type, String fileName, String contentType) {
+        return s3Service.createPresignedUpload(type, fileName, contentType);
+    }
+
     public S3Service.PresignedUpload getPresignedUpload(String type, String fileName) {
         return s3Service.createPresignedUpload(type, fileName);
     }
