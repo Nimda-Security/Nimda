@@ -206,7 +206,7 @@ public class AttachmentController {
             @RequestParam("fileName") String fileName) {
 
         if (!(fileStore instanceof S3FileStore s3FileStore)) {
-            return ApiResponse.fail("S3 저장소가 활성화되지 않았습니다.").toResponse(HttpStatus.BAD_REQUEST);
+            return ApiResponse.fail("파일 업로드 서비스를 사용할 수 없습니다.").toResponse(HttpStatus.SERVICE_UNAVAILABLE);
         }
         S3Service.PresignedUpload presigned = s3FileStore.getPresignedUpload(type, fileName);
         return ApiResponse.ok(Map.of(
