@@ -1,7 +1,7 @@
 spring:
   application:
     name: nimda-cup
- 
+
   datasource:
     url: ${SPRING_DATASOURCE_URL:jdbc:mysql://localhost:3306/nimda_con?useSSL=false&serverTimezone=Asia/Seoul&allowPublicKeyRetrieval=true}
     username: ${SPRING_DATASOURCE_USERNAME}
@@ -75,7 +75,7 @@ nimda:
 # 미설정 시 첨부는 nimda.file.upload-dir(로컬 디스크)만 사용합니다.
 aws:
   s3:
-    bucket: ${AWS_S3_BUCKET:nimda-server}
+    bucket: ${AWS_S3_BUCKET:nimda-bucket}
     region: ${AWS_REGION:ap-northeast-2}
     access-key: ${AWS_ACCESS_KEY:}
     secret-key: ${AWS_SECRET_KEY:}
