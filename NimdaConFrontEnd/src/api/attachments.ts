@@ -138,9 +138,7 @@ export const putFileToPresignedUrl = async (
 ): Promise<{ ok: true } | { ok: false; message: string }> => {
   const res = await fetch(uploadUrl, {
     method: 'PUT',
-    headers: {
-      'Content-Type': file.type || 'application/octet-stream',
-    },
+    
     body: file,
   });
 
