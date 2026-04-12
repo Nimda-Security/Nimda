@@ -89,22 +89,19 @@ const parseJsonSafe = async (response: Response) => {
 export type PresignedBoardUploadResult = {
   uploadUrl: string;
   key: string;
-  contentType: string;
 };
 
 /**
- * S3 업로드용 presigned URL 발급 (type=board: 게시판 첨부 경로)
- * contentType을 백엔드에 전달하면 S3 서명에 포함되며, 응답으로 동일한 값을 돌려준다.
+ * S3 업로드용 presigned URL 발급
+ * - Content-Type은 서명에 포함하지 않음: 클라이언트가 PUT 시 file.type을 보내면 S3가 해당 타입으로 저장.
  */
 export const requestPresignedUpload = async (
   type: 'board' | 'file' | 'profile',
-  fileName: string,
-  contentType?: string
+  fileName: string
 ): Promise<{ ok: true; data: PresignedBoardUploadResult } | { ok: false; message: string }> => {
   const params = new URLSearchParams();
   params.set('type', type);
   params.set('fileName', fileName);
-  if (contentType) params.set('contentType', contentType);
 
   const response = await fetch(`${ATTACHMENTS_BASE}/presigned`, {
     method: 'POST',
@@ -126,17 +123,16 @@ export const requestPresignedUpload = async (
   const data = result.data ?? result;
   const uploadUrl = data.uploadUrl as string | undefined;
   const key = data.key as string | undefined;
-  const signedContentType = (data.contentType as string | undefined) || 'application/octet-stream';
   if (!uploadUrl || !key) {
     return { ok: false, message: 'Presigned 응답 형식이 올바르지 않습니다.' };
   }
 
-  return { ok: true, data: { uploadUrl, key, contentType: signedContentType } };
+  return { ok: true, data: { uploadUrl, key } };
 };
 
 /**
  * 브라우저에서 S3로 직접 업로드 (PUT)
- * contentType은 presigned 응답에서 받은 값을 그대로 사용해야 S3 서명과 일치한다.
+ * Content-Type 헤더는 서명과 독립적으로 전달: S3는 이를 서명 검증 없이 저장 타입으로 사용한다.
  */
 export const putFileToPresignedUrl = async (
   uploadUrl: string,
@@ -222,12 +218,12 @@ export const uploadBoardFileViaS3 = async (
     }
   }
 
-  const presigned = await requestPresignedUpload('board', safeFile.name, safeFile.type || undefined);
+  const presigned = await requestPresignedUpload('board', safeFile.name);
   if (!presigned.ok) {
     return presigned;
   }
 
-  const put = await putFileToPresignedUrl(presigned.data.uploadUrl, safeFile, presigned.data.contentType);
+  const put = await putFileToPresignedUrl(presigned.data.uploadUrl, safeFile);
   if (!put.ok) {
     return put;
   }

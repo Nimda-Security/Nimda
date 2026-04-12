@@ -199,29 +199,20 @@ public class AttachmentController {
      * [S3] 업로드용 Presigned URL 발급 API.
      * - type: profile / board / file
      * - fileName: 원본 파일명
-     * - contentType: 업로드 시 사용할 Content-Type (생략 시 확장자로 추론)
-     */
+     * Content-Type은 서명에 포함하지 않음: 클라이언트가 PUT 시 직접 보내면 S3가 가주.     */
     @PostMapping("/presigned")
     public ResponseEntity<?> createPresignedUpload(
             @RequestParam("type") String type,
-            @RequestParam("fileName") String fileName,
-            @RequestParam(value = "contentType", required = false) String contentType) {
+            @RequestParam("fileName") String fileName) {
 
         if (!(fileStore instanceof S3FileStore s3FileStore)) {
             return ApiResponse.fail("파일 업로드 서비스를 사용할 수 없습니다.").toResponse(HttpStatus.SERVICE_UNAVAILABLE);
         }
 
-        // contentType이 없으면 확장자로 추론
-        if (contentType == null || contentType.isBlank()) {
-            String ext = extractExtFromFilename(fileName);
-            contentType = getContentType(ext);
-        }
-
-        S3Service.PresignedUpload presigned = s3FileStore.getPresignedUpload(type, fileName, contentType);
+        S3Service.PresignedUpload presigned = s3FileStore.getPresignedUpload(type, fileName);
         return ApiResponse.ok(Map.of(
                 "uploadUrl", presigned.getUrl(),
-                "key", presigned.getKey(),
-                "contentType", presigned.getContentType() != null ? presigned.getContentType() : "application/octet-stream"
+                "key", presigned.getKey()
         )).toResponse();
     }
 

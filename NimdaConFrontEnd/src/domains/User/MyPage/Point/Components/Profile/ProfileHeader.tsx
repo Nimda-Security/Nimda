@@ -41,14 +41,14 @@ const ProfileHeader: React.FC<ProfileHeaderProps> = ({ userInfo, activeTab, setA
     setUploading(true);
     try {
       // 1. Presigned URL 발급
-      const presigned = await requestPresignedUpload("profile", file.name, file.type || undefined);
+      const presigned = await requestPresignedUpload("profile", file.name);
       if (!presigned.ok) {
         alert(presigned.message);
         return;
       }
 
       // 2. S3에 직접 업로드
-      const upload = await putFileToPresignedUrl(presigned.data.uploadUrl, file, presigned.data.contentType);
+      const upload = await putFileToPresignedUrl(presigned.data.uploadUrl, file, file.type);
       if (!upload.ok) {
         alert(upload.message);
         return;

@@ -22,13 +22,13 @@ public class S3Service {
 
     /**
      * 업로드용 Presigned URL + S3 키 동시 생성.
-     * - 클라이언트는 url로 업로드하고, key는 나중에 등록 API에 전달한다.
+     * - Content-Type은 서명에 포함하지 않음: 브라우저 PUT 시 값 불일치 방지.
+     *   클라이언트가 어떤 Content-Type 헤더를 보내더라도 S3가 해당 타입으로 저장함.
      *
      * @param type "profile", "board", "file" 중 선택
      * @param fileName 원본 파일명
-     * @param contentType 업로드 시 사용할 Content-Type (서명에 포함됨)
      */
-    public PresignedUpload createPresignedUpload(String type, String fileName, String contentType) {
+    public PresignedUpload createPresignedUpload(String type, String fileName) {
         // 0. 확장자 화이트리스트 검증 (1차 방어선)
         if (!com.nimda.cite.attachment.service.AttachmentService.isAllowedExtension(extractExt(fileName))) {
             throw new IllegalArgumentException("허용되지 않는 파일 형식입니다: " + extractExt(fileName));
@@ -51,14 +51,11 @@ public class S3Service {
         // 2. S3 키(경로 + UUID 파일명) 생성
         String fileKey = path + UUID.randomUUID() + "_" + fileName;
 
-        // 3. S3 업로드 요청 객체 생성 (contentType을 서명에 포함)
-        PutObjectRequest.Builder putBuilder = PutObjectRequest.builder()
+        // 3. S3 업로드 요청 객체 생성 (Content-Type은 서명에 포함하지 않음)
+        PutObjectRequest objectRequest = PutObjectRequest.builder()
                 .bucket(s3Properties.getBucket())
-                .key(fileKey);
-        if (contentType != null && !contentType.isBlank()) {
-            putBuilder.contentType(contentType);
-        }
-        PutObjectRequest objectRequest = putBuilder.build();
+                .key(fileKey)
+                .build();
 
         // 4. Presigned URL 요청 (유효시간 10분)
         PutObjectPresignRequest presignRequest = PutObjectPresignRequest.builder()
@@ -66,16 +63,16 @@ public class S3Service {
                 .putObjectRequest(objectRequest)
                 .build();
 
-        // 5. 최종 URL + 키 + contentType 반환
+        // 5. 최종 URL + 키 반환
         String url = s3Presigner.presignPutObject(presignRequest).url().toString();
-        return new PresignedUpload(fileKey, url, contentType);
+        return new PresignedUpload(fileKey, url);
     }
 
     /**
-     * 하위 호환: contentType 없이 호출하면 null로 전달.
+     * 하위 호환: contentType 인자를 받지만 서명에는 포함하지 않음.
      */
-    public PresignedUpload createPresignedUpload(String type, String fileName) {
-        return createPresignedUpload(type, fileName, null);
+    public PresignedUpload createPresignedUpload(String type, String fileName, String contentType) {
+        return createPresignedUpload(type, fileName);
     }
 
     /**
@@ -133,12 +130,10 @@ public class S3Service {
     public static class PresignedUpload {
         private final String key;
         private final String url;
-        private final String contentType;
 
-        public PresignedUpload(String key, String url, String contentType) {
+        public PresignedUpload(String key, String url) {
             this.key = key;
             this.url = url;
-            this.contentType = contentType;
         }
 
         public String getKey() {
@@ -147,10 +142,6 @@ public class S3Service {
 
         public String getUrl() {
             return url;
-        }
-
-        public String getContentType() {
-            return contentType;
         }
     }
 }
