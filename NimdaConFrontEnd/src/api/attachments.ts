@@ -138,9 +138,8 @@ export const putFileToPresignedUrl = async (
 ): Promise<{ ok: true } | { ok: false; message: string }> => {
   const res = await fetch(uploadUrl, {
     method: 'PUT',
-    headers: {
-      'Content-Type': file.type || 'application/octet-stream',
-    },
+    // Presigned URL이 Content-Type 없이 서명되었으므로 헤더 미포함.
+    // Content-Type 헤더를 명시하면 AWS가 서명 불일치(403)로 거부한다.
     body: file,
   });
 
