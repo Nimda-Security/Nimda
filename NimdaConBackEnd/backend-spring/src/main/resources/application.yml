@@ -93,6 +93,8 @@ aws:
 
 logging:
   level:
+    com.nimda.cite.common.s3: DEBUG
+    org.springframework.boot.autoconfigure.condition: DEBUG # 컨디션 체크 확인용
     com.nimda.cup: DEBUG
     org.springframework.security: WARN
     org.hibernate.SQL: DEBUG
