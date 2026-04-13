@@ -1,10 +1,12 @@
 package com.nimda.cite.attachment.store;
 
+import com.nimda.cite.common.s3.AwsS3ConfiguredCondition;
 import com.nimda.cite.common.s3.S3Service;
 import lombok.RequiredArgsConstructor;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnBean;
+import org.springframework.context.annotation.Conditional;
 import org.springframework.context.annotation.Primary;
 import org.springframework.core.io.Resource;
 import software.amazon.awssdk.services.s3.S3Client;
@@ -16,7 +18,7 @@ import java.util.Optional;
 
 @Component
 @Primary
-@ConditionalOnBean(S3Client.class) // 자격 증명 없으면 S3 빈 미생성 → LocalFileStore만 사용
+@Conditional(AwsS3ConfiguredCondition.class)
 @RequiredArgsConstructor
 public class S3FileStore implements FileStore {
 

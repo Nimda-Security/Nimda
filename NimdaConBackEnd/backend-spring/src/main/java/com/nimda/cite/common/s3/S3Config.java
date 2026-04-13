@@ -19,6 +19,7 @@ public class S3Config {
 
     @Bean
     public S3Client s3Client() {
+        System.out.println("S3 리전 주입 확인: " + s3Properties.getRegion());
         return S3Client.builder()
                 .region(Region.of(s3Properties.getRegion()))
                 .credentialsProvider(StaticCredentialsProvider.create(
