@@ -42,11 +42,12 @@ services:
       - SPRING_DATASOURCE_PASSWORD=${MYSQL_PASSWORD}
       # Spring Boot 포트 설정
       - SERVER_PORT=8080
-      # AWS S3 설정 — .env의 변수를 그대로 컨테이너에 전달
-      - AWS_S3_BUCKET=${AWS_S3_BUCKET}
-      - AWS_S3_REGION=${AWS_S3_REGION}
-      - AWS_S3_ACCESS_KEY=${AWS_S3_ACCESS_KEY}
-      - AWS_S3_SECRET_KEY=${AWS_S3_SECRET_KEY}
+      # AWS S3 설정 —
+      # 오른쪽은 자바 코드에서 읽는 변수 / env에서 가지고 올 값
+      - aws.s3.bucket=${AWS_S3_BUCKET}
+      - aws.s3.region=${AWS_S3_REGION}
+      - aws.s3.access-key=${AWS_S3_ACCESS_KEY}
+      - aws.s3.secret-key=${AWS_S3_SECRET_KEY}
       # JWT 시크릿 (반드시 .env 파일에 안전한 값으로 설정)
       - JWT_SECRET=${JWT_SECRET}
     restart: always
