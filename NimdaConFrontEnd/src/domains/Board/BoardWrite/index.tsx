@@ -1,216 +1,52 @@
 import { useState, useEffect, useRef } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
-import DOMPurify, { type Config as DOMPurifyConfig } from 'dompurify';
 import Layout from '@/components/Layout';
 import { createBoardAPI, getBoardDetailAPI, updateBoardAPI } from '@/api/board';
 import { uploadBoardFileViaS3 } from '@/api/attachments';
 import { getAllCategoriesAPI } from '@/api/category';
 import { getTagsByCategoryAPI } from '@/api/tag';
 import type { TagResponse } from '@/api/tag';
-import ChevronDown from '@/components/icons/ChevronDown';
 import { isAdmin, hasRole } from '@/utils/jwt';
 import { highlightCodeBlocks } from '@/utils/codeHighlight';
-import InlineColorPicker from '@/components/InlineColorPicker';
-import EmoticonPicker, {
-  getEmoticonSrc,
-} from '@/domains/Comment/EmoticonPicker';
+import { getEmoticonSrc } from '@/domains/Comment/EmoticonPicker';
 import type { Category } from '../types';
 
-const CODE_LANGUAGE_OPTIONS = [
-  { label: 'Plain text', value: 'plaintext' },
-  { label: 'JavaScript', value: 'javascript' },
-  { label: 'TypeScript', value: 'typescript' },
-  { label: 'HTML', value: 'html' },
-  { label: 'CSS', value: 'css' },
-  { label: 'Python', value: 'python' },
-  { label: 'C', value: 'c' },
-  { label: 'C++', value: 'cpp' },
-  { label: 'Java', value: 'java' },
-];
+import type {
+  ColorPickerTab,
+  EyeDropperApi,
+  ImageResizeHandle,
+  ImageResizeSession,
+} from './constants';
 
-const getCodeLanguageLabel = (language: string) =>
-  CODE_LANGUAGE_OPTIONS.find((option) => option.value === language)?.label ||
-  language.toUpperCase();
+import {
+  getSanitizedEditorHtml,
+  sanitizeEditorDom,
+  normalizeFontSizeValue,
+  isEditorVisuallyEmpty,
+  getClosestWithinEditor,
+  placeCaretAtNodeStart,
+  getSelectionOffsetsInElement,
+  setSelectionInElementByOffset,
+  readCurrentColor as readCurrentColorUtil,
+  findAnchorFromNode,
+  normalizeLinkUrl,
+} from './editorUtils';
 
-const COLOR_PALETTE = [
-  '#0C0C0C',
-  '#A3A3A3',
-  '#D64454',
-  '#E17654',
-  '#E8B446',
-  '#5CB85C',
-  '#5BC0DE',
-  '#4A7FCC',
-  '#8B6BB7',
-  '#D97399',
-];
-const MAX_RECENT_COLORS = 5;
-type ColorPickerTab = 'palette' | 'custom';
+import {
+  getCodeElementInPre,
+  syncCodeBlockEmptyState,
+  ensureCodeLanguageSelector,
+  refreshCodeBlockHighlight,
+  updateCodeBlockLanguage,
+  getCurrentPreElement,
+  applyCodeLanguage as applyCodeLanguageUtil,
+} from './codeBlockUtils';
 
-type EyeDropperApi = {
-  open: () => Promise<{ sRGBHex: string }>;
-};
+import { getCodeLanguageLabel } from './constants';
 
-type ImageResizeHandle = 'nw' | 'ne' | 'sw' | 'se';
-
-type ImageResizeSession = {
-  handle: ImageResizeHandle;
-  startX: number;
-  startY: number;
-  startWidth: number;
-  startHeight: number;
-  startLeft: number;
-  startTop: number;
-  aspectRatio: number;
-};
-
-const MAX_FONT_SIZE_PX = 24;
-
-const normalizeFontSizeValue = (size: string, fallbackPx = 14) => {
-  const match = size
-    .trim()
-    .toLowerCase()
-    .match(/^(-?\d+(?:\.\d+)?)(px|rem|em|%)?$/);
-  if (!match) return `${fallbackPx}px`;
-
-  const value = Number(match[1]);
-  const unit = match[2] ?? 'px';
-  if (!Number.isFinite(value) || value <= 0) return `${fallbackPx}px`;
-
-  const basePx = 16;
-  let px = value;
-  if (unit === 'rem' || unit === 'em') px = value * basePx;
-  if (unit === '%') px = (value / 100) * basePx;
-
-  const clamped = Math.min(MAX_FONT_SIZE_PX, Math.max(1, Math.round(px)));
-  return `${clamped}px`;
-};
-
-const mapFontTagSizeToPx = (size: string | null) => {
-  const parsed = Number(size ?? '');
-  const map: Record<number, number> = {
-    1: 10,
-    2: 13,
-    3: 16,
-    4: 18,
-    5: 24,
-    6: 24,
-    7: 24,
-  };
-  const px = Number.isFinite(parsed) ? (map[parsed] ?? 14) : 14;
-  return `${px}px`;
-};
-
-const flattenNestedFontSizeSpans = (root: ParentNode) => {
-  const sizedSpans = root.querySelectorAll<HTMLSpanElement>('span[style]');
-  sizedSpans.forEach((span) => {
-    if (!span.style.fontSize) return;
-    span.style.fontSize = normalizeFontSizeValue(span.style.fontSize);
-
-    let parent = span.parentElement;
-    while (parent && parent !== root) {
-      if (!(parent instanceof HTMLSpanElement) || !parent.style.fontSize) {
-        parent = parent.parentElement;
-        continue;
-      }
-
-      const parentSize = normalizeFontSizeValue(parent.style.fontSize);
-      const childSize = normalizeFontSizeValue(span.style.fontSize);
-      if (parentSize === childSize) {
-        span.style.removeProperty('font-size');
-      }
-      break;
-    }
-  });
-};
-
-const pruneRedundantSpans = (root: ParentNode) => {
-  const spans = root.querySelectorAll<HTMLSpanElement>('span');
-  spans.forEach((span) => {
-    if (span.hasAttribute('style') && span.style.cssText.trim().length === 0) {
-      span.removeAttribute('style');
-    }
-    if (span.attributes.length === 0) {
-      span.replaceWith(...Array.from(span.childNodes));
-    }
-  });
-};
-
-const sanitizeEditorDom = (root: HTMLElement) => {
-  const fonts = root.querySelectorAll<HTMLElement>('font[size]');
-  fonts.forEach((font) => {
-    const span = document.createElement('span');
-    span.style.fontSize = mapFontTagSizeToPx(font.getAttribute('size'));
-    span.innerHTML = font.innerHTML;
-    font.replaceWith(span);
-  });
-
-  const styled = root.querySelectorAll<HTMLElement>('[style]');
-  styled.forEach((element) => {
-    if (!element.style.fontSize) return;
-    const normalized = normalizeFontSizeValue(element.style.fontSize);
-    element.style.setProperty('font-size', normalized, 'important');
-  });
-
-  flattenNestedFontSizeSpans(root);
-  pruneRedundantSpans(root);
-};
-
-const EDITOR_PURIFY_CONFIG: DOMPurifyConfig = {
-  ALLOWED_TAGS: [
-    'p', 'div', 'span', 'br',
-    'h1', 'h2', 'h3', 'h4', 'h5', 'h6',
-    'strong', 'em', 'u', 's', 'b', 'i', 'strike', 'del', 'ins',
-    'ul', 'ol', 'li',
-    'a', 'img',
-    'pre', 'code',
-    'table', 'thead', 'tbody', 'tr', 'td', 'th',
-    'hr', 'blockquote',
-    'select', 'option', 'button',
-  ],
-  ALLOWED_ATTR: [
-    'href', 'src', 'alt', 'style', 'class',
-    'target', 'rel',
-    'width', 'height',
-    'data-language', 'data-language-label', 'data-code-empty', 'data-empty',
-    'data-emoticon-id',
-    'dir', 'type', 'value', 'title', 'aria-label', 'contenteditable',
-  ],
-  ALLOW_DATA_ATTR: false,
-  FORCE_BODY: false,
-};
-
-const getSanitizedEditorHtml = (editor: HTMLElement) => {
-  const clone = editor.cloneNode(true) as HTMLElement;
-  sanitizeEditorDom(clone);
-  // DOMPurify: script/iframe/이벤트 핸들러 제거
-  return DOMPurify.sanitize(clone.innerHTML, EDITOR_PURIFY_CONFIG) as unknown as string;
-};
-
-const getClosestWithinEditor = (
-  node: Node | null,
-  editor: HTMLElement,
-  selector: string
-) => {
-  let current: Node | null = node;
-  while (current && current !== editor) {
-    if (current instanceof HTMLElement && current.matches(selector)) {
-      return current;
-    }
-    current = current.parentNode;
-  }
-  return null;
-};
-
-const placeCaretAtNodeStart = (node: Node) => {
-  const selection = window.getSelection();
-  if (!selection) return;
-  const range = document.createRange();
-  range.selectNodeContents(node);
-  range.collapse(true);
-  selection.removeAllRanges();
-  selection.addRange(range);
-};
+import CategorySelector from './CategorySelector';
+import Toolbar from './Toolbar';
+import AttachmentSection from './AttachmentSection';
 
 function BoardWritePage() {
   const navigate = useNavigate();
@@ -221,12 +57,14 @@ function BoardWritePage() {
   const isEditMode = !!editId;
   const slug = paramBoardType?.toLowerCase() || 'news';
 
+  // ── Category state ──
   const [allCategories, setAllCategories] = useState<Category[]>([]);
   const [parentCategoryId, setParentCategoryId] = useState<number | null>(null);
   const [subCategoryId, setSubCategoryId] = useState<number | null>(null);
   const [showParentDropdown, setShowParentDropdown] = useState(false);
   const [showSubDropdown, setShowSubDropdown] = useState(false);
 
+  // ── Post state ──
   const [title, setTitle] = useState('');
   const [content, setContent] = useState('');
   const [tagId, setTagId] = useState<number | null>(null);
@@ -238,6 +76,10 @@ function BoardWritePage() {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isUploading, setIsUploading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [isPinned, setIsPinned] = useState(false);
+  const [currentTagList, setCurrentTagList] = useState<TagResponse[]>([]);
+
+  // ── Toolbar state ──
   const [showFontSize, setShowFontSize] = useState(false);
   const [showColorPicker, setShowColorPicker] = useState(false);
   const [showLinkPopover, setShowLinkPopover] = useState(false);
@@ -254,9 +96,8 @@ function BoardWritePage() {
   const [currentAlignment, setCurrentAlignment] = useState<
     'left' | 'center' | 'right'
   >('left');
-  const [isPinned, setIsPinned] = useState(false);
-  const [currentTagList, setCurrentTagList] = useState<TagResponse[]>([]);
 
+  // ── Refs ──
   const fileInputRef = useRef<HTMLInputElement>(null);
   const imageInputRef = useRef<HTMLInputElement>(null);
   const contentRef = useRef<HTMLDivElement>(null);
@@ -275,6 +116,8 @@ function BoardWritePage() {
     height: number;
   } | null>(null);
   const [resizeTooltip, setResizeTooltip] = useState<string>('');
+
+  // ── Image resize helpers ──
 
   const clearSelectedImage = () => {
     if (selectedImageRef.current) {
@@ -348,49 +191,12 @@ function BoardWritePage() {
     };
   };
 
-  // contentEditable에서 HTML 추출
+  // ── Editor content helpers ──
+
   const getEditorContent = () => {
     const editor = contentRef.current;
     if (!editor) return '';
     return getSanitizedEditorHtml(editor);
-  };
-
-  const isEditorVisuallyEmpty = (editor: HTMLElement) => {
-    const hasMeaningfulNode = (node: Node): boolean => {
-      if (node.nodeType === Node.TEXT_NODE) {
-        const text = node.textContent?.replace(/\u00A0/g, '').trim() ?? '';
-        return text.length > 0;
-      }
-
-      if (node.nodeType !== Node.ELEMENT_NODE) {
-        return false;
-      }
-
-      const element = node as HTMLElement;
-      const tag = element.tagName;
-
-      if (tag === 'BR') return false;
-      if (element.classList.contains('bw-code-lang-wrapper')) return false;
-
-      if (
-        [
-          'PRE',
-          'IMG',
-          'VIDEO',
-          'IFRAME',
-          'TABLE',
-          'HR',
-          'CANVAS',
-          'SVG',
-        ].includes(tag)
-      ) {
-        return true;
-      }
-
-      return Array.from(element.childNodes).some(hasMeaningfulNode);
-    };
-
-    return !Array.from(editor.childNodes).some(hasMeaningfulNode);
   };
 
   const syncEditorEmptyState = () => {
@@ -405,16 +211,18 @@ function BoardWritePage() {
       .forEach((pre) => syncCodeBlockEmptyState(pre as HTMLElement));
   };
 
+  // ── Content sync effect ──
   useEffect(() => {
     syncEditorEmptyState();
     if (isComposingRef.current || justEndedCompositionRef.current) {
       return;
     }
-    if (contentRef.current && !getCurrentPreElement()) {
+    if (contentRef.current && !getCurrentPreElement(contentRef.current)) {
       highlightCodeBlocks(contentRef.current);
     }
   }, [content]);
 
+  // ── Image resize: global pointer move/up ──
   useEffect(() => {
     const handleGlobalPointerMove = (e: MouseEvent) => {
       const session = resizeSessionRef.current;
@@ -501,6 +309,7 @@ function BoardWritePage() {
     };
   }, []);
 
+  // ── Outside click / window resize for image deselect ──
   useEffect(() => {
     const handleOutsideMouseDown = (e: MouseEvent) => {
       const target = e.target;
@@ -525,7 +334,7 @@ function BoardWritePage() {
     };
   }, []);
 
-  // Native beforeinput handler to fix RTL text input in code blocks
+  // ── Native beforeinput handler to fix RTL text input in code blocks ──
   useEffect(() => {
     const editor = contentRef.current;
     if (!editor) return;
@@ -563,16 +372,16 @@ function BoardWritePage() {
       }
       if (e.inputType !== 'insertText' || !e.data) return;
 
-      const editor = contentRef.current;
+      const editorEl = contentRef.current;
       const selection = window.getSelection();
-      if (!editor || !selection || selection.rangeCount === 0) return;
+      if (!editorEl || !selection || selection.rangeCount === 0) return;
       const range = selection.getRangeAt(0);
-      if (!editor.contains(range.commonAncestorContainer)) return;
+      if (!editorEl.contains(range.commonAncestorContainer)) return;
 
       if (e.data === ' ') {
         const currentBlock = getClosestWithinEditor(
           range.startContainer,
-          editor,
+          editorEl,
           'p,div'
         ) as HTMLElement | null;
 
@@ -580,7 +389,7 @@ function BoardWritePage() {
           currentBlock &&
           !getClosestWithinEditor(
             range.startContainer,
-            editor,
+            editorEl,
             'pre,code,table,li'
           )
         ) {
@@ -614,7 +423,7 @@ function BoardWritePage() {
         }
       }
 
-      const currentPre = getCurrentPreElement();
+      const currentPre = getCurrentPreElement(editorEl);
       if (!currentPre) return;
 
       e.preventDefault();
@@ -708,7 +517,7 @@ function BoardWritePage() {
 
       setContent(getEditorContent());
       syncEditorEmptyState();
-      if (!getCurrentPreElement()) {
+      if (!getCurrentPreElement(editor)) {
         requestAnimationFrame(() => {
           highlightCodeBlocks(editor);
         });
@@ -730,7 +539,7 @@ function BoardWritePage() {
     };
   }, []);
 
-  // 모든 카테고리 로드
+  // ── Load all categories ──
   useEffect(() => {
     const fetchAllCategories = async () => {
       try {
@@ -743,7 +552,7 @@ function BoardWritePage() {
     fetchAllCategories();
   }, []);
 
-  // URL slug에 따른 초기 게시판 설정
+  // ── Initial board setup from URL slug ──
   useEffect(() => {
     if (allCategories.length === 0) return;
 
@@ -809,11 +618,9 @@ function BoardWritePage() {
       const cat = allCategories.find((c) => c.slug === slug);
       if (cat) {
         if (cat.parentId) {
-          // 만약 slug가 하위 카테고리라면 부모를 상단에, 자기자신을 하단에 설정
           setParentCategoryId(cat.parentId);
           setSubCategoryId(cat.id);
         } else {
-          // slug가 상위 카테고리라면 상단에 설정, 하단은 첫 번째 자식으로 초기화 시도
           setParentCategoryId(cat.id);
           const children = allCategories.filter((c) => c.parentId === cat.id);
           if (children.length > 0) {
@@ -827,6 +634,7 @@ function BoardWritePage() {
     fetchInitial();
   }, [allCategories, slug]);
 
+  // ── Derived category data ──
   const rootCategories = allCategories
     .filter((c) => c.parentId === null && c.isActive)
     .filter((c) => !['바로가기', '대회'].includes(c.name))
@@ -838,7 +646,7 @@ function BoardWritePage() {
   );
   const currentSubCat = allCategories.find((c) => c.id === subCategoryId);
 
-  // 현재 선택된 카테고리의 태그를 Tag API에서 조회
+  // ── Fetch tags for selected category ──
   useEffect(() => {
     const targetCat = currentSubCat || currentParentCat;
     if (!targetCat?.id) {
@@ -860,6 +668,7 @@ function BoardWritePage() {
     };
   }, [currentSubCat?.id, currentParentCat?.id]);
 
+  // ── Submit handler ──
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
@@ -949,6 +758,7 @@ function BoardWritePage() {
     }
   };
 
+  // ── Image / file upload handlers ──
   const handleImageSelect = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const selectedFiles = e.target.files;
     if (!selectedFiles || selectedFiles.length === 0) return;
@@ -1025,13 +835,6 @@ function BoardWritePage() {
     setAttachedFiles((prev) => prev.filter((f) => f.id !== attachmentId));
   };
 
-  const formatFileSize = (bytes: number): string => {
-    if (!bytes) return '';
-    if (bytes < 1024) return `${bytes}B`;
-    if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(1)}KB`;
-    return `${(bytes / (1024 * 1024)).toFixed(1)}MB`;
-  };
-
   const handleDragOver = (e: React.DragEvent) => {
     e.preventDefault();
     setIsDragOver(true);
@@ -1089,7 +892,8 @@ function BoardWritePage() {
     setIsUploading(false);
   };
 
-  // 텍스트 포맷팅 (bold, italic, underline, strikeThrough)
+  // ── Toolbar action helpers ──
+
   const applyFormat = (
     format: 'bold' | 'italic' | 'underline' | 'strikeThrough'
   ) => {
@@ -1099,18 +903,16 @@ function BoardWritePage() {
 
   const applyFontSize = (size: string) => {
     contentRef.current?.focus();
-    const selectedColor = readCurrentColor();
+    const currentColor = readCurrentColorUtil();
     const normalizedSize = normalizeFontSizeValue(size);
-    // execCommand fontSize uses 1-7 scale, so we use formatBlock + span approach
     document.execCommand('fontSize', false, '7');
-    // Replace the generated <font size="7"> with a span that has the actual px size
     const editor = contentRef.current;
     if (editor) {
       const fonts = editor.querySelectorAll('font[size="7"]');
       fonts.forEach((font) => {
         const span = document.createElement('span');
         span.style.fontSize = normalizedSize;
-        span.style.color = selectedColor;
+        span.style.color = currentColor;
         span.innerHTML = font.innerHTML;
         font.parentNode?.replaceChild(span, font);
       });
@@ -1132,7 +934,7 @@ function BoardWritePage() {
       const normalized = color.toUpperCase();
       return [normalized, ...prev.filter((item) => item !== normalized)].slice(
         0,
-        MAX_RECENT_COLORS
+        5
       );
     });
   };
@@ -1154,14 +956,12 @@ function BoardWritePage() {
     }
   };
 
-  const findAnchorFromNode = (node: Node | null) => {
-    let current = node;
-    while (current && current !== contentRef.current) {
-      if (current instanceof HTMLAnchorElement) return current;
-      current = current.parentNode;
-    }
-    return null;
+  const readCurrentColor = () => {
+    contentRef.current?.focus();
+    return readCurrentColorUtil();
   };
+
+  // ── Link helpers ──
 
   const updateLinkActiveState = () => {
     const selection = window.getSelection();
@@ -1176,7 +976,7 @@ function BoardWritePage() {
       return;
     }
 
-    const anchor = findAnchorFromNode(selection.anchorNode);
+    const anchor = findAnchorFromNode(selection.anchorNode, contentRef.current);
     setIsLinkActive(!!anchor);
   };
 
@@ -1200,18 +1000,11 @@ function BoardWritePage() {
 
     savedLinkRangeRef.current = range.cloneRange();
     const selectedText = range.toString().trim();
-    const anchor = findAnchorFromNode(selection.anchorNode);
+    const anchor = findAnchorFromNode(selection.anchorNode, contentRef.current);
 
     setLinkUrl(anchor?.getAttribute('href') || 'https://');
     setLinkText(anchor?.textContent || selectedText);
     setShowLinkPopover(true);
-  };
-
-  const normalizeLinkUrl = (raw: string) => {
-    const trimmed = raw.trim();
-    if (!trimmed) return '';
-    if (/^(https?:|mailto:|tel:)/i.test(trimmed)) return trimmed;
-    return `https://${trimmed}`;
   };
 
   const applyLink = () => {
@@ -1236,7 +1029,7 @@ function BoardWritePage() {
     selection.removeAllRanges();
     selection.addRange(savedRange);
 
-    const activeAnchor = findAnchorFromNode(selection.anchorNode);
+    const activeAnchor = findAnchorFromNode(selection.anchorNode, editor);
     if (activeAnchor && savedRange.collapsed) {
       activeAnchor.setAttribute('href', normalizedUrl);
       activeAnchor.setAttribute('target', '_blank');
@@ -1300,6 +1093,8 @@ function BoardWritePage() {
     };
   }, [showLinkPopover]);
 
+  // ── Emoticon handler ──
+
   const handleToolbarEmoticonSelect = (marker: string) => {
     const editor = contentRef.current;
     if (!editor) return;
@@ -1344,20 +1139,7 @@ function BoardWritePage() {
     syncEditorEmptyState();
   };
 
-  const readCurrentColor = () => {
-    contentRef.current?.focus();
-    const raw = document.queryCommandValue('foreColor');
-    if (typeof raw === 'string') {
-      const hex = raw.match(/#([0-9a-fA-F]{6})/);
-      if (hex) return `#${hex[1]}`.toUpperCase();
-      const rgb = raw.match(/rgb\s*\((\d+),\s*(\d+),\s*(\d+)\)/i);
-      if (rgb) {
-        const toHex = (n: number) => n.toString(16).padStart(2, '0');
-        return `#${toHex(Number(rgb[1]))}${toHex(Number(rgb[2]))}${toHex(Number(rgb[3]))}`.toUpperCase();
-      }
-    }
-    return '#0C0C0C';
-  };
+  // ── Alignment ──
 
   const applyAlignment = (align: 'left' | 'center' | 'right') => {
     contentRef.current?.focus();
@@ -1381,296 +1163,12 @@ function BoardWritePage() {
     applyAlignment(next);
   };
 
-  const getCurrentPreElement = () => {
-    const selection = window.getSelection();
-    let node: Node | null = selection?.anchorNode ?? null;
-
-    while (node && node !== contentRef.current) {
-      if (node instanceof HTMLElement && node.tagName === 'PRE') {
-        return node;
-      }
-      node = node.parentNode;
-    }
-
-    return null;
+  // ── Code language (delegates to codeBlockUtils) ──
+  const handleApplyCodeLanguage = (language: string) => {
+    applyCodeLanguageUtil(language, contentRef, getEditorContent, setContent);
   };
 
-  const getCodeElementInPre = (pre: HTMLElement) => {
-    let code = pre.querySelector('code');
-    if (!code) {
-      code = document.createElement('code');
-      code.textContent = pre.textContent || '';
-      pre.innerHTML = '';
-      pre.appendChild(code);
-    }
-    pre.setAttribute('dir', 'ltr');
-    code.setAttribute('dir', 'ltr');
-    pre.style.direction = 'ltr';
-    code.style.direction = 'ltr';
-    pre.style.unicodeBidi = 'embed';
-    code.style.unicodeBidi = 'embed';
-    pre.style.textAlign = 'left';
-    code.style.textAlign = 'left';
-    return code;
-  };
-
-  const syncCodeBlockEmptyState = (pre: HTMLElement) => {
-    const code = pre.querySelector('code') as HTMLElement | null;
-    const normalizedText = (code?.textContent ?? '')
-      .replace(/\u00A0/g, '')
-      .trim();
-    pre.setAttribute(
-      'data-code-empty',
-      normalizedText.length === 0 ? 'true' : 'false'
-    );
-  };
-
-  const ensureCodeLanguageSelector = (pre: HTMLElement, language: string) => {
-    let wrapper = pre.querySelector(
-      '.bw-code-lang-wrapper'
-    ) as HTMLElement | null;
-
-    if (!wrapper) {
-      wrapper = document.createElement('div');
-      wrapper.contentEditable = 'false';
-      wrapper.className = 'bw-code-lang-wrapper';
-      pre.insertBefore(wrapper, pre.firstChild);
-    }
-
-    let select = wrapper.querySelector('select') as HTMLSelectElement | null;
-    if (!select) {
-      select = document.createElement('select');
-      select.className = 'bw-code-lang-select';
-      CODE_LANGUAGE_OPTIONS.forEach((option) => {
-        const optionElement = document.createElement('option');
-        optionElement.value = option.value;
-        optionElement.textContent = option.label;
-        select?.appendChild(optionElement);
-      });
-      wrapper.appendChild(select);
-    }
-
-    let deleteButton = wrapper.querySelector(
-      '.bw-code-delete-btn'
-    ) as HTMLButtonElement | null;
-    if (!deleteButton) {
-      deleteButton = document.createElement('button');
-      deleteButton.type = 'button';
-      deleteButton.className = 'bw-code-delete-btn';
-      deleteButton.textContent = '×';
-      deleteButton.title = '코드블럭 삭제';
-      deleteButton.setAttribute('aria-label', '코드블럭 삭제');
-      wrapper.appendChild(deleteButton);
-    }
-
-    if (select) {
-      select.value = language;
-    }
-  };
-
-  const refreshCodeBlockHighlight = (
-    pre: HTMLElement,
-    cursorStart: number,
-    cursorEnd = cursorStart
-  ) => {
-    highlightCodeBlocks(pre);
-    syncCodeBlockEmptyState(pre);
-    const code = pre.querySelector('code') as HTMLElement | null;
-    if (code) {
-      setSelectionInElementByOffset(code, cursorStart, cursorEnd);
-    }
-  };
-
-  const updateCodeBlockLanguage = (pre: HTMLElement, language: string) => {
-    const normalizedLanguage =
-      language === 'plaintext' ? 'plaintext' : language;
-
-    const prevLanguageClass = Array.from(pre.classList).find((c) =>
-      c.startsWith('language-')
-    );
-    if (prevLanguageClass) {
-      pre.classList.remove(prevLanguageClass);
-    }
-
-    pre.classList.add('bw-code-block', `language-${normalizedLanguage}`);
-    pre.setAttribute('data-language', normalizedLanguage);
-    pre.setAttribute(
-      'data-language-label',
-      getCodeLanguageLabel(normalizedLanguage)
-    );
-    ensureCodeLanguageSelector(pre, normalizedLanguage);
-
-    const code = getCodeElementInPre(pre);
-    Array.from(code.classList)
-      .filter((cls) => cls.startsWith('language-'))
-      .forEach((cls) => code.classList.remove(cls));
-    code.classList.add(`language-${normalizedLanguage}`);
-    code.removeAttribute('data-highlighted');
-    syncCodeBlockEmptyState(pre);
-  };
-
-  const getSelectionOffsetsInElement = (element: HTMLElement) => {
-    const selection = window.getSelection();
-    if (!selection || selection.rangeCount === 0) return null;
-
-    const range = selection.getRangeAt(0);
-    if (
-      !element.contains(range.startContainer) ||
-      !element.contains(range.endContainer)
-    ) {
-      return null;
-    }
-
-    const startRange = document.createRange();
-    startRange.selectNodeContents(element);
-    startRange.setEnd(range.startContainer, range.startOffset);
-    const start = startRange.toString().length;
-
-    const endRange = document.createRange();
-    endRange.selectNodeContents(element);
-    endRange.setEnd(range.endContainer, range.endOffset);
-    const end = endRange.toString().length;
-
-    return { start, end };
-  };
-
-  const setSelectionInElementByOffset = (
-    element: HTMLElement,
-    startOffset: number,
-    endOffset = startOffset
-  ) => {
-    const selection = window.getSelection();
-    if (!selection) return;
-
-    const walker = document.createTreeWalker(element, NodeFilter.SHOW_TEXT);
-    const textNodes: Text[] = [];
-    let totalLength = 0;
-
-    while (walker.nextNode()) {
-      const node = walker.currentNode as Text;
-      textNodes.push(node);
-      totalLength += node.data.length;
-    }
-
-    if (textNodes.length === 0) {
-      const emptyNode = document.createTextNode(element.textContent || '');
-      element.innerHTML = '';
-      element.appendChild(emptyNode);
-      textNodes.push(emptyNode);
-      totalLength = emptyNode.data.length;
-    }
-
-    const clamp = (value: number) => Math.max(0, Math.min(value, totalLength));
-    const targetStart = clamp(startOffset);
-    const targetEnd = clamp(endOffset);
-
-    const resolve = (target: number) => {
-      let consumed = 0;
-      for (const node of textNodes) {
-        const nodeLength = node.data.length;
-        if (target <= consumed + nodeLength) {
-          return { node, offset: target - consumed };
-        }
-        consumed += nodeLength;
-      }
-      const last = textNodes[textNodes.length - 1];
-      return { node: last, offset: last.data.length };
-    };
-
-    const startPos = resolve(targetStart);
-    const endPos = resolve(targetEnd);
-
-    const range = document.createRange();
-    range.setStart(startPos.node, startPos.offset);
-    range.setEnd(endPos.node, endPos.offset);
-    selection.removeAllRanges();
-    selection.addRange(range);
-  };
-
-  const applyCodeLanguage = (language: string) => {
-    contentRef.current?.focus();
-
-    const selection = window.getSelection();
-    if (!selection || selection.rangeCount === 0 || !contentRef.current) {
-      return;
-    }
-
-    const currentPre = getCurrentPreElement();
-
-    if (language === 'none') {
-      if (currentPre) {
-        const codeElement = getCodeElementInPre(currentPre);
-        const text = codeElement.textContent || '';
-        const paragraph = document.createElement('p');
-        paragraph.innerHTML = text ? text.replace(/\n/g, '<br>') : '<br>';
-        currentPre.replaceWith(paragraph);
-
-        const range = document.createRange();
-        range.selectNodeContents(paragraph);
-        range.collapse(false);
-        selection.removeAllRanges();
-        selection.addRange(range);
-      }
-      setContent(getEditorContent());
-      setTimeout(() => {
-        if (contentRef.current) {
-          highlightCodeBlocks(contentRef.current);
-        }
-      }, 0);
-      return;
-    }
-
-    let targetPre = currentPre;
-
-    if (!targetPre) {
-      const range = selection.getRangeAt(0);
-      const selectedText = range.toString();
-      const normalizedLanguage =
-        language === 'plaintext' ? 'plaintext' : language;
-      const pre = document.createElement('pre');
-      pre.className = `bw-code-block language-${normalizedLanguage}`;
-      pre.setAttribute('data-language', language);
-      pre.setAttribute('data-language-label', getCodeLanguageLabel(language));
-      pre.setAttribute('dir', 'ltr');
-      pre.style.direction = 'ltr';
-      pre.style.unicodeBidi = 'embed';
-      pre.style.textAlign = 'left';
-      const code = document.createElement('code');
-      code.className = `language-${normalizedLanguage}`;
-      code.setAttribute('dir', 'ltr');
-      code.style.direction = 'ltr';
-      code.style.unicodeBidi = 'embed';
-      code.style.textAlign = 'left';
-      code.textContent = selectedText || '';
-      ensureCodeLanguageSelector(pre, normalizedLanguage);
-      pre.appendChild(code);
-      syncCodeBlockEmptyState(pre);
-
-      const paragraph = document.createElement('p');
-      paragraph.innerHTML = '<br>';
-
-      range.deleteContents();
-      range.insertNode(paragraph);
-      range.insertNode(pre);
-
-      targetPre = pre;
-      const newRange = document.createRange();
-      newRange.selectNodeContents(code);
-      newRange.collapse(false);
-      selection.removeAllRanges();
-      selection.addRange(newRange);
-    }
-
-    if (targetPre) {
-      updateCodeBlockLanguage(targetPre, language);
-    }
-
-    setContent(getEditorContent());
-    const editor = contentRef.current;
-    if (editor) {
-      setTimeout(() => highlightCodeBlocks(editor), 0);
-    }
-  };
+  // ── Editor key-down handler ──
 
   const handleEditorKeyDown = (e: React.KeyboardEvent<HTMLDivElement>) => {
     const nativeEvent = e.nativeEvent as KeyboardEvent;
@@ -1754,7 +1252,7 @@ function BoardWritePage() {
       }
     }
 
-    const currentPre = getCurrentPreElement();
+    const currentPre = getCurrentPreElement(editor);
 
     if (currentPre) {
       const codeElement = getCodeElementInPre(currentPre);
@@ -1882,8 +1380,8 @@ function BoardWritePage() {
           }
         } else {
           if (e.shiftKey) {
-            const lineStart = text.lastIndexOf('\n', start - 1) + 1;
-            const beforeCaret = text.slice(lineStart, start);
+            const lineStartIdx = text.lastIndexOf('\n', start - 1) + 1;
+            const beforeCaret = text.slice(lineStartIdx, start);
             let removeCount = 0;
             if (beforeCaret.endsWith('  ')) removeCount = 2;
             else if (beforeCaret.endsWith(' ')) removeCount = 1;
@@ -2014,8 +1512,8 @@ function BoardWritePage() {
           const pre = node;
           const code = pre.querySelector('code') as HTMLElement | null;
           if (!code) return;
-          const offsets = getSelectionOffsetsInElement(code);
-          if (offsets && offsets.start === 0 && offsets.end === 0) {
+          const cursorOffsets = getSelectionOffsetsInElement(code);
+          if (cursorOffsets && cursorOffsets.start === 0 && cursorOffsets.end === 0) {
             e.preventDefault();
             const prev = pre.previousElementSibling;
             if (prev instanceof HTMLElement) {
@@ -2053,108 +1551,36 @@ function BoardWritePage() {
 
     if (!currentPre && e.key === 'Enter') {
       requestAnimationFrame(() => {
-        const editor = contentRef.current;
-        if (!editor) return;
-        sanitizeEditorDom(editor);
+        const editorEl = contentRef.current;
+        if (!editorEl) return;
+        sanitizeEditorDom(editorEl);
         setContent(getEditorContent());
       });
     }
   };
 
+  // ── Render ──
   return (
     <Layout hideSidebar={true}>
       <div className="bw-page">
         <form onSubmit={handleSubmit} className="bw-container">
           {/* ── 상단: 대분류 + 소분류 게시판 선택 ── */}
-          <div className="bw-top-bar">
-            {/* 대분류 */}
-            <span className="bw-label">게시판</span>
-            <div
-              className="bw-category-selector"
-              onClick={() => {
-                setShowParentDropdown((p) => !p);
-                setShowSubDropdown(false);
-              }}
-            >
-              <span className="bw-category-selected">
-                {currentParentCat ? currentParentCat.name : '선택하세요'}
-              </span>
-              <span
-                className={`bw-chevron ${showParentDropdown ? 'bw-chevron--open' : ''}`}
-              >
-                <ChevronDown />
-              </span>
-              {showParentDropdown && (
-                <div className="bw-category-dropdown">
-                  {rootCategories.map((cat) => (
-                    <div
-                      key={cat.id}
-                      className={`bw-category-option ${cat.id === parentCategoryId ? 'bw-category-option--active' : ''}`}
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        setParentCategoryId(cat.id);
-                        const children = allCategories.filter(
-                          (c) => c.parentId === cat.id
-                        );
-                        if (children.length > 0) {
-                          setSubCategoryId(children[0].id);
-                        } else {
-                          setSubCategoryId(cat.id);
-                        }
-                        setTagId(null);
-                        setShowParentDropdown(false);
-                      }}
-                    >
-                      {cat.name}
-                    </div>
-                  ))}
-                </div>
-              )}
-            </div>
-
-            {/* 소분류 (하위 카테고리가 있을 때만 표시) */}
-            {subCategories.length > 0 && (
-              <>
-                <span className="bw-label" style={{ marginLeft: '16px' }}>
-                  소분류
-                </span>
-                <div
-                  className="bw-category-selector"
-                  onClick={() => {
-                    setShowSubDropdown((p) => !p);
-                    setShowParentDropdown(false);
-                  }}
-                >
-                  <span className="bw-category-selected">
-                    {currentSubCat ? currentSubCat.name : '선택하세요'}
-                  </span>
-                  <span
-                    className={`bw-chevron ${showSubDropdown ? 'bw-chevron--open' : ''}`}
-                  >
-                    <ChevronDown />
-                  </span>
-                  {showSubDropdown && (
-                    <div className="bw-category-dropdown">
-                      {subCategories.map((sub) => (
-                        <div
-                          key={sub.id}
-                          className={`bw-category-option ${sub.id === subCategoryId ? 'bw-category-option--active' : ''}`}
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            setSubCategoryId(sub.id);
-                            setTagId(null);
-                            setShowSubDropdown(false);
-                          }}
-                        >
-                          {sub.name}
-                        </div>
-                      ))}
-                    </div>
-                  )}
-                </div>
-              </>
-            )}
-          </div>
+          <CategorySelector
+            allCategories={allCategories}
+            rootCategories={rootCategories}
+            parentCategoryId={parentCategoryId}
+            subCategoryId={subCategoryId}
+            showParentDropdown={showParentDropdown}
+            showSubDropdown={showSubDropdown}
+            currentParentCat={currentParentCat}
+            currentSubCat={currentSubCat}
+            subCategories={subCategories}
+            setParentCategoryId={setParentCategoryId}
+            setSubCategoryId={setSubCategoryId}
+            setShowParentDropdown={setShowParentDropdown}
+            setShowSubDropdown={setShowSubDropdown}
+            setTagId={setTagId}
+          />
 
           <div className="bw-divider" />
           <div className="bw-title-area">
@@ -2173,549 +1599,42 @@ function BoardWritePage() {
           <div className="bw-divider" />
 
           {/* ── 툴바 ── */}
-          <div className="bw-toolbar">
-            <div className="bw-tool-dropdown-wrap">
-              <EmoticonPicker onSelect={handleToolbarEmoticonSelect} />
-            </div>
-            <span className="bw-tool-dot" />
-            <button
-              type="button"
-              className="bw-tool-btn"
-              title="굵게"
-              onClick={() => applyFormat('bold')}
-            >
-              <svg
-                width="18"
-                height="18"
-                viewBox="0 0 24 24"
-                fill="none"
-                stroke="currentColor"
-                strokeWidth="2.2"
-                strokeLinecap="round"
-                strokeLinejoin="round"
-              >
-                <path d="M6 4h8a4 4 0 0 1 4 4 4 4 0 0 1-4 4H6z" />
-                <path d="M6 12h9a4 4 0 0 1 4 4 4 4 0 0 1-4 4H6z" />
-              </svg>
-            </button>
-            <button
-              type="button"
-              className="bw-tool-btn"
-              title="기울임"
-              onClick={() => applyFormat('italic')}
-            >
-              <svg
-                width="18"
-                height="18"
-                viewBox="0 0 24 24"
-                fill="none"
-                stroke="currentColor"
-                strokeWidth="2"
-                strokeLinecap="round"
-                strokeLinejoin="round"
-              >
-                <line x1="19" y1="4" x2="10" y2="4" />
-                <line x1="14" y1="20" x2="5" y2="20" />
-                <line x1="15" y1="4" x2="9" y2="20" />
-              </svg>
-            </button>
-            <button
-              type="button"
-              className="bw-tool-btn"
-              title="밑줄"
-              onClick={() => applyFormat('underline')}
-            >
-              <svg
-                width="18"
-                height="18"
-                viewBox="0 0 24 24"
-                fill="none"
-                stroke="currentColor"
-                strokeWidth="2"
-                strokeLinecap="round"
-                strokeLinejoin="round"
-              >
-                <path d="M6 3v7a6 6 0 0 0 6 6 6 6 0 0 0 6-6V3" />
-                <line x1="4" y1="21" x2="20" y2="21" />
-              </svg>
-            </button>
-            <button
-              type="button"
-              className="bw-tool-btn"
-              title="취소선"
-              onClick={() => applyFormat('strikeThrough')}
-            >
-              <svg
-                width="18"
-                height="18"
-                viewBox="0 0 24 24"
-                fill="none"
-                stroke="currentColor"
-                strokeWidth="2"
-                strokeLinecap="round"
-                strokeLinejoin="round"
-              >
-                <line x1="4" y1="12" x2="20" y2="12" />
-                <path d="M17.5 7.5C17.5 5.01 15.49 3 13 3H11C8.51 3 6.5 5.01 6.5 7.5c0 1.38.62 2.61 1.6 3.43" />
-                <path d="M6.5 16.5C6.5 18.99 8.51 21 11 21h2c2.49 0 4.5-2.01 4.5-4.5 0-1.38-.62-2.61-1.6-3.43" />
-              </svg>
-            </button>
-            <div className="bw-tool-dropdown-wrap" ref={linkPopoverWrapRef}>
-              <button
-                type="button"
-                className={`bw-tool-btn ${isLinkActive ? 'bw-tool-btn--active' : ''}`}
-                title="링크"
-                onMouseDown={(e) => e.preventDefault()}
-                onClick={() => {
-                  setShowFontSize(false);
-                  setShowColorPicker(false);
-                  if (showLinkPopover) {
-                    setShowLinkPopover(false);
-                  } else {
-                    openLinkPopover();
-                  }
-                }}
-              >
-                <svg
-                  width="18"
-                  height="18"
-                  viewBox="0 0 24 24"
-                  fill="none"
-                  stroke="currentColor"
-                  strokeWidth="2"
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                >
-                  <path d="M10 13a5 5 0 0 0 7.07 0l2.83-2.83a5 5 0 1 0-7.07-7.07L11 4" />
-                  <path d="M14 11a5 5 0 0 0-7.07 0L4.1 13.83a5 5 0 0 0 7.07 7.07L13 19" />
-                </svg>
-              </button>
-              {showLinkPopover && (
-                <div
-                  className="bw-link-popover"
-                  role="dialog"
-                  aria-label="링크 삽입"
-                >
-                  <label className="bw-link-popover__label">
-                    URL 주소
-                    <input
-                      type="text"
-                      className="bw-link-popover__input"
-                      value={linkUrl}
-                      onChange={(e) => setLinkUrl(e.target.value)}
-                      placeholder="https://"
-                    />
-                  </label>
-                  <label className="bw-link-popover__label">
-                    표시 텍스트
-                    <input
-                      type="text"
-                      className="bw-link-popover__input"
-                      value={linkText}
-                      onChange={(e) => setLinkText(e.target.value)}
-                      placeholder="표시할 텍스트"
-                      onKeyDown={(e) => {
-                        if (e.key === 'Enter') {
-                          e.preventDefault();
-                          applyLink();
-                        }
-                      }}
-                    />
-                  </label>
-                  <div className="bw-link-popover__actions">
-                    <button
-                      type="button"
-                      className="bw-link-popover__btn bw-link-popover__btn--cancel"
-                      onClick={() => setShowLinkPopover(false)}
-                    >
-                      취소
-                    </button>
-                    <button
-                      type="button"
-                      className="bw-link-popover__btn bw-link-popover__btn--confirm"
-                      onClick={applyLink}
-                    >
-                      확인
-                    </button>
-                  </div>
-                </div>
-              )}
-            </div>
-            <span className="bw-tool-dot" />
-            {/* 폰트 크기 */}
-            <div className="bw-tool-dropdown-wrap">
-              <button
-                type="button"
-                className="bw-tool-btn"
-                title="글자 크기"
-                onClick={() => {
-                  setShowFontSize((p) => !p);
-                  setShowColorPicker(false);
-                }}
-              >
-                <svg
-                  width="18"
-                  height="18"
-                  viewBox="0 0 24 24"
-                  fill="none"
-                  stroke="currentColor"
-                  strokeWidth="2"
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                >
-                  <polyline points="4 7 4 4 20 4 20 7" />
-                  <line x1="9" y1="20" x2="15" y2="20" />
-                  <line x1="12" y1="4" x2="12" y2="20" />
-                </svg>
-              </button>
-              {showFontSize && (
-                <div className="bw-tool-dropdown">
-                  {[
-                    { label: '작게', value: '12px' },
-                    { label: '보통', value: '14px' },
-                    { label: '조금 크게', value: '16px' },
-                    { label: '크게', value: '20px' },
-                    { label: '아주 크게', value: '28px' },
-                  ].map((opt) => (
-                    <button
-                      key={opt.value}
-                      type="button"
-                      className="bw-tool-dropdown-item"
-                      style={{ fontSize: opt.value }}
-                      onClick={() => applyFontSize(opt.value)}
-                    >
-                      {opt.label}
-                    </button>
-                  ))}
-                </div>
-              )}
-            </div>
-            {/* 글자 색상 */}
-            <div className="bw-tool-dropdown-wrap">
-              <button
-                type="button"
-                className="bw-tool-btn"
-                title="글자 색상"
-                onClick={() => {
-                  setShowColorPicker((p) => {
-                    const next = !p;
-                    if (next) {
-                      const current = readCurrentColor();
-                      setPendingColor(current);
-                      setPendingCustomColor(current);
-                      setColorPickerTab('palette');
-                    }
-                    return next;
-                  });
-                  setShowFontSize(false);
-                }}
-              >
-                <svg
-                  width="18"
-                  height="18"
-                  viewBox="0 0 24 24"
-                  fill="none"
-                  stroke={selectedColor}
-                  strokeWidth="2"
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                >
-                  <path d="M12 3L4 21h16L12 3z" />
-                  <line x1="8" y1="15" x2="16" y2="15" />
-                </svg>
-              </button>
-              {showColorPicker && (
-                <div className="bw-tool-dropdown bw-color-grid">
-                  <div className="bw-color-tabs">
-                    <button
-                      type="button"
-                      className={`bw-color-tab ${colorPickerTab === 'palette' ? 'is-active' : ''}`}
-                      onClick={() => setColorPickerTab('palette')}
-                    >
-                      팔레트
-                    </button>
-                    <button
-                      type="button"
-                      className={`bw-color-tab ${colorPickerTab === 'custom' ? 'is-active' : ''}`}
-                      onClick={() => setColorPickerTab('custom')}
-                    >
-                      직접 선택
-                    </button>
-                  </div>
-
-                  {colorPickerTab === 'palette' && (
-                    <>
-                      <button
-                        type="button"
-                        className="bw-color-swatch"
-                        style={{
-                          background:
-                            'linear-gradient(to top right, #fff 0%, #fff 46%, #d64454 46%, #d64454 54%, #fff 54%, #fff 100%)',
-                          border:
-                            pendingColor === '#0C0C0C'
-                              ? '2px solid #0c0c0c'
-                              : '1px solid #e5e5e5',
-                        }}
-                        onClick={() => {
-                          setPendingColor('#0C0C0C');
-                          setPendingCustomColor('#0C0C0C');
-                        }}
-                        title="기본 색상"
-                      />
-                      {COLOR_PALETTE.map((c) => (
-                        <button
-                          key={c}
-                          type="button"
-                          className="bw-color-swatch"
-                          style={{
-                            background: c,
-                            border:
-                              pendingColor === c
-                                ? '2px solid #0c0c0c'
-                                : '2px solid #e5e5e5',
-                          }}
-                          onClick={() => {
-                            setPendingColor(c);
-                            setPendingCustomColor(c);
-                          }}
-                          title={c}
-                        />
-                      ))}
-                    </>
-                  )}
-
-                  {colorPickerTab === 'custom' && (
-                    <div className="bw-color-custom-panel bw-color-custom-panel--full">
-                      <div className="bw-color-custom-layout">
-                        <InlineColorPicker
-                          value={pendingCustomColor}
-                          onChange={(hex) => {
-                            setPendingCustomColor(hex);
-                            setPendingColor(hex);
-                          }}
-                        />
-                        <div className="bw-color-custom-controls">
-                          <input
-                            type="text"
-                            className="bw-color-hex-input"
-                            value={pendingCustomColor.toUpperCase()}
-                            onChange={(e) => {
-                              const next = e.target.value.toUpperCase();
-                              setPendingCustomColor(next);
-                              if (/^#[0-9A-F]{6}$/.test(next)) {
-                                setPendingColor(next);
-                              }
-                            }}
-                            maxLength={7}
-                            placeholder="#RRGGBB"
-                          />
-                          <div className="bw-color-preview-row">
-                            <span
-                              className="bw-color-preview-box"
-                              style={{ background: pendingColor }}
-                              aria-label={`현재 선택 색상 ${pendingColor.toUpperCase()}`}
-                            />
-                            <button
-                              type="button"
-                              className="bw-color-eyedropper"
-                              onClick={handlePickScreenColor}
-                              title="화면에서 색상 추출"
-                              aria-label="스포이드"
-                            >
-                              <svg
-                                width="16"
-                                height="16"
-                                viewBox="0 0 24 24"
-                                fill="none"
-                                stroke="currentColor"
-                                strokeWidth="2"
-                                strokeLinecap="round"
-                                strokeLinejoin="round"
-                              >
-                                <path d="M19 11l-6-6" />
-                                <path d="M5 21l4-4" />
-                                <path d="M2 22l3-1 7-7-2-2-7 7-1 3z" />
-                                <path d="M14 4l6 6" />
-                              </svg>
-                            </button>
-                          </div>
-                          <div className="bw-color-recent-wrap bw-color-recent-wrap--compact">
-                            {Array.from({ length: MAX_RECENT_COLORS }).map(
-                              (_, idx) => {
-                                const color = recentColors[idx];
-                                const isEmpty = !color;
-
-                                return (
-                                  <button
-                                    key={color ?? `custom-empty-${idx}`}
-                                    type="button"
-                                    className={`bw-color-swatch ${isEmpty ? 'is-empty-slot' : ''}`}
-                                    style={
-                                      color
-                                        ? {
-                                            background: color,
-                                            border:
-                                              pendingColor === color
-                                                ? '2px solid #0c0c0c'
-                                                : '2px solid #e5e5e5',
-                                          }
-                                        : undefined
-                                    }
-                                    onClick={() => {
-                                      if (!color) return;
-                                      setPendingColor(color);
-                                      setPendingCustomColor(color);
-                                    }}
-                                    title={color ?? '비어있는 최근 색상 슬롯'}
-                                  />
-                                );
-                              }
-                            )}
-                          </div>
-                          <button
-                            type="button"
-                            className="bw-color-confirm"
-                            onClick={() => {
-                              const confirmed = pendingColor.toUpperCase();
-                              applyColor(confirmed);
-                              pushRecentColor(confirmed);
-                            }}
-                          >
-                            확인
-                          </button>
-                        </div>
-                      </div>
-                    </div>
-                  )}
-
-                  {colorPickerTab !== 'custom' && (
-                    <button
-                      type="button"
-                      className="bw-color-confirm"
-                      onClick={() => {
-                        const confirmed = pendingColor.toUpperCase();
-                        applyColor(confirmed);
-                        pushRecentColor(confirmed);
-                      }}
-                    >
-                      확인
-                    </button>
-                  )}
-                </div>
-              )}
-            </div>
-            <span className="bw-tool-dot" />
-            <button
-              type="button"
-              className="bw-tool-btn"
-              title="사진 첨부"
-              onClick={() => imageInputRef.current?.click()}
-            >
-              <svg
-                width="18"
-                height="18"
-                viewBox="0 0 24 24"
-                fill="none"
-                stroke="currentColor"
-                strokeWidth="1.8"
-                strokeLinecap="round"
-                strokeLinejoin="round"
-              >
-                <rect x="3" y="3" width="18" height="18" rx="2" ry="2" />
-                <circle cx="8.5" cy="8.5" r="1.5" />
-                <polyline points="21 15 16 10 5 21" />
-              </svg>
-            </button>
-            <button
-              type="button"
-              className="bw-tool-btn"
-              title="파일 첨부"
-              onClick={() => fileInputRef.current?.click()}
-            >
-              <svg
-                width="18"
-                height="18"
-                viewBox="0 0 24 24"
-                fill="none"
-                stroke="currentColor"
-                strokeWidth="1.8"
-                strokeLinecap="round"
-                strokeLinejoin="round"
-              >
-                <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" />
-                <polyline points="14 2 14 8 20 8" />
-                <line x1="12" y1="18" x2="12" y2="12" />
-                <line x1="9" y1="15" x2="15" y2="15" />
-              </svg>
-            </button>
-            <span className="bw-tool-dot" />
-            <div className="bw-tool-dropdown-wrap">
-              <button
-                type="button"
-                className="bw-tool-btn"
-                title="코드 블록"
-                onClick={() => applyCodeLanguage('plaintext')}
-              >
-                <svg
-                  width="18"
-                  height="18"
-                  viewBox="0 0 24 24"
-                  fill="none"
-                  stroke="currentColor"
-                  strokeWidth="2"
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                >
-                  <polyline points="16 18 22 12 16 6" />
-                  <polyline points="8 6 2 12 8 18" />
-                </svg>
-              </button>
-            </div>
-            <div className="bw-tool-dropdown-wrap">
-              <button
-                type="button"
-                className="bw-tool-btn"
-                title="정렬"
-                onClick={cycleAlignment}
-              >
-                <svg
-                  width="18"
-                  height="18"
-                  viewBox="0 0 24 24"
-                  fill="none"
-                  stroke="currentColor"
-                  strokeWidth="2"
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                >
-                  {currentAlignment === 'left' && (
-                    <>
-                      <line x1="4" y1="6" x2="20" y2="6" />
-                      <line x1="4" y1="10" x2="14" y2="10" />
-                      <line x1="4" y1="14" x2="20" y2="14" />
-                      <line x1="4" y1="18" x2="14" y2="18" />
-                    </>
-                  )}
-                  {currentAlignment === 'center' && (
-                    <>
-                      <line x1="4" y1="6" x2="20" y2="6" />
-                      <line x1="7" y1="10" x2="17" y2="10" />
-                      <line x1="4" y1="14" x2="20" y2="14" />
-                      <line x1="7" y1="18" x2="17" y2="18" />
-                    </>
-                  )}
-                  {currentAlignment === 'right' && (
-                    <>
-                      <line x1="4" y1="6" x2="20" y2="6" />
-                      <line x1="10" y1="10" x2="20" y2="10" />
-                      <line x1="4" y1="14" x2="20" y2="14" />
-                      <line x1="10" y1="18" x2="20" y2="18" />
-                    </>
-                  )}
-                </svg>
-              </button>
-            </div>
-          </div>
+          <Toolbar
+            applyFormat={applyFormat}
+            showFontSize={showFontSize}
+            setShowFontSize={setShowFontSize}
+            applyFontSize={applyFontSize}
+            showColorPicker={showColorPicker}
+            setShowColorPicker={setShowColorPicker}
+            selectedColor={selectedColor}
+            colorPickerTab={colorPickerTab}
+            setColorPickerTab={setColorPickerTab}
+            pendingColor={pendingColor}
+            setPendingColor={setPendingColor}
+            pendingCustomColor={pendingCustomColor}
+            setPendingCustomColor={setPendingCustomColor}
+            recentColors={recentColors}
+            applyColor={applyColor}
+            pushRecentColor={pushRecentColor}
+            handlePickScreenColor={handlePickScreenColor}
+            readCurrentColor={readCurrentColor}
+            showLinkPopover={showLinkPopover}
+            setShowLinkPopover={setShowLinkPopover}
+            linkUrl={linkUrl}
+            setLinkUrl={setLinkUrl}
+            linkText={linkText}
+            setLinkText={setLinkText}
+            isLinkActive={isLinkActive}
+            linkPopoverWrapRef={linkPopoverWrapRef}
+            openLinkPopover={openLinkPopover}
+            applyLink={applyLink}
+            imageInputRef={imageInputRef}
+            fileInputRef={fileInputRef}
+            applyCodeLanguage={handleApplyCodeLanguage}
+            currentAlignment={currentAlignment}
+            cycleAlignment={cycleAlignment}
+            handleToolbarEmoticonSelect={handleToolbarEmoticonSelect}
+          />
 
           <div className="bw-divider" />
 
@@ -2739,9 +1658,7 @@ function BoardWritePage() {
                   return;
                 }
 
-                // Only highlight when cursor is NOT inside a code block
-                // (highlighting resets cursor position, causing RTL bug)
-                if (contentRef.current && !getCurrentPreElement()) {
+                if (contentRef.current && !getCurrentPreElement(contentRef.current)) {
                   setTimeout(
                     () =>
                       highlightCodeBlocks(contentRef.current as HTMLElement),
@@ -2777,134 +1694,23 @@ function BoardWritePage() {
 
           <div className="bw-divider" />
 
-          {/* ── 태그 선택 (Tag 엔티티 기반) ── */}
-          <div className="bw-section">
-            <span className="bw-section-label">세부 카테고리</span>
-            {currentTagList.length > 0 ? (
-              <div className="bw-tag-list">
-                {currentTagList.map((tagOption) => (
-                  <button
-                    key={tagOption.id}
-                    type="button"
-                    className={`bw-tag-chip ${tagId === tagOption.id ? 'bw-tag-chip--active' : ''}`}
-                    onClick={() =>
-                      setTagId(tagId === tagOption.id ? null : tagOption.id)
-                    }
-                  >
-                    #{tagOption.tagName}
-                  </button>
-                ))}
-              </div>
-            ) : (
-              <p className="bw-tag-hint">카테고리가 없습니다.</p>
-            )}
-            {!tagId && (
-              <p
-                ref={detailCategoryWarningRef}
-                tabIndex={-1}
-                style={{
-                  marginTop: '8px',
-                  color: '#D64454',
-                  fontSize: '13px',
-                  lineHeight: '150%',
-                  outline: 'none',
-                }}
-              >
-                게시글 분류를 위한 카테고리를 선택해 주세요.
-              </p>
-            )}
-          </div>
-
-          <div className="bw-divider" />
-
-          {/* ── 첨부파일 ── */}
-          <div className="bw-section">
-            <span className="bw-section-label">첨부파일</span>
-            {attachedFiles.some((f) => !f.isInline) && (
-              <div className="bw-file-list">
-                {attachedFiles
-                  .filter((f) => !f.isInline)
-                  .map((f) => (
-                    <div key={f.id} className="bw-file-selected">
-                      <svg
-                        width="16"
-                        height="16"
-                        viewBox="0 0 24 24"
-                        fill="none"
-                        stroke="currentColor"
-                        strokeWidth="2"
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                      >
-                        <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" />
-                        <polyline points="14 2 14 8 20 8" />
-                      </svg>
-                      <span className="bw-file-name">{f.name}</span>
-                      <span className="bw-file-size">
-                        {formatFileSize(f.size)}
-                      </span>
-                      <button
-                        type="button"
-                        className="bw-file-remove"
-                        onClick={() => handleRemoveFile(f.id)}
-                      >
-                        ×
-                      </button>
-                    </div>
-                  ))}
-              </div>
-            )}
-            <div
-              className={`bw-dropzone ${isDragOver ? 'bw-dropzone--active' : ''}`}
-              onDragOver={handleDragOver}
-              onDragLeave={handleDragLeave}
-              onDrop={handleDrop}
-              onClick={() => fileInputRef.current?.click()}
-            >
-              {isUploading ? (
-                <p className="bw-dropzone-text">업로드 중...</p>
-              ) : (
-                <>
-                  <svg
-                    className="bw-dropzone-icon"
-                    width="32"
-                    height="32"
-                    viewBox="0 0 24 24"
-                    fill="none"
-                    stroke="currentColor"
-                    strokeWidth="1.5"
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                  >
-                    <polyline points="16 16 12 12 8 16" />
-                    <line x1="12" y1="12" x2="12" y2="21" />
-                    <path d="M20.39 18.39A5 5 0 0 0 18 9h-1.26A8 8 0 1 0 3 16.3" />
-                  </svg>
-                  <p className="bw-dropzone-text">
-                    파일을 드래그하거나 클릭하여 업로드
-                  </p>
-                  <p className="bw-dropzone-hint">
-                    최대 50MB &nbsp;·&nbsp; 여러 파일 동시 업로드 가능
-                  </p>
-                </>
-              )}
-            </div>
-            <input
-              ref={fileInputRef}
-              type="file"
-              multiple
-              onChange={handleFileSelect}
-              style={{ display: 'none' }}
-            />
-            <input
-              ref={imageInputRef}
-              type="file"
-              accept="image/*"
-              multiple
-              onChange={handleImageSelect}
-              style={{ display: 'none' }}
-            />
-          </div>
+          <AttachmentSection
+            currentTagList={currentTagList}
+            tagId={tagId}
+            setTagId={setTagId}
+            detailCategoryWarningRef={detailCategoryWarningRef}
+            attachedFiles={attachedFiles}
+            isDragOver={isDragOver}
+            isUploading={isUploading}
+            handleDragOver={handleDragOver}
+            handleDragLeave={handleDragLeave}
+            handleDrop={handleDrop}
+            handleRemoveFile={handleRemoveFile}
+            fileInputRef={fileInputRef}
+            imageInputRef={imageInputRef}
+            handleFileSelect={handleFileSelect}
+            handleImageSelect={handleImageSelect}
+          />
 
           {error && <div className="bw-error">{error}</div>}
 

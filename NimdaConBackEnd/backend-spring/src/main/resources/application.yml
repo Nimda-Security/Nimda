@@ -66,6 +66,10 @@ jwt:
   secret: ${JWT_SECRET} # JWT 토큰 서명 검증키 (Base64 인코딩됨)
   token-validity-in-seconds: 86400 # JWT 토큰 만료 시간 24시간 (초)
 
+auth:
+  cookie:
+    secure: ${AUTH_COOKIE_SECURE:true}
+
 # 첨부파일 로컬 저장 (cite attachment)
 nimda:
   file:
