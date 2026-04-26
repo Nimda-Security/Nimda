@@ -1,4 +1,4 @@
-﻿// 게시판 관련 API 함수들
+// 게시판 관련 API 함수들
 
 import type {
   Category,
@@ -719,6 +719,42 @@ export const getMyBoardsAPI = async (): Promise<MyBoard[]> => {
     return [];
   } catch (error) {
     console.error('내 게시글 목록 조회 오류:', error);
+    return [];
+  }
+};
+
+/**
+ * 내가 댓글을 작성한 게시글 목록 조회
+ */
+export const getMyCommentedBoardsAPI = async (): Promise<MyBoard[]> => {
+  try {
+    const response = await fetch(`${API_BASE_URL}/my/commented-boards`, {
+      method: 'GET',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      credentials: 'include',
+    });
+
+    const result = await response.json();
+    if (response.ok && result.success && Array.isArray(result.data)) {
+      return result.data.map((b: Record<string, unknown>) => {
+        const author = b.author as Record<string, unknown> | undefined;
+        return {
+          id: b.id as number,
+          title: b.title as string,
+          likeCount: (b.likeCount as number) ?? 0,
+          commentCount: (b.commentCount as number) ?? 0,
+          createdAt: b.createdAt as string,
+          filepath: b.filepath as string | undefined,
+          authorNickname: author?.nickname as string | undefined,
+          authorProfileImage: author?.profileImage as string | undefined,
+        };
+      });
+    }
+    return [];
+  } catch (error) {
+    console.error('내가 댓글을 작성한 게시글 목록 조회 오류:', error);
     return [];
   }
 };
