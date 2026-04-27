@@ -1,4 +1,4 @@
-import { useEffect, useState, useRef } from 'react';
+import { useEffect, useMemo, useState, useRef } from 'react';
 import { Link } from 'react-router-dom';
 import Avatar from '@/components/Avatar/Avatar';
 import { Heart } from '@/components/icons/Heart';
@@ -30,6 +30,41 @@ interface CommentSectionProps {
   boardId: number;
   isAdmin?: boolean;
 }
+
+type CommentSortType = 'latest' | 'oldest' | 'likes';
+
+const parseCommentDate = (value: string) => {
+  const normalized = value.replace(
+    /^(\d{4})\/(\d{2})\/(\d{2}) (\d{2}):(\d{2})$/,
+    '$1-$2-$3T$4:$5:00'
+  );
+  const time = new Date(normalized).getTime();
+  return Number.isNaN(time) ? 0 : time;
+};
+
+const sortCommentsTree = (
+  list: CommentResponse[],
+  sortType: CommentSortType
+): CommentResponse[] => {
+  const sorted = [...list].sort((a, b) => {
+    if (sortType === 'likes') {
+      if (b.likeCount !== a.likeCount) {
+        return b.likeCount - a.likeCount;
+      }
+      return parseCommentDate(b.createdAt) - parseCommentDate(a.createdAt);
+    }
+
+    const diff = parseCommentDate(a.createdAt) - parseCommentDate(b.createdAt);
+    return sortType === 'oldest' ? diff : -diff;
+  });
+
+  return sorted.map((comment) => ({
+    ...comment,
+    children: comment.children?.length
+      ? sortCommentsTree(comment.children, sortType)
+      : [],
+  }));
+};
 
 /**
  * 댓글 리스트의 각 아이템 아바타
@@ -450,6 +485,7 @@ function CommentItem({
 
 function CommentSection({ boardId }: CommentSectionProps) {
   const [comments, setComments] = useState<(CommentResponse)[]>([]);
+  const [sortType, setSortType] = useState<CommentSortType>('latest');
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [newContext, setNewContext] = useState('');
@@ -579,10 +615,39 @@ function CommentSection({ boardId }: CommentSectionProps) {
     list.reduce((n, c) => n + 1 + countAll((c.children ?? []) as (CommentResponse)[]), 0);
 
   const totalCount = countAll(comments);
+  const sortedComments = useMemo(
+    () => sortCommentsTree(comments, sortType),
+    [comments, sortType]
+  );
 
   return (
     <section className="comment-section">
-      <h2 className="comment-section__title">댓글 {totalCount}</h2>
+      <div className="comment-section__header">
+        <h2 className="comment-section__title">댓글 {totalCount}</h2>
+        <div className="comment-section__sort" role="tablist" aria-label="댓글 정렬">
+          <button
+            type="button"
+            className={`comment-section__sort-btn${sortType === 'latest' ? ' comment-section__sort-btn--active' : ''}`}
+            onClick={() => setSortType('latest')}
+          >
+            최신순
+          </button>
+          <button
+            type="button"
+            className={`comment-section__sort-btn${sortType === 'oldest' ? ' comment-section__sort-btn--active' : ''}`}
+            onClick={() => setSortType('oldest')}
+          >
+            오래된순
+          </button>
+          <button
+            type="button"
+            className={`comment-section__sort-btn${sortType === 'likes' ? ' comment-section__sort-btn--active' : ''}`}
+            onClick={() => setSortType('likes')}
+          >
+            좋아요순
+          </button>
+        </div>
+      </div>
 
       {loading ? (
         <div className="comment-section__loading">로딩 중...</div>
@@ -592,7 +657,7 @@ function CommentSection({ boardId }: CommentSectionProps) {
         <div className="comment-section__empty">첫 번째 댓글을 남겨보세요.</div>
       ) : (
         <div className="comment-list">
-          {comments.map((c) => (
+          {sortedComments.map((c) => (
             <div key={c.id}>
               {editingId === c.id ? (
                 <div className="comment-edit">

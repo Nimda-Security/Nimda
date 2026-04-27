@@ -8,12 +8,55 @@
   padding-top: 24px;
 }
 
+.comment-section__header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  margin-bottom: 24px;
+}
+
 .comment-section__title {
   font-size: 20px;
   font-weight: 700;
   color: var(--color-black);
   line-height: 1.5;
-  margin-bottom: 24px;
+  margin-bottom: 0;
+}
+
+.comment-section__sort {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  flex-wrap: wrap;
+}
+
+.comment-section__sort-btn {
+  padding: 6px 10px;
+  border: 1px solid var(--color-gray-200);
+  border-radius: 999px;
+  background: var(--color-white);
+  color: var(--color-gray-500);
+  font-size: 12px;
+  font-weight: 600;
+  line-height: 1;
+  cursor: pointer;
+  font-family: "Pretendard", sans-serif;
+  transition:
+    border-color 0.15s ease,
+    color 0.15s ease,
+    background-color 0.15s ease;
+}
+
+.comment-section__sort-btn:hover {
+  border-color: var(--color-gray-400);
+  color: var(--color-black);
+}
+
+.comment-section__sort-btn--active {
+  border-color: var(--color-pink);
+  background: rgba(217, 115, 153, 0.08);
+  color: var(--color-pink);
 }
 
 /* ===========================
