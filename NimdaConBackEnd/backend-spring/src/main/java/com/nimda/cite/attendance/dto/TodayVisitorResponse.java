@@ -22,7 +22,7 @@ public class TodayVisitorResponse {
         User user = log.getUser();
 
         return TodayVisitorResponse.builder()
-                .id(log.getId())
+                .id(user.getId())
                 .userName(user.getNickname())
                 .profileImageUrl(user.getProfileImage())
                 .build();

@@ -11,9 +11,11 @@ function LogInPage() {
   const navigate = useNavigate();
   const [showPassword, setShowPassword] = useState(false);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
   const handleLogin = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
+    if (isSubmitting) return;
     setErrorMessage(null);
 
     const form = e.currentTarget;
@@ -26,12 +28,17 @@ function LogInPage() {
       return;
     }
 
-    const result = await loginAPI({ userId, password });
+    try {
+      setIsSubmitting(true);
+      const result = await loginAPI({ userId, password });
 
-    if (result.success) {
-      navigate("/");
-    } else {
-      setErrorMessage(result.message || LOGIN_ERROR_MESSAGE);
+      if (result.success) {
+        navigate("/");
+      } else {
+        setErrorMessage(result.message || LOGIN_ERROR_MESSAGE);
+      }
+    } finally {
+      setIsSubmitting(false);
     }
   };
 
@@ -91,8 +98,8 @@ function LogInPage() {
               </p>
             )}
 
-            <button type="submit" className="login-page__submit">
-              로그인
+            <button type="submit" className="login-page__submit" disabled={isSubmitting}>
+              {isSubmitting ? "로그인 중..." : "로그인"}
             </button>
           </form>
 

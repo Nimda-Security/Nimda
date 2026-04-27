@@ -16,11 +16,17 @@ public interface AttendanceLogRepository extends JpaRepository<AttendanceLog, Lo
                 // 2. LocalDateTime의 시작점(00:00:00)부터 끝점(23:59:59)까지 검색
                 @Query("SELECT a FROM AttendanceLog a " +
                         "JOIN FETCH a.user " +
-                        "WHERE a.attendanceDate >= :start AND a.attendanceDate <= :end " +
+                        "WHERE a.id IN (" +
+                        "    SELECT MAX(l.id) FROM AttendanceLog l " +
+                        "    WHERE l.attendanceDate >= :start AND l.attendanceDate <= :end " +
+                        "    GROUP BY l.user.id" +
+                        ") " +
                         "ORDER BY a.id DESC")
                 List<AttendanceLog> findTodayVisitorsWithUser(
                         @Param("start") LocalDateTime start,
                         @Param("end") LocalDateTime end
                 );
+
+        boolean existsByUserIdAndAttendanceDateBetween(Long userId, LocalDateTime start, LocalDateTime end);
         List<AttendanceLog> findByUserIdOrderByAttendanceDateDesc(Long userId);
 }

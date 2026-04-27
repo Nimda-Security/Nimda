@@ -27,8 +27,7 @@ public class AttendanceService {
     // 출석 체크
     @Transactional
     public void markAttendance(Long userId) {
-
-        Attendance attendance = attendanceRepository.findById(userId)
+        Attendance attendance = attendanceRepository.findByIdForUpdate(userId)
                 .orElseGet(() -> {
                     User user = userRepository.findById(userId)
                             .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "유저를 찾을 수 없습니다."));
@@ -39,9 +38,12 @@ public class AttendanceService {
                 });
 
         LocalDate today = LocalDate.now();
+        LocalDateTime start = today.atStartOfDay();
+        LocalDateTime end = start.plusDays(1);
 
         // 중복 체크
-        if (attendance.getLastDate() != null && attendance.getLastDate().equals(today)) {
+        if ((attendance.getLastDate() != null && attendance.getLastDate().equals(today))
+                || logRepository.existsByUserIdAndAttendanceDateBetween(userId, start, end)) {
             throw new IllegalStateException("이미 오늘 출석을 완료했습니다.");
         }
 
