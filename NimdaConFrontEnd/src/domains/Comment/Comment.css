@@ -71,8 +71,8 @@
 }
 
 .comment-input__avatar {
-  width: 40px;
-  height: 40px;
+  width: 32px;
+  height: 32px;
   border-radius: 50%;
   background: var(--color-gray-200);
   display: flex;
@@ -165,6 +165,49 @@
    =========================== */
 .comment-list {
   border-top: 1px solid var(--color-gray-200);
+}
+
+.comment-pagination {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  margin-top: 24px;
+}
+
+.comment-pagination__btn,
+.comment-pagination__num {
+  min-width: 30px;
+  height: 30px;
+  border: 1px solid var(--color-gray-200);
+  border-radius: 999px;
+  background: var(--color-white);
+  color: var(--color-gray-600);
+  font-size: 12px;
+  font-weight: 600;
+  cursor: pointer;
+  padding: 0;
+  transition:
+    border-color 0.15s ease,
+    color 0.15s ease,
+    background-color 0.15s ease;
+}
+
+.comment-pagination__btn:hover:not(:disabled),
+.comment-pagination__num:hover {
+  border-color: var(--color-pink);
+  color: var(--color-pink);
+}
+
+.comment-pagination__btn:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+
+.comment-pagination__num--active {
+  border-color: var(--color-pink);
+  background: rgba(217, 115, 153, 0.08);
+  color: var(--color-pink);
 }
 
 /* 단일 댓글 아이템 */

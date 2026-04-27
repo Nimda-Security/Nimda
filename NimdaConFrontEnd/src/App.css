@@ -11,6 +11,7 @@
   --content-gap: 24px;
   --content-width: 696px;
   --footer-height: 180px;
+  --footer-gap: 80px;
 
   /* Figma 색상 토큰 */
   --color-black: #0c0c0c;
@@ -87,7 +88,7 @@ body {
 .layout__body {
   flex: 1;
   padding-top: calc(var(--header-height) + var(--header-gap));
-  padding-bottom: 48px;
+  padding-bottom: var(--footer-gap);
 }
 
 .layout__container {
@@ -126,8 +127,16 @@ body {
   justify-content: center;
   min-height: calc(
     100vh - var(--header-height) - var(--header-gap) - var(--footer-height) -
-      48px
+      var(--footer-gap)
   );
+}
+
+.layout-page-main {
+  flex: 1;
+  display: flex;
+  justify-content: center;
+  padding-bottom: var(--footer-gap);
+  overflow-x: hidden;
 }
 
 /* Footer */

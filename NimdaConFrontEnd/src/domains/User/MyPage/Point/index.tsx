@@ -128,7 +128,7 @@ function MyPagePoint() {
       <Header />
       <div className="h-[88px] w-full" />
 
-      <main className="flex-1 flex justify-center pb-20 overflow-x-hidden">
+      <main className="layout-page-main">
         <div className="w-full max-w-[960px]">
           {/* 상단 프로필 및 탭 메뉴 */}
           <ProfileSection
@@ -142,7 +142,7 @@ function MyPagePoint() {
           <div className="h-[24px] w-full" />
 
           {/* 3. 하단 콘텐츠 영역 */}
-          <div className="w-full pb-10">
+          <div className="w-full">
             {activeTab === 'profile' && <UserInfoContent loading={loading} />}
 
             {activeTab === 'my_posts' && <MyPostsContent />}

@@ -558,7 +558,7 @@ export default function UserProfilePage() {
       <Header />
       <div className="h-[88px] w-full" />
 
-      <main className="flex-1 flex justify-center pb-24 overflow-x-hidden">
+      <main className="layout-page-main">
         <div className="w-full max-w-[960px]">
           <div className="w-full flex flex-col gap-[36px]">
             {/* 아바타 + 기본 정보 */}

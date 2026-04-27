@@ -32,6 +32,7 @@ interface CommentSectionProps {
 }
 
 type CommentSortType = 'latest' | 'oldest' | 'likes';
+const COMMENTS_PER_PAGE = 15;
 
 const parseCommentDate = (value: string) => {
   const normalized = value.replace(
@@ -65,6 +66,20 @@ const sortCommentsTree = (
       : [],
   }));
 };
+
+interface FlattenedCommentItem {
+  comment: CommentResponse;
+  depth: number;
+}
+
+const flattenCommentsTree = (
+  list: CommentResponse[],
+  depth = 0
+): FlattenedCommentItem[] =>
+  list.flatMap((comment) => [
+    { comment, depth },
+    ...flattenCommentsTree(comment.children ?? [], depth + 1),
+  ]);
 
 /**
  * 댓글 리스트의 각 아이템 아바타
@@ -347,6 +362,7 @@ function CommentMoreDropdown({
 
 interface CommentItemProps {
   comment: CommentResponse;
+  depth: number;
   onReply: (parentId: number, authorName: string) => void;
   onEdit: (commentId: number, currentContext: string) => void;
   onDelete: (commentId: number) => void;
@@ -365,6 +381,7 @@ interface CommentItemProps {
 
 function CommentItem({
   comment,
+  depth,
   onReply,
   onEdit,
   onDelete,
@@ -380,14 +397,16 @@ function CommentItem({
   replyInputRef,
   myProfileImage // [추가]
 }: CommentItemProps) {
-  const isReply = comment.parentId !== null;
-  const children = comment.children ?? [];
+  const isReply = depth > 0;
 
   const { editable, deletable, hideable } = comment;
 
   return (
     <>
-      <div className={`comment-item${isReply ? ' comment-item--reply' : ''}`}>
+      <div
+        className={`comment-item${isReply ? ' comment-item--reply' : ''}`}
+        style={isReply ? { marginLeft: `${depth * 48}px` } : undefined}
+      >
         <CommentAvatar src={comment.authorProfileImage} name={comment.authorName} />
         <div className="comment-item__body">
           <div className="comment-item__header">
@@ -457,28 +476,6 @@ function CommentItem({
           <button type="button" onClick={onCancelReply} className="comment-reply-input__cancel">취소</button>
         </div>
       )}
-
-      {children.length > 0 &&
-        children.map((child) => (
-          <CommentItem
-            key={child.id}
-            comment={child}
-            onReply={onReply}
-            onEdit={onEdit}
-            onDelete={onDelete}
-            onHide={onHide}
-            onToggleLike={onToggleLike}
-            replyTargetId={replyTargetId}
-            replyTargetName={replyTargetName}
-            replyContext={replyContext}
-            setReplyContext={setReplyContext}
-            onSubmitReply={onSubmitReply}
-            isReplySubmitting={isReplySubmitting}
-            onCancelReply={onCancelReply}
-            replyInputRef={replyInputRef}
-            myProfileImage={myProfileImage} // [추가]
-          />
-        ))}
     </>
   );
 }
@@ -486,6 +483,7 @@ function CommentItem({
 function CommentSection({ boardId }: CommentSectionProps) {
   const [comments, setComments] = useState<(CommentResponse)[]>([]);
   const [sortType, setSortType] = useState<CommentSortType>('latest');
+  const [currentPage, setCurrentPage] = useState(1);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [newContext, setNewContext] = useState('');
@@ -619,6 +617,23 @@ function CommentSection({ boardId }: CommentSectionProps) {
     () => sortCommentsTree(comments, sortType),
     [comments, sortType]
   );
+  const flattenedComments = useMemo(
+    () => flattenCommentsTree(sortedComments),
+    [sortedComments]
+  );
+  const totalPages = Math.max(1, Math.ceil(flattenedComments.length / COMMENTS_PER_PAGE));
+  const pagedComments = useMemo(() => {
+    const startIndex = (currentPage - 1) * COMMENTS_PER_PAGE;
+    return flattenedComments.slice(startIndex, startIndex + COMMENTS_PER_PAGE);
+  }, [currentPage, flattenedComments]);
+
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [sortType, boardId]);
+
+  useEffect(() => {
+    setCurrentPage((prev) => Math.min(prev, totalPages));
+  }, [totalPages]);
 
   return (
     <section className="comment-section">
@@ -649,6 +664,14 @@ function CommentSection({ boardId }: CommentSectionProps) {
         </div>
       </div>
 
+      <CommentInput
+        value={newContext}
+        onChange={setNewContext}
+        onSubmit={handleSubmitComment}
+        isSubmitting={isSubmitting}
+        profileImage={myProfileImage}
+      />
+
       {loading ? (
         <div className="comment-section__loading">로딩 중...</div>
       ) : error ? (
@@ -656,10 +679,11 @@ function CommentSection({ boardId }: CommentSectionProps) {
       ) : comments.length === 0 ? (
         <div className="comment-section__empty">첫 번째 댓글을 남겨보세요.</div>
       ) : (
-        <div className="comment-list">
-          {sortedComments.map((c) => (
-            <div key={c.id}>
-              {editingId === c.id ? (
+        <>
+          <div className="comment-list">
+            {pagedComments.map(({ comment, depth }) => (
+              <div key={comment.id}>
+              {editingId === comment.id ? (
                 <div className="comment-edit">
                   <CommentInput
                     value={editContext}
@@ -673,7 +697,8 @@ function CommentSection({ boardId }: CommentSectionProps) {
                 </div>
               ) : (
                 <CommentItem
-                  comment={c}
+                  comment={comment}
+                  depth={depth}
                   onReply={handleOpenReply}
                   onEdit={handleOpenEdit}
                   onDelete={handleDelete}
@@ -690,19 +715,46 @@ function CommentSection({ boardId }: CommentSectionProps) {
                   myProfileImage={myProfileImage} // [추가]
                 />
               )}
+              </div>
+            ))}
+          </div>
+
+          {totalPages > 1 && (
+            <div className="comment-pagination" aria-label="댓글 페이지네이션">
+              <button
+                type="button"
+                className="comment-pagination__btn"
+                onClick={() => setCurrentPage((prev) => Math.max(1, prev - 1))}
+                disabled={currentPage === 1}
+                aria-label="이전 페이지"
+              >
+                ‹
+              </button>
+              {Array.from({ length: totalPages }, (_, index) => index + 1).map((page) => (
+                <button
+                  key={page}
+                  type="button"
+                  className={`comment-pagination__num${page === currentPage ? ' comment-pagination__num--active' : ''}`}
+                  onClick={() => setCurrentPage(page)}
+                  aria-current={page === currentPage ? 'page' : undefined}
+                >
+                  {page}
+                </button>
+              ))}
+              <button
+                type="button"
+                className="comment-pagination__btn"
+                onClick={() => setCurrentPage((prev) => Math.min(totalPages, prev + 1))}
+                disabled={currentPage === totalPages}
+                aria-label="다음 페이지"
+              >
+                ›
+              </button>
             </div>
-          ))}
-        </div>
+          )}
+        </>
       )}
 
-      {/* 메인 댓글 입력창 */}
-      <CommentInput
-        value={newContext}
-        onChange={setNewContext}
-        onSubmit={handleSubmitComment}
-        isSubmitting={isSubmitting}
-        profileImage={myProfileImage} // [추가] 내 프로필 이미지 전달
-      />
     </section>
   );
 }
