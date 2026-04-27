@@ -7,6 +7,7 @@ import javascript from 'highlight.js/lib/languages/javascript';
 import python from 'highlight.js/lib/languages/python';
 import typescript from 'highlight.js/lib/languages/typescript';
 import xml from 'highlight.js/lib/languages/xml';
+import { getCodeLanguageLabel } from '@/domains/Board/BoardWrite/constants';
 
 let registered = false;
 
@@ -80,8 +81,21 @@ export const highlightCodeBlocks = (root: ParentNode) => {
 
     const normalizedLanguage = aliasMap[rawLanguage] ?? rawLanguage;
 
+    if (normalizedLanguage) {
+      pre.setAttribute('data-language', normalizedLanguage);
+      pre.setAttribute(
+        'data-language-label',
+        getCodeLanguageLabel(normalizedLanguage)
+      );
+      Array.from(pre.classList)
+        .filter((cls) => cls.startsWith('language-'))
+        .forEach((cls) => pre.classList.remove(cls));
+      pre.classList.add(`language-${normalizedLanguage}`);
+    }
+
     if (!normalizedLanguage || normalizedLanguage === 'plaintext') {
       code.classList.remove('hljs');
+      code.innerText = code.textContent || '';
       return;
     }
 
@@ -89,8 +103,14 @@ export const highlightCodeBlocks = (root: ParentNode) => {
       .filter((cls) => cls.startsWith('language-'))
       .forEach((cls) => code?.classList.remove(cls));
     code.classList.add(`language-${normalizedLanguage}`);
-    code.removeAttribute('data-highlighted');
+    code.classList.add('hljs');
 
-    hljs.highlightElement(code);
+    const source = code.textContent || '';
+    const highlighted = hljs.highlight(source, {
+      language: normalizedLanguage,
+      ignoreIllegals: true,
+    });
+
+    code.innerHTML = highlighted.value;
   });
 };

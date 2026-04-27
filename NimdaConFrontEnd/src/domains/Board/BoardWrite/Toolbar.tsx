@@ -1,73 +1,46 @@
 import React from 'react';
-import {
-  COLOR_PALETTE,
-  MAX_RECENT_COLORS,
-  FONT_SIZE_OPTIONS,
-  type ColorPickerTab,
-} from './constants';
+import type { Editor } from '@tiptap/react';
+import { COLOR_PALETTE, FONT_SIZE_OPTIONS } from './constants';
 import EmoticonPicker from '@/domains/Comment/EmoticonPicker';
 import InlineColorPicker from '@/components/InlineColorPicker';
 
 interface ToolbarProps {
-  // Format
-  applyFormat: (format: 'bold' | 'italic' | 'underline' | 'strikeThrough') => void;
-
-  // Font size
+  editor: Editor | null;
   showFontSize: boolean;
   setShowFontSize: React.Dispatch<React.SetStateAction<boolean>>;
-  applyFontSize: (size: string) => void;
-
-  // Color
   showColorPicker: boolean;
   setShowColorPicker: React.Dispatch<React.SetStateAction<boolean>>;
-  selectedColor: string;
-  colorPickerTab: ColorPickerTab;
-  setColorPickerTab: React.Dispatch<React.SetStateAction<ColorPickerTab>>;
+  showLinkPopover: boolean;
+  setShowLinkPopover: React.Dispatch<React.SetStateAction<boolean>>;
+  colorPickerTab: 'palette' | 'custom';
+  setColorPickerTab: React.Dispatch<React.SetStateAction<'palette' | 'custom'>>;
   pendingColor: string;
   setPendingColor: React.Dispatch<React.SetStateAction<string>>;
   pendingCustomColor: string;
   setPendingCustomColor: React.Dispatch<React.SetStateAction<string>>;
   recentColors: string[];
-  applyColor: (color: string) => void;
   pushRecentColor: (color: string) => void;
   handlePickScreenColor: () => void;
-  readCurrentColor: () => string;
-
-  // Link
-  showLinkPopover: boolean;
-  setShowLinkPopover: React.Dispatch<React.SetStateAction<boolean>>;
   linkUrl: string;
   setLinkUrl: React.Dispatch<React.SetStateAction<string>>;
   linkText: string;
   setLinkText: React.Dispatch<React.SetStateAction<string>>;
-  isLinkActive: boolean;
   linkPopoverWrapRef: React.RefObject<HTMLDivElement | null>;
-  openLinkPopover: () => void;
-  applyLink: () => void;
-
-  // Image / File
   imageInputRef: React.RefObject<HTMLInputElement | null>;
   fileInputRef: React.RefObject<HTMLInputElement | null>;
-
-  // Code
-  applyCodeLanguage: (language: string) => void;
-
-  // Alignment
-  currentAlignment: 'left' | 'center' | 'right';
-  cycleAlignment: () => void;
-
-  // Emoticon
-  handleToolbarEmoticonSelect: (marker: string) => void;
+  onApplyLink: () => void;
+  onInsertCodeBlock: () => void;
+  onInsertEmoticon: (marker: string) => void;
 }
 
 export default function Toolbar({
-  applyFormat,
+  editor,
   showFontSize,
   setShowFontSize,
-  applyFontSize,
   showColorPicker,
   setShowColorPicker,
-  selectedColor,
+  showLinkPopover,
+  setShowLinkPopover,
   colorPickerTab,
   setColorPickerTab,
   pendingColor,
@@ -75,51 +48,90 @@ export default function Toolbar({
   pendingCustomColor,
   setPendingCustomColor,
   recentColors,
-  applyColor,
   pushRecentColor,
   handlePickScreenColor,
-  readCurrentColor,
-  showLinkPopover,
-  setShowLinkPopover,
   linkUrl,
   setLinkUrl,
   linkText,
   setLinkText,
-  isLinkActive,
   linkPopoverWrapRef,
-  openLinkPopover,
-  applyLink,
   imageInputRef,
   fileInputRef,
-  applyCodeLanguage,
-  currentAlignment,
-  cycleAlignment,
-  handleToolbarEmoticonSelect,
+  onApplyLink,
+  onInsertCodeBlock,
+  onInsertEmoticon,
 }: ToolbarProps) {
+  const selectedColor =
+    editor?.getAttributes('textStyle').color?.toUpperCase() || '#0C0C0C';
+  const currentAlignment = editor?.isActive({ textAlign: 'center' })
+    ? 'center'
+    : editor?.isActive({ textAlign: 'right' })
+      ? 'right'
+      : 'left';
+
+  const applyColor = (color: string) => {
+    if (!editor) return;
+    editor.chain().focus().setColor(color).run();
+    setShowColorPicker(false);
+  };
+
+  const applyFontSize = (size: string) => {
+    if (!editor) return;
+    editor.chain().focus().setFontSize(size).run();
+    setShowFontSize(false);
+  };
+
+  const cycleAlignment = () => {
+    if (!editor) return;
+
+    if (currentAlignment === 'left') {
+      editor.chain().focus().setTextAlign('center').run();
+      return;
+    }
+
+    if (currentAlignment === 'center') {
+      editor.chain().focus().setTextAlign('right').run();
+      return;
+    }
+
+    editor.chain().focus().setTextAlign('left').run();
+  };
+
+  const openColorPicker = () => {
+    setShowColorPicker((prev) => {
+      const next = !prev;
+      if (next) {
+        setPendingColor(selectedColor);
+        setPendingCustomColor(selectedColor);
+        setColorPickerTab('palette');
+      }
+      return next;
+    });
+    setShowFontSize(false);
+  };
+
   return (
     <div className="bw-toolbar">
       <div className="bw-tool-dropdown-wrap">
-        <EmoticonPicker onSelect={handleToolbarEmoticonSelect} />
+        <EmoticonPicker onSelect={onInsertEmoticon} />
       </div>
       <span className="bw-tool-dot" />
-      {/* Bold */}
       <button
         type="button"
-        className="bw-tool-btn"
+        className={`bw-tool-btn ${editor?.isActive('bold') ? 'bw-tool-btn--active' : ''}`}
         title="굵게"
-        onClick={() => applyFormat('bold')}
+        onClick={() => editor?.chain().focus().toggleBold().run()}
       >
         <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
           <path d="M6 4h8a4 4 0 0 1 4 4 4 4 0 0 1-4 4H6z" />
           <path d="M6 12h9a4 4 0 0 1 4 4 4 4 0 0 1-4 4H6z" />
         </svg>
       </button>
-      {/* Italic */}
       <button
         type="button"
-        className="bw-tool-btn"
+        className={`bw-tool-btn ${editor?.isActive('italic') ? 'bw-tool-btn--active' : ''}`}
         title="기울임"
-        onClick={() => applyFormat('italic')}
+        onClick={() => editor?.chain().focus().toggleItalic().run()}
       >
         <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
           <line x1="19" y1="4" x2="10" y2="4" />
@@ -127,24 +139,22 @@ export default function Toolbar({
           <line x1="15" y1="4" x2="9" y2="20" />
         </svg>
       </button>
-      {/* Underline */}
       <button
         type="button"
-        className="bw-tool-btn"
+        className={`bw-tool-btn ${editor?.isActive('underline') ? 'bw-tool-btn--active' : ''}`}
         title="밑줄"
-        onClick={() => applyFormat('underline')}
+        onClick={() => editor?.chain().focus().toggleUnderline().run()}
       >
         <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
           <path d="M6 3v7a6 6 0 0 0 6 6 6 6 0 0 0 6-6V3" />
           <line x1="4" y1="21" x2="20" y2="21" />
         </svg>
       </button>
-      {/* StrikeThrough */}
       <button
         type="button"
-        className="bw-tool-btn"
+        className={`bw-tool-btn ${editor?.isActive('strike') ? 'bw-tool-btn--active' : ''}`}
         title="취소선"
-        onClick={() => applyFormat('strikeThrough')}
+        onClick={() => editor?.chain().focus().toggleStrike().run()}
       >
         <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
           <line x1="4" y1="12" x2="20" y2="12" />
@@ -152,21 +162,16 @@ export default function Toolbar({
           <path d="M6.5 16.5C6.5 18.99 8.51 21 11 21h2c2.49 0 4.5-2.01 4.5-4.5 0-1.38-.62-2.61-1.6-3.43" />
         </svg>
       </button>
-      {/* Link */}
       <div className="bw-tool-dropdown-wrap" ref={linkPopoverWrapRef}>
         <button
           type="button"
-          className={`bw-tool-btn ${isLinkActive ? 'bw-tool-btn--active' : ''}`}
+          className={`bw-tool-btn ${editor?.isActive('link') ? 'bw-tool-btn--active' : ''}`}
           title="링크"
           onMouseDown={(e) => e.preventDefault()}
           onClick={() => {
             setShowFontSize(false);
             setShowColorPicker(false);
-            if (showLinkPopover) {
-              setShowLinkPopover(false);
-            } else {
-              openLinkPopover();
-            }
+            setShowLinkPopover((prev) => !prev);
           }}
         >
           <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
@@ -175,11 +180,7 @@ export default function Toolbar({
           </svg>
         </button>
         {showLinkPopover && (
-          <div
-            className="bw-link-popover"
-            role="dialog"
-            aria-label="링크 삽입"
-          >
+          <div className="bw-link-popover" role="dialog" aria-label="링크 삽입">
             <label className="bw-link-popover__label">
               URL 주소
               <input
@@ -201,7 +202,7 @@ export default function Toolbar({
                 onKeyDown={(e) => {
                   if (e.key === 'Enter') {
                     e.preventDefault();
-                    applyLink();
+                    onApplyLink();
                   }
                 }}
               />
@@ -217,7 +218,7 @@ export default function Toolbar({
               <button
                 type="button"
                 className="bw-link-popover__btn bw-link-popover__btn--confirm"
-                onClick={applyLink}
+                onClick={onApplyLink}
               >
                 확인
               </button>
@@ -226,14 +227,13 @@ export default function Toolbar({
         )}
       </div>
       <span className="bw-tool-dot" />
-      {/* Font Size */}
       <div className="bw-tool-dropdown-wrap">
         <button
           type="button"
           className="bw-tool-btn"
           title="글자 크기"
           onClick={() => {
-            setShowFontSize((p) => !p);
+            setShowFontSize((prev) => !prev);
             setShowColorPicker(false);
           }}
         >
@@ -259,25 +259,12 @@ export default function Toolbar({
           </div>
         )}
       </div>
-      {/* Color */}
       <div className="bw-tool-dropdown-wrap">
         <button
           type="button"
           className="bw-tool-btn"
           title="글자 색상"
-          onClick={() => {
-            setShowColorPicker((p) => {
-              const next = !p;
-              if (next) {
-                const current = readCurrentColor();
-                setPendingColor(current);
-                setPendingCustomColor(current);
-                setColorPickerTab('palette');
-              }
-              return next;
-            });
-            setShowFontSize(false);
-          }}
+          onClick={openColorPicker}
         >
           <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke={selectedColor} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
             <path d="M12 3L4 21h16L12 3z" />
@@ -302,48 +289,29 @@ export default function Toolbar({
                 직접 선택
               </button>
             </div>
-
             {colorPickerTab === 'palette' && (
               <>
-                <button
-                  type="button"
-                  className="bw-color-swatch"
-                  style={{
-                    background:
-                      'linear-gradient(to top right, #fff 0%, #fff 46%, #d64454 46%, #d64454 54%, #fff 54%, #fff 100%)',
-                    border:
-                      pendingColor === '#0C0C0C'
-                        ? '2px solid #0c0c0c'
-                        : '1px solid #e5e5e5',
-                  }}
-                  onClick={() => {
-                    setPendingColor('#0C0C0C');
-                    setPendingCustomColor('#0C0C0C');
-                  }}
-                  title="기본 색상"
-                />
-                {COLOR_PALETTE.map((c) => (
+                {COLOR_PALETTE.map((color) => (
                   <button
-                    key={c}
+                    key={color}
                     type="button"
                     className="bw-color-swatch"
                     style={{
-                      background: c,
+                      background: color,
                       border:
-                        pendingColor === c
+                        pendingColor.toUpperCase() === color
                           ? '2px solid #0c0c0c'
                           : '2px solid #e5e5e5',
                     }}
                     onClick={() => {
-                      setPendingColor(c);
-                      setPendingCustomColor(c);
+                      setPendingColor(color);
+                      setPendingCustomColor(color);
                     }}
-                    title={c}
+                    title={color}
                   />
                 ))}
               </>
             )}
-
             {colorPickerTab === 'custom' && (
               <div className="bw-color-custom-panel bw-color-custom-panel--full">
                 <div className="bw-color-custom-layout">
@@ -373,14 +341,12 @@ export default function Toolbar({
                       <span
                         className="bw-color-preview-box"
                         style={{ background: pendingColor }}
-                        aria-label={`현재 선택 색상 ${pendingColor.toUpperCase()}`}
                       />
                       <button
                         type="button"
                         className="bw-color-eyedropper"
                         onClick={handlePickScreenColor}
                         title="화면에서 색상 추출"
-                        aria-label="스포이드"
                       >
                         <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                           <path d="M19 11l-6-6" />
@@ -391,72 +357,38 @@ export default function Toolbar({
                       </button>
                     </div>
                     <div className="bw-color-recent-wrap bw-color-recent-wrap--compact">
-                      {Array.from({ length: MAX_RECENT_COLORS }).map(
-                        (_, idx) => {
-                          const color = recentColors[idx];
-                          const isEmpty = !color;
-
-                          return (
-                            <button
-                              key={color ?? `custom-empty-${idx}`}
-                              type="button"
-                              className={`bw-color-swatch ${isEmpty ? 'is-empty-slot' : ''}`}
-                              style={
-                                color
-                                  ? {
-                                      background: color,
-                                      border:
-                                        pendingColor === color
-                                          ? '2px solid #0c0c0c'
-                                          : '2px solid #e5e5e5',
-                                    }
-                                  : undefined
-                              }
-                              onClick={() => {
-                                if (!color) return;
-                                setPendingColor(color);
-                                setPendingCustomColor(color);
-                              }}
-                              title={color ?? '비어있는 최근 색상 슬롯'}
-                            />
-                          );
-                        }
-                      )}
+                      {recentColors.map((color) => (
+                        <button
+                          key={color}
+                          type="button"
+                          className="bw-color-swatch"
+                          style={{ background: color }}
+                          onClick={() => {
+                            setPendingColor(color);
+                            setPendingCustomColor(color);
+                          }}
+                        />
+                      ))}
                     </div>
-                    <button
-                      type="button"
-                      className="bw-color-confirm"
-                      onClick={() => {
-                        const confirmed = pendingColor.toUpperCase();
-                        applyColor(confirmed);
-                        pushRecentColor(confirmed);
-                      }}
-                    >
-                      확인
-                    </button>
                   </div>
                 </div>
               </div>
             )}
-
-            {colorPickerTab !== 'custom' && (
-              <button
-                type="button"
-                className="bw-color-confirm"
-                onClick={() => {
-                  const confirmed = pendingColor.toUpperCase();
-                  applyColor(confirmed);
-                  pushRecentColor(confirmed);
-                }}
-              >
-                확인
-              </button>
-            )}
+            <button
+              type="button"
+              className="bw-color-confirm"
+              onClick={() => {
+                const confirmed = pendingColor.toUpperCase();
+                applyColor(confirmed);
+                pushRecentColor(confirmed);
+              }}
+            >
+              확인
+            </button>
           </div>
         )}
       </div>
       <span className="bw-tool-dot" />
-      {/* Image */}
       <button
         type="button"
         className="bw-tool-btn"
@@ -469,7 +401,6 @@ export default function Toolbar({
           <polyline points="21 15 16 10 5 21" />
         </svg>
       </button>
-      {/* File */}
       <button
         type="button"
         className="bw-tool-btn"
@@ -484,21 +415,17 @@ export default function Toolbar({
         </svg>
       </button>
       <span className="bw-tool-dot" />
-      {/* Code Block */}
-      <div className="bw-tool-dropdown-wrap">
-        <button
-          type="button"
-          className="bw-tool-btn"
-          title="코드 블록"
-          onClick={() => applyCodeLanguage('plaintext')}
-        >
-          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-            <polyline points="16 18 22 12 16 6" />
-            <polyline points="8 6 2 12 8 18" />
-          </svg>
-        </button>
-      </div>
-      {/* Alignment */}
+      <button
+        type="button"
+        className={`bw-tool-btn ${editor?.isActive('codeBlock') ? 'bw-tool-btn--active' : ''}`}
+        title="코드 블록"
+        onClick={onInsertCodeBlock}
+      >
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+          <polyline points="16 18 22 12 16 6" />
+          <polyline points="8 6 2 12 8 18" />
+        </svg>
+      </button>
       <div className="bw-tool-dropdown-wrap">
         <button
           type="button"

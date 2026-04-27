@@ -59,7 +59,7 @@ public class AttachmentController {
     public ResponseEntity<?> upload(
             @AuthenticationPrincipal CustomUserDetails userDetails,
             @RequestParam("file") MultipartFile file,
-            @RequestParam("boardId") Long boardId,
+            @RequestParam(value = "boardId", required = false) Long boardId,
             @RequestParam("categoryId") Long categoryId) {
         Long userId = userDetails != null ? userDetails.getUser().getId() : null;
         if (userId == null) {

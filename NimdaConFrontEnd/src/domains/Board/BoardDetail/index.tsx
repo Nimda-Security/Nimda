@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { useNavigate, useParams, Link } from 'react-router-dom';
 import DOMPurify, { type Config as DOMPurifyConfig } from 'dompurify';
 import { MessageBox } from '@/components/icons/MessageBox';
@@ -150,17 +150,18 @@ function BoardDetailPage() {
   const [menuOpen, setMenuOpen] = useState(false);
   const [showAttachments, setShowAttachments] = useState(false);
   const normalizedViewerContent = sanitizeViewerContent(board?.content ?? '');
+  const bodyRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     if (id) fetchBoard(parseInt(id));
   }, [id]);
 
   useEffect(() => {
-    const body = document.querySelector('.board-detail__body');
+    const body = bodyRef.current;
     if (body) {
       highlightCodeBlocks(body);
     }
-  }, [board?.content]);
+  }, [normalizedViewerContent]);
 
   const fetchBoard = async (boardId: number) => {
     try {
@@ -392,6 +393,7 @@ function BoardDetailPage() {
 
         {/* Body */}
         <div
+          ref={bodyRef}
           className="board-detail__body board-detail__content-scope"
           dangerouslySetInnerHTML={{ __html: normalizedViewerContent }}
         />

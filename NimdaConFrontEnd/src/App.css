@@ -1725,7 +1725,6 @@ body {
 
 .bw-content-input pre {
   margin: 10px 0;
-  padding: 12px 14px;
   width: 100%;
   min-height: 72px;
   border-radius: 8px;
@@ -1747,7 +1746,7 @@ body {
 
 .bw-content-input code {
   display: block;
-  min-height: 1.4em;
+  min-height: 1.6em;
   font-family:
     ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, 'Liberation Mono',
     'Courier New', monospace;
@@ -1785,114 +1784,140 @@ body {
   display: inline-block;
 }
 
-.bw-resizable-image--selected {
-  outline: 2px solid rgba(74, 127, 204, 0.8);
-  outline-offset: 2px;
-}
-
 .bw-editor-surface {
   position: relative;
 }
 
-.bw-image-resize-overlay {
+.bw-editor-image {
+  display: block;
+  margin: 12px 0;
+  border-radius: 8px;
+}
+
+.bw-resize-container {
+  display: inline-flex;
+  margin: 12px 0;
+  position: relative;
+  vertical-align: top;
+}
+
+.bw-resize-wrapper {
+  position: relative;
+  display: inline-flex;
+  border-radius: 10px;
+  transition: box-shadow 0.15s ease;
+  overflow: visible;
+}
+
+.bw-resize-wrapper:hover,
+.bw-resize-container.is-selected .bw-resize-wrapper {
+  box-shadow: 0 0 0 2px rgba(74, 127, 204, 0.18);
+}
+
+.bw-resize-container.is-resizing .bw-resize-wrapper {
+  box-shadow: 0 0 0 2px rgba(74, 127, 204, 0.4);
+}
+
+.bw-resize-handle {
   position: absolute;
-  border: 1px dashed #4a7fcc;
+  width: 12px;
+  height: 12px;
+  padding: 0;
+  border-radius: 999px;
+  border: 2px solid #ffffff;
+  background: #4a7fcc;
+  box-shadow: 0 0 0 1px rgba(12, 12, 12, 0.22);
+  opacity: 0;
   pointer-events: none;
-  z-index: 12;
+  transition: opacity 0.15s ease, transform 0.15s ease;
+}
+
+.bw-resize-container.is-selected .bw-resize-handle,
+.bw-resize-container.is-resizing .bw-resize-handle {
+  opacity: 1;
+  pointer-events: auto;
+}
+
+.bw-resize-handle--nw {
+  top: -6px;
+  left: -6px;
+  cursor: nwse-resize;
+}
+
+.bw-resize-handle--ne {
+  top: -6px;
+  right: -6px;
+  cursor: nesw-resize;
+}
+
+.bw-resize-handle--sw {
+  bottom: -6px;
+  left: -6px;
+  cursor: nesw-resize;
+}
+
+.bw-resize-handle--se {
+  right: -6px;
+  bottom: -6px;
+  cursor: nwse-resize;
 }
 
 .bw-image-resize-tooltip {
   position: absolute;
-  top: -24px;
   left: 50%;
+  top: -32px;
   transform: translateX(-50%);
-  min-width: max-content;
-  height: 20px;
-  padding: 0 8px;
-  border-radius: 10px;
-  background: rgba(12, 12, 12, 0.85);
-  color: #fff;
-  font-size: 11px;
-  line-height: 20px;
-  font-weight: 600;
-  text-align: center;
-  pointer-events: none;
-}
-
-.bw-image-resize-handle {
-  position: absolute;
-  width: 10px;
-  height: 10px;
   border-radius: 999px;
-  border: 1px solid #fff;
-  background: #4a7fcc;
-  pointer-events: auto;
-  padding: 0;
-}
-
-.bw-image-resize-handle--nw {
-  top: -6px;
-  left: -6px;
-  cursor: nwse-resize;
-}
-
-.bw-image-resize-handle--ne {
-  top: -6px;
-  right: -6px;
-  cursor: nesw-resize;
-}
-
-.bw-image-resize-handle--sw {
-  bottom: -6px;
-  left: -6px;
-  cursor: nesw-resize;
-}
-
-.bw-image-resize-handle--se {
-  bottom: -6px;
-  right: -6px;
-  cursor: nwse-resize;
-}
-
-.bw-content-input pre.bw-code-block {
-  padding-top: 6px;
-}
-
-.bw-content-input pre.bw-code-block code {
-  padding-top: 8px;
-}
-
-.bw-content-input pre.bw-code-block[data-code-empty='true'] code::before {
-  content: '코드 입력... (↑/↓ 이동, 삭제는 우측 상단 X 버튼)';
-  color: #a3a3a3;
-  font-size: 12px;
+  background: rgba(12, 12, 12, 0.82);
+  color: #ffffff;
+  font-size: 11px;
+  line-height: 1;
+  padding: 6px 8px;
+  white-space: nowrap;
   pointer-events: none;
+  box-shadow: 0 8px 18px rgba(12, 12, 12, 0.18);
 }
 
-.bw-code-lang-wrapper {
-  position: absolute;
-  top: 4px;
-  right: 8px;
-  z-index: 5;
+.bw-code-node {
+  margin: 12px 0;
+}
+
+.bw-code-node__toolbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  padding: 0 6px 6px;
+}
+
+.bw-code-node__label {
   display: inline-flex;
   align-items: center;
-  gap: 6px;
+  gap: 8px;
+}
+
+.bw-code-node__label-text {
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: #737373;
 }
 
 .bw-code-lang-select {
-  font-size: 10px;
-  line-height: 1.2;
+  font-size: 11px;
+  line-height: 1.3;
   border-radius: 4px;
   border: 1px solid #d4d4d4;
   background: #fff;
   color: #525252;
-  padding: 2px 18px 2px 6px;
+  padding: 4px 22px 4px 8px;
   outline: none;
 }
 
 .bw-code-delete-btn {
-  width: 18px;
-  height: 18px;
+  width: 22px;
+  height: 22px;
   border: 1px solid #d4d4d4;
   border-radius: 4px;
   background: #ffffff;
@@ -1904,6 +1929,20 @@ body {
   justify-content: center;
   cursor: pointer;
   padding: 0;
+}
+
+.bw-code-block {
+  margin: 0;
+  padding: 14px 16px;
+}
+
+.bw-code-block code {
+  padding-top: 0;
+}
+
+.bw-code-block code:empty::before {
+  content: '코드를 입력하세요.';
+  color: #a3a3a3;
 }
 
 .bw-code-delete-btn:hover {
@@ -1957,13 +1996,11 @@ body {
   color: #8e8e8e;
 }
 
-.bw-content-input::placeholder {
-  color: #bcbcbc;
-}
-
-.bw-content-input[data-empty='true']::before {
+.bw-content-input p.is-editor-empty:first-child::before {
   content: attr(data-placeholder);
   color: #bcbcbc;
+  float: left;
+  height: 0;
   pointer-events: none;
 }
 

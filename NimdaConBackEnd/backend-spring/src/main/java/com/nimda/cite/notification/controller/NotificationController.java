@@ -9,6 +9,7 @@ import com.nimda.cite.notification.service.NotificationService;
 import com.nimda.cup.user.entity.User;
 import com.nimda.cup.user.security.CustomUserDetails;
 import lombok.RequiredArgsConstructor;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
@@ -23,7 +24,9 @@ public class NotificationController {
 
     private final NotificationRepositroy notificationRepository;
     private final NotificationService notificationService;
-    private final S3Service s3Service;
+
+    @Autowired(required = false)
+    private S3Service s3Service;
 
     // 도착한 알림 최신순으로 조회
     @GetMapping
@@ -48,7 +51,7 @@ public class NotificationController {
     private NotificationResponse toResponse(Notification n) {
         NotificationResponse base = NotificationResponse.from(n);
         String profileImage = base.getSenderProfileImage();
-        if (profileImage != null && !profileImage.isBlank() && !profileImage.startsWith("http")) {
+        if (s3Service != null && profileImage != null && !profileImage.isBlank() && !profileImage.startsWith("http")) {
             profileImage = s3Service.createPresignedGetUrl(profileImage, 60);
         }
         return NotificationResponse.builder()

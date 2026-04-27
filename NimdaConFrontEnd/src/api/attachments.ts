@@ -200,6 +200,37 @@ export const registerAttachmentAfterS3 = async (
   return { ok: true, attachmentId };
 };
 
+const uploadBoardFileLocally = async (
+  file: File,
+  categoryId: number
+): Promise<{ ok: true; attachmentId: number } | { ok: false; message: string }> => {
+  const formData = new FormData();
+  formData.append('file', file);
+  formData.append('categoryId', String(categoryId));
+
+  const response = await fetch(`${ATTACHMENTS_BASE}/upload`, {
+    method: 'POST',
+    credentials: 'include',
+    body: formData,
+  });
+
+  const result = await parseJsonSafe(response);
+  if (!response.ok || !result?.success) {
+    return {
+      ok: false,
+      message: (result?.message as string) || '로컬 파일 업로드에 실패했습니다.',
+    };
+  }
+
+  const data = result.data ?? result;
+  const attachmentId = data.attachmentId as number | undefined;
+  if (attachmentId == null || Number.isNaN(attachmentId)) {
+    return { ok: false, message: '첨부 ID 응답이 없습니다.' };
+  }
+
+  return { ok: true, attachmentId };
+};
+
 /**
  * 파일 한 개에 대해 presigned → PUT → register까지 수행 (게시글 작성용 단일 첨부).
  * S3 미설정 등으로 presigned가 실패하면 메시지 반환.
@@ -220,7 +251,7 @@ export const uploadBoardFileViaS3 = async (
 
   const presigned = await requestPresignedUpload('board', safeFile.name);
   if (!presigned.ok) {
-    return presigned;
+    return uploadBoardFileLocally(safeFile, categoryId);
   }
 
   const put = await putFileToPresignedUrl(presigned.data.uploadUrl, safeFile);

@@ -99,6 +99,34 @@ export const sanitizeEditorDom = (root: HTMLElement) => {
 
 export const getSanitizedEditorHtml = (editor: HTMLElement) => {
   const clone = editor.cloneNode(true) as HTMLElement;
+
+  clone
+    .querySelectorAll('.bw-code-node__toolbar, .bw-resize-handle, .bw-image-resize-tooltip')
+    .forEach((element) => element.remove());
+
+  clone.querySelectorAll<HTMLElement>('.bw-code-node').forEach((wrapper) => {
+    const pre = wrapper.querySelector('pre');
+    if (pre) {
+      wrapper.replaceWith(pre.cloneNode(true));
+    }
+  });
+
+  clone.querySelectorAll<HTMLElement>('.bw-resize-container').forEach((wrapper) => {
+    const img = wrapper.querySelector('img');
+    if (img) {
+      wrapper.replaceWith(img.cloneNode(true));
+    }
+  });
+
+  clone.querySelectorAll<HTMLElement>('*').forEach((element) => {
+    element.removeAttribute('contenteditable');
+    element.removeAttribute('draggable');
+    element.removeAttribute('data-node-view-wrapper');
+    element.removeAttribute('data-node-view-content');
+    element.removeAttribute('data-drag-handle');
+    element.classList.remove('ProseMirror-selectednode');
+  });
+
   sanitizeEditorDom(clone);
   // DOMPurify: script/iframe/이벤트 핸들러 제거
   return DOMPurify.sanitize(clone.innerHTML, EDITOR_PURIFY_CONFIG) as unknown as string;
