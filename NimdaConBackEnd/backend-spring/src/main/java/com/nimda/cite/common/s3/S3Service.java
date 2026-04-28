@@ -14,7 +14,6 @@ import java.time.Duration;
 import java.util.UUID;
 @Service
 @RequiredArgsConstructor
-@ConditionalOnBean(S3Presigner.class)
 public class S3Service {
 
     private final S3Presigner s3Presigner;
