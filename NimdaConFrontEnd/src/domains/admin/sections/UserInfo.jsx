@@ -96,7 +96,7 @@ const UserInfo = ({
                   />
                 ) : (
                   <img
-                    src="/default_user_profile.png"
+                    src="/default_user_profile.svg"
                     alt="기본 프로필"
                     style={{
                       width: '120px',

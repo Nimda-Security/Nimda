@@ -142,7 +142,7 @@ const PinPostManagement = ({
                             <img
                               src={
                                 post.author?.profileImage ||
-                                '/default_user_profile.png'
+                                '/default_user_profile.svg'
                               }
                               alt=""
                               className="admin__author-avatar"

@@ -7,11 +7,15 @@ interface AvatarProps {
   className?: string;
 }
 
-const Avatar: React.FC<AvatarProps> = ({ src, alt = '', size = 40, className = '' }) => {
-  const sizeStyle = typeof size === 'number' ? { width: `${size}px`, height: `${size}px` } : { width: size, height: size };
+const DEFAULT_PROFILE = '/default_user_profile.svg';
 
-  const DEFAULT_PROFILE = '/default_user_profile.png';
-  const effectiveSrc = src && src !== DEFAULT_PROFILE ? src : DEFAULT_PROFILE;
+const Avatar: React.FC<AvatarProps> = ({ src, alt = '', size = 40, className = '' }) => {
+  const sizeStyle =
+    typeof size === 'number'
+      ? { width: `${size}px`, height: `${size}px` }
+      : { width: size, height: size };
+
+  const effectiveSrc = src?.trim() ? src : DEFAULT_PROFILE;
 
   return (
     <img
@@ -20,7 +24,6 @@ const Avatar: React.FC<AvatarProps> = ({ src, alt = '', size = 40, className = '
       className={`rounded-full object-cover border border-gray-100 ${className}`}
       style={sizeStyle}
       onError={(e) => {
-        // If image fails to load, fall back to default profile
         if (e.currentTarget.src !== DEFAULT_PROFILE) {
           e.currentTarget.src = DEFAULT_PROFILE;
         }

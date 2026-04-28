@@ -5,6 +5,7 @@ import { getCurrentNickname, isAdmin } from '@/utils/jwt';
 import { isLoggedIn, logoutAPI, getMyPageInfo, validateSession } from '@/api/auth';
 import Logout from '@/components/icons/Logout.svg';
 import NotificationBell from '@/components/Notification/NotificationBell';
+import Avatar from '@/components/Avatar/Avatar';
 
 const Navbar: React.FC = () => {
   const navigate = useNavigate();
@@ -103,10 +104,11 @@ const Navbar: React.FC = () => {
                 }}
                 title="마이페이지"
               >
-                <img
-                  src={profileImage || '/default_user_profile.png'}
+                <Avatar
+                  src={profileImage}
                   alt="프로필"
-                  style={{ width: '100%', height: '100%', objectFit: 'cover' }}
+                  size="100%"
+                  className="w-full h-full border-0"
                 />
               </button>
 

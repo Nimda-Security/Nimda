@@ -14,6 +14,7 @@ import { getPushedBoardLikesCount } from '@/api/boardLike';
 import { getUserBalance } from '@/api/point';
 import type { Category } from '@/domains/Board/types';
 import ChevronDown from '@/components/icons/ChevronDown';
+import Avatar from '@/components/Avatar/Avatar';
 
 const Sidebar: React.FC = () => {
   const [nickname, setNickname] = useState<string | null>(null);
@@ -160,10 +161,11 @@ const Sidebar: React.FC = () => {
       {/* 유저 프로필 영역 */}
       <div className="sidebar-profile">
         <div className="sidebar-profile__avatar">
-          <img
-            src={profileImage || '/default_user_profile.png'}
+          <Avatar
+            src={profileImage}
             alt="프로필"
-            style={{ width: '100%', height: '100%', objectFit: 'cover' }}
+            size="100%"
+            className="w-full h-full border-0"
           />
         </div>
         <p className="sidebar-profile__name">
@@ -375,11 +377,11 @@ const Sidebar: React.FC = () => {
               todayVisitors.map((visitor) => (
                 <div key={visitor.id} className="sidebar-visitors__item">
                   <div className="sidebar-visitors__avatar">
-                    <img
-                      src={
-                        visitor.profileImageUrl || '/default_user_profile.png'
-                      }
+                    <Avatar
+                      src={visitor.profileImageUrl}
                       alt="avatar"
+                      size="100%"
+                      className="w-full h-full border-0"
                     />
                   </div>
                   <Link

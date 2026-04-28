@@ -105,7 +105,7 @@ function MyPagePoint() {
   const userInfo = {
     name: userProfile.nickname,
     id: userProfile.userId,
-    profileImage: userProfile.profileImage || '/default_user_profile.png',
+    profileImage: userProfile.profileImage || '/default_user_profile.svg',
     stats: [
       { label: '방문', value: String(stats.visitCount) },
       { label: '작성글', value: String(stats.postCount) },
