@@ -1,0 +1,16 @@
+package com.nimda.cite.domain.like.repository;
+
+import com.nimda.cite.domain.comment.entity.Comment;
+import com.nimda.cite.domain.like.entity.CommentLike;
+import com.nimda.cite.user.entity.User;
+import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.stereotype.Repository;
+
+import java.util.Optional;
+
+@Repository
+public interface CommentLikeRepositroy extends JpaRepository<CommentLike, Long> {
+    Optional<CommentLike> findByCommentAndUser(Comment comment, User user);
+    long countByCommentId(Long commentId);
+    boolean existsByCommentIdAndUserId(Long commentId, Long userId);
+}

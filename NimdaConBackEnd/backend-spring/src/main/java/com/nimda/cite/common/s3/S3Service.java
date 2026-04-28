@@ -1,5 +1,6 @@
 package com.nimda.cite.common.s3;
 
+import com.nimda.cite.domain.attachment.service.AttachmentService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnBean;
 import org.springframework.stereotype.Service;
@@ -10,7 +11,6 @@ import software.amazon.awssdk.services.s3.presigner.model.GetObjectPresignReques
 import software.amazon.awssdk.services.s3.presigner.model.PutObjectPresignRequest;
 
 import java.time.Duration;
-import java.util.Set;
 import java.util.UUID;
 @Service
 @RequiredArgsConstructor
@@ -30,7 +30,7 @@ public class S3Service {
      */
     public PresignedUpload createPresignedUpload(String type, String fileName) {
         // 0. 확장자 화이트리스트 검증 (1차 방어선)
-        if (!com.nimda.cite.attachment.service.AttachmentService.isAllowedExtension(extractExt(fileName))) {
+        if (!AttachmentService.isAllowedExtension(extractExt(fileName))) {
             throw new IllegalArgumentException("허용되지 않는 파일 형식입니다: " + extractExt(fileName));
         }
 
