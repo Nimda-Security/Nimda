@@ -171,6 +171,7 @@ function BoardWritePage() {
   const currentSubCat = allCategories.find(
     (category) => category.id === subCategoryId
   );
+  const targetCategoryId = currentSubCat?.id ?? currentParentCat?.id ?? null;
 
   const pushRecentColor = (color: string) => {
     setRecentColors((prev) => {
@@ -336,8 +337,7 @@ function BoardWritePage() {
   }, [allCategories, slug, isEditMode, editId, editor, navigate]);
 
   useEffect(() => {
-    const targetCategory = currentSubCat || currentParentCat;
-    if (!targetCategory?.id) {
+    if (!targetCategoryId) {
       setCurrentTagList([]);
       return;
     }
@@ -346,7 +346,7 @@ function BoardWritePage() {
 
     const loadTags = async () => {
       try {
-        const tags = await getTagsByCategoryAPI(targetCategory.id);
+        const tags = await getTagsByCategoryAPI(targetCategoryId);
         if (!cancelled) {
           setCurrentTagList(tags);
         }
@@ -362,7 +362,7 @@ function BoardWritePage() {
     return () => {
       cancelled = true;
     };
-  }, [currentParentCat?.id, currentSubCat?.id]);
+  }, [targetCategoryId]);
 
   useEffect(() => {
     if (!editor || !showLinkPopover) return;
