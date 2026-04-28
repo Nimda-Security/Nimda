@@ -1,6 +1,6 @@
-package com.nimda.cite.comment.dto;
+package com.nimda.cite.domain.comment.dto;
 
-import com.nimda.cite.comment.enums.STATUS;
+import com.nimda.cite.domain.comment.enums.STATUS;
 import jakarta.validation.constraints.NotNull;
 import lombok.AllArgsConstructor;
 import lombok.Getter;

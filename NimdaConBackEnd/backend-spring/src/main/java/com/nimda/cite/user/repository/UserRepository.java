@@ -1,7 +1,7 @@
-package com.nimda.cup.user.repository;
+package com.nimda.cite.user.repository;
 
-import com.nimda.cup.user.entity.User;
-import com.nimda.cup.user.enums.ApprovalStatus;
+import com.nimda.cite.user.entity.User;
+import com.nimda.cite.user.enums.ApprovalStatus;
 import org.springframework.data.jpa.repository.EntityGraph;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.lang.NonNull;

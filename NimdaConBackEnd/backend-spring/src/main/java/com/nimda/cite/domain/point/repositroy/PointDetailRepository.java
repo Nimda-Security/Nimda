@@ -1,6 +1,6 @@
-package com.nimda.cite.point.repositroy;
+package com.nimda.cite.domain.point.repositroy;
 
-import com.nimda.cite.point.entity.PointDetail;
+import com.nimda.cite.domain.point.entity.PointDetail;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Repository;
 

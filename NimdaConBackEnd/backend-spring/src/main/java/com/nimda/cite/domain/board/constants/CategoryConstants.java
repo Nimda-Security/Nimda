@@ -1,4 +1,4 @@
-package com.nimda.cite.board.constants;
+package com.nimda.cite.domain.board.constants;
 
 /** 카테고리 ID 상수 (disposition·정책 분기 등에 사용, ID 변경 시 여기만 수정) */
 public final class CategoryConstants {

@@ -1,9 +1,9 @@
-package com.nimda.cup.user.controller;
+package com.nimda.cite.user.controller;
 
 import com.nimda.cite.common.s3.S3Service;
-import com.nimda.cup.user.entity.User;
-import com.nimda.cup.user.service.AdminUserService;
-import com.nimda.cup.user.service.UserService;
+import com.nimda.cite.user.entity.User;
+import com.nimda.cite.user.service.AdminUserService;
+import com.nimda.cite.user.service.UserService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;

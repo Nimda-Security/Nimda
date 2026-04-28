@@ -1,4 +1,4 @@
-package com.nimda.cup.user.entity;
+package com.nimda.cite.user.entity;
 
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;

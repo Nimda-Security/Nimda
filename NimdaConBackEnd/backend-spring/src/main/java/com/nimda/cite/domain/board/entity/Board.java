@@ -1,4 +1,4 @@
-package com.nimda.cite.board.entity;
+package com.nimda.cite.domain.board.entity;
 
 /**
  * ========================================
@@ -8,11 +8,11 @@ package com.nimda.cite.board.entity;
  * [기존 게시판 코드 기준]
  * - 기본 구조: 유지 (title, content, filename, filepath)
  * - ID 타입: Integer → Long으로 변경
- * - 패키지: com.Board.Board.entity → com.nimda.cite.board.entity
+ * - 패키지: com.Board.Board.entity → com.nimda.cite.domain.board.entity
  * - 어노테이션: @Data → @Getter, @Setter, @EntityListeners로 변경
  * 
  * [현재 프로젝트 통합 사항]
- * 1. User 엔티티 관계 추가 (작성자 정보) - com.nimda.cup.user.entity.User 사용
+ * 1. User 엔티티 관계 추가 (작성자 정보) - com.nimda.cite.user.entity.User 사용
  * 2. BoardType enum 추가 (게시판 타입 필터링) - NEWS, ACADEMIC, COMMUNITY, QNA, FREE
  * 3. JPA Auditing 추가 (생성일시, 수정일시 자동 관리)
  * 4. ID 타입: Long으로 통일 (현재 프로젝트 스타일)
@@ -32,8 +32,8 @@ package com.nimda.cite.board.entity;
 
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonProperty;
-import com.nimda.cite.board.enums.BoardStatus;
-import com.nimda.cite.tag.entity.Tag;
+import com.nimda.cite.domain.board.enums.BoardStatus;
+import com.nimda.cite.domain.tag.entity.Tag;
 import com.nimda.cite.common.entity.BaseTimeEntity;
 import com.nimda.cite.user.entity.User;
 import jakarta.persistence.*;

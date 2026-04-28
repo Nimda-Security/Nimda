@@ -1,4 +1,4 @@
-package com.nimda.cite.board.controller;
+package com.nimda.cite.domain.board.controller;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;

@@ -1,6 +1,6 @@
-package com.nimda.cup.user.security;
+package com.nimda.cite.user.security;
 
-import com.nimda.cup.user.entity.User;
+import com.nimda.cite.user.entity.User;
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.userdetails.UserDetails;

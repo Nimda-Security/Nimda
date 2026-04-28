@@ -1,9 +1,9 @@
-package com.nimda.cite.comment.entity;
+package com.nimda.cite.domain.comment.entity;
 
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
-import com.nimda.cite.board.entity.Board;
-import com.nimda.cite.comment.enums.STATUS;
-import com.nimda.cite.like.entity.CommentLike;
+import com.nimda.cite.domain.board.entity.Board;
+import com.nimda.cite.domain.comment.enums.STATUS;
+import com.nimda.cite.domain.like.entity.CommentLike;
 import com.nimda.cite.user.entity.User;
 import jakarta.persistence.*;
 import lombok.*;

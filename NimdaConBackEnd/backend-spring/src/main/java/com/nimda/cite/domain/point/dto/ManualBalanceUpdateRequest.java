@@ -1,4 +1,4 @@
-package com.nimda.cite.point.dto;
+package com.nimda.cite.domain.point.dto;
 
 import lombok.Builder;
 import lombok.Getter;

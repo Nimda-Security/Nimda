@@ -1,4 +1,4 @@
-package com.nimda.cite.attachment.dto;
+package com.nimda.cite.domain.attachment.dto;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
 import lombok.Getter;

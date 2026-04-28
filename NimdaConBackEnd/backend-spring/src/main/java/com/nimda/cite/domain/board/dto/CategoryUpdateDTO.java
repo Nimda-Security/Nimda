@@ -1,6 +1,6 @@
-package com.nimda.cite.board.dto;
+package com.nimda.cite.domain.board.dto;
 
-import com.nimda.cite.tag.entity.Tag;
+import com.nimda.cite.domain.tag.entity.Tag;
 import jakarta.validation.constraints.Size;
 import lombok.AllArgsConstructor;
 import lombok.Data;

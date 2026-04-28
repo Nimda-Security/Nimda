@@ -1,8 +1,8 @@
-package com.nimda.cite.notification.service;
+package com.nimda.cite.domain.notification.service;
 
 import com.nimda.cite.domain.alarm.service.AlarmService;
-import com.nimda.cite.notification.entity.Notification;
-import com.nimda.cite.notification.repositroy.NotificationRepositroy;
+import com.nimda.cite.domain.notification.entity.Notification;
+import com.nimda.cite.domain.notification.repositroy.NotificationRepositroy;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;

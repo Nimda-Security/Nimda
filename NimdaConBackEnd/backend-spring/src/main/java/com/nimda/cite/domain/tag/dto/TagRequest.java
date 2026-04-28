@@ -1,4 +1,4 @@
-package com.nimda.cite.tag.dto;
+package com.nimda.cite.domain.tag.dto;
 
 import lombok.*;
 

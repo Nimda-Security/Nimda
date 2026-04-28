@@ -1,12 +1,12 @@
-package com.nimda.cite.like.service;
+package com.nimda.cite.domain.like.service;
 
 import com.nimda.cite.domain.alarm.service.AlarmService;
 import com.nimda.cite.domain.comment.entity.Comment;
 import com.nimda.cite.domain.comment.repository.CommentRepository;
-import com.nimda.cite.like.entity.CommentLike;
-import com.nimda.cite.like.repository.CommentLikeRepositroy;
-import com.nimda.cite.notification.entity.Notification;
-import com.nimda.cite.notification.enums.NotificationType;
+import com.nimda.cite.domain.like.entity.CommentLike;
+import com.nimda.cite.domain.like.repository.CommentLikeRepositroy;
+import com.nimda.cite.domain.notification.entity.Notification;
+import com.nimda.cite.domain.notification.enums.NotificationType;
 import com.nimda.cite.user.entity.User;
 import com.nimda.cite.user.repository.UserRepository;
 import lombok.RequiredArgsConstructor;

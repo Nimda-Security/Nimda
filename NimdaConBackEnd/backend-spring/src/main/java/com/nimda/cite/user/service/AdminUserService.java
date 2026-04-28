@@ -1,10 +1,10 @@
-package com.nimda.cup.user.service;
+package com.nimda.cite.user.service;
 
-import com.nimda.cup.user.entity.Authority;
-import com.nimda.cup.user.entity.User;
-import com.nimda.cup.user.enums.ApprovalStatus;
-import com.nimda.cup.user.repository.AuthorityRepository;
-import com.nimda.cup.user.repository.UserRepository;
+import com.nimda.cite.user.entity.Authority;
+import com.nimda.cite.user.entity.User;
+import com.nimda.cite.user.enums.ApprovalStatus;
+import com.nimda.cite.user.repository.AuthorityRepository;
+import com.nimda.cite.user.repository.UserRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;

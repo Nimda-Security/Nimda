@@ -1,4 +1,4 @@
-package com.nimda.cite.alarm.Repository;
+package com.nimda.cite.domain.alarm.Repository;
 
 import org.springframework.stereotype.Repository;
 import org.springframework.web.servlet.mvc.method.annotation.SseEmitter;

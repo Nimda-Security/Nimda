@@ -1,7 +1,7 @@
-package com.nimda.cite.tag.repository;
+package com.nimda.cite.domain.tag.repository;
 
 import com.nimda.cite.domain.board.entity.Category;
-import com.nimda.cite.tag.entity.Tag;
+import com.nimda.cite.domain.tag.entity.Tag;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Repository;
 

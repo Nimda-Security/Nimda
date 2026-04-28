@@ -1,4 +1,4 @@
-package com.nimda.cite.like.entity;
+package com.nimda.cite.domain.like.entity;
 
 import com.nimda.cite.domain.comment.entity.Comment;
 import com.nimda.cite.user.entity.User;

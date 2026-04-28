@@ -1,4 +1,4 @@
-package com.nimda.cite.board.enums;
+package com.nimda.cite.domain.board.enums;
 
 public enum BoardStatus {
     ACTIVE,     // 공개

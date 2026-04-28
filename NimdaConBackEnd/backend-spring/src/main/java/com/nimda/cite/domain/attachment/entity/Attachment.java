@@ -1,4 +1,4 @@
-package com.nimda.cite.attachment.entity;
+package com.nimda.cite.domain.attachment.entity;
 
 import com.nimda.cite.common.entity.BaseTimeEntity;
 import jakarta.persistence.*;

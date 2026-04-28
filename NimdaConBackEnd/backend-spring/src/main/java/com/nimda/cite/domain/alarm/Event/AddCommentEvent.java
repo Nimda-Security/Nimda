@@ -1,4 +1,4 @@
-package com.nimda.cite.alarm.Event;
+package com.nimda.cite.domain.alarm.Event;
 
 import com.nimda.cite.user.entity.User;
 import lombok.Getter;

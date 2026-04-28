@@ -1,11 +1,11 @@
-package com.nimda.cite.notification.controller;
+package com.nimda.cite.domain.notification.controller;
 
 import com.nimda.cite.common.response.ApiResponse;
 import com.nimda.cite.common.s3.S3Service;
-import com.nimda.cite.notification.dto.NotificationResponse;
-import com.nimda.cite.notification.entity.Notification;
-import com.nimda.cite.notification.repositroy.NotificationRepositroy;
-import com.nimda.cite.notification.service.NotificationService;
+import com.nimda.cite.domain.notification.dto.NotificationResponse;
+import com.nimda.cite.domain.notification.entity.Notification;
+import com.nimda.cite.domain.notification.repositroy.NotificationRepositroy;
+import com.nimda.cite.domain.notification.service.NotificationService;
 import com.nimda.cite.user.entity.User;
 import com.nimda.cite.user.security.CustomUserDetails;
 import lombok.RequiredArgsConstructor;

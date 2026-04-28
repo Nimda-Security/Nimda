@@ -1,4 +1,4 @@
-package com.nimda.cup.config;
+package com.nimda.cite.config;
 
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -117,9 +117,9 @@ public class SecurityConfig {
                         .requestMatchers(HttpMethod.GET, "/api/problems/*/admin").hasRole("ADMIN")
 
                         // [우선순위 6] 기타 공개 조회용 (문제/대회 등)
-                        .requestMatchers(HttpMethod.GET, "/api/contest/**").permitAll()
-                        .requestMatchers(HttpMethod.GET, "/api/problems/**").permitAll()
-                        .requestMatchers(HttpMethod.GET, "/api/scoreboard/**").permitAll()
+                        // .requestMatchers(HttpMethod.GET, "/api/contest/**").permitAll()
+                        // .requestMatchers(HttpMethod.GET, "/api/problems/**").permitAll()
+                        // .requestMatchers(HttpMethod.GET, "/api/scoreboard/**").permitAll()
 
                         // [우선순위 7] 나머지 모든 요청은 기본적으로 인증 필요
                         .anyRequest().authenticated()

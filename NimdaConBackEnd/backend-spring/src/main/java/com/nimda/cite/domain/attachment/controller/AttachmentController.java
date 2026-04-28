@@ -1,13 +1,13 @@
-package com.nimda.cite.attachment.controller;
+package com.nimda.cite.domain.attachment.controller;
 
-import com.nimda.cite.attachment.dto.AttachmentDeleteRequestDto;
-import com.nimda.cite.attachment.dto.AttachmentRegisterRequestDto;
-import com.nimda.cite.attachment.dto.AttachmentResponseDto;
-import com.nimda.cite.attachment.entity.Attachment;
-import com.nimda.cite.attachment.service.AttachmentService;
-import com.nimda.cite.attachment.store.FileStore;
-import com.nimda.cite.attachment.store.S3FileStore;
-import com.nimda.cite.board.constants.CategoryConstants;
+import com.nimda.cite.domain.attachment.dto.AttachmentDeleteRequestDto;
+import com.nimda.cite.domain.attachment.dto.AttachmentRegisterRequestDto;
+import com.nimda.cite.domain.attachment.dto.AttachmentResponseDto;
+import com.nimda.cite.domain.attachment.entity.Attachment;
+import com.nimda.cite.domain.attachment.service.AttachmentService;
+import com.nimda.cite.domain.attachment.store.FileStore;
+import com.nimda.cite.domain.attachment.store.S3FileStore;
+import com.nimda.cite.domain.board.constants.CategoryConstants;
 import com.nimda.cite.common.response.ApiResponse;
 import com.nimda.cite.common.s3.S3Service;
 import com.nimda.cite.user.security.CustomUserDetails;

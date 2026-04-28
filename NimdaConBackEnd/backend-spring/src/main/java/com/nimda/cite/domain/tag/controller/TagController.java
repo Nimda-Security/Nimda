@@ -1,13 +1,12 @@
-package com.nimda.cite.tag.controller;
+package com.nimda.cite.domain.tag.controller;
 
 
 import com.nimda.cite.common.response.ApiResponse;
-import com.nimda.cite.tag.dto.TagRequest;
-import com.nimda.cite.tag.dto.TagResponse;
-import com.nimda.cite.tag.entity.Tag;
-import com.nimda.cite.tag.service.TagService;
+import com.nimda.cite.domain.tag.dto.TagRequest;
+import com.nimda.cite.domain.tag.dto.TagResponse;
+import com.nimda.cite.domain.tag.entity.Tag;
+import com.nimda.cite.domain.tag.service.TagService;
 import lombok.RequiredArgsConstructor;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;

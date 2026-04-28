@@ -1,4 +1,4 @@
-package com.nimda.cite.comment.dto;
+package com.nimda.cite.domain.comment.dto;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
 import lombok.Getter;

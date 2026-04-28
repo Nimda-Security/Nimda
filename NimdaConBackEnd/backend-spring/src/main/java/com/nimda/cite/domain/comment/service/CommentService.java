@@ -1,14 +1,14 @@
-package com.nimda.cite.comment.service;
+package com.nimda.cite.domain.comment.service;
 
-import com.nimda.cite.alarm.Event.AddChildCommentEvent;
-import com.nimda.cite.alarm.Event.AddCommentEvent;
-import com.nimda.cite.board.entity.Board;
-import com.nimda.cite.board.repository.BoardRepository;
-import com.nimda.cite.comment.dto.*;
-import com.nimda.cite.comment.entity.Comment;
-import com.nimda.cite.comment.enums.STATUS;
-import com.nimda.cite.comment.repository.CommentRepository;
-import com.nimda.cite.like.repository.CommentLikeRepositroy;
+import com.nimda.cite.domain.alarm.Event.AddChildCommentEvent;
+import com.nimda.cite.domain.alarm.Event.AddCommentEvent;
+import com.nimda.cite.domain.board.entity.Board;
+import com.nimda.cite.domain.board.repository.BoardRepository;
+import com.nimda.cite.domain.comment.dto.*;
+import com.nimda.cite.domain.comment.entity.Comment;
+import com.nimda.cite.domain.comment.enums.STATUS;
+import com.nimda.cite.domain.comment.repository.CommentRepository;
+import com.nimda.cite.domain.like.repository.CommentLikeRepositroy;
 import com.nimda.cite.user.entity.User;
 import com.nimda.cite.user.repository.UserRepository;
 import org.springframework.beans.factory.annotation.Autowired;

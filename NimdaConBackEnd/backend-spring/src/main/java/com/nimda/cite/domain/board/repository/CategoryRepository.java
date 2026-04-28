@@ -1,6 +1,6 @@
-package com.nimda.cite.board.repository;
+package com.nimda.cite.domain.board.repository;
 
-import com.nimda.cite.board.entity.Category;
+import com.nimda.cite.domain.board.entity.Category;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Repository;
 

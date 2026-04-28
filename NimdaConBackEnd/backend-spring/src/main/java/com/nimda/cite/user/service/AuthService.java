@@ -1,14 +1,14 @@
-package com.nimda.cup.user.service;
+package com.nimda.cite.user.service;
 
-import com.nimda.cite.point.entity.UserBalance;
-import com.nimda.cite.point.repositroy.UserBalanceRepository;
-import com.nimda.cup.user.dto.LoginResponseDTO;
-import com.nimda.cup.user.entity.User;
-import com.nimda.cup.user.enums.ApprovalStatus;
-import com.nimda.cup.user.exception.UserNotApprovedException;
-import com.nimda.cup.common.util.JwtUtil;
-import com.nimda.cup.user.repository.UserRepository;
-import com.nimda.cup.user.security.CustomUserDetails;
+import com.nimda.cite.domain.point.entity.UserBalance;
+import com.nimda.cite.domain.point.repositroy.UserBalanceRepository;
+import com.nimda.cite.user.dto.LoginResponseDTO;
+import com.nimda.cite.user.entity.User;
+import com.nimda.cite.user.enums.ApprovalStatus;
+import com.nimda.cite.user.exception.UserNotApprovedException;
+import com.nimda.cite.common.util.JwtUtil;
+import com.nimda.cite.user.repository.UserRepository;
+import com.nimda.cite.user.security.CustomUserDetails;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;

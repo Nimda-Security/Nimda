@@ -1,4 +1,4 @@
-package com.nimda.cite.board.dto;
+package com.nimda.cite.domain.board.dto;
 
 import lombok.AllArgsConstructor;
 import lombok.Builder;

@@ -1,4 +1,4 @@
-package com.nimda.cite.attachment.store;
+package com.nimda.cite.domain.attachment.store;
 
 import org.springframework.core.io.Resource;
 import org.springframework.web.multipart.MultipartFile;

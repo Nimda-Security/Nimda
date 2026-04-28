@@ -1,4 +1,4 @@
-package com.nimda.cup.common.util;
+package com.nimda.cite.common.util;
 
 import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.Jwts;

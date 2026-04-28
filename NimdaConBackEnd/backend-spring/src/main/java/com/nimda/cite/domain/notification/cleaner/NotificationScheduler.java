@@ -1,6 +1,6 @@
-package com.nimda.cite.notification.cleaner;
+package com.nimda.cite.domain.notification.cleaner;
 
-import com.nimda.cite.notification.repositroy.NotificationRepositroy;
+import com.nimda.cite.domain.notification.repositroy.NotificationRepositroy;
 import org.springframework.transaction.annotation.Transactional;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;

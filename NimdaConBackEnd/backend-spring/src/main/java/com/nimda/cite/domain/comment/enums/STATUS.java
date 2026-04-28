@@ -1,4 +1,4 @@
-package com.nimda.cite.comment.enums;
+package com.nimda.cite.domain.comment.enums;
 
 public enum STATUS {
     PUBLIC,     // 공개

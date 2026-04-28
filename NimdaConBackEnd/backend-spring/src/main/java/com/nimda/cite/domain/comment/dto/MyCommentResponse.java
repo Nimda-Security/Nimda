@@ -1,6 +1,6 @@
-package com.nimda.cite.comment.dto;
+package com.nimda.cite.domain.comment.dto;
 
-import com.nimda.cite.comment.entity.Comment;
+import com.nimda.cite.domain.comment.entity.Comment;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Getter;

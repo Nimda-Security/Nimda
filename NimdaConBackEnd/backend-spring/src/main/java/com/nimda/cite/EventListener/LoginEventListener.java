@@ -1,10 +1,10 @@
 package com.nimda.cite.EventListener;
 
-import com.nimda.cite.alarm.service.AlarmService;
-import com.nimda.cite.attendance.service.AttendanceService;
-import com.nimda.cite.point.enums.PointTypes;
-import com.nimda.cite.point.service.PointService;
-import com.nimda.cup.user.security.CustomUserDetails;
+import com.nimda.cite.domain.alarm.service.AlarmService;
+import com.nimda.cite.domain.attendance.service.AttendanceService;
+import com.nimda.cite.domain.point.enums.PointTypes;
+import com.nimda.cite.domain.point.service.PointService;
+import com.nimda.cite.user.security.CustomUserDetails;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.context.event.EventListener;

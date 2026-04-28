@@ -1,4 +1,4 @@
-package com.nimda.cite.point.enums;
+package com.nimda.cite.domain.point.enums;
 
 import lombok.Getter;
 import lombok.RequiredArgsConstructor;

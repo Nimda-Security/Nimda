@@ -1,9 +1,9 @@
-package com.nimda.cup.config;
+package com.nimda.cite.config;
 
-import com.nimda.cup.common.util.JwtUtil;
-import com.nimda.cup.user.entity.User;
-import com.nimda.cup.user.repository.UserRepository;
-import com.nimda.cup.user.security.CustomUserDetails;
+import com.nimda.cite.common.util.JwtUtil;
+import com.nimda.cite.user.entity.User;
+import com.nimda.cite.user.repository.UserRepository;
+import com.nimda.cite.user.security.CustomUserDetails;
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;

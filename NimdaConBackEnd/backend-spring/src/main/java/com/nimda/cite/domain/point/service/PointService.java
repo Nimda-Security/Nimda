@@ -1,10 +1,10 @@
-package com.nimda.cite.point.service;
+package com.nimda.cite.domain.point.service;
 
-import com.nimda.cite.point.entity.PointDetail;
-import com.nimda.cite.point.entity.UserBalance;
-import com.nimda.cite.point.enums.PointTypes;
-import com.nimda.cite.point.repositroy.PointDetailRepository;
-import com.nimda.cite.point.repositroy.UserBalanceRepository;
+import com.nimda.cite.domain.point.entity.PointDetail;
+import com.nimda.cite.domain.point.entity.UserBalance;
+import com.nimda.cite.domain.point.enums.PointTypes;
+import com.nimda.cite.domain.point.repositroy.PointDetailRepository;
+import com.nimda.cite.domain.point.repositroy.UserBalanceRepository;
 import com.nimda.cite.user.entity.User;
 import com.nimda.cite.user.repository.UserRepository;
 import lombok.RequiredArgsConstructor;

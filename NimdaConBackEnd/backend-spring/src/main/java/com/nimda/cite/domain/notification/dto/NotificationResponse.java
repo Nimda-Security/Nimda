@@ -1,6 +1,6 @@
-package com.nimda.cite.notification.dto;
+package com.nimda.cite.domain.notification.dto;
 
-import com.nimda.cite.notification.entity.Notification;
+import com.nimda.cite.domain.notification.entity.Notification;
 import lombok.Builder;
 import lombok.Getter;
 

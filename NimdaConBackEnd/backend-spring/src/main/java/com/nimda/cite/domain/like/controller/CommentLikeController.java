@@ -1,8 +1,8 @@
-package com.nimda.cite.like.controller;
+package com.nimda.cite.domain.like.controller;
 
 import com.nimda.cite.common.response.ApiResponse;
-import com.nimda.cite.like.dto.CommentLikeResponse;
-import com.nimda.cite.like.service.CommentLikeService;
+import com.nimda.cite.domain.like.dto.CommentLikeResponse;
+import com.nimda.cite.domain.like.service.CommentLikeService;
 import com.nimda.cite.user.security.CustomUserDetails;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;

@@ -1,4 +1,4 @@
-package com.nimda.cite.notification.enums;
+package com.nimda.cite.domain.notification.enums;
 
     public enum NotificationType {
         PushLikeButtonAtBoard("님이 내 게시글을 좋아합니다."),

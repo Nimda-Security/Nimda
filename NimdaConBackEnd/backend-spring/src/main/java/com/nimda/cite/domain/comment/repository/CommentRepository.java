@@ -1,7 +1,7 @@
-package com.nimda.cite.comment.repository;
+package com.nimda.cite.domain.comment.repository;
 
-import com.nimda.cite.comment.entity.Comment;
-import com.nimda.cite.comment.enums.STATUS;
+import com.nimda.cite.domain.comment.entity.Comment;
+import com.nimda.cite.domain.comment.enums.STATUS;
 import com.nimda.cite.user.entity.User;
 import org.springframework.data.jpa.repository.EntityGraph;
 import org.springframework.data.jpa.repository.JpaRepository;
@@ -61,15 +61,15 @@ public interface CommentRepository extends JpaRepository<Comment, Long> {
     // 마이페이지 작성 댓글에서 여러 댓글 한번에 삭제 처리
     // [사용] DELETE /api/my-page/comments
     @Modifying
-    @Query("UPDATE Comment c SET c.status = com.nimda.cite.comment.enums.STATUS.DELETED " +
+    @Query("UPDATE Comment c SET c.status = com.nimda.cite.domain.comment.enums.STATUS.DELETED " +
             "WHERE c.id IN :ids AND c.author = :author")
     void deleteAllByIdInAndAuthor(@Param("ids") List<Long> ids, @Param("author") User author);
 
     // 게시글 삭제 시 하위 댓글 전체 삭제
     // [사용] DELETE /api/cite/board/{boardId}
     @Modifying
-    @Query("UPDATE Comment c SET c.status = com.nimda.cite.comment.enums.STATUS.DELETED " +
-            "WHERE c.board.id = :boardId AND c.status != com.nimda.cite.comment.enums.STATUS.DELETED")
+    @Query("UPDATE Comment c SET c.status = com.nimda.cite.domain.comment.enums.STATUS.DELETED " +
+            "WHERE c.board.id = :boardId AND c.status != com.nimda.cite.domain.comment.enums.STATUS.DELETED")
     void deleteAllByBoardId(@Param("boardId") Long boardId);
 
     // 내가 작성한 유지 중인 댓글 수 조회

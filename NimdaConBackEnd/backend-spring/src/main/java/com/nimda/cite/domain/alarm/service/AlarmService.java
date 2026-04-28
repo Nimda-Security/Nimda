@@ -1,14 +1,14 @@
-package com.nimda.cite.alarm.service;
+package com.nimda.cite.domain.alarm.service;
 
-import com.nimda.cite.alarm.Event.AddChildCommentEvent;
-import com.nimda.cite.alarm.Event.AddCommentEvent;
-import com.nimda.cite.alarm.Event.CommentLikeEvent;
-import com.nimda.cite.alarm.Event.PushLikeButtonEvent;
-import com.nimda.cite.alarm.Repository.SseEmitterRepository;
-import com.nimda.cite.notification.dto.NotificationResponse;
-import com.nimda.cite.notification.entity.Notification;
-import com.nimda.cite.notification.enums.NotificationType;
-import com.nimda.cite.notification.repositroy.NotificationRepositroy;
+import com.nimda.cite.domain.alarm.Event.AddChildCommentEvent;
+import com.nimda.cite.domain.alarm.Event.AddCommentEvent;
+import com.nimda.cite.domain.alarm.Event.CommentLikeEvent;
+import com.nimda.cite.domain.alarm.Event.PushLikeButtonEvent;
+import com.nimda.cite.domain.alarm.Repository.SseEmitterRepository;
+import com.nimda.cite.domain.notification.dto.NotificationResponse;
+import com.nimda.cite.domain.notification.entity.Notification;
+import com.nimda.cite.domain.notification.enums.NotificationType;
+import com.nimda.cite.domain.notification.repositroy.NotificationRepositroy;
 import com.nimda.cite.user.entity.User;
 import com.nimda.cite.user.repository.UserRepository;
 import org.springframework.transaction.annotation.Transactional;

@@ -1,10 +1,10 @@
-package com.nimda.cite.attachment.service;
+package com.nimda.cite.domain.attachment.service;
 
-import com.nimda.cite.attachment.dto.AttachmentResponseDto;
-import com.nimda.cite.attachment.entity.Attachment;
-import com.nimda.cite.attachment.repository.AttachmentRepository;
-import com.nimda.cite.attachment.store.FileStore;
-import com.nimda.cite.board.constants.CategoryConstants;
+import com.nimda.cite.domain.attachment.dto.AttachmentResponseDto;
+import com.nimda.cite.domain.attachment.entity.Attachment;
+import com.nimda.cite.domain.attachment.repository.AttachmentRepository;
+import com.nimda.cite.domain.attachment.store.FileStore;
+import com.nimda.cite.domain.board.constants.CategoryConstants;
 import com.nimda.cite.common.image.ImageSanitizer;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;

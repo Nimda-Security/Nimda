@@ -1,6 +1,6 @@
-package com.nimda.cite.attendance.repositroy;
+package com.nimda.cite.domain.attendance.repositroy;
 
-import com.nimda.cite.attendance.entity.Attendance;
+import com.nimda.cite.domain.attendance.entity.Attendance;
 import jakarta.persistence.LockModeType;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Lock;

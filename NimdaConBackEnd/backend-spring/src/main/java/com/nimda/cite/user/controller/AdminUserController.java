@@ -1,9 +1,9 @@
-package com.nimda.cup.user.controller;
+package com.nimda.cite.user.controller;
 
-import com.nimda.cite.board.service.BoardService;
-import com.nimda.cup.user.entity.User;
-import com.nimda.cup.user.enums.ApprovalStatus;
-import com.nimda.cup.user.service.AdminUserService;
+import com.nimda.cite.domain.board.service.BoardService;
+import com.nimda.cite.user.entity.User;
+import com.nimda.cite.user.enums.ApprovalStatus;
+import com.nimda.cite.user.service.AdminUserService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;

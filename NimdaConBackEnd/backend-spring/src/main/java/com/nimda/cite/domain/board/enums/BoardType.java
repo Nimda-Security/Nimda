@@ -1,4 +1,4 @@
-package com.nimda.cite.board.enums;
+package com.nimda.cite.domain.board.enums;
 
 public enum BoardType {
     NEWS,         // 새 소식 게시판

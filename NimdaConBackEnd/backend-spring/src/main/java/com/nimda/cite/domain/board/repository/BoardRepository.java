@@ -1,4 +1,4 @@
-package com.nimda.cite.board.repository;
+package com.nimda.cite.domain.board.repository;
 
 /**
  * ========================================
@@ -8,7 +8,7 @@ package com.nimda.cite.board.repository;
  * [기존 게시판 코드 기준]
  * - 기본 구조: JpaRepository<Board, Integer> → JpaRepository<Board, Long>
  * - 검색 메서드: findByTitleContaining 유지
- * - 패키지: com.Board.Board.repository → com.nimda.cite.board.repository
+ * - 패키지: com.Board.Board.repository → com.nimda.cite.domain.board.repository
  * 
  * [현재 프로젝트 통합 사항]
  * 1. BoardType 필터링 메서드 추가 (findByBoardType)
@@ -22,9 +22,9 @@ package com.nimda.cite.board.repository;
  * ========================================
  */
 
-import com.nimda.cite.board.entity.Board;
-import com.nimda.cite.board.entity.Category;
-import com.nimda.cite.board.enums.BoardStatus;
+import com.nimda.cite.domain.board.entity.Board;
+import com.nimda.cite.domain.board.entity.Category;
+import com.nimda.cite.domain.board.enums.BoardStatus;
 import com.nimda.cite.user.entity.User;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;

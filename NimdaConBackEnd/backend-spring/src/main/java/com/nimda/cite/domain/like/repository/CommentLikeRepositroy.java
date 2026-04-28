@@ -1,7 +1,7 @@
-package com.nimda.cite.like.repository;
+package com.nimda.cite.domain.like.repository;
 
 import com.nimda.cite.domain.comment.entity.Comment;
-import com.nimda.cite.like.entity.CommentLike;
+import com.nimda.cite.domain.like.entity.CommentLike;
 import com.nimda.cite.user.entity.User;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Repository;

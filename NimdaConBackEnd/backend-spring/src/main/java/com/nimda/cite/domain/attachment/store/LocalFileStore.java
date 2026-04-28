@@ -1,4 +1,4 @@
-package com.nimda.cite.attachment.store;
+package com.nimda.cite.domain.attachment.store;
 
 import jakarta.annotation.PostConstruct;
 import org.slf4j.Logger;

@@ -1,6 +1,6 @@
-package com.nimda.cite.point.dto;
+package com.nimda.cite.domain.point.dto;
 
-import com.nimda.cite.point.entity.UserBalance;
+import com.nimda.cite.domain.point.entity.UserBalance;
 import lombok.Builder;
 import lombok.Getter;
 

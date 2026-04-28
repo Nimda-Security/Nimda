@@ -1,4 +1,4 @@
-package com.nimda.cup.user.dto;
+package com.nimda.cite.user.dto;
 
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.Size;

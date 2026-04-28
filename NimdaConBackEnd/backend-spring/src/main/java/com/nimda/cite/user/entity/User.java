@@ -1,4 +1,4 @@
-package com.nimda.cup.user.entity;
+package com.nimda.cite.user.entity;
 
 import jakarta.persistence.*;
 import jakarta.validation.constraints.Email;
@@ -9,9 +9,8 @@ import lombok.Getter;
 import lombok.Setter;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
-import com.nimda.cup.common.entity.BaseTimeEntity;
-import com.nimda.cup.group.entity.GroupMembership;
-import com.nimda.cup.user.enums.ApprovalStatus;
+import com.nimda.cite.common.entity.BaseTimeEntity;
+import com.nimda.cite.user.enums.ApprovalStatus;
 
 import java.util.HashSet;
 import java.util.Set;
@@ -112,9 +111,4 @@ public class User extends BaseTimeEntity {
     )
     @JsonIgnore
     private Set<Authority> authorities = new HashSet<>();
-
-    // 그룹 멤버십 관계 (1:N 관계)
-    @OneToMany(mappedBy = "user", fetch = FetchType.LAZY)
-    @JsonIgnore
-    private Set<GroupMembership> groupMemberships = new HashSet<>();
 }

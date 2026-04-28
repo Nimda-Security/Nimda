@@ -1,4 +1,4 @@
-package com.nimda.cup.user.exception;
+package com.nimda.cite.user.exception;
 
 /**
  * 사용자 승인 상태 관련 예외

@@ -1,4 +1,4 @@
-package com.nimda.cite.point.entity;
+package com.nimda.cite.domain.point.entity;
 
 import com.nimda.cite.user.entity.User;
 import jakarta.persistence.*;

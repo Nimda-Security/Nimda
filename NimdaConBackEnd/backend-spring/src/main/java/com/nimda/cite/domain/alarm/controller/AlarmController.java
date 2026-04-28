@@ -1,6 +1,6 @@
-package com.nimda.cite.alarm.controller;
+package com.nimda.cite.domain.alarm.controller;
 
-import com.nimda.cite.alarm.service.AlarmService;
+import com.nimda.cite.domain.alarm.service.AlarmService;
 import com.nimda.cite.user.security.CustomUserDetails;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;

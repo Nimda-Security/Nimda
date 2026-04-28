@@ -1,12 +1,12 @@
-package com.nimda.cite.like.controller;
+package com.nimda.cite.domain.like.controller;
 
 import com.nimda.cite.domain.board.dto.BoardResponseDTO;
 import com.nimda.cite.domain.board.entity.Board;
 import com.nimda.cite.domain.comment.enums.STATUS;
 import com.nimda.cite.domain.comment.repository.CommentRepository;
 import com.nimda.cite.common.response.ApiResponse;
-import com.nimda.cite.like.dto.BoardLikeResponse;
-import com.nimda.cite.like.service.BoardLikeService;
+import com.nimda.cite.domain.like.dto.BoardLikeResponse;
+import com.nimda.cite.domain.like.service.BoardLikeService;
 import com.nimda.cite.user.repository.UserRepository;
 import com.nimda.cite.user.security.CustomUserDetails;
 import lombok.RequiredArgsConstructor;

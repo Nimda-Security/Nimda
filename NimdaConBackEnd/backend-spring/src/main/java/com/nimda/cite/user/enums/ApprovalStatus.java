@@ -1,4 +1,4 @@
-package com.nimda.cup.user.enums;
+package com.nimda.cite.user.enums;
 
 /**
  * 사용자 승인 상태 Enum

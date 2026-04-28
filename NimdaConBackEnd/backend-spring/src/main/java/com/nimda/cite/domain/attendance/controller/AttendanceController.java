@@ -1,9 +1,9 @@
-package com.nimda.cite.attendance.controller;
+package com.nimda.cite.domain.attendance.controller;
 
-import com.nimda.cite.attendance.dto.TodayVisitorResponse;
-import com.nimda.cite.attendance.entity.Attendance;
-import com.nimda.cite.attendance.entity.AttendanceLog;
-import com.nimda.cite.attendance.service.AttendanceService;
+import com.nimda.cite.domain.attendance.dto.TodayVisitorResponse;
+import com.nimda.cite.domain.attendance.entity.Attendance;
+import com.nimda.cite.domain.attendance.entity.AttendanceLog;
+import com.nimda.cite.domain.attendance.service.AttendanceService;
 import com.nimda.cite.common.response.ApiResponse;
 import com.nimda.cite.common.s3.S3Service;
 import com.nimda.cite.user.security.CustomUserDetails;

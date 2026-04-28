@@ -1,4 +1,4 @@
-package com.nimda.cite.comment.dto;
+package com.nimda.cite.domain.comment.dto;
 
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;

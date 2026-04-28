@@ -1,6 +1,6 @@
-package com.nimda.cite.tag.dto;
+package com.nimda.cite.domain.tag.dto;
 
-import com.nimda.cite.tag.entity.Tag;
+import com.nimda.cite.domain.tag.entity.Tag;
 import lombok.*;
 
 @Getter

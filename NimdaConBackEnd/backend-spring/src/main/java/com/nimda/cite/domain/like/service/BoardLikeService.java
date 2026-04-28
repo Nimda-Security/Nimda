@@ -1,13 +1,13 @@
-package com.nimda.cite.like.service;
+package com.nimda.cite.domain.like.service;
 
 import com.nimda.cite.domain.alarm.Event.PushLikeButtonEvent;
 import com.nimda.cite.domain.alarm.service.AlarmService;
 import com.nimda.cite.domain.board.entity.Board;
-import com.nimda.cite.like.entity.BoardLike;
+import com.nimda.cite.domain.like.entity.BoardLike;
 import com.nimda.cite.domain.board.repository.BoardRepository;
-import com.nimda.cite.like.repository.BoardLikeRepository;
-import com.nimda.cite.notification.entity.Notification;
-import com.nimda.cite.notification.enums.NotificationType;
+import com.nimda.cite.domain.like.repository.BoardLikeRepository;
+import com.nimda.cite.domain.notification.entity.Notification;
+import com.nimda.cite.domain.notification.enums.NotificationType;
 import com.nimda.cite.user.entity.User;
 import com.nimda.cite.user.repository.UserRepository;
 import lombok.RequiredArgsConstructor;

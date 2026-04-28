@@ -1,6 +1,6 @@
-package com.nimda.cite.board.dto;
+package com.nimda.cite.domain.board.dto;
 
-import com.nimda.cite.board.entity.Category;
+import com.nimda.cite.domain.board.entity.Category;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Getter;

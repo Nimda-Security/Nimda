@@ -1,7 +1,7 @@
-package com.nimda.cite.comment.controller;
+package com.nimda.cite.domain.comment.controller;
 
-import com.nimda.cite.comment.dto.*;
-import com.nimda.cite.comment.service.CommentService;
+import com.nimda.cite.domain.comment.dto.*;
+import com.nimda.cite.domain.comment.service.CommentService;
 import com.nimda.cite.common.response.ApiResponse;
 import com.nimda.cite.common.s3.S3Service;
 import com.nimda.cite.user.repository.UserRepository;

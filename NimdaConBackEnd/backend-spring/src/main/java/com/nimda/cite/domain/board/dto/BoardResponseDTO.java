@@ -1,8 +1,8 @@
-package com.nimda.cite.board.dto;
+package com.nimda.cite.domain.board.dto;
 
-import com.nimda.cite.attachment.dto.AttachmentResponseDto;
-import com.nimda.cite.board.entity.Board;
-import com.nimda.cite.tag.entity.Tag;
+import com.nimda.cite.domain.attachment.dto.AttachmentResponseDto;
+import com.nimda.cite.domain.board.entity.Board;
+import com.nimda.cite.domain.tag.entity.Tag;
 import com.nimda.cite.user.entity.User;
 import lombok.AllArgsConstructor;
 import lombok.Builder;

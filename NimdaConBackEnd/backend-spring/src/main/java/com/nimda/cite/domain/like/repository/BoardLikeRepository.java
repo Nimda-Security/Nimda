@@ -1,7 +1,7 @@
-package com.nimda.cite.like.repository;
+package com.nimda.cite.domain.like.repository;
 
 import com.nimda.cite.domain.board.entity.Board;
-import com.nimda.cite.like.entity.BoardLike;
+import com.nimda.cite.domain.like.entity.BoardLike;
 import com.nimda.cite.user.entity.User;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Modifying;
@@ -28,7 +28,7 @@ public interface BoardLikeRepository extends JpaRepository<BoardLike, Long> {
 
         @Query("SELECT bl FROM BoardLike bl JOIN FETCH bl.board " +
                 "WHERE bl.liker.id = :userId " +
-                "AND bl.board.status != com.nimda.cite.board.enums.BoardStatus.DELETED")
+                "AND bl.board.status != com.nimda.cite.domain.board.enums.BoardStatus.DELETED")
         List<BoardLike> findAllByLikerId(@Param("userId") Long userId);
 
         // 게시글 삭제 시 해당 게시글의 모든 좋아요 데이터를 물리적으로 삭제

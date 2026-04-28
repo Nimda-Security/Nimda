@@ -1,6 +1,6 @@
-package com.nimda.cite.attendance.dto;
+package com.nimda.cite.domain.attendance.dto;
 
-import com.nimda.cite.attendance.entity.AttendanceLog;
+import com.nimda.cite.domain.attendance.entity.AttendanceLog;
 import com.nimda.cite.user.entity.User;
 import lombok.Builder;
 import lombok.Getter;

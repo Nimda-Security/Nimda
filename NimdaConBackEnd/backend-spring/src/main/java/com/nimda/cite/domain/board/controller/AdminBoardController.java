@@ -1,11 +1,11 @@
-package com.nimda.cite.board.controller;
+package com.nimda.cite.domain.board.controller;
 
-import com.nimda.cite.board.entity.Category;
-import com.nimda.cite.board.enums.BoardStatus;
-import com.nimda.cite.board.repository.CategoryRepository;
-import com.nimda.cite.board.service.BoardService;
-import com.nimda.cite.tag.entity.Tag;
-import com.nimda.cite.tag.repository.TagRepository;
+import com.nimda.cite.domain.board.entity.Category;
+import com.nimda.cite.domain.board.enums.BoardStatus;
+import com.nimda.cite.domain.board.repository.CategoryRepository;
+import com.nimda.cite.domain.board.service.BoardService;
+import com.nimda.cite.domain.tag.entity.Tag;
+import com.nimda.cite.domain.tag.repository.TagRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;

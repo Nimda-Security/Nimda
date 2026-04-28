@@ -1,4 +1,4 @@
-package com.nimda.cite.tag.entity;
+package com.nimda.cite.domain.tag.entity;
 
 import com.nimda.cite.domain.board.entity.Category;
 import jakarta.persistence.*;

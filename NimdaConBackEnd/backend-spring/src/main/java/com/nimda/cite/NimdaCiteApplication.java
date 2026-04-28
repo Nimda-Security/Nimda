@@ -1,4 +1,4 @@
-package com.nimda;
+package com.nimda.cite;
 
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
@@ -10,14 +10,11 @@ import org.springframework.scheduling.annotation.EnableAsync;
 import org.springframework.scheduling.annotation.EnableScheduling;
 
 @EnableScheduling
-@SpringBootApplication
 @EnableJpaAuditing
 @EnableAsync // 알림 비동기 방식으로 처리
-@ComponentScan(basePackages = { "com.nimda.cite" })
-@EntityScan(basePackages = { "com.nimda.cite" })
-@EnableJpaRepositories(basePackages = { "com.nimda.cite" })
-public class NimdaConApplication {
+@SpringBootApplication
+public class NimdaCiteApplication {
     public static void main(String[] args) {
-        SpringApplication.run(NimdaConApplication.class, args);
+        SpringApplication.run(NimdaCiteApplication.class, args);
     }
 }

@@ -1,4 +1,4 @@
-package com.nimda.cite.like.dto;
+package com.nimda.cite.domain.like.dto;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
 import lombok.Builder;

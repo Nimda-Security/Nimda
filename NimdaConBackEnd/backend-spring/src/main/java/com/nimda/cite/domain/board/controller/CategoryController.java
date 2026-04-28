@@ -1,11 +1,11 @@
-package com.nimda.cite.board.controller;
+package com.nimda.cite.domain.board.controller;
 
-import com.nimda.cite.board.dto.CategoryCreateDTO;
-import com.nimda.cite.board.dto.CategoryResponseDTO;
-import com.nimda.cite.board.dto.CategorySortOrderDTO;
-import com.nimda.cite.board.dto.CategoryUpdateDTO;
-import com.nimda.cite.board.entity.Category;
-import com.nimda.cite.board.service.CategoryService;
+import com.nimda.cite.domain.board.dto.CategoryCreateDTO;
+import com.nimda.cite.domain.board.dto.CategoryResponseDTO;
+import com.nimda.cite.domain.board.dto.CategorySortOrderDTO;
+import com.nimda.cite.domain.board.dto.CategoryUpdateDTO;
+import com.nimda.cite.domain.board.entity.Category;
+import com.nimda.cite.domain.board.service.CategoryService;
 import com.nimda.cite.common.response.ApiResponse;
 import com.nimda.cite.user.entity.User;
 import com.nimda.cite.user.security.CustomUserDetails;

@@ -1,11 +1,11 @@
-package com.nimda.cite.point.controller;
+package com.nimda.cite.domain.point.controller;
 
 import com.nimda.cite.common.response.ApiResponse;
-import com.nimda.cite.point.dto.BalanceResponse;
-import com.nimda.cite.point.dto.ManualBalanceUpdateRequest;
-import com.nimda.cite.point.dto.PointDetailResponse;
-import com.nimda.cite.point.entity.UserBalance;
-import com.nimda.cite.point.service.PointService;
+import com.nimda.cite.domain.point.dto.BalanceResponse;
+import com.nimda.cite.domain.point.dto.ManualBalanceUpdateRequest;
+import com.nimda.cite.domain.point.dto.PointDetailResponse;
+import com.nimda.cite.domain.point.entity.UserBalance;
+import com.nimda.cite.domain.point.service.PointService;
 import com.nimda.cite.user.repository.UserRepository;
 import com.nimda.cite.user.security.CustomUserDetails;
 import lombok.RequiredArgsConstructor;

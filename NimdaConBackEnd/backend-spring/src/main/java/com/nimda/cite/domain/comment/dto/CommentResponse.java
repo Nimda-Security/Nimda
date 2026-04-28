@@ -1,8 +1,8 @@
-package com.nimda.cite.comment.dto;
+package com.nimda.cite.domain.comment.dto;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
-import com.nimda.cite.comment.entity.Comment;
-import com.nimda.cite.comment.enums.STATUS;
+import com.nimda.cite.domain.comment.entity.Comment;
+import com.nimda.cite.domain.comment.enums.STATUS;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Getter;

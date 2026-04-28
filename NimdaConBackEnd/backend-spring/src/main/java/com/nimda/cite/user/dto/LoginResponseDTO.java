@@ -1,4 +1,4 @@
-package com.nimda.cup.user.dto;
+package com.nimda.cite.user.dto;
 
 import lombok.AllArgsConstructor;
 import lombok.Builder;

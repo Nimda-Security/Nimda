@@ -1,13 +1,13 @@
-package com.nimda.cite.board.service;
+package com.nimda.cite.domain.board.service;
 
-import com.nimda.cite.attachment.service.AttachmentService;
-import com.nimda.cite.alarm.service.AlarmService;
-import com.nimda.cite.board.entity.Board;
-import com.nimda.cite.board.entity.Category;
-import com.nimda.cite.board.enums.BoardStatus;
-import com.nimda.cite.board.repository.BoardRepository;
-import com.nimda.cite.comment.repository.CommentRepository;
-import com.nimda.cite.like.repository.BoardLikeRepository;
+import com.nimda.cite.domain.attachment.service.AttachmentService;
+import com.nimda.cite.domain.alarm.service.AlarmService;
+import com.nimda.cite.domain.board.entity.Board;
+import com.nimda.cite.domain.board.entity.Category;
+import com.nimda.cite.domain.board.enums.BoardStatus;
+import com.nimda.cite.domain.board.repository.BoardRepository;
+import com.nimda.cite.domain.comment.repository.CommentRepository;
+import com.nimda.cite.domain.like.repository.BoardLikeRepository;
 import com.nimda.cite.user.entity.User;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;

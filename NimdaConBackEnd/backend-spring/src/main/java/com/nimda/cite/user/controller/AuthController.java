@@ -1,15 +1,14 @@
-package com.nimda.cup.user.controller;
+package com.nimda.cite.user.controller;
 
-import com.nimda.cite.common.response.ApiResponse;
-import com.nimda.cup.user.dto.LoginDTO;
-import com.nimda.cup.user.dto.LoginResponseDTO;
-import com.nimda.cup.user.dto.MyPageResponseDTO;
-import com.nimda.cup.user.dto.RegisterDTO;
-import com.nimda.cup.user.dto.UpdateProfileDTO;
-import com.nimda.cup.user.entity.User;
-import com.nimda.cup.user.exception.UserNotApprovedException;
-import com.nimda.cup.user.security.CustomUserDetails;
-import com.nimda.cup.user.service.AuthService;
+import com.nimda.cite.user.dto.LoginDTO;
+import com.nimda.cite.user.dto.LoginResponseDTO;
+import com.nimda.cite.user.dto.MyPageResponseDTO;
+import com.nimda.cite.user.dto.RegisterDTO;
+import com.nimda.cite.user.dto.UpdateProfileDTO;
+import com.nimda.cite.user.entity.User;
+import com.nimda.cite.user.exception.UserNotApprovedException;
+import com.nimda.cite.user.security.CustomUserDetails;
+import com.nimda.cite.user.service.AuthService;
 import com.nimda.cite.common.s3.S3Service;
 import jakarta.servlet.http.HttpServletResponse;
 import jakarta.validation.Valid;

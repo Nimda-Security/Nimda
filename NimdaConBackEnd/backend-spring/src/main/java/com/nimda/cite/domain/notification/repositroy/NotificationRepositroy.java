@@ -1,6 +1,6 @@
-package com.nimda.cite.notification.repositroy;
+package com.nimda.cite.domain.notification.repositroy;
 
-import com.nimda.cite.notification.entity.Notification;
+import com.nimda.cite.domain.notification.entity.Notification;
 import com.nimda.cite.user.entity.User;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;

@@ -1,6 +1,6 @@
-package com.nimda.cite.notification.entity;
+package com.nimda.cite.domain.notification.entity;
 
-import com.nimda.cite.notification.enums.NotificationType;
+import com.nimda.cite.domain.notification.enums.NotificationType;
 import com.nimda.cite.user.entity.User;
 import jakarta.persistence.Entity;
 import jakarta.persistence.GeneratedValue;

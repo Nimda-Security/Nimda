@@ -1,6 +1,6 @@
-package com.nimda.cite.attachment.dto;
+package com.nimda.cite.domain.attachment.dto;
 
-import com.nimda.cite.attachment.entity.Attachment;
+import com.nimda.cite.domain.attachment.entity.Attachment;
 import lombok.Builder;
 import lombok.Getter;
 

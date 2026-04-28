@@ -1,11 +1,10 @@
-package com.nimda.cite.attachment.store;
+package com.nimda.cite.domain.attachment.store;
 
 import com.nimda.cite.common.s3.AwsS3ConfiguredCondition;
 import com.nimda.cite.common.s3.S3Service;
 import lombok.RequiredArgsConstructor;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.boot.autoconfigure.condition.ConditionalOnBean;
 import org.springframework.context.annotation.Conditional;
 import org.springframework.context.annotation.Primary;
 import org.springframework.core.io.Resource;

@@ -1,9 +1,9 @@
-package com.nimda.cite.attendance.service;
+package com.nimda.cite.domain.attendance.service;
 
-import com.nimda.cite.attendance.entity.Attendance;
-import com.nimda.cite.attendance.repositroy.AttendanceRepositroy;
-import com.nimda.cite.attendance.entity.AttendanceLog;
-import com.nimda.cite.attendance.repositroy.AttendanceLogRepository;
+import com.nimda.cite.domain.attendance.entity.Attendance;
+import com.nimda.cite.domain.attendance.repositroy.AttendanceRepositroy;
+import com.nimda.cite.domain.attendance.entity.AttendanceLog;
+import com.nimda.cite.domain.attendance.repositroy.AttendanceLogRepository;
 import com.nimda.cite.user.entity.User;
 import com.nimda.cite.user.repository.UserRepository;
 import org.springframework.transaction.annotation.Transactional;
