@@ -109,6 +109,7 @@ const MyPostsContent: React.FC = () => {
                   thumbnailUrl: board.filepath || undefined,
                   authorNickname: board.authorNickname,
                   authorProfileImage: board.authorProfileImage,
+                  authorProfileDecoration: board.authorProfileDecoration,
                 }}
                 checked={selectedIds.has(board.id)}
                 onToggle={() => toggleSelect(board.id)}

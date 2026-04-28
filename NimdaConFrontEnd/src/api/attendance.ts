@@ -10,6 +10,7 @@ export interface AttendanceLog {
     id: number;
 userName: string;
 profileImageUrl?: string;
+profileDecoration?: string;
 }
 
 /** 출석부 상태 정보 (Attendance Entity 매칭) */

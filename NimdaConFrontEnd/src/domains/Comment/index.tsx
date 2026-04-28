@@ -84,9 +84,23 @@ const flattenCommentsTree = (
 /**
  * 댓글 리스트의 각 아이템 아바타
  */
-function CommentAvatar({ src }: { src: string | null; name: string }) {
+function CommentAvatar({
+  src,
+  decorationKey,
+}: {
+  src: string | null;
+  decorationKey?: string | null;
+  name: string;
+}) {
   return (
-    <Avatar src={src} size={32} className="comment-item__avatar" />
+    <Avatar
+      src={src}
+      decorationKey={decorationKey}
+      size={40}
+      wrapperClassName="comment-item__avatar"
+      className="border-0"
+      decorationScale={1.16}
+    />
   );
 }
 
@@ -100,6 +114,7 @@ function CommentInput({
   placeholder,
   isSubmitting,
   profileImage,
+  profileDecoration,
   buttonLabel = '작성',
   showAvatar = true,
 }: {
@@ -109,6 +124,7 @@ function CommentInput({
   placeholder?: string;
   isSubmitting: boolean;
   profileImage?: string | null;
+  profileDecoration?: string | null;
   buttonLabel?: string;
   showAvatar?: boolean;
 }) {
@@ -220,7 +236,13 @@ function CommentInput({
     <div className="comment-input">
       {showAvatar && (
         <div className="comment-input__avatar">
-          <Avatar src={profileImage} size="100%" />
+          <Avatar
+            src={profileImage}
+            decorationKey={profileDecoration}
+            size="100%"
+            className="border-0"
+            decorationScale={1.16}
+          />
         </div>
       )}
       <div className="comment-input__body">
@@ -377,6 +399,7 @@ interface CommentItemProps {
   onCancelReply: () => void;
   replyInputRef: React.RefObject<HTMLDivElement | null>;
   myProfileImage: string | null; // [추가] 답글창에 쓰기 위함
+  myProfileDecoration: string | null;
 }
 
 function CommentItem({
@@ -395,7 +418,8 @@ function CommentItem({
   isReplySubmitting,
   onCancelReply,
   replyInputRef,
-  myProfileImage // [추가]
+  myProfileImage, // [추가]
+  myProfileDecoration,
 }: CommentItemProps) {
   const isReply = depth > 0;
 
@@ -407,7 +431,11 @@ function CommentItem({
         className={`comment-item${isReply ? ' comment-item--reply' : ''}`}
         style={isReply ? { marginLeft: `${depth * 48}px` } : undefined}
       >
-        <CommentAvatar src={comment.authorProfileImage} name={comment.authorName} />
+        <CommentAvatar
+          src={comment.authorProfileImage}
+          decorationKey={comment.authorProfileDecoration}
+          name={comment.authorName}
+        />
         <div className="comment-item__body">
           <div className="comment-item__header">
             <Link
@@ -472,6 +500,7 @@ function CommentItem({
             buttonLabel="답글 등록"
             showAvatar={true} // [수정] 답글창에도 아바타를 보여주려면 true
             profileImage={myProfileImage} // [추가] 내 사진 전달
+            profileDecoration={myProfileDecoration}
           />
           <button type="button" onClick={onCancelReply} className="comment-reply-input__cancel">취소</button>
         </div>
@@ -499,6 +528,7 @@ function CommentSection({ boardId }: CommentSectionProps) {
 
   // [추가] 내 프로필 이미지 상태
   const [myProfileImage, setMyProfileImage] = useState<string | null>(null);
+  const [myProfileDecoration, setMyProfileDecoration] = useState<string | null>(null);
 
   useEffect(() => { fetchComments(); }, [boardId]);
 
@@ -508,8 +538,9 @@ function CommentSection({ boardId }: CommentSectionProps) {
       try {
         if (isLoggedIn()) {
           const res = await getMyPageInfo();
-          if (res.success && res.data?.profileImage) {
-            setMyProfileImage(res.data.profileImage);
+          if (res.success && res.data) {
+            setMyProfileImage(res.data.profileImage ?? null);
+            setMyProfileDecoration(res.data.profileDecoration ?? null);
           }
         }
       } catch (error) {
@@ -670,6 +701,7 @@ function CommentSection({ boardId }: CommentSectionProps) {
         onSubmit={handleSubmitComment}
         isSubmitting={isSubmitting}
         profileImage={myProfileImage}
+        profileDecoration={myProfileDecoration}
       />
 
       {loading ? (
@@ -713,6 +745,7 @@ function CommentSection({ boardId }: CommentSectionProps) {
                   onCancelReply={() => setReplyTargetId(null)}
                   replyInputRef={replyInputRef}
                   myProfileImage={myProfileImage} // [추가]
+                  myProfileDecoration={myProfileDecoration}
                 />
               )}
               </div>

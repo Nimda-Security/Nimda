@@ -13,6 +13,7 @@ export interface CommentResponse {
   parentId: number | null;
   authorName: string;
   authorProfileImage: string | null;
+  authorProfileDecoration: string | null;
   status: CommentStatus;
   context: string;
   createdAt: string;

@@ -688,6 +688,7 @@ export interface MyBoard {
   filepath?: string;
   authorNickname?: string;
   authorProfileImage?: string;
+  authorProfileDecoration?: string;
 }
 
 export const getMyBoardsAPI = async (): Promise<MyBoard[]> => {
@@ -713,6 +714,7 @@ export const getMyBoardsAPI = async (): Promise<MyBoard[]> => {
           filepath: b.filepath as string | undefined,
           authorNickname: author?.nickname as string | undefined,
           authorProfileImage: author?.profileImage as string | undefined,
+          authorProfileDecoration: author?.profileDecoration as string | undefined,
         };
       });
     }
@@ -749,6 +751,7 @@ export const getMyCommentedBoardsAPI = async (): Promise<MyBoard[]> => {
           filepath: b.filepath as string | undefined,
           authorNickname: author?.nickname as string | undefined,
           authorProfileImage: author?.profileImage as string | undefined,
+          authorProfileDecoration: author?.profileDecoration as string | undefined,
         };
       });
     }
@@ -780,5 +783,4 @@ export const deleteMyBoardsAPI = async (boardIds: number[]): Promise<{ success: 
     return { success: false, message: '게시글 삭제 중 오류가 발생했습니다.' };
   }
 };
-
 

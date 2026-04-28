@@ -13,6 +13,7 @@ public class TodayVisitorResponse {
     private Long id;
     private String userName;
     private String profileImageUrl;
+    private String profileDecoration;
 
     public static TodayVisitorResponse from(AttendanceLog log) {
         if (log == null || log.getUser() == null) {
@@ -25,6 +26,7 @@ public class TodayVisitorResponse {
                 .id(user.getId())
                 .userName(user.getNickname())
                 .profileImageUrl(user.getProfileImage())
+                .profileDecoration(user.getProfileDecoration())
                 .build();
     }
 

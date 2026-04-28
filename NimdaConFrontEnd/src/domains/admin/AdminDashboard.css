@@ -215,6 +215,51 @@
   background-color: var(--color-gray-100);
 }
 
+.admin__btn--primary {
+  border-color: var(--color-black);
+  background-color: var(--color-black);
+  color: #ffffff;
+}
+
+.admin__btn--primary:hover {
+  background-color: #333333;
+}
+
+.admin__content-card {
+  border: 1px solid var(--color-gray-100);
+  border-radius: 8px;
+  background: #ffffff;
+}
+
+.admin__form-label {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--color-black);
+}
+
+.admin__form-input {
+  width: 100%;
+  min-height: 36px;
+  border: 1px solid var(--color-gray-200);
+  border-radius: 4px;
+  background: #ffffff;
+  padding: 8px 10px;
+  font-size: 14px;
+  font-family: 'Pretendard', sans-serif;
+  outline: none;
+}
+
+.admin__form-input:focus {
+  border-color: var(--color-black);
+}
+
+.admin__empty-text {
+  color: var(--color-gray-500);
+  font-size: 14px;
+  text-align: center;
+  padding: 32px 0;
+}
+
 /* Table */
 .admin__table-wrap {
   border: 1px solid var(--color-gray-100);

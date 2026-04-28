@@ -48,6 +48,24 @@ const AdminSidebar = ({ activeSection, activeSubSection, setActiveSection, setAc
           </div>
         </div>
 
+        {/* 프로필 장식 관리 */}
+        <div className="admin__nav-section">
+          <button
+            onClick={() => handleNavClick('profile-decorations', null)}
+            className={`admin__nav-section-title ${activeSection === 'profile-decorations' ? 'admin__nav-section-title--active' : ''}`}
+          >
+            프로필 장식 관리
+          </button>
+          <div className="admin__nav-subsection">
+            <button
+              onClick={() => handleNavClick('profile-decorations', 'profile-decorations')}
+              className={`admin__nav-item ${activeSection === 'profile-decorations' ? 'admin__nav-item--active' : ''}`}
+            >
+              배지 등록
+            </button>
+          </div>
+        </div>
+
         {/* 글 관리 */}
         <div className="admin__nav-section">
           <button

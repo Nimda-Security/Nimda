@@ -386,6 +386,7 @@ export default function UserProfilePage() {
                     thumbnailUrl: board.filepath || undefined,
                     authorNickname: board.authorNickname,
                     authorProfileImage: board.authorProfileImage,
+                    authorProfileDecoration: board.authorProfileDecoration,
                   }}
                   checked={false}
                   onToggle={() => {}}
@@ -565,8 +566,11 @@ export default function UserProfilePage() {
             <div className="inline-flex pl-8 pr-[510px] items-start gap-6">
               <Avatar
                 src={profile.profileImage}
+                decorationKey={profile.profileDecoration}
                 size={96}
-                className="board-detail__avatar"
+                wrapperClassName="user-profile-avatar-wrap"
+                className="user-profile-avatar"
+                decorationScale={1.18}
               />
               <ProfileSummary userInfo={userInfo} />
             </div>

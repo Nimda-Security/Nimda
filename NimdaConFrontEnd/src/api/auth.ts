@@ -19,8 +19,33 @@ export interface LoginResponse {
     major?: string;
     birth?: string;
     studentNum?: string;
+    profileImage?: string | null;
+    profileDecoration?: string | null;
+    roles?: string[];
   };
 }
+
+export const PROFILE_UPDATED_EVENT = 'nimda:profile-updated';
+
+const setStoredUser = (user: Record<string, unknown> | null) => {
+  if (!user) {
+    localStorage.removeItem('user');
+    return;
+  }
+  localStorage.setItem('user', JSON.stringify(user));
+};
+
+export const mergeStoredUser = (updates: Record<string, unknown>) => {
+  const currentUser = getCurrentUser() ?? {};
+  const nextUser = { ...currentUser, ...updates };
+  setStoredUser(nextUser);
+  window.dispatchEvent(
+    new CustomEvent(PROFILE_UPDATED_EVENT, {
+      detail: nextUser,
+    })
+  );
+  return nextUser;
+};
 
 export interface RegisterRequest {
   userId: string;
@@ -68,7 +93,7 @@ export const loginAPI = async (
     if (response.ok) {
       // 쿠키 기반 인증: 토큰은 HttpOnly 쿠키로 관리, 사용자 정보만 localStorage에 저장
       if (userInfo) {
-        localStorage.setItem("user", JSON.stringify(userInfo));
+        setStoredUser(userInfo);
         if (userInfo.roles) {
           localStorage.setItem("roles", JSON.stringify(userInfo.roles));
         }
@@ -196,6 +221,7 @@ export const logoutAPI = async () => {
   }
   localStorage.removeItem("user");
   localStorage.removeItem("roles");
+  window.dispatchEvent(new CustomEvent(PROFILE_UPDATED_EVENT, { detail: null }));
 };
 
 /**
@@ -404,6 +430,12 @@ export const updateProfileImageAPI = async (
     try {
       result = await response.json();
     } catch {
+      if (response.status === 401 || response.status === 403) {
+        return {
+          success: false,
+          message: '로그인 세션이 만료되었거나 권한이 없습니다. 다시 로그인해 주세요.',
+        };
+      }
       return {
         success: false,
         message: `서버 오류 (${response.status})`,
@@ -411,6 +443,9 @@ export const updateProfileImageAPI = async (
     }
 
     if (response.ok && result.success) {
+      mergeStoredUser({
+        profileImage: result.profileImageUrl ?? null,
+      });
       return {
         success: true,
         message: result.message || "프로필 이미지가 변경되었습니다.",
@@ -427,6 +462,67 @@ export const updateProfileImageAPI = async (
     return {
       success: false,
       message: "서버에 연결할 수 없습니다.",
+    };
+  }
+};
+
+export const updateProfileDecorationAPI = async (
+  profileDecorationKey: string | null
+): Promise<{ success: boolean; message: string; profileDecoration?: string | null }> => {
+  try {
+    const response = await fetch(`${API_BASE_URL}/auth/profile-decoration`, {
+      method: 'PUT',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      credentials: 'include',
+      body: JSON.stringify({ profileDecorationKey }),
+    });
+
+    let result;
+    try {
+      result = await response.json();
+    } catch {
+      if (response.status === 401 || response.status === 403) {
+        return {
+          success: false,
+          message: '로그인 세션이 만료되었거나 권한이 없습니다. 다시 로그인해 주세요.',
+        };
+      }
+      return {
+        success: false,
+        message: `서버 오류 (${response.status})`,
+      };
+    }
+
+    if (response.ok && result.success) {
+      const nextDecoration =
+        typeof result.profileDecoration === 'string' && result.profileDecoration
+          ? result.profileDecoration
+          : null;
+      mergeStoredUser({
+        profileDecoration: nextDecoration,
+      });
+      return {
+        success: true,
+        message: result.message || '프로필 장식이 변경되었습니다.',
+        profileDecoration: nextDecoration,
+      };
+    }
+
+    return {
+      success: false,
+      message:
+        result.message ||
+        (response.status === 401 || response.status === 403
+          ? '로그인 세션이 만료되었거나 권한이 없습니다. 다시 로그인해 주세요.'
+          : '프로필 장식 변경에 실패했습니다.'),
+    };
+  } catch (error) {
+    console.error('프로필 장식 변경 API 오류:', error);
+    return {
+      success: false,
+      message: '서버에 연결할 수 없습니다.',
     };
   }
 };

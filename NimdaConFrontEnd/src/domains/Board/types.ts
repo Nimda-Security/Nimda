@@ -36,6 +36,7 @@ export interface BoardAuthor {
   nickname: string;
   email?: string;
   profileImage?: string;
+  profileDecoration?: string;
 }
 
 /**

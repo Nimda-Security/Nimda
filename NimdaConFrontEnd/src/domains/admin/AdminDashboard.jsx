@@ -30,6 +30,7 @@ import PostManagement from './sections/PostManagement';
 import CategoryManagement from './sections/CategoryManagement';
 import PinPostManagement from './sections/PinPostManagement';
 import TagManagement from './sections/TagManagement';
+import ProfileDecorationManagement from './sections/ProfileDecorationManagement';
 import AdminSidebar from './components/AdminSidebar';
 import MileagePaymentForm from './components/MileagePaymentForm';
 import { updatePointManual } from '@/api/point';
@@ -1035,6 +1036,8 @@ function AdminDashboard() {
             </div>
           </div>
         );
+      case 'profile-decorations':
+        return <ProfileDecorationManagement />;
       default:
         return null;
     }

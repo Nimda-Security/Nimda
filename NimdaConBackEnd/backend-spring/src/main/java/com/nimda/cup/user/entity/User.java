@@ -85,6 +85,10 @@ public class User extends BaseTimeEntity {
     private String profileImage;
     // 프로필 이미지 URL
 
+    @Column(name = "profile_decoration", length = 100)
+    private String profileDecoration;
+    // 장착 중인 프로필 장식 키
+
     // 마이페이지 이메일 숨기기
     @Column(name = "email_hide", nullable = false)
     private boolean emailHide = false; // 기본값 설정

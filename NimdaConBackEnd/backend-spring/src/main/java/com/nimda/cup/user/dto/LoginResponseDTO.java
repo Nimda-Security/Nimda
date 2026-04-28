@@ -28,6 +28,8 @@ public class LoginResponseDTO {
         private String userId;
         private String nickname;
         private String email;
+        private String profileImage;
+        private String profileDecoration;
         private List<String> roles;
     }
 }

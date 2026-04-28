@@ -356,7 +356,7 @@ function BoardListPage({ slug: propSlug }: BoardListPageProps) {
                     <Link to={post.author?.nickname ? `/user/${post.author.nickname}` : '#'} className="board-list__author" onClick={(e) => e.stopPropagation()}>{post.author?.nickname || '익명'}</Link>
                     <span className="board-list__date">{formatDate(post.createdAt)}</span>
                   </div>
-                  <Avatar src={post.author?.profileImage} size={32} className="board-list__avatar" />
+                  <Avatar src={post.author?.profileImage} decorationKey={post.author?.profileDecoration} size={32} className="board-list__avatar" />
                 </div>
                 <div className="board-list__row-divider" />
               </div>
@@ -378,7 +378,7 @@ function BoardListPage({ slug: propSlug }: BoardListPageProps) {
                     <Link to={post.author?.nickname ? `/user/${post.author.nickname}` : '#'} className="board-list__author" onClick={(e) => e.stopPropagation()}>{post.author?.nickname || '익명'}</Link>
                     <span className="board-list__date">{formatDate(post.createdAt)}</span>
                   </div>
-                  <Avatar src={post.author?.profileImage} size={32} className="board-list__avatar" />
+                  <Avatar src={post.author?.profileImage} decorationKey={post.author?.profileDecoration} size={32} className="board-list__avatar" />
                 </div>
                 <div className="board-list__row-divider" />
               </div >
@@ -405,7 +405,7 @@ function BoardListPage({ slug: propSlug }: BoardListPageProps) {
                         <Link to={post.author?.nickname ? `/user/${post.author.nickname}` : '#'} className="board-list__author" onClick={(e) => e.stopPropagation()}>{post.author?.nickname || '익명'}</Link>
                         <span className="board-list__date">{formatDate(post.createdAt)}</span>
                       </div>
-                      <Avatar src={post.author?.profileImage} size={32} className="board-list__avatar" />
+                      <Avatar src={post.author?.profileImage} decorationKey={post.author?.profileDecoration} size={32} className="board-list__avatar" />
                     </div>
                     <div className="board-list__row-divider" />
                   </div>

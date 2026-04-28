@@ -211,6 +211,7 @@ const PhotoGalleryBoard: React.FC<PhotoGalleryBoardProps> = ({
                       <div className="photo-gallery-board__author">
                         <Avatar
                           src={post.author?.profileImage}
+                          decorationKey={post.author?.profileDecoration}
                           size={28}
                           className="photo-gallery-board__avatar"
                         />

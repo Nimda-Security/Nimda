@@ -67,6 +67,7 @@
 /* 아바타 */
 .user-profile-avatar-wrap {
   flex-shrink: 0;
+  overflow: visible;
 }
 
 .user-profile-avatar {

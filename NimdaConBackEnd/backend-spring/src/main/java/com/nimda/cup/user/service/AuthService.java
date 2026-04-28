@@ -6,6 +6,8 @@ import com.nimda.cup.user.dto.LoginResponseDTO;
 import com.nimda.cup.user.entity.User;
 import com.nimda.cup.user.enums.ApprovalStatus;
 import com.nimda.cup.user.exception.UserNotApprovedException;
+import com.nimda.cup.user.profiledecoration.ProfileDecoration;
+import com.nimda.cup.user.profiledecoration.ProfileDecorationRepository;
 import com.nimda.cup.common.util.JwtUtil;
 import com.nimda.cup.user.repository.UserRepository;
 import com.nimda.cup.user.security.CustomUserDetails;
@@ -36,6 +38,8 @@ public class AuthService {
     private UserBalanceRepository userBalanceRepository;
     @Autowired
     private UserRepository userRepository;
+    @Autowired
+    private ProfileDecorationRepository profileDecorationRepository;
 
     /**
      * 사용자 인증
@@ -112,6 +116,8 @@ public class AuthService {
                 .userId(fullUser.getUserId())
                 .nickname(fullUser.getNickname())
                 .email(fullUser.getEmail())
+                .profileImage(fullUser.getProfileImage())
+                .profileDecoration(fullUser.getProfileDecoration())
                 .roles(authorities)
                 .build();
 
@@ -172,6 +178,39 @@ public class AuthService {
         User user = userRepository.findById(userId)
                 .orElseThrow(() -> new IllegalArgumentException("존재하지 않는 사용자입니다."));
         user.setProfileImage(profileImageKey);
+        return user;
+    }
+
+    /**
+     * 프로필 장식 변경
+     */
+    @Transactional
+    public User updateProfileDecoration(Long userId, String profileDecorationKey) {
+        User user = userRepository.findById(userId)
+                .orElseThrow(() -> new IllegalArgumentException("존재하지 않는 사용자입니다."));
+        if (profileDecorationKey == null || profileDecorationKey.isBlank()) {
+            user.setProfileDecoration(null);
+            return user;
+        }
+
+        String decorationKey = profileDecorationKey.trim();
+        ProfileDecoration decoration = profileDecorationRepository.findByKey(decorationKey)
+                .orElseThrow(() -> new IllegalArgumentException("존재하지 않는 프로필 장식입니다."));
+        if (!decoration.isActive()) {
+            throw new IllegalArgumentException("사용할 수 없는 프로필 장식입니다.");
+        }
+
+        String requiredRole = decoration.getRequiredRole();
+        if (requiredRole != null && !requiredRole.isBlank()) {
+            boolean allowed = user.getAuthorities().stream()
+                    .anyMatch(authority -> requiredRole.equals(authority.getAuthorityName()));
+            if (!allowed) {
+                throw new SecurityException("이 프로필 장식을 사용할 권한이 없습니다.");
+            }
+        }
+
+        user.setProfileDecoration(
+                decorationKey);
         return user;
     }
 

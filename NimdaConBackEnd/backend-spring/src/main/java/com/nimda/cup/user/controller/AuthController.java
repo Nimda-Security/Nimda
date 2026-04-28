@@ -172,6 +172,10 @@ public class AuthController {
                     .birth(user.getBirth())
                     .studentNum(user.getStudentNum())
                     .profileImage(profileImageUrl)
+                    .profileDecoration(user.getProfileDecoration())
+                    .roles(user.getAuthorities().stream()
+                            .map(authority -> authority.getAuthorityName())
+                            .toList())
                     .createdAt(user.getCreatedAt())
                     .updatedAt(user.getUpdatedAt())
                     .emailHide(user.isEmailHide())
@@ -218,6 +222,10 @@ public class AuthController {
                     .birth(updated.getBirth())
                     .studentNum(updated.getStudentNum())
                     .profileImage(updated.getProfileImage())
+                    .profileDecoration(updated.getProfileDecoration())
+                    .roles(updated.getAuthorities().stream()
+                            .map(authority -> authority.getAuthorityName())
+                            .toList())
                     .createdAt(updated.getCreatedAt())
                     .updatedAt(updated.getUpdatedAt())
                     .emailHide(updated.isEmailHide())
@@ -277,6 +285,41 @@ public class AuthController {
             log.error("프로필 이미지 변경 중 오류 발생", e);
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
                     .body(Map.of("success", false, "message", "프로필 이미지 변경 중 오류가 발생했습니다."));
+        }
+    }
+
+    /**
+     * 프로필 장식 변경
+     */
+    @PutMapping("/profile-decoration")
+    public ResponseEntity<?> updateProfileDecoration(
+            @AuthenticationPrincipal CustomUserDetails customUserDetails,
+            @RequestBody Map<String, String> request) {
+        try {
+            if (customUserDetails == null) {
+                return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
+                        .body(Map.of("message", "인증이 필요합니다."));
+            }
+
+            String decorationKey = request.get("profileDecorationKey");
+            User user = customUserDetails.getUser();
+            User updated = authService.updateProfileDecoration(user.getId(), decorationKey);
+
+            return ResponseEntity.ok(Map.of(
+                    "success", true,
+                    "message", "프로필 장식이 변경되었습니다.",
+                    "profileDecoration", updated.getProfileDecoration() == null ? "" : updated.getProfileDecoration()));
+
+        } catch (SecurityException e) {
+            return ResponseEntity.status(HttpStatus.FORBIDDEN)
+                    .body(Map.of("success", false, "message", e.getMessage()));
+        } catch (IllegalArgumentException e) {
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST)
+                    .body(Map.of("success", false, "message", e.getMessage()));
+        } catch (Exception e) {
+            log.error("프로필 장식 변경 중 오류 발생", e);
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body(Map.of("success", false, "message", "프로필 장식 변경 중 오류가 발생했습니다."));
         }
     }
 

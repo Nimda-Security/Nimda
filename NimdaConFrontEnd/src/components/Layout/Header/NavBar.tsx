@@ -2,7 +2,13 @@ import React, { useState, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import Logo from '@/components/icons/Logo';
 import { getCurrentNickname, isAdmin } from '@/utils/jwt';
-import { isLoggedIn, logoutAPI, getMyPageInfo, validateSession } from '@/api/auth';
+import {
+  isLoggedIn,
+  logoutAPI,
+  getMyPageInfo,
+  validateSession,
+  PROFILE_UPDATED_EVENT,
+} from '@/api/auth';
 import Logout from '@/components/icons/Logout.svg';
 import NotificationBell from '@/components/Notification/NotificationBell';
 import Avatar from '@/components/Avatar/Avatar';
@@ -32,12 +38,22 @@ const Navbar: React.FC = () => {
           return;
         }
         getMyPageInfo().then((result) => {
-          if (result.success && result.data?.profileImage) {
-            setProfileImage(result.data.profileImage);
+          if (result.success && result.data) {
+            setProfileImage(result.data.profileImage ?? null);
           }
         });
       });
     }
+
+    const handleProfileUpdated = (event: Event) => {
+      const detail = (event as CustomEvent<Record<string, unknown> | null>).detail;
+      setProfileImage((detail?.profileImage as string | null) ?? null);
+    };
+
+    window.addEventListener(PROFILE_UPDATED_EVENT, handleProfileUpdated);
+    return () => {
+      window.removeEventListener(PROFILE_UPDATED_EVENT, handleProfileUpdated);
+    };
   }, []);
 
   const handleLogout = () => {

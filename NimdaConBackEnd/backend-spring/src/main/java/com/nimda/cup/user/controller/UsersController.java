@@ -85,6 +85,7 @@ public class UsersController {
             userMap.put("bojId", user.getBojId());
             userMap.put("emailHide", user.isEmailHide());
             userMap.put("profileImage", profileImage);
+            userMap.put("profileDecoration", user.getProfileDecoration());
             userMap.put("createdAt", user.getCreatedAt());
             userMap.put("updatedAt", user.getUpdatedAt());
 
@@ -151,6 +152,7 @@ public class UsersController {
             Map<String, Object> profile = new LinkedHashMap<>();
             profile.put("nickname", user.getNickname());
             profile.put("profileImage", profileImage);
+            profile.put("profileDecoration", user.getProfileDecoration());
             profile.put("bojId", user.getBojId());
             profile.put("major", user.getMajor());
             profile.put("createdAt", user.getCreatedAt());

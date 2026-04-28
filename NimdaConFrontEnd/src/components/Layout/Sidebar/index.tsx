@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Link, useLocation, useSearchParams } from 'react-router-dom';
 import { getCurrentNickname, hasRole, isAdmin } from '@/utils/jwt';
-import { isLoggedIn, getMyPageInfo } from '@/api/auth';
+import { isLoggedIn, getMyPageInfo, PROFILE_UPDATED_EVENT } from '@/api/auth';
 import { getAllCategoriesAPI } from '@/api/category';
 import {
   getMyTotalAttendanceCount,
@@ -20,6 +20,7 @@ const Sidebar: React.FC = () => {
   const [nickname, setNickname] = useState<string | null>(null);
   const [isLoggedInState, setIsLoggedInState] = useState(false);
   const [profileImage, setProfileImage] = useState<string | null>(null);
+  const [profileDecoration, setProfileDecoration] = useState<string | null>(null);
   const [categories, setCategories] = useState<Category[]>([]);
   const [categoriesLoading, setCategoriesLoading] = useState(false);
 
@@ -121,8 +122,9 @@ const Sidebar: React.FC = () => {
         if (balance.success) {
           setCoinBalance(balance.currentBalance || 0);
         }
-        if (myPageResult.success && myPageResult.data?.profileImage) {
-          setProfileImage(myPageResult.data.profileImage);
+        if (myPageResult.success && myPageResult.data) {
+          setProfileImage(myPageResult.data.profileImage ?? null);
+          setProfileDecoration(myPageResult.data.profileDecoration ?? null);
         }
       } catch (error) {
         console.error('프로필 통계 로드 오류:', error);
@@ -131,6 +133,19 @@ const Sidebar: React.FC = () => {
 
     loadProfileStats();
   }, [isLoggedInState]);
+
+  useEffect(() => {
+    const handleProfileUpdated = (event: Event) => {
+      const detail = (event as CustomEvent<Record<string, unknown> | null>).detail;
+      setProfileImage((detail?.profileImage as string | null) ?? null);
+      setProfileDecoration((detail?.profileDecoration as string | null) ?? null);
+    };
+
+    window.addEventListener(PROFILE_UPDATED_EVENT, handleProfileUpdated);
+    return () => {
+      window.removeEventListener(PROFILE_UPDATED_EVENT, handleProfileUpdated);
+    };
+  }, []);
 
   useEffect(() => {
     const loadCategories = async () => {
@@ -163,9 +178,11 @@ const Sidebar: React.FC = () => {
         <div className="sidebar-profile__avatar">
           <Avatar
             src={profileImage}
+            decorationKey={profileDecoration}
             alt="프로필"
             size="100%"
             className="w-full h-full border-0"
+            decorationScale={1.16}
           />
         </div>
         <p className="sidebar-profile__name">
@@ -379,9 +396,11 @@ const Sidebar: React.FC = () => {
                   <div className="sidebar-visitors__avatar">
                     <Avatar
                       src={visitor.profileImageUrl}
+                      decorationKey={visitor.profileDecoration}
                       alt="avatar"
                       size="100%"
                       className="w-full h-full border-0"
+                      decorationScale={1.1}
                     />
                   </div>
                   <Link

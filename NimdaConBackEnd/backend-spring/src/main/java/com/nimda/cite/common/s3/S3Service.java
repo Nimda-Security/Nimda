@@ -30,13 +30,18 @@ public class S3Service {
      */
     public PresignedUpload createPresignedUpload(String type, String fileName) {
         // 0. 확장자 화이트리스트 검증 (1차 방어선)
-        if (!com.nimda.cite.attachment.service.AttachmentService.isAllowedExtension(extractExt(fileName))) {
-            throw new IllegalArgumentException("허용되지 않는 파일 형식입니다: " + extractExt(fileName));
+        String ext = extractExt(fileName);
+        boolean allowed = "profile-decoration".equals(type)
+                ? Set.of("svg", "png", "jpg", "jpeg", "webp").contains(ext)
+                : com.nimda.cite.attachment.service.AttachmentService.isAllowedExtension(ext);
+        if (!allowed) {
+            throw new IllegalArgumentException("허용되지 않는 파일 형식입니다: " + ext);
         }
 
         // 1. 경로 결정 (null이면 temp/)
         String path = switch (type) {
             case "profile" -> s3Properties.getProfileImagePath();
+            case "profile-decoration" -> "profile-decorations/";
             case "board" -> s3Properties.getBoardImagePath();
             case "file" -> s3Properties.getBoardFilePath();
             default -> "temp/";

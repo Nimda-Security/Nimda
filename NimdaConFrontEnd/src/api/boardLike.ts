@@ -114,6 +114,7 @@ export interface LikedBoard {
   filepath?: string;
   authorNickname?: string;
   authorProfileImage?: string;
+  authorProfileDecoration?: string;
 }
 
 export const getLikedBoardsAPI = async (): Promise<LikedBoard[]> => {
@@ -142,6 +143,7 @@ export const getLikedBoardsAPI = async (): Promise<LikedBoard[]> => {
           filepath: b.filepath as string | undefined,
           authorNickname: author?.nickname as string | undefined,
           authorProfileImage: author?.profileImage as string | undefined,
+          authorProfileDecoration: author?.profileDecoration as string | undefined,
         };
       });
     }

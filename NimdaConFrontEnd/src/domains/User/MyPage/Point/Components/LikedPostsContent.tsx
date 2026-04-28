@@ -106,6 +106,7 @@ const LikedPostsContent: React.FC = () => {
                 thumbnailUrl: board.filepath || undefined,
                 authorNickname: board.authorNickname,
                 authorProfileImage: board.authorProfileImage,
+                authorProfileDecoration: board.authorProfileDecoration,
               }}
               checked={false}
               onToggle={() => {}}

@@ -24,6 +24,7 @@ public class CommentResponse {
     private Long parentId;
     private String authorName;
     private String authorProfileImage;
+    private String authorProfileDecoration;
     private STATUS status;
     private String context;
     private String createdAt;
@@ -58,6 +59,7 @@ public class CommentResponse {
                 .parentId(comment.getParent() != null ? comment.getParent().getId() : null)
                 .authorName(displayName)
                 .authorProfileImage(isDeleted ? null : comment.getAuthor().getProfileImage())
+                .authorProfileDecoration(isDeleted ? null : comment.getAuthor().getProfileDecoration())
                 .status(comment.getStatus())
                 .context(displayContext)
                 .createdAt(formatDateTime(comment.getCreatedAt()))
@@ -80,6 +82,7 @@ public class CommentResponse {
                 .parentId(comment.getParent() != null ? comment.getParent().getId() : null)
                 .authorName(comment.getAuthor().getNickname())
                 .authorProfileImage(comment.getAuthor().getProfileImage())
+                .authorProfileDecoration(comment.getAuthor().getProfileDecoration())
                 .status(comment.getStatus())
                 .context(comment.getContext())
                 .createdAt(formatDateTime(comment.getCreatedAt()))
@@ -101,6 +104,7 @@ public class CommentResponse {
                 .parentId(comment.getParent() != null ? comment.getParent().getId() : null)
                 .authorName(comment.getAuthor().getNickname())
                 .authorProfileImage(comment.getAuthor().getProfileImage())
+                .authorProfileDecoration(comment.getAuthor().getProfileDecoration())
                 .status(comment.getStatus())
                 .context(comment.getContext())
                 .createdAt(formatDateTime(comment.getCreatedAt()))

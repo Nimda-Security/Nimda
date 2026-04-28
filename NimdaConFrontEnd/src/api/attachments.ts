@@ -96,7 +96,7 @@ export type PresignedBoardUploadResult = {
  * - Content-Type은 서명에 포함하지 않음: 클라이언트가 PUT 시 file.type을 보내면 S3가 해당 타입으로 저장.
  */
 export const requestPresignedUpload = async (
-  type: 'board' | 'file' | 'profile',
+  type: 'board' | 'file' | 'profile' | 'profile-decoration',
   fileName: string
 ): Promise<{ ok: true; data: PresignedBoardUploadResult } | { ok: false; message: string }> => {
   const params = new URLSearchParams();

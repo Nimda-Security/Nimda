@@ -11,6 +11,7 @@ export interface ContentListItemData {
   thumbnailUrl?: string;
   authorNickname?: string;
   authorProfileImage?: string;
+  authorProfileDecoration?: string;
 }
 
 interface ContentListItemProps {
@@ -153,6 +154,7 @@ const ContentListItem: React.FC<ContentListItemProps> = ({
             <div className="w-[24px] h-[24px] rounded-full flex-shrink-0">
               <Avatar
                 src={item.authorProfileImage}
+                decorationKey={item.authorProfileDecoration}
                 size={24}
                 className="w-full h-full object-cover rounded-full"
               />

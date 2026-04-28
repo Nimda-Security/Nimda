@@ -7,6 +7,7 @@ import lombok.NoArgsConstructor;
 import lombok.Setter;
 
 import java.time.LocalDateTime;
+import java.util.List;
 
 /**
  * 마이페이지 응답 DTO
@@ -30,6 +31,8 @@ public class MyPageResponseDTO {
     private String birth;
     private String studentNum;
     private String profileImage;
+    private String profileDecoration;
+    private List<String> roles;
     private LocalDateTime createdAt;
     private LocalDateTime updatedAt;
     private boolean emailHide;

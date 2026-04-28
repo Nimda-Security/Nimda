@@ -358,6 +358,7 @@ function BoardDetailPage() {
           <div className="board-detail__meta">
             <Avatar
               src={board.author?.profileImage}
+              decorationKey={board.author?.profileDecoration}
               size={40}
               className="board-detail__avatar"
             />

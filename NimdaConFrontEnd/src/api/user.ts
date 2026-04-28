@@ -5,6 +5,7 @@ const API_BASE_URL = '/api';
 export interface UserPublicProfile {
   nickname: string;
   profileImage?: string | null;
+  profileDecoration?: string | null;
   bojId?: string | null;
   major?: string | null;
   createdAt?: string;
@@ -54,6 +55,7 @@ export interface LikedBoard {
   filepath?: string;
   authorNickname?: string;
   authorProfileImage?: string;
+  authorProfileDecoration?: string;
 }
 
 export async function getUserLikedBoardsByNickname(nickname: string): Promise<LikedBoard[]> {
@@ -73,6 +75,7 @@ export async function getUserLikedBoardsByNickname(nickname: string): Promise<Li
         filepath: b.filepath as string | undefined,
         authorNickname: author?.nickname as string | undefined,
         authorProfileImage: author?.profileImage as string | undefined,
+        authorProfileDecoration: author?.profileDecoration as string | undefined,
       };
     });
   }
