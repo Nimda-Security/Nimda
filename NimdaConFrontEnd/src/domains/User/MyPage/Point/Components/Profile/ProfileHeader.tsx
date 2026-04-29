@@ -63,13 +63,18 @@ const ProfileHeader: React.FC<ProfileHeaderProps> = ({
     const loadDecorations = async () => {
       const result = await getProfileDecorationsAPI();
       if (result.success && result.decorations.length > 0) {
-        setDecorationOptions(result.decorations);
-        setProfileDecorationOptions(result.decorations);
+        const roles = new Set<string>(userInfo?.roles ?? []);
+        const availableDecorations = result.decorations.filter(
+          (decoration) =>
+            !decoration.requiredRole || roles.has(decoration.requiredRole)
+        );
+        setDecorationOptions(availableDecorations);
+        setProfileDecorationOptions(availableDecorations);
       }
     };
 
     void loadDecorations();
-  }, [showDecorationModal]);
+  }, [showDecorationModal, userInfo?.roles]);
 
   useEffect(() => {
     if (!showAvatarMenu) return;

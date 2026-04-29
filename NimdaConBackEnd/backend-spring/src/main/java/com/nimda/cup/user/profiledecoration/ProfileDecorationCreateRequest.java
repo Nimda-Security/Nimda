@@ -1,9 +1,7 @@
-package com.nimda.cite.domain.profiledecoration.dto;
+package com.nimda.cup.user.profiledecoration;
 
 import lombok.Getter;
 import lombok.Setter;
-
-import java.util.List;
 
 @Getter
 @Setter
@@ -12,5 +10,4 @@ public class ProfileDecorationCreateRequest {
     private String label;
     private String filePath;
     private String requiredRole;
-    private List<String> requiredRoles;
 }

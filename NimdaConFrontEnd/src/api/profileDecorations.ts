@@ -8,7 +8,6 @@ export interface ProfileDecorationOption {
   key: string;
   label: string;
   src: string;
-  requiredRoles?: string[];
   requiredRole?: string | null;
   active?: boolean;
 }

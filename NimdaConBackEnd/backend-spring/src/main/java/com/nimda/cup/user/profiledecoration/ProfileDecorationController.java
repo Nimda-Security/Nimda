@@ -1,22 +1,16 @@
-package com.nimda.cite.domain.profiledecoration.controller;
+package com.nimda.cup.user.profiledecoration;
 
 import com.nimda.cite.common.response.ApiResponse;
 import com.nimda.cite.common.s3.S3Service;
-import com.nimda.cite.domain.profiledecoration.dto.ProfileDecorationCreateRequest;
-import com.nimda.cite.domain.profiledecoration.entity.ProfileDecoration;
-import com.nimda.cite.domain.profiledecoration.service.ProfileDecorationService;
-import com.nimda.cite.user.security.CustomUserDetails;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
-import org.springframework.security.core.annotation.AuthenticationPrincipal;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.PathVariable;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
+
+import java.net.URI;
+import java.util.Map;
 
 @RestController
 @RequiredArgsConstructor
@@ -28,9 +22,11 @@ public class ProfileDecorationController {
     private S3Service s3Service;
 
     @GetMapping("/api/profile-decorations")
-    public ResponseEntity<?> getAvailableDecorations(@AuthenticationPrincipal CustomUserDetails userDetails) {
+    public ResponseEntity<?> getActiveDecorations() {
         return ApiResponse.ok(
-                service.getAvailableDecorations(userDetails == null ? null : userDetails.getUser())
+                service.getActiveDecorations().stream()
+                        .map(ProfileDecorationDto::from)
+                        .toList()
         ).toResponse();
     }
 
@@ -57,13 +53,18 @@ public class ProfileDecorationController {
 
     @GetMapping("/api/admin/profile-decorations")
     public ResponseEntity<?> getAdminDecorations() {
-        return ApiResponse.ok(service.getAllDecorations()).toResponse();
+        return ApiResponse.ok(
+                service.getAllDecorations().stream()
+                        .map(ProfileDecorationDto::from)
+                        .toList()
+        ).toResponse();
     }
 
     @PostMapping("/api/admin/profile-decorations")
     public ResponseEntity<?> createDecoration(@RequestBody ProfileDecorationCreateRequest request) {
         try {
-            return ApiResponse.ok("프로필 배지가 등록되었습니다.", service.create(request)).toResponse();
+            ProfileDecoration decoration = service.create(request);
+            return ApiResponse.ok("프로필 배지가 등록되었습니다.", ProfileDecorationDto.from(decoration)).toResponse();
         } catch (IllegalArgumentException e) {
             return ApiResponse.fail(e.getMessage()).toResponse(HttpStatus.BAD_REQUEST);
         }

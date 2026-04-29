@@ -2,11 +2,12 @@ package com.nimda.cite.user.service;
 
 import com.nimda.cite.domain.point.entity.UserBalance;
 import com.nimda.cite.domain.point.repositroy.UserBalanceRepository;
-import com.nimda.cite.domain.profiledecoration.service.ProfileDecorationService;
 import com.nimda.cite.user.dto.LoginResponseDTO;
 import com.nimda.cite.user.entity.User;
 import com.nimda.cite.user.enums.ApprovalStatus;
 import com.nimda.cite.user.exception.UserNotApprovedException;
+import com.nimda.cup.user.profiledecoration.ProfileDecoration;
+import com.nimda.cup.user.profiledecoration.ProfileDecorationRepository;
 import com.nimda.cite.common.util.JwtUtil;
 import com.nimda.cite.user.repository.UserRepository;
 import com.nimda.cite.user.security.CustomUserDetails;
@@ -38,7 +39,7 @@ public class AuthService {
     @Autowired
     private UserRepository userRepository;
     @Autowired
-    private ProfileDecorationService profileDecorationService;
+    private ProfileDecorationRepository profileDecorationRepository;
 
     /**
      * 사용자 인증
@@ -193,9 +194,23 @@ public class AuthService {
         }
 
         String decorationKey = profileDecorationKey.trim();
-        profileDecorationService.validateUsableDecoration(user, decorationKey);
+        ProfileDecoration decoration = profileDecorationRepository.findByKey(decorationKey)
+                .orElseThrow(() -> new IllegalArgumentException("존재하지 않는 프로필 장식입니다."));
+        if (!decoration.isActive()) {
+            throw new IllegalArgumentException("사용할 수 없는 프로필 장식입니다.");
+        }
 
-        user.setProfileDecoration(decorationKey);
+        String requiredRole = decoration.getRequiredRole();
+        if (requiredRole != null && !requiredRole.isBlank()) {
+            boolean allowed = user.getAuthorities().stream()
+                    .anyMatch(authority -> requiredRole.equals(authority.getAuthorityName()));
+            if (!allowed) {
+                throw new SecurityException("이 프로필 장식을 사용할 권한이 없습니다.");
+            }
+        }
+
+        user.setProfileDecoration(
+                decorationKey);
         return user;
     }
 
