@@ -1,5 +1,6 @@
 package com.nimda.cite.common.s3;
 
+import com.nimda.cite.domain.attachment.service.AttachmentService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnBean;
 import org.springframework.stereotype.Service;
@@ -14,7 +15,6 @@ import java.util.Set;
 import java.util.UUID;
 @Service
 @RequiredArgsConstructor
-@ConditionalOnBean(S3Presigner.class)
 public class S3Service {
 
     private final S3Presigner s3Presigner;
@@ -33,7 +33,7 @@ public class S3Service {
         String ext = extractExt(fileName);
         boolean allowed = "profile-decoration".equals(type)
                 ? Set.of("svg", "png", "jpg", "jpeg", "webp").contains(ext)
-                : com.nimda.cite.attachment.service.AttachmentService.isAllowedExtension(ext);
+                : AttachmentService.isAllowedExtension(ext);
         if (!allowed) {
             throw new IllegalArgumentException("허용되지 않는 파일 형식입니다: " + ext);
         }
