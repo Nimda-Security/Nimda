@@ -1,4 +1,4 @@
-package com.nimda.cup.user.profiledecoration;
+package com.nimda.cite.domain.profiledecoration;
 
 import lombok.Builder;
 import lombok.Getter;
@@ -18,7 +18,7 @@ public class ProfileDecorationDto {
                 .id(decoration.getId())
                 .key(decoration.getKey())
                 .label(decoration.getLabel())
-                .src("/api/profile-decorations/" + decoration.getKey() + "/image")
+                .src("/api/cite/profile-decorations/" + decoration.getKey() + "/image")
                 .requiredRole(decoration.getRequiredRole())
                 .active(decoration.isActive())
                 .build();

@@ -1,4 +1,4 @@
-package com.nimda.cup.user.profiledecoration;
+package com.nimda.cite.domain.profiledecoration;
 
 import lombok.Getter;
 import lombok.Setter;

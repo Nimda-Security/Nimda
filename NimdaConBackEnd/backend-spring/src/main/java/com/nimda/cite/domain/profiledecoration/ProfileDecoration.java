@@ -1,6 +1,6 @@
-package com.nimda.cup.user.profiledecoration;
+package com.nimda.cite.domain.profiledecoration;
 
-import com.nimda.cup.common.entity.BaseTimeEntity;
+import com.nimda.cite.common.entity.BaseTimeEntity;
 import jakarta.persistence.*;
 import lombok.AccessLevel;
 import lombok.Getter;

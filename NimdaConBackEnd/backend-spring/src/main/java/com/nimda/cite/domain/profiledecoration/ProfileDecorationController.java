@@ -1,19 +1,16 @@
-package com.nimda.cup.user.profiledecoration;
+package com.nimda.cite.domain.profiledecoration;
 
 import com.nimda.cite.common.response.ApiResponse;
 import com.nimda.cite.common.s3.S3Service;
-import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
-import java.net.URI;
-import java.util.Map;
-
 @RestController
-@RequiredArgsConstructor
+@RequestMapping("/api/cite")
 public class ProfileDecorationController {
 
     private final ProfileDecorationService service;
@@ -21,7 +18,11 @@ public class ProfileDecorationController {
     @Autowired(required = false)
     private S3Service s3Service;
 
-    @GetMapping("/api/profile-decorations")
+    public ProfileDecorationController(ProfileDecorationService profileDecorationService) {
+        this.service = profileDecorationService;
+    }
+
+    @GetMapping("/profile-decorations")
     public ResponseEntity<?> getActiveDecorations() {
         return ApiResponse.ok(
                 service.getActiveDecorations().stream()
@@ -30,7 +31,7 @@ public class ProfileDecorationController {
         ).toResponse();
     }
 
-    @GetMapping("/api/profile-decorations/{key}/image")
+    @GetMapping("/profile-decorations/{key}/image")
     public ResponseEntity<?> getDecorationImage(@PathVariable String key) {
         ProfileDecoration decoration = service.getByKey(key);
         String filePath = decoration.getFilePath();
@@ -51,7 +52,8 @@ public class ProfileDecorationController {
                 .build();
     }
 
-    @GetMapping("/api/admin/profile-decorations")
+    @PreAuthorize("hasRole('ADMIN')")
+    @GetMapping("/admin/profile-decorations")
     public ResponseEntity<?> getAdminDecorations() {
         return ApiResponse.ok(
                 service.getAllDecorations().stream()
@@ -60,7 +62,8 @@ public class ProfileDecorationController {
         ).toResponse();
     }
 
-    @PostMapping("/api/admin/profile-decorations")
+    @PreAuthorize("hasRole('ADMIN')")
+    @PostMapping("/admin/profile-decorations")
     public ResponseEntity<?> createDecoration(@RequestBody ProfileDecorationCreateRequest request) {
         try {
             ProfileDecoration decoration = service.create(request);
