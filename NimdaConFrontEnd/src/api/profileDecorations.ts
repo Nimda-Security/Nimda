@@ -28,7 +28,7 @@ export const getProfileDecorationsAPI = async (): Promise<{
   decorations: ProfileDecorationOption[];
 }> => {
   try {
-    const response = await fetch('/api/profile-decorations', {
+    const response = await fetch('/api/cite/profile-decorations', {
       method: 'GET',
       credentials: 'include',
     });
@@ -54,7 +54,7 @@ export const getProfileDecorationsAPI = async (): Promise<{
 
 export const getAdminProfileDecorationsAPI = async () => {
   try {
-    const response = await fetch('/api/admin/profile-decorations', {
+    const response = await fetch('/api/cite/admin/profile-decorations', {
       method: 'GET',
       credentials: 'include',
     });
@@ -88,7 +88,7 @@ export const createProfileDecorationAPI = async ({
   filePath: string;
 }) => {
   try {
-    const response = await fetch('/api/admin/profile-decorations', {
+    const response = await fetch('/api/cite/admin/profile-decorations', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       credentials: 'include',

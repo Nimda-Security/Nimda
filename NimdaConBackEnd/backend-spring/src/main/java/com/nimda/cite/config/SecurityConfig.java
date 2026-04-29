@@ -84,10 +84,10 @@ public class SecurityConfig {
 
                         // [우선순위 3] 비로그인 허용 (Public API - 정보성 데이터)
                         // 메인 페이지 구성에 필요한 기초 정보들은 로그인 없이 GET 허용
-                        .requestMatchers(HttpMethod.GET, "/api/profile-decorations/**").permitAll()
                         .requestMatchers(HttpMethod.GET, "/api/cite/attendance/today").permitAll()
                         .requestMatchers(HttpMethod.GET, "/api/cite/category/**").permitAll()
                         .requestMatchers(HttpMethod.GET, "/api/cite/attachments/*/download-url").permitAll()
+                        .requestMatchers(HttpMethod.GET, "/api/cite/profile-decorations/**").permitAll()
 
                         // [우선순위 4] 인증 필수 API (로그인하지 않으면 접근 불가)
                         // 게시판 조회(GET)를 포함한 모든 게시판 활동은 인증 필요
@@ -111,6 +111,7 @@ public class SecurityConfig {
 
                         // [우선순위 5] 관리자(ADMIN) 전용 API
                         .requestMatchers("/api/admin/**").hasRole("ADMIN")
+                        .requestMatchers("/api/cite/admin/profile-decorations/**").hasRole("ADMIN")
                         .requestMatchers(HttpMethod.DELETE, "/api/users/**").hasRole("ADMIN")
                         .requestMatchers(HttpMethod.PUT, "/api/users/*/role").hasRole("ADMIN")
                         .requestMatchers(HttpMethod.GET, "/api/groups", "/api/cite/category/all").hasRole("ADMIN")
