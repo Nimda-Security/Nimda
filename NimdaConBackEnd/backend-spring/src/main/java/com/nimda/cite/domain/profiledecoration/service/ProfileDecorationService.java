@@ -65,7 +65,8 @@ public class ProfileDecorationService {
         List<String> authorityNames = getAuthorityNames(user);
         boolean hasRoleRestriction = profileDecorationRoleRepository.existsByDecoration(decoration);
         boolean allowedByRole = !hasRoleRestriction
-                || profileDecorationRoleRepository.existsByDecorationAndAuthorityNameIn(decoration, authorityNames);
+                || (!authorityNames.isEmpty()
+                && profileDecorationRoleRepository.existsByDecorationAndAuthorityNameIn(decoration, authorityNames));
         boolean ownedByUser = userProfileDecorationRepository.existsByUserIdAndDecoration(user.getId(), decoration);
 
         if (!allowedByRole && !ownedByUser) {
@@ -138,7 +139,6 @@ public class ProfileDecorationService {
 
     private List<String> normalizeRoles(ProfileDecorationCreateRequest request) {
         Set<String> roles = new LinkedHashSet<>();
-        addRole(roles, request.getRequiredRole());
         if (request.getRequiredRoles() != null) {
             request.getRequiredRoles().forEach(role -> addRole(roles, role));
         }

@@ -9,7 +9,6 @@ export interface ProfileDecorationOption {
   label: string;
   src: string;
   requiredRoles?: string[];
-  requiredRole?: string | null;
   active?: boolean;
 }
 
@@ -80,12 +79,12 @@ export const getAdminProfileDecorationsAPI = async () => {
 export const createProfileDecorationAPI = async ({
   key,
   label,
-  requiredRole,
+  requiredRoles,
   filePath,
 }: {
   key: string;
   label: string;
-  requiredRole?: string | null;
+  requiredRoles?: string[];
   filePath: string;
 }) => {
   try {
@@ -93,7 +92,7 @@ export const createProfileDecorationAPI = async ({
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       credentials: 'include',
-      body: JSON.stringify({ key, label, requiredRole, filePath }),
+      body: JSON.stringify({ key, label, requiredRoles: requiredRoles ?? [], filePath }),
     });
     const result = await parseJsonSafe(response);
     if (response.ok && result?.success) {

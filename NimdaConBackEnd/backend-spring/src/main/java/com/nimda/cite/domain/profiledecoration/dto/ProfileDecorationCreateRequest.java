@@ -11,6 +11,5 @@ public class ProfileDecorationCreateRequest {
     private String key;
     private String label;
     private String filePath;
-    private String requiredRole;
     private List<String> requiredRoles;
 }

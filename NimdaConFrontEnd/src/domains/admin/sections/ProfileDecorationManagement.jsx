@@ -70,7 +70,7 @@ const ProfileDecorationManagement = () => {
       const created = await createProfileDecorationAPI({
         key: key.trim(),
         label: label.trim(),
-        requiredRole: requiredRole.trim() || null,
+        requiredRoles: requiredRole.trim() ? [requiredRole.trim()] : [],
         filePath: upload.data.key,
       });
       if (!created.success) {
