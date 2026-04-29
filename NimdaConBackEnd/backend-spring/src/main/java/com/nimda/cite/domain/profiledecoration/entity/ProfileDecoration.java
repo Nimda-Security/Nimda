@@ -1,7 +1,12 @@
-package com.nimda.cup.user.profiledecoration;
+package com.nimda.cite.domain.profiledecoration.entity;
 
-import com.nimda.cup.common.entity.BaseTimeEntity;
-import jakarta.persistence.*;
+import com.nimda.cite.common.entity.BaseTimeEntity;
+import jakarta.persistence.Column;
+import jakarta.persistence.Entity;
+import jakarta.persistence.GeneratedValue;
+import jakarta.persistence.GenerationType;
+import jakarta.persistence.Id;
+import jakarta.persistence.Table;
 import lombok.AccessLevel;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
@@ -25,9 +30,6 @@ public class ProfileDecoration extends BaseTimeEntity {
     @Column(name = "file_path", nullable = false, length = 500)
     private String filePath;
 
-    @Column(name = "required_role", length = 50)
-    private String requiredRole;
-
     @Column(nullable = false)
     private boolean active = true;
 
@@ -37,10 +39,9 @@ public class ProfileDecoration extends BaseTimeEntity {
         this.filePath = filePath;
     }
 
-    public void update(String label, String filePath, String requiredRole, boolean active) {
+    public void update(String label, String filePath, boolean active) {
         this.label = label;
         this.filePath = filePath;
-        this.requiredRole = requiredRole;
         this.active = active;
     }
 }

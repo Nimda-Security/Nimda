@@ -206,9 +206,9 @@ const ProfileDecorationManagement = () => {
                 <p style={{ fontSize: '12px', color: '#8e8e8e' }}>
                   {decoration.key}
                 </p>
-                {decoration.requiredRole && (
+                {decoration.requiredRoles?.length > 0 && (
                   <p style={{ fontSize: '12px', color: '#d97399', marginTop: '6px' }}>
-                    {decoration.requiredRole}
+                    {decoration.requiredRoles.join(', ')}
                   </p>
                 )}
               </div>
