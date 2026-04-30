@@ -2,40 +2,32 @@ name: CI Pipeline
 
 on:
   push:
-    branches: [ main, develop, be ]  # 이 브랜치들에 코드를 푸시하면 실행
+    branches: [ main, develop, be ]
   pull_request:
-    branches: [ main, develop ]      # PR을 보낼 때도 실행
+    branches: [ main, develop ]
 
-# 작업들 정의
 jobs:
   build:
     name: Build and Test
-    runs-on: ubuntu-latest  # Ubuntu 서버에서 실행
-    
+    runs-on: ubuntu-latest
+
     steps:
-      # 1단계: 코드 가져오기
       - name: Checkout code
         uses: actions/checkout@v4
-        # GitHub 저장소의 코드를 가져옵니다
-        
-      # 2단계: Java 17 설치
+
       - name: Set up JDK 17
         uses: actions/setup-java@v4
         with:
           java-version: '17'
           distribution: 'temurin'
-          # 프로젝트가 Java 17을 사용하므로 설치합니다
-          
-      # 3단계: Maven 의존성 캐싱 (빌드 속도 향상)
+
       - name: Cache Maven dependencies
         uses: actions/cache@v4
         with:
           path: ~/.m2
           key: ${{ runner.os }}-m2-${{ hashFiles('**/pom.xml') }}
           restore-keys: ${{ runner.os }}-m2
-          # Maven 라이브러리를 캐시해서 다음 빌드가 더 빠릅니다
-          
-      # 4단계: Maven으로 빌드 및 테스트 (S3: application.yml의 ${AWS_S3_*} 와 Spring relaxed binding 일치)
+
       - name: Build and Test with Maven
         working-directory: NimdaConBackEnd/backend-spring
         run: mvn clean package
@@ -51,83 +43,62 @@ jobs:
           AWS_S3_SECRET_KEY: ${{ secrets.AWS_SECRET_KEY }}
           AWS_S3_BUCKET: ${{ secrets.AWS_S3_BUCKET }}
           AWS_S3_REGION: ${{ secrets.AWS_REGION }}
-        # clean: 이전 빌드 파일 삭제
-        # package: 테스트 실행 후 JAR 파일 생성
-        # 테스트가 없으면 자동으로 건너뜀
-        
-      # 6단계: 빌드 결과물(JAR) 저장
+
       - name: Upload JAR artifact
         uses: actions/upload-artifact@v4
         with:
           name: jar-file
           path: NimdaConBackEnd/backend-spring/target/*.jar
           retention-days: 7
-          # 빌드된 JAR 파일을 저장해두면 나중에 다운로드 가능합니다
-          
-      # 7단계: Docker 이미지 빌드
+
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v3
-        # Docker 빌드를 위한 최적화된 빌드 환경 설정
-        
-      # 8단계: Docker 이미지 빌드
+
       - name: Build Docker image
         working-directory: NimdaConBackEnd/backend-spring
         run: |
           docker build -t xtkww971/nimda-backend:latest .
-          # Dockerfile을 사용하여 Docker 이미지를 빌드합니다
-          # Dockerfile이 backend-spring 디렉토리에 있으므로 해당 디렉토리에서 빌드
-          
-      # 8-1단계: Docker 이미지 정리 (GitHub Actions에서 사용하지 않는 이미지 삭제)
+
       - name: Clean up Docker images
         run: docker image prune -f
-        # 빌드 과정에서 생성된 중간 이미지나 사용하지 않는 이미지 정리
-          
-      # 9단계: Docker Hub에 로그인
+
       - name: Login to Docker Hub
         uses: docker/login-action@v3
         with:
           username: ${{ secrets.DOCKER_HUB_USERNAME }}
           password: ${{ secrets.DOCKER_HUB_PASSWORD }}
-          # GitHub Secrets에 저장된 Docker Hub 인증 정보 사용
-          # Secrets 설정: 저장소 Settings → Secrets and variables → Actions
-          
-      # 10단계: Docker 이미지를 Docker Hub에 푸시
+
       - name: Push Docker image
         run: docker push xtkww971/nimda-backend:latest
-        # 빌드된 Docker 이미지를 Docker Hub에 업로드합니다
-        # docker-compose.yml에서 이 이미지를 사용합니다
-        
-      # 11단계: 서버에 SSH로 접속하여 배포
+
+      # 11단계: 서버에 SSH로 접속하여 docker-compose.yml 생성 및 배포
       - name: Deploy to server
         run: |
           mkdir -p ~/.ssh
           echo "${{ secrets.SERVER_SSH_KEY }}" > ~/.ssh/deploy_key
           chmod 600 ~/.ssh/deploy_key
           ssh-keyscan -H ${{ secrets.SERVER_HOST }} >> ~/.ssh/known_hosts 2>/dev/null || true
+          
           ssh -i ~/.ssh/deploy_key -o StrictHostKeyChecking=no ${{ secrets.SERVER_USER }}@${{ secrets.SERVER_HOST }} "
-            cd ${{ secrets.SERVER_DEPLOY_PATH }} && 
-            echo '=== 기존 컨테이너 정리 ===' &&
-            docker-compose down || true &&
-            echo '=== 새로운 이미지 Pull ===' &&
-            docker-compose pull && 
-            echo '=== 컨테이너 시작 (최신 이미지 적용) ===' &&
-            docker-compose up -d --remove-orphans && 
-            echo '=== 사용하지 않는 이미지 정리 ===' &&
-            docker image prune -a -f &&
+            mkdir -p ${{ secrets.SERVER_DEPLOY_PATH }}
+            cd ${{ secrets.SERVER_DEPLOY_PATH }}
+
+            echo '=== docker-compose.yml 생성 중 ==='
+            cat << 'EOF' > docker-compose.yml
+            version: '3.8'
+            services:
+              nimda-backend:
+                image: xtkww971/nimda-backend:latest
+                container_name: nimda-backend
+                ports:
+                  - "8080:8080"
+                restart: always
+            EOF
+
+            echo '=== 배포 프로세스 시작 ==='
+            docker compose down || true
+            docker compose pull
+            docker compose up -d --remove-orphans
+            docker image prune -af
             echo '=== 배포 완료 ==='
           "
-
-# Secrets (저장소 Settings → Actions): DOCKER_HUB_*, SERVER_*, AWS_ACCESS_KEY, AWS_SECRET_KEY, AWS_S3_BUCKET, AWS_REGION 등
-
-# 자동 실행 작업 정리
-# 1. 코드 가져오기
-# 2. Java 17 설치
-# 3. Maven 의존성 캐싱
-# 4. Maven 빌드 및 테스트 -> JAR 파일 생성
-# 5. JAR 파일 저장
-# 6. Docker 이미지 빌드
-# 7. Docker 이미지 정리 (GitHub Actions)
-# 8. Docker Hub 로그인
-# 9. Docker Hub에 이미지 푸시
-# 10. 서버에 SSH 접속
-# 11. docker-compose pull & up (자동 배포) + 이미지 정리 (서버) 
