@@ -73,7 +73,7 @@ jobs:
       - name: Build Docker image
         working-directory: NimdaConBackEnd/backend-spring
         run: |
-          docker build -t novvvv/nimda-backend:latest .
+          docker build -t xtkww971/nimda-backend:latest .
           # Dockerfile을 사용하여 Docker 이미지를 빌드합니다
           # Dockerfile이 backend-spring 디렉토리에 있으므로 해당 디렉토리에서 빌드
           
@@ -93,7 +93,7 @@ jobs:
           
       # 10단계: Docker 이미지를 Docker Hub에 푸시
       - name: Push Docker image
-        run: docker push novvvv/nimda-backend:latest
+        run: docker push xtkww971/nimda-backend:latest
         # 빌드된 Docker 이미지를 Docker Hub에 업로드합니다
         # docker-compose.yml에서 이 이미지를 사용합니다
         
