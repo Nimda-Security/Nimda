@@ -38,9 +38,14 @@ public class SecurityConfig {
 
         configuration.setAllowedOriginPatterns(Arrays.asList(
                 "http://localhost:*",
+                "http://43.200.36.32:*",
+                "https://43.200.36.32:*",
                 "https://nimda.kr",
                 "https://*.nimda.kr",
-                "https://*.vercel.app"
+                "http://nimda.kr",
+                "http://*.nimda.kr",
+                "https://*.vercel.app",
+                "http://*.vercel.app"
         ));
 
         configuration.setAllowedMethods(Arrays.asList("GET", "POST", "PUT", "DELETE", "PATCH", "OPTIONS"));

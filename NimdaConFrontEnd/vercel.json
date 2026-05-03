@@ -2,7 +2,7 @@
   "rewrites": [
     {
       "source": "/api/:path*",
-      "destination": "https://api.nimda.kr/api/:path*"
+      "destination": "http://43.200.36.32/api/:path*"
     },
     {
       "source": "/(.*)",
