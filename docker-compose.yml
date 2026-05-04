@@ -25,7 +25,7 @@ services:
 
   # Spring Boot 백엔드 서비스 - BLUE (일반 사용 중)
   backend-blue:
-    image: xtkww971/nimda-backend:latest
+    image: ${BACKEND_IMAGE_TAG:-xtkww971/nimda-backend:latest}
     container_name: nimda-backend-blue
     pull_policy: always  # 항상 최신 이미지 가져오기
     depends_on:
@@ -59,7 +59,7 @@ services:
 
   # Spring Boot 백엔드 서비스 - GREEN (배포용 대기)
   backend-green:
-    image: xtkww971/nimda-backend:latest
+    image: ${BACKEND_IMAGE_TAG:-xtkww971/nimda-backend:latest}
     container_name: nimda-backend-green
     pull_policy: always  # 항상 최신 이미지 가져오기
     depends_on:

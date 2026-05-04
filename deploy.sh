@@ -1,19 +1,19 @@
 #!/bin/bash
 
 # Nimda Zero-Downtime Deployment Script (Blue-Green Pattern)
-# 기존 서버를 내리지 않고 무중단 배포 수행
+# 고유 이미지 태그 및 완전한 Blue-Green 배포 구현
 
 set -e
 
-DOCKER_IMAGE="xtkww971/nimda-backend:latest"
-COMPOSE_FILE="docker-compose.yml"
+DOCKER_COMPOSE_FILE="docker-compose.yml"
 NGINX_CONF="nginx/nginx.conf"
-NGINX_TEMPLATE="nginx/nginx.conf.template"
 LOG_FILE="deployment.log"
-STATE_FILE=".deployment_state"
+
+# 기본값 (CI에서 전달하지 않으면 latest 사용)
+BACKEND_IMAGE_TAG="${BACKEND_IMAGE_TAG:-xtkww971/nimda-backend:latest}"
 
 # ============================================================
-# 로그 및 유틸 함수
+# 로그 함수
 # ============================================================
 
 log() {
@@ -29,17 +29,17 @@ success() {
     echo "[$(date +'%Y-%m-%d %H:%M:%S')] ✓ $1" | tee -a "$LOG_FILE"
 }
 
-# 활성 서비스 저장/조회
+# ============================================================
+# 현재 활성 서비스 확인
+# ============================================================
+
 get_active_service() {
-    if [ -f "$STATE_FILE" ]; then
-        cat "$STATE_FILE"
+    # nginx.conf에서 [ACTIVE_BACKEND_MARKER: XXX] 추출
+    if grep -q "\[ACTIVE_BACKEND_MARKER: green\]" "$NGINX_CONF"; then
+        echo "green"
     else
         echo "blue"
     fi
-}
-
-save_active_service() {
-    echo "$1" > "$STATE_FILE"
 }
 
 get_standby_service() {
@@ -78,6 +78,50 @@ health_check() {
 }
 
 # ============================================================
+# Nginx 설정 업데이트
+# ============================================================
+
+update_nginx_config() {
+    local new_active=$1
+    local new_upstream
+    
+    if [ "$new_active" = "blue" ]; then
+        new_upstream="backend-blue:8080"
+    else
+        new_upstream="backend-green:8080"
+    fi
+
+    log "Nginx 설정 업데이트: 활성 → $new_active"
+    
+    # 1. 마커 업데이트
+    sed -i "s/\[ACTIVE_BACKEND_MARKER: [a-z]*\]/[ACTIVE_BACKEND_MARKER: ${new_active}]/" "$NGINX_CONF"
+    
+    # 2. upstream backend_server 업데이트
+    sed -i "/# 활성 업스트림/,/}/s/server backend-[a-z]*:8080;/server ${new_upstream};/" "$NGINX_CONF"
+    
+    success "Nginx 설정 업데이트 완료"
+}
+
+# ============================================================
+# Nginx Reload
+# ============================================================
+
+reload_nginx() {
+    log "Nginx 설정 적용..."
+    
+    # 문법 검사
+    if ! docker exec nimda-nginx nginx -t 2>&1 | grep -q "successful"; then
+        error "Nginx 설정 문법 오류"
+    fi
+    
+    # 설정 재적용 (graceful reload)
+    docker exec nimda-nginx nginx -s reload
+    sleep 2
+    
+    success "Nginx 설정 적용 완료"
+}
+
+# ============================================================
 # 배포 함수
 # ============================================================
 
@@ -85,58 +129,57 @@ deploy_backend() {
     local active=$(get_active_service)
     local standby=$(get_standby_service "$active")
 
-    log "=================================================="
+    log "=========================================="
     log "🚀 Nimda 무중단 배포 시작"
+    log "   이미지: $BACKEND_IMAGE_TAG"
     log "   현재 활성: $active | 배포 대상: $standby"
-    log "=================================================="
+    log "=========================================="
 
-    # Step 1: 최신 이미지 다운로드 (캐시 무시하고 강제 새로고침)
+    # Step 1: 이미지 다운로드
     log ""
-    log "[Step 1/4] 최신 이미지 다운로드 (기존 캐시 제거)..."
+    log "[Step 1/5] 최신 이미지 다운로드..."
     
-    # 기존 이미지 강제 제거
-    docker rmi -f "$DOCKER_IMAGE" 2>/dev/null || true
-    log "  기존 캐시 제거 완료"
+    # docker-compose pull로 특정 서비스의 새 이미지 가져오기
+    export BACKEND_IMAGE_TAG
+    docker-compose -f "$DOCKER_COMPOSE_FILE" pull "backend-$standby" || error "이미지 다운로드 실패"
     
-    # 새 이미지 Pull (항상 최신 버전 가져오기)
-    docker pull "$DOCKER_IMAGE" || error "이미지 다운로드 실패"
-    log "  ✓ 새 이미지 다운로드 완료"
+    success "이미지 다운로드 완료: $BACKEND_IMAGE_TAG"
 
-    # Step 2: 대기 서비스 업데이트 (기존 active는 여전히 실행 중)
+    # Step 2: 대기 서비스 시작
     log ""
-    log "[Step 2/4] $standby 서비스에 새 이미지 배포..."
-    docker-compose -f "$COMPOSE_FILE" up -d "backend-$standby" || error "컨테이너 업데이트 실패"
+    log "[Step 2/5] $standby 서비스 시작 (새 이미지)..."
+    
+    docker-compose -f "$DOCKER_COMPOSE_FILE" up -d "backend-$standby" || error "컨테이너 시작 실패"
+    
+    success "$standby 서비스 시작 완료"
 
-    # Step 3: 헬스체크 (새로운 서비스가 정상 작동할 때까지 대기)
+    # Step 3: 헬스체크
     log ""
-    log "[Step 3/4] 새 서비스 헬스체크..."
+    log "[Step 3/5] 헬스체크..."
     health_check "$standby"
 
-    # Step 4: 트래픽 전환 (nginx 설정 재생성)
+    # Step 4: Nginx 설정 업데이트 및 Reload
     log ""
-    log "[Step 4/4] 트래픽 전환 ($active → $standby)..."
+    log "[Step 4/5] 트래픽 전환 ($active → $standby)..."
     
-    # Nginx 설정 파일 재생성
-    export ACTIVE_SERVICE=$standby
-    envsubst < "$NGINX_TEMPLATE" > "$NGINX_CONF" || error "Nginx 설정 생성 실패"
+    update_nginx_config "$standby"
+    reload_nginx
+
+    # Step 5: 정리
+    log ""
+    log "[Step 5/5] 불필요한 이미지 정리..."
     
-    # Nginx 재시작
-    docker-compose -f "$COMPOSE_FILE" restart nginx || error "Nginx 재시작 실패"
-    sleep 2
-
-    # 최종 확인
-    health_check "$standby"
-
-    # 상태 저장
-    save_active_service "$standby"
+    # 사용하지 않는 이미지 정리
+    docker image prune -af
+    
+    success "이미지 정리 완료"
 
     log ""
-    log "=================================================="
+    log "=========================================="
     success "무중단 배포 완료!"
     log "   활성 서비스: $standby (새 버전)"
     log "   대기 서비스: $active (이전 버전)"
-    log "   기존 사용자는 영향 없음 ✓"
-    log "=================================================="
+    log "=========================================="
 }
 
 # ============================================================
@@ -148,33 +191,33 @@ rollback() {
     local standby=$(get_standby_service "$active")
 
     log ""
-    log "=================================================="
-    log "⏮️  롤백 시작: $active → $standby"
-    log "=================================================="
+    log "=========================================="
+    log "⏮️  배포 롤백 시작"
+    log "   활성: $active → $standby"
+    log "=========================================="
 
-    # Step 1: 대기 서비스 재시작 (이미지 유지)
-    log "[Step 1/2] $standby 서비스 재시작..."
-    docker-compose -f "$COMPOSE_FILE" up -d "backend-$standby" || error "서비스 재시작 실패"
+    # 대기 서비스 재시작 (이미지 유지)
+    log "[Step 1/3] $standby 서비스 재시작..."
+    docker-compose -f "$DOCKER_COMPOSE_FILE" up -d "backend-$standby" || error "서비스 재시작 실패"
     health_check "$standby"
 
-    # Step 2: 트래픽 전환
-    log "[Step 2/2] 트래픽 전환..."
-    export ACTIVE_SERVICE=$standby
-    envsubst < "$NGINX_TEMPLATE" > "$NGINX_CONF"
-    docker-compose -f "$COMPOSE_FILE" restart nginx
-    sleep 2
+    # Nginx 설정 변경
+    log "[Step 2/3] 트래픽 전환..."
+    update_nginx_config "$standby"
+    reload_nginx
 
-    # 상태 저장
-    save_active_service "$standby"
+    # 정리
+    log "[Step 3/3] 불필요한 이미지 정리..."
+    docker image prune -af
 
     log ""
     success "롤백 완료!"
     log "   활성 서비스: $standby"
-    log "=================================================="
+    log "=========================================="
 }
 
 # ============================================================
-# 상태 조회 함수
+# 상태 조회
 # ============================================================
 
 status() {
@@ -183,12 +226,15 @@ status() {
 
     echo ""
     echo "📊 Nimda 배포 상태"
-    echo "=================================================="
+    echo "=========================================="
     echo "  활성 서비스  : $active"
     echo "  대기 서비스  : $standby"
     echo ""
     echo "📦 실행 중인 컨테이너:"
     docker ps --filter "name=nimda-backend" --format "table {{.Names}}\t{{.Status}}\t{{.Image}}"
+    echo ""
+    echo "🐳 로컬 이미지 목록:"
+    docker images | grep "xtkww971/nimda-backend" | head -5
     echo ""
 }
 
@@ -210,23 +256,31 @@ main() {
         *)
             cat << 'EOF'
 
-🚀 Nimda 무중단 배포 스크립트
+🚀 Nimda 무중단 배포 스크립트 (Blue-Green Pattern)
 
 사용법:
-  ./deploy.sh deploy    - 무중단 배포 (기존 서버 유지)
-  ./deploy.sh rollback  - 이전 버전으로 롤백
-  ./deploy.sh status    - 배포 상태 조회
+  ./deploy.sh deploy    - 무중단 배포
+  ./deploy.sh rollback  - 롤백
+  ./deploy.sh status    - 상태 조회
+
+환경변수:
+  BACKEND_IMAGE_TAG     - 배포할 이미지 (기본값: xtkww971/nimda-backend:latest)
+
+예시:
+  # 기본 배포 (latest 사용)
+  ./deploy.sh deploy
+
+  # 특정 이미지 버전으로 배포
+  BACKEND_IMAGE_TAG=xtkww971/nimda-backend:abc12345 ./deploy.sh deploy
 
 특징:
+  ✓ 고유 태그 지원 (commit hash)
   ✓ Blue-Green 배포 패턴
   ✓ 기존 서버 다운 없음
   ✓ 배포 중 트래픽 손실 없음
   ✓ 빠른 롤백 가능
-
-예시:
-  ./deploy.sh deploy    # 최신 이미지로 무중단 배포
-  ./deploy.sh status    # 현재 상태 확인
-  ./deploy.sh rollback  # 배포 실패 시 즉시 롤백
+  ✓ 자동 헬스체크
+  ✓ Nginx graceful reload
 
 EOF
             exit 1

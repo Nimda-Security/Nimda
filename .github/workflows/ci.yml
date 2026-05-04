@@ -54,17 +54,22 @@ jobs:
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v3
 
-      - name: Build Docker image
+      - name: Build Docker image with unique tag
         working-directory: NimdaConBackEnd/backend-spring
         run: |
-          docker build -t xtkww971/nimda-backend:latest .
+          # 고유 태그: commit hash + 짧은 번호
+          IMAGE_TAG="${{ github.sha }}"
+          echo "IMAGE_TAG=${IMAGE_TAG}" >> $GITHUB_ENV
+          echo "BUILD_TAG=xtkww971/nimda-backend:${IMAGE_TAG:0:8}"
+          
+          # 고유 태그로 빌드
+          docker build -t xtkww971/nimda-backend:${IMAGE_TAG:0:8} .
+          # latest도 함께 태깅
+          docker tag xtkww971/nimda-backend:${IMAGE_TAG:0:8} xtkww971/nimda-backend:latest
 
       - name: Clean up dangling Docker images
         run: |
-          # 사용되지 않는 이미지 정리
           docker image prune -f
-          # latest 태그가 여러 개인 경우 정리
-          docker image ls xtkww971/nimda-backend | awk 'NR>1 {print $3}' | sort -u | tail -n +2 | xargs -r docker rmi -f || true
 
       - name: Login to Docker Hub
         uses: docker/login-action@v3
@@ -73,11 +78,24 @@ jobs:
           password: ${{ secrets.DOCKER_HUB_PASSWORD }}
 
       - name: Push Docker image
-        run: docker push xtkww971/nimda-backend:latest
+        run: |
+          IMAGE_TAG="${{ github.sha }}"
+          SHORT_TAG=${IMAGE_TAG:0:8}
+          
+          # 고유 태그와 latest 모두 push
+          docker push xtkww971/nimda-backend:${SHORT_TAG}
+          docker push xtkww971/nimda-backend:latest
+          
+          echo "🐳 푸시된 이미지:"
+          echo "  - xtkww971/nimda-backend:${SHORT_TAG}"
+          echo "  - xtkww971/nimda-backend:latest"
 
       # Blue-Green 무중단 배포
       - name: Deploy to server (Zero-Downtime)
         run: |
+          IMAGE_TAG="${{ github.sha }}"
+          SHORT_TAG=${IMAGE_TAG:0:8}
+          
           mkdir -p ~/.ssh
           echo "${{ secrets.SERVER_SSH_KEY }}" > ~/.ssh/deploy_key
           chmod 600 ~/.ssh/deploy_key
@@ -88,21 +106,16 @@ jobs:
             
             echo '=========================================='
             echo '🚀 무중단 배포 시작'
+            echo '   이미지 태그: ${SHORT_TAG}'
             echo '=========================================='
             
-            # 기존 이미지 강제 제거 (캐시 방지)
-            docker rmi -f xtkww971/nimda-backend:latest 2>/dev/null || true
-            
-            # 배포 스크립트 실행
+            # 배포 스크립트 실행 (이미지 태그 전달)
             if [ -f 'deploy.sh' ]; then
               chmod +x deploy.sh
-              ./deploy.sh deploy
+              BACKEND_IMAGE_TAG='xtkww971/nimda-backend:${SHORT_TAG}' ./deploy.sh deploy
             else
               echo '❌ deploy.sh 파일을 찾을 수 없습니다'
-              echo '초기 배포를 수행합니다...'
-              docker-compose pull --no-parallel
-              docker-compose up -d backend-blue backend-green nginx mysql
-              docker image prune -af
+              exit 1
             fi
             
             echo '=========================================='
