@@ -23,10 +23,10 @@ services:
       timeout: 5s
       retries: 5
 
-  # Spring Boot 백엔드 서비스
-  backend:
+  # Spring Boot 백엔드 서비스 - BLUE (일반 사용 중)
+  backend-blue:
     image: xtkww971/nimda-backend:latest
-    container_name: nimda-backend
+    container_name: nimda-backend-blue
     depends_on:
       mysql:
         condition: service_healthy # MySQL이 준비될 때까지 대기
@@ -42,8 +42,7 @@ services:
       - SPRING_DATASOURCE_PASSWORD=${MYSQL_PASSWORD}
       # Spring Boot 포트 설정
       - SERVER_PORT=8080
-      # AWS S3 설정 —
-      # 오른쪽은 자바 코드에서 읽는 변수 / env에서 가지고 올 값
+      # AWS S3 설정
       - aws.s3.bucket=${AWS_S3_BUCKET}
       - aws.s3.region=${AWS_S3_REGION}
       - aws.s3.access-key=${AWS_S3_ACCESS_KEY}
@@ -51,13 +50,46 @@ services:
       # JWT 시크릿 (반드시 .env 파일에 안전한 값으로 설정)
       - JWT_SECRET=${JWT_SECRET}
     restart: always
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8080/api/health"]
+      interval: 10s
+      timeout: 5s
+      retries: 3
+
+  # Spring Boot 백엔드 서비스 - GREEN (배포용 대기)
+  backend-green:
+    image: xtkww971/nimda-backend:latest
+    container_name: nimda-backend-green
+    depends_on:
+      mysql:
+        condition: service_healthy
+    expose:
+      - "8080"
+    environment:
+      - TZ=Asia/Seoul
+      - SPRING_DATASOURCE_URL=jdbc:mysql://mysql:3306/${MYSQL_DATABASE}?useSSL=false&serverTimezone=Asia/Seoul&allowPublicKeyRetrieval=true
+      - SPRING_DATASOURCE_USERNAME=${MYSQL_USER}
+      - SPRING_DATASOURCE_PASSWORD=${MYSQL_PASSWORD}
+      - SERVER_PORT=8080
+      - aws.s3.bucket=${AWS_S3_BUCKET}
+      - aws.s3.region=${AWS_S3_REGION}
+      - aws.s3.access-key=${AWS_S3_ACCESS_KEY}
+      - aws.s3.secret-key=${AWS_S3_SECRET_KEY}
+      - JWT_SECRET=${JWT_SECRET}
+    restart: always
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8080/api/health"]
+      interval: 10s
+      timeout: 5s
+      retries: 3
 
   # Nginx 리버스 프록시 서비스
   nginx:
     image: nginx:alpine
     container_name: nimda-nginx
     depends_on:
-      - backend # 백엔드가 준비될 때까지 대기
+      - backend-blue # 백엔드가 준비될 때까지 대기
+      - backend-green
     ports:
       - "80:80" # HTTP
       - "443:443" # HTTPS
