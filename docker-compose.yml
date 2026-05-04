@@ -27,6 +27,7 @@ services:
   backend-blue:
     image: xtkww971/nimda-backend:latest
     container_name: nimda-backend-blue
+    pull_policy: always  # 항상 최신 이미지 가져오기
     depends_on:
       mysql:
         condition: service_healthy # MySQL이 준비될 때까지 대기
@@ -60,6 +61,7 @@ services:
   backend-green:
     image: xtkww971/nimda-backend:latest
     container_name: nimda-backend-green
+    pull_policy: always  # 항상 최신 이미지 가져오기
     depends_on:
       mysql:
         condition: service_healthy

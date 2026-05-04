@@ -90,10 +90,17 @@ deploy_backend() {
     log "   현재 활성: $active | 배포 대상: $standby"
     log "=================================================="
 
-    # Step 1: 최신 이미지 다운로드
+    # Step 1: 최신 이미지 다운로드 (캐시 무시하고 강제 새로고침)
     log ""
-    log "[Step 1/4] 최신 이미지 다운로드..."
+    log "[Step 1/4] 최신 이미지 다운로드 (기존 캐시 제거)..."
+    
+    # 기존 이미지 강제 제거
+    docker rmi -f "$DOCKER_IMAGE" 2>/dev/null || true
+    log "  기존 캐시 제거 완료"
+    
+    # 새 이미지 Pull (항상 최신 버전 가져오기)
     docker pull "$DOCKER_IMAGE" || error "이미지 다운로드 실패"
+    log "  ✓ 새 이미지 다운로드 완료"
 
     # Step 2: 대기 서비스 업데이트 (기존 active는 여전히 실행 중)
     log ""

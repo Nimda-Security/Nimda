@@ -59,8 +59,12 @@ jobs:
         run: |
           docker build -t xtkww971/nimda-backend:latest .
 
-      - name: Clean up Docker images
-        run: docker image prune -f
+      - name: Clean up dangling Docker images
+        run: |
+          # 사용되지 않는 이미지 정리
+          docker image prune -f
+          # latest 태그가 여러 개인 경우 정리
+          docker image ls xtkww971/nimda-backend | awk 'NR>1 {print $3}' | sort -u | tail -n +2 | xargs -r docker rmi -f || true
 
       - name: Login to Docker Hub
         uses: docker/login-action@v3
@@ -86,6 +90,9 @@ jobs:
             echo '🚀 무중단 배포 시작'
             echo '=========================================='
             
+            # 기존 이미지 강제 제거 (캐시 방지)
+            docker rmi -f xtkww971/nimda-backend:latest 2>/dev/null || true
+            
             # 배포 스크립트 실행
             if [ -f 'deploy.sh' ]; then
               chmod +x deploy.sh
@@ -93,7 +100,7 @@ jobs:
             else
               echo '❌ deploy.sh 파일을 찾을 수 없습니다'
               echo '초기 배포를 수행합니다...'
-              docker-compose pull
+              docker-compose pull --no-parallel
               docker-compose up -d backend-blue backend-green nginx mysql
               docker image prune -af
             fi
