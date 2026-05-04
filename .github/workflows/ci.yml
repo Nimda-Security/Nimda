@@ -71,8 +71,8 @@ jobs:
       - name: Push Docker image
         run: docker push xtkww971/nimda-backend:latest
 
-      # 11단계: 서버에 SSH로 접속하여 docker-compose.yml 생성 및 배포
-      - name: Deploy to server
+      # Blue-Green 무중단 배포
+      - name: Deploy to server (Zero-Downtime)
         run: |
           mkdir -p ~/.ssh
           echo "${{ secrets.SERVER_SSH_KEY }}" > ~/.ssh/deploy_key
@@ -80,25 +80,25 @@ jobs:
           ssh-keyscan -H ${{ secrets.SERVER_HOST }} >> ~/.ssh/known_hosts 2>/dev/null || true
           
           ssh -i ~/.ssh/deploy_key -o StrictHostKeyChecking=no ${{ secrets.SERVER_USER }}@${{ secrets.SERVER_HOST }} "
-            mkdir -p ${{ secrets.SERVER_DEPLOY_PATH }}
             cd ${{ secrets.SERVER_DEPLOY_PATH }}
-
-            echo '=== docker-compose.yml 생성 중 ==='
-            cat << 'EOF' > docker-compose.yml
-            version: '3.8'
-            services:
-              nimda-backend:
-                image: xtkww971/nimda-backend:latest
-                container_name: nimda-backend
-                ports:
-                  - "8080:8080"
-                restart: always
-            EOF
-
-            echo '=== 배포 프로세스 시작 ==='
-            docker compose down || true
-            docker compose pull
-            docker compose up -d --remove-orphans
-            docker image prune -af
-            echo '=== 배포 완료 ==='
+            
+            echo '=========================================='
+            echo '🚀 무중단 배포 시작'
+            echo '=========================================='
+            
+            # 배포 스크립트 실행
+            if [ -f 'deploy.sh' ]; then
+              chmod +x deploy.sh
+              ./deploy.sh deploy
+            else
+              echo '❌ deploy.sh 파일을 찾을 수 없습니다'
+              echo '초기 배포를 수행합니다...'
+              docker-compose pull
+              docker-compose up -d backend-blue backend-green nginx mysql
+              docker image prune -af
+            fi
+            
+            echo '=========================================='
+            echo '✓ 배포 완료'
+            echo '=========================================='
           "
