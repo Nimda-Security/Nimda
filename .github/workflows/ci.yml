@@ -128,8 +128,8 @@ jobs:
               export BACKEND_IMAGE_TAG='${BACKEND_IMAGE}'
               
               # docker-compose pull 및 서비스 업데이트
-              docker-compose pull backend-blue backend-green
-              docker-compose up -d backend-blue backend-green nginx mysql
+              docker compose pull backend-blue backend-green
+              docker compose up -d backend-blue backend-green nginx mysql
               
               echo '[Step 2/3] 헬스체크...'
               sleep 3
