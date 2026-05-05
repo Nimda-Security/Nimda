@@ -95,6 +95,7 @@ jobs:
         run: |
           IMAGE_TAG="${{ github.sha }}"
           SHORT_TAG=${IMAGE_TAG:0:8}
+          BACKEND_IMAGE="xtkww971/nimda-backend:${SHORT_TAG}"
           
           mkdir -p ~/.ssh
           echo "${{ secrets.SERVER_SSH_KEY }}" > ~/.ssh/deploy_key
@@ -102,7 +103,8 @@ jobs:
           ssh-keyscan -H ${{ secrets.SERVER_HOST }} >> ~/.ssh/known_hosts 2>/dev/null || true
           
           ssh -i ~/.ssh/deploy_key -o StrictHostKeyChecking=no ${{ secrets.SERVER_USER }}@${{ secrets.SERVER_HOST }} "
-            cd ${{ secrets.SERVER_DEPLOY_PATH }}
+            DEPLOY_PATH='${{ secrets.SERVER_DEPLOY_PATH }}'
+            cd \$DEPLOY_PATH
             
             echo '=========================================='
             echo '🚀 무중단 배포 시작'
@@ -111,11 +113,41 @@ jobs:
             
             # 배포 스크립트 실행 (이미지 태그 전달)
             if [ -f 'deploy.sh' ]; then
+              echo '[배포 방식] deploy.sh 사용'
               chmod +x deploy.sh
-              BACKEND_IMAGE_TAG='xtkww971/nimda-backend:${SHORT_TAG}' ./deploy.sh deploy
+              BACKEND_IMAGE_TAG='${BACKEND_IMAGE}' ./deploy.sh deploy || {
+                echo '❌ deploy.sh 실행 실패. 수동 배포로 전환합니다'
+                exit 1
+              }
             else
-              echo '❌ deploy.sh 파일을 찾을 수 없습니다'
-              exit 1
+              echo '[배포 방식] 수동 배포 (deploy.sh 미존재)'
+              echo ''
+              echo '[Step 1/3] 이미지 다운로드 및 컨테이너 업데이트...'
+              
+              # 환경변수 설정
+              export BACKEND_IMAGE_TAG='${BACKEND_IMAGE}'
+              
+              # docker-compose pull 및 서비스 업데이트
+              docker-compose pull backend-blue backend-green
+              docker-compose up -d backend-blue backend-green nginx mysql
+              
+              echo '[Step 2/3] 헬스체크...'
+              sleep 3
+              for i in {1..30}; do
+                if docker exec nimda-backend-blue curl -s -f http://localhost:8080/api/health > /dev/null 2>&1; then
+                  echo '✓ 헬스체크 성공'
+                  break
+                fi
+                if [ \$i -eq 30 ]; then
+                  echo '❌ 헬스체크 실패'
+                  exit 1
+                fi
+                sleep 1
+              done
+              
+              echo '[Step 3/3] 이미지 정리...'
+              docker image prune -af
+              echo '✓ 수동 배포 완료'
             fi
             
             echo '=========================================='
