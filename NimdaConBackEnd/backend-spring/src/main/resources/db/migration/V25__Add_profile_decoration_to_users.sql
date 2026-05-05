@@ -1,1 +1,0 @@
-ALTER TABLE users ADD COLUMN profile_decoration VARCHAR(100) NULL DEFAULT NULL;
