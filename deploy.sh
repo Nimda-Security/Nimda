@@ -219,7 +219,7 @@ deploy_backend() {
     
     # docker-compose pull로 특정 서비스의 새 이미지 가져오기
     export BACKEND_IMAGE_TAG
-    docker-compose -f "$DOCKER_COMPOSE_FILE" pull "backend-$standby" || error "이미지 다운로드 실패"
+    docker compose -f "$DOCKER_COMPOSE_FILE" pull "backend-$standby" || error "이미지 다운로드 실패"
     
     success "이미지 다운로드 완료: $BACKEND_IMAGE_TAG"
 
@@ -227,7 +227,7 @@ deploy_backend() {
     log ""
     log "[Step 2/5] $standby 서비스 시작 (새 이미지)..."
     
-    docker-compose -f "$DOCKER_COMPOSE_FILE" up -d "backend-$standby" || error "컨테이너 시작 실패"
+    docker compose -f "$DOCKER_COMPOSE_FILE" up -d "backend-$standby" || error "컨테이너 시작 실패"
     
     success "$standby 서비스 시작 완료"
 
@@ -276,7 +276,7 @@ rollback() {
 
     # 대기 서비스 재시작 (이미지 유지)
     log "[Step 1/3] $standby 서비스 재시작..."
-    docker-compose -f "$DOCKER_COMPOSE_FILE" up -d "backend-$standby" || error "서비스 재시작 실패"
+    docker compose -f "$DOCKER_COMPOSE_FILE" up -d "backend-$standby" || error "서비스 재시작 실패"
     health_check "$standby"
 
     # Nginx 설정 변경
