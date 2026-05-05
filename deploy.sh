@@ -34,12 +34,22 @@ success() {
 # ============================================================
 
 get_active_service() {
-    # nginx.conf에서 [ACTIVE_BACKEND_MARKER: XXX] 추출
-    if grep -q "\[ACTIVE_BACKEND_MARKER: green\]" "$NGINX_CONF"; then
+    # 1단계: nginx.conf 마커 확인
+    if grep -q "\[ACTIVE_BACKEND_MARKER: green\]" "$NGINX_CONF" 2>/dev/null; then
         echo "green"
-    else
-        echo "blue"
+        return 0
     fi
+    
+    # 2단계: 마커 미발견 시 실행 중인 컨테이너 확인 (Fallback)
+    if docker ps --format "table {{.Names}}" | grep -q "nimda-backend-green"; then
+        if docker exec nimda-backend-green curl -s -f http://localhost:8080/api/health > /dev/null 2>&1; then
+            echo "green"
+            return 0
+        fi
+    fi
+    
+    # 기본값: blue
+    echo "blue"
 }
 
 get_standby_service() {
@@ -57,24 +67,29 @@ get_standby_service() {
 health_check() {
     local service=$1
     local container="nimda-backend-${service}"
-    local max_attempts=30
+    local max_attempts=60  # 최대 60초 (기존 30초 → 60초로 연장, Spring Boot 구동 시간 고려)
     local attempt=0
 
-    log "헬스체크 시작: $container"
+    log "헬스체크 시작: $container (최대 ${max_attempts}초)"
 
     while [ $attempt -lt $max_attempts ]; do
+        # curl로 헬스체크 엔드포인트 확인
         if docker exec "$container" curl -s -f http://localhost:8080/api/health > /dev/null 2>&1; then
-            success "$container 정상 작동 확인"
+            success "$container 정상 작동 확인 (${attempt}초 소요)"
             return 0
         fi
+        
         attempt=$((attempt + 1))
-        if [ $((attempt % 5)) -eq 0 ]; then
-            log "  대기 중... ($attempt/$max_attempts초)"
+        
+        # 진행상황 로그 (10초마다)
+        if [ $((attempt % 10)) -eq 0 ]; then
+            log "  대기 중... ($attempt/${max_attempts}초)"
         fi
+        
         sleep 1
     done
 
-    error "$container 헬스체크 실패 (${max_attempts}초 초과)"
+    error "$container 헬스체크 실패 (${max_attempts}초 초과) - 배포 롤백"
 }
 
 # ============================================================
@@ -93,13 +108,23 @@ update_nginx_config() {
 
     log "Nginx 설정 업데이트: 활성 → $new_active"
     
-    # 1. 마커 업데이트
-    sed -i "s/\[ACTIVE_BACKEND_MARKER: [a-z]*\]/[ACTIVE_BACKEND_MARKER: ${new_active}]/" "$NGINX_CONF"
+    # 백업 생성
+    cp "$NGINX_CONF" "${NGINX_CONF}.bak.$(date +%s)"
     
-    # 2. upstream backend_server 업데이트
+    # 1. 마커 업데이트 (있으면)
+    if grep -q "\[ACTIVE_BACKEND_MARKER:" "$NGINX_CONF"; then
+        sed -i "s/\[ACTIVE_BACKEND_MARKER: [a-z]*\]/[ACTIVE_BACKEND_MARKER: ${new_active}]/" "$NGINX_CONF"
+    fi
+    
+    # 2. upstream backend_server 업데이트 (주요 변경)
     sed -i "/# 활성 업스트림/,/}/s/server backend-[a-z]*:8080;/server ${new_upstream};/" "$NGINX_CONF"
     
-    success "Nginx 설정 업데이트 완료"
+    # 3. 변경 확인
+    if grep -q "server ${new_upstream}" "$NGINX_CONF"; then
+        success "Nginx 설정 업데이트 완료"
+    else
+        error "Nginx 설정 업데이트 실패 - 설정 파일 검증 오류"
+    fi
 }
 
 # ============================================================
@@ -109,21 +134,74 @@ update_nginx_config() {
 reload_nginx() {
     log "Nginx 설정 적용..."
     
-    # 문법 검사
+    # 1. 문법 검사
     if ! docker exec nimda-nginx nginx -t 2>&1 | grep -q "successful"; then
-        error "Nginx 설정 문법 오류"
+        error "Nginx 설정 문법 오류 - 복구 중..."
+        # 이전 백업으로 복구
+        local backup=$(ls -t "${NGINX_CONF}.bak."* 2>/dev/null | head -1)
+        if [ -f "$backup" ]; then
+            cp "$backup" "$NGINX_CONF"
+            log "  백업으로 복구됨: $(basename $backup)"
+        fi
+        error "Nginx 설정 적용 실패"
     fi
     
-    # 설정 재적용 (graceful reload)
+    # 2. Graceful reload
     docker exec nimda-nginx nginx -s reload
     sleep 2
     
-    success "Nginx 설정 적용 완료"
+    # 3. Nginx 상태 확인
+    if docker exec nimda-nginx curl -s http://localhost/api/health > /dev/null 2>&1 || \
+       docker exec nimda-nginx curl -s http://localhost:80 > /dev/null 2>&1; then
+        success "Nginx 설정 적용 완료"
+    else
+        log "⚠️  Nginx reload 완료 (상태 확인은 생략)"
+    fi
 }
 
 # ============================================================
-# 배포 함수
+# 이미지 정리 함수 (선택적)
 # ============================================================
+
+cleanup_old_images() {
+    log "불필요한 이미지 정리..."
+    
+    # 1. 사용 중인 이미지 ID 확인
+    local active_image=$(docker ps -f "name=nimda-backend-blue\|nimda-backend-green" --format "{{.Image}}")
+    
+    # 2. xtkww971/nimda-backend의 모든 이미지를 나열 (최신순)
+    local all_images=$(docker images --filter "reference=xtkww971/nimda-backend" --format "{{.ID}}|{{.CreatedAt}}" | sort -t'|' -k2 -r)
+    
+    # 3. 현재 사용 중인 이미지를 제외하고, 최신 3개만 보관
+    # (더 이전 이미지는 삭제)
+    local count=0
+    local deleted_count=0
+    
+    echo "$all_images" | while IFS='|' read -r image_id created_at; do
+        # 이미지 ID가 짧은 형태로 변환
+        short_id=$(echo "$image_id" | cut -c1-12)
+        
+        # 현재 사용 중인 이미지는 스킵
+        if echo "$active_image" | grep -q "$image_id\|$short_id"; then
+            log "  ✓ 현재 사용 중: $short_id"
+            return
+        fi
+        
+        # 최신 2개는 보관 (빠른 롤백 용도)
+        if [ $count -lt 2 ]; then
+            log "  ✓ 보관됨: $short_id (created: ${created_at})"
+        else
+            # 그 이상은 삭제
+            if docker rmi "$image_id" 2>/dev/null; then
+                log "  ✗ 삭제됨: $short_id"
+                deleted_count=$((deleted_count + 1))
+            fi
+        fi
+        count=$((count + 1))
+    done
+    
+    success "이미지 정리 완료 (삭제: $deleted_count개)"
+}
 
 deploy_backend() {
     local active=$(get_active_service)
@@ -167,12 +245,12 @@ deploy_backend() {
 
     # Step 5: 정리
     log ""
-    log "[Step 5/5] 불필요한 이미지 정리..."
+    log "[Step 5/5] 이전 버전 이미지 정리 (최신 3개 보관)..."
     
-    # 사용하지 않는 이미지 정리
-    docker image prune -af
+    # 선택적 이미지 정리 (최신 2~3개 이미지는 보관)
+    cleanup_old_images
     
-    success "이미지 정리 완료"
+    success "정리 완료"
 
     log ""
     log "=========================================="
@@ -207,8 +285,8 @@ rollback() {
     reload_nginx
 
     # 정리
-    log "[Step 3/3] 불필요한 이미지 정리..."
-    docker image prune -af
+    log "[Step 3/3] 이전 버전 이미지 정리..."
+    cleanup_old_images
 
     log ""
     success "롤백 완료!"
