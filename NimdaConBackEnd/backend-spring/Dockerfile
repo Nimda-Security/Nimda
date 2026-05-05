@@ -17,18 +17,24 @@ WORKDIR /app
 
 # 필수 패키지 설치 (비대화형 모드)
 USER root
+
+# 1. 패키지 서버를 한국(카카오) 미러로 변경 (속도 하이패스)
+RUN sed -i 's/archive.ubuntu.com/mirror.kakao.com/g' /etc/apt/sources.list && \
+    sed -i 's/security.ubuntu.com/mirror.kakao.com/g' /etc/apt/sources.list
+
+# 2. 패키지 업데이트 및 설치
 RUN apt-get update && \
     apt-get install -y --no-install-recommends \
     g++ \
     build-essential \
     tzdata \
     curl && \
-    ln -snf /usr/share/zoneinfo/$TZ /etc/localtime && \
-    echo $TZ > /etc/timezone && \
+    # 시간대 설정
+    ln -snf /usr/share/zoneinfo/Asia/Seoul /etc/localtime && \
+    echo Asia/Seoul > /etc/timezone && \
     # 캐시 정리 (이미지 용량 감소)
     apt-get clean && \
     rm -rf /var/lib/apt/lists/* /var/cache/apt/* /tmp/* /var/tmp/*
-
 # Copy the built jar from the build stage
 COPY --from=build /app/target/*.jar app.jar
 
