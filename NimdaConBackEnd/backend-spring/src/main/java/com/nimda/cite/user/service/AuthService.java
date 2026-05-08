@@ -1,5 +1,7 @@
 package com.nimda.cite.user.service;
 
+import com.nimda.cite.Verfication.Service.VerificationService;
+import com.nimda.cite.aws.SES.MailService;
 import com.nimda.cite.domain.point.entity.UserBalance;
 import com.nimda.cite.domain.point.repositroy.UserBalanceRepository;
 import com.nimda.cite.user.dto.LoginResponseDTO;
@@ -40,6 +42,10 @@ public class AuthService {
     private UserRepository userRepository;
     @Autowired
     private ProfileDecorationRepository profileDecorationRepository;
+    @Autowired
+    private MailService mailService;
+    @Autowired
+    private VerificationService verificationService;
 
     /**
      * 사용자 인증
