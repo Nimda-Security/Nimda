@@ -1,6 +1,24 @@
 spring:
   application:
     name: nimda-cup
+    
+  # 이메일 설정 (Spring Mail)
+  mail:
+    host: ${MAIL_HOST:smtp.gmail.com}
+    port: ${MAIL_PORT:587}
+    username: ${MAIL_USERNAME}
+    password: ${MAIL_PASSWORD}
+    protocol: smtp
+    properties:
+      mail:
+        smtp:
+          auth: true
+          starttls:
+            enable: true
+            required: true
+          connectiontimeout: 5000
+          timeout: 5000
+          writetimeout: 5000
 
   datasource:
     url: ${SPRING_DATASOURCE_URL:jdbc:mysql://localhost:3306/nimda_con?useSSL=false&serverTimezone=Asia/Seoul&allowPublicKeyRetrieval=true}
@@ -92,7 +110,9 @@ aws:
     # 파일 크기 제한 
     max-file-size: 10485760 # 10mb
     allowed-image-types: jpg,jpeg,png,gif,webp # 허용 이미지 타입
-    allowed-file-types: pdf,doc,docx,xls,xlsx,zip  # 허용된 파일 타입 
+    allowed-file-types: pdf,doc,docx,xls,xlsx,zip  # 허용된 파일 타입
+
+
 
 
 logging:
