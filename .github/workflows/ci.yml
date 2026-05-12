@@ -83,17 +83,6 @@ jobs:
             mkdir -p ${{ secrets.SERVER_DEPLOY_PATH }}
             cd ${{ secrets.SERVER_DEPLOY_PATH }}
 
-            echo '=== docker-compose.yml 생성 중 ==='
-            cat << 'EOF' > docker-compose.yml
-            version: '3.8'
-            services:
-              nimda-backend:
-                image: xtkww971/nimda-backend:latest
-                container_name: nimda-backend
-                ports:
-                  - "8080:8080"
-                restart: always
-            EOF
 
             echo '=== 배포 프로세스 시작 ==='
             docker compose down || true
