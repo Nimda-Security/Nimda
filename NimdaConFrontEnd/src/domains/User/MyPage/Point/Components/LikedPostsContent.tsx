@@ -117,6 +117,9 @@ const LikedPostsContent: React.FC = () => {
         </div>
       </div>
 
+      <div className="h-[12px]" />
+      <div className="mt-[8px] h-[40px]" aria-hidden="true" />
+
       <div style={{ marginBottom: '24px' }}>
         <Pagination
           currentPage={currentPage}
