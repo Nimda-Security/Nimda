@@ -10,6 +10,7 @@ const EMOTICONS = [
   { id: '31', label: '님다 이모티콘31' },
   { id: '32', label: '님다 이모티콘32' },
   { id: '33', label: '님다 이모티콘33' },
+  { id: '34', label: '님다 이모티콘34' },
 ] as const;
 
 const EMOTICON_INDEX_MAP: Record<string, number> = {
@@ -22,6 +23,7 @@ const EMOTICON_INDEX_MAP: Record<string, number> = {
   '31': 7,
   '32': 8,
   '33': 9,
+  '34': 10,
 };
 
 export function getEmoticonSrc(id: string): string {
