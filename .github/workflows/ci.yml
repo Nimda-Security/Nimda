@@ -83,11 +83,10 @@ jobs:
             mkdir -p ${{ secrets.SERVER_DEPLOY_PATH }}
             cd ${{ secrets.SERVER_DEPLOY_PATH }}
 
-
             echo '=== 배포 프로세스 시작 ==='
             docker compose down || true
             docker compose pull
-            docker compose up -d --remove-orphans
+            docker compose up -d 
             docker image prune -af
             echo '=== 배포 완료 ==='
           "
