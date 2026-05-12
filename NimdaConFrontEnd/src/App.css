@@ -1777,6 +1777,32 @@ body {
   text-decoration: none;
 }
 
+.bw-content-input ul,
+.bw-content-input ol {
+  margin: 8px 0;
+  padding-left: 24px;
+}
+
+.bw-content-input ul {
+  list-style: disc;
+}
+
+.bw-content-input ol {
+  list-style: decimal;
+}
+
+.bw-content-input li {
+  padding-left: 2px;
+}
+
+.bw-content-input li + li {
+  margin-top: 4px;
+}
+
+.bw-content-input li p {
+  margin: 0;
+}
+
 .bw-content-input .comment-emoticon-inline {
   width: 160px;
   height: 160px;

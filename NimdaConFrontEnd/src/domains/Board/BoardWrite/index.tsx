@@ -143,6 +143,26 @@ function BoardWritePage() {
         editor?.chain().focus().insertContent(text).run();
         return true;
       },
+      handleKeyDown: (_view, event) => {
+        if (event.key !== 'Enter' || event.shiftKey || !editor) {
+          return false;
+        }
+
+        const { selection } = editor.state;
+        const { $from } = selection;
+        const isEmptyListItem =
+          selection.empty &&
+          editor.isActive('listItem') &&
+          $from.parent.isTextblock &&
+          $from.parent.content.size === 0;
+
+        if (!isEmptyListItem) {
+          return false;
+        }
+
+        event.preventDefault();
+        return editor.chain().focus().liftListItem('listItem').run();
+      },
     },
     onUpdate: ({ editor: currentEditor }) => {
       setContent(currentEditor.getHTML());
