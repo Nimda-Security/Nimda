@@ -114,13 +114,13 @@ public class BoardController {
         return false;
     }
 
-    // "배너" 카테고리(자신 또는 부모)인지 확인
-    private boolean isBannerCategory(Category category) {
+    // "뉴스" 카테고리(자신 또는 부모)인지 확인
+    private boolean isNewsCategory(Category category) {
         if (category == null) return false;
-        if ("banner".equalsIgnoreCase(category.getSlug())) return true;
+        if ("news".equalsIgnoreCase(category.getSlug())) return true;
         if (category.getParentId() != null) {
             Category parent = categoryRepository.findById(category.getParentId()).orElse(null);
-            if (parent != null && "banner".equalsIgnoreCase(parent.getSlug())) return true;
+            if (parent != null && "news".equalsIgnoreCase(parent.getSlug())) return true;
         }
         return false;
     }
@@ -375,9 +375,9 @@ public class BoardController {
                 }
             }
 
-            // "배너" 카테고리(자신 또는 부모)는 ADMIN만 작성 가능
-            if (isBannerCategory(category) && !hasRole(author, "ROLE_ADMIN")) {
-                return ApiResponse.fail("배너 게시판은 관리자만 작성할 수 있습니다.").toResponse(HttpStatus.FORBIDDEN);
+            // "뉴스" 카테고리(자신 또는 부모)는 ADMIN만 작성 가능
+            if (isNewsCategory(category) && !hasRole(author, "ROLE_ADMIN")) {
+                return ApiResponse.fail("새 소식 게시판은 관리자만 작성할 수 있습니다.").toResponse(HttpStatus.FORBIDDEN);
             }
 
             // "카르텔" 카테고리 접근 권한 확인
@@ -497,8 +497,8 @@ public class BoardController {
             Category category = categoryRepository.findById(categoryId)
                     .orElseThrow(() -> new RuntimeException("카테고리를 찾을 수 없습니다: " + categoryId));
 
-            if (isBannerCategory(category) && !isAdmin) {
-                return ApiResponse.fail("배너 게시판은 관리자만 수정할 수 있습니다.").toResponse(HttpStatus.FORBIDDEN);
+            if (isNewsCategory(category) && !isAdmin) {
+                return ApiResponse.fail("새 소식 게시판은 관리자만 수정할 수 있습니다.").toResponse(HttpStatus.FORBIDDEN);
             }
 
             // "카르텔" 카테고리 접근 권한 확인
