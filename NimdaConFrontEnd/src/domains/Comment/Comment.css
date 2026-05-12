@@ -119,6 +119,7 @@
 
 /* contenteditable 에디터 */
 .comment-input__editor {
+  position: relative;
   overflow-y: auto;
   cursor: text;
   white-space: pre-wrap;
@@ -126,9 +127,11 @@
 
 .comment-input__editor--empty::before {
   content: attr(data-placeholder);
+  position: absolute;
+  top: 12px;
+  left: 16px;
   color: var(--color-gray-500);
   pointer-events: none;
-  display: block;
 }
 
 .comment-input__footer {
