@@ -251,6 +251,37 @@ public class AdminUserController {
         }
     }
 
+    /**
+     * 특정 사용자 상세 조회
+     * 
+     * @param id 사용자 ID
+     * @return 사용자 정보
+     */
+    @GetMapping("/{id}")
+    public ResponseEntity<?> getUserById(@PathVariable Long id) {
+        try {
+            User user = adminUserService.findById(id);
+
+            Map<String, Object> response = new HashMap<>();
+            response.put("success", true);
+            response.put("user", user);
+
+            return ResponseEntity.ok(response);
+        } catch (RuntimeException e) {
+            log.error("사용자 조회 중 오류 발생", e);
+            Map<String, Object> error = new HashMap<>();
+            error.put("success", false);
+            error.put("message", e.getMessage());
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(error);
+        } catch (Exception e) {
+            log.error("사용자 조회 중 예기치 않은 오류 발생", e);
+            Map<String, Object> error = new HashMap<>();
+            error.put("success", false);
+            error.put("message", "사용자 조회 중 오류가 발생했습니다.");
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(error);
+        }
+    }
+
     @PostMapping("/tag-delete/{tag}")
     public ResponseEntity<?> deleteTag(@PathVariable String tag) {
         try {
