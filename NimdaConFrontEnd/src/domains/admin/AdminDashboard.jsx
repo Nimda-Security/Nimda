@@ -97,9 +97,13 @@ function AdminDashboard() {
     setLoading(true);
     try {
       const result = await getAllUsersAPI();
+      console.log("[loadUsers] API 결과:", result);
       if (result.success) {
+        console.log("[loadUsers] 로드된 사용자 수:", result.users?.length || 0);
+        console.log("[loadUsers] 사용자 목록:", result.users);
         setUsers(result.users || []);
       } else {
+        console.error("[loadUsers] 실패:", result.message);
         alert('사용자 목록을 불러오는데 실패했습니다: ' + result.message);
       }
     } catch (error) {
