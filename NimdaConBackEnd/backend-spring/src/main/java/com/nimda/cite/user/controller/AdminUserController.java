@@ -19,12 +19,12 @@ import java.util.Map;
 
 /**
  * 관리자용 사용자 관리 컨트롤러
- * 
+ *
  * [역할]
  * - 사용자 승인/거부
  * - 승인 대기 사용자 목록 조회
  * - 모든 사용자 조회
- * 
+ *
  * [보안]
  * - 클래스 레벨: @PreAuthorize("hasRole('ADMIN')")로 관리자 권한 체크
  * - SecurityConfig: /api/admin/** 패턴으로 관리자 권한 설정
@@ -44,7 +44,7 @@ public class AdminUserController {
 
     /**
      * 모든 사용자 조회
-     * 
+     *
      * @return 사용자 목록
      */
     @GetMapping
@@ -69,7 +69,7 @@ public class AdminUserController {
 
     /**
      * 승인 대기 사용자 목록 조회
-     * 
+     *
      * @return 승인 대기 사용자 목록
      */
     @GetMapping("/pending")
@@ -95,7 +95,7 @@ public class AdminUserController {
      * 사용자 승인
      * - status를 APPROVED로 변경
      * - ROLE_USER 권한 부여
-     * 
+     *
      * @param id 사용자 ID
      * @return 승인된 사용자 정보
      */
@@ -128,7 +128,7 @@ public class AdminUserController {
     /**
      * 사용자 거부
      * - status를 REJECTED로 변경
-     * 
+     *
      * @param id 사용자 ID
      * @return 거부된 사용자 정보
      */
