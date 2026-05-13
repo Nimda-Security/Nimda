@@ -17,6 +17,7 @@ public class MailService {
 
     private final JavaMailSender javaMailSender;
     private final RedisUtil redisUtil;
+    private final String AUTH_PREFIX = "AUTH_CODE:";
 
     public void sendSimpleEmail(String to, String subject, String text) {
         SimpleMailMessage message = new SimpleMailMessage();
@@ -37,5 +38,24 @@ public class MailService {
             log.error("메일 발송 실패: {}", e.getMessage());
             throw new RuntimeException("이메일 발송 중 오류가 발생했습니다.");
         }
+    }
+
+    // code는 사용자가 입력한 번호
+    public boolean verifyCode(String email, String code) {
+        String key = AUTH_PREFIX + email;
+        String savedCode = redisUtil.getData(key);
+
+        if (savedCode == null) {
+            // 인증 시간이 만료되었거나 코드가 없는 경우
+            return false;
+        }
+
+        if (savedCode.equals(code)) {
+            // 인증 성공 시 Redis에서 삭제
+            redisUtil.deleteData(key);
+            return true;
+        }
+
+        return false;
     }
 }
