@@ -15,7 +15,7 @@ public class MailController {
 
     @GetMapping
     public String registrationMail(@RequestParam String email) {
-        mailService.sendEmail(email, "Nimda 회원가입 확인 메일");
+        mailService.checkEmail(email);
         return "발송 요청 완료! " + email + " 보관함을 확인하세요.";
     }
 
