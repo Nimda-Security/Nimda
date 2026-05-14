@@ -19,7 +19,7 @@ public class MailService {
     private final RedisUtil redisUtil;
     private final String AUTH_PREFIX = "AUTH_CODE:";
 
-    public void sendSimpleEmail(String to, String subject, String text) {
+    public void checkEmail(String to) {
         SimpleMailMessage message = new SimpleMailMessage();
 
         String code = RandomModule.GenerateRandomStr(10,true);
