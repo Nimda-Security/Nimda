@@ -62,7 +62,7 @@ export const getAdminUserDetailAPI = async (userId) => {
     const result = await parseJsonSafe(response);
 
     if (response.ok) {
-      return { success: true, user: result };
+      return { success: true, user: result.user };
     }
 
     return {
