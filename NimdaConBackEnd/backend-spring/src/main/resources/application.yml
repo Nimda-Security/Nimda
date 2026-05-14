@@ -1,13 +1,12 @@
 spring:
   application:
     name: nimda-cup
-    
   # 이메일 설정 (Spring Mail)
   mail:
     host: ${MAIL_HOST:smtp.gmail.com}
     port: ${MAIL_PORT:587}
-    username: ${MAIL_USERNAME}
-    password: ${MAIL_PASSWORD}
+    username: ${MAIL_USERNAME:applicationMailUserName}
+    password: ${MAIL_PASSWORD:applicationMailPassword}
     protocol: smtp
     properties:
       mail:
@@ -81,7 +80,7 @@ server:
 # JWT 설정
 jwt:
   header: Authorization # JWT Token을 Request Header에서 탐색할 때 사용할 헤더 이름 
-  secret: ${JWT_SECRET} # JWT 토큰 서명 검증키 (Base64 인코딩됨)
+  secret: ${JWT_SECRET:RAMDOMSECRTSTRING} # JWT 토큰 서명 검증키 (Base64 인코딩됨)
   token-validity-in-seconds: 86400 # JWT 토큰 만료 시간 24시간 (초)
 
 auth:
@@ -111,9 +110,6 @@ aws:
     max-file-size: 10485760 # 10mb
     allowed-image-types: jpg,jpeg,png,gif,webp # 허용 이미지 타입
     allowed-file-types: pdf,doc,docx,xls,xlsx,zip  # 허용된 파일 타입
-
-
-
 
 logging:
   level:
