@@ -29,3 +29,4 @@ export const hasRole = (role: string): boolean => {
 
 // 관리자 권한 체크
 export const isAdmin = (): boolean => hasRole('ROLE_ADMIN');
+export const isDev = (): boolean => hasRole('ROLE_DEV');

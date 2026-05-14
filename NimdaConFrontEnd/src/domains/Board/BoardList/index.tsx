@@ -8,7 +8,7 @@ import type { Board, Category } from '../types';
 import { CATEGORY_LABELS } from '../constants';
 import { Heart } from '@/components/icons/Heart';
 import { MessageBox } from '@/components/icons/MessageBox';
-import { isAdmin, hasRole } from '@/utils/jwt';
+import { isAdmin, isDev, hasRole } from '@/utils/jwt';
 import { formatDate } from '@/utils/formatDate';
 import './BoardList.css';
 import Avatar from '@/components/Avatar/Avatar';
@@ -248,7 +248,9 @@ function BoardListPage({ slug: propSlug }: BoardListPageProps) {
     return false;
   }, [category, slug, allCategories]);
 
-  const canWrite = (!isNewsCategoryGroup && !isBannerCategoryGroup) || isAdmin();
+  const isStandardWriteAccess = (!isNewsCategoryGroup && !isBannerCategoryGroup) || isAdmin();
+  const isDevPatchAccess = isDev() && (category?.slug === 'notice');
+  const canWrite = isStandardWriteAccess || isDevPatchAccess;
 
   const isCartelCategoryGroup = useMemo(() => {
     if (!category) return false;
