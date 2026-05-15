@@ -1,11 +1,7 @@
 package com.nimda.cite.user.controller;
 
 import com.nimda.cite.aws.SES.MailService;
-import com.nimda.cite.common.response.ApiResponse;
 import com.nimda.cite.common.util.TokenProvider;
-import com.nimda.cite.user.dto.ChangePassword.CheckAuthCodeRequestDTO;
-import com.nimda.cite.user.dto.ChangePassword.CheckUserValidateRequest;
-import com.nimda.cite.user.dto.ChangePassword.CheckUserValidateResponse;
 import com.nimda.cite.user.dto.LoginDTO;
 import com.nimda.cite.user.dto.LoginResponseDTO;
 import com.nimda.cite.user.dto.MyPageResponseDTO;
