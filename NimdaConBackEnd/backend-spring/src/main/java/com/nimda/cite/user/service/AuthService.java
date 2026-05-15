@@ -1,6 +1,6 @@
 package com.nimda.cite.user.service;
 
-import com.nimda.cite.Verfication.Service.VerificationService;
+import com.nimda.cite.common.util.RedisUtil;
 import com.nimda.cite.domain.point.entity.UserBalance;
 import com.nimda.cite.domain.point.repositroy.UserBalanceRepository;
 import com.nimda.cite.user.dto.ChangePassword.CheckUserValidateResponse;
@@ -45,7 +45,7 @@ public class AuthService {
     @Autowired
     private ProfileDecorationRepository profileDecorationRepository;
     @Autowired
-    private VerificationService verificationService;
+    private RedisUtil redisUtil;
 
     /**
      * 사용자 인증
@@ -255,22 +255,5 @@ public class AuthService {
 
         // Dirty Checking에 의해 자동 UPDATE
         return user;
-    }
-
-    // 컨트롤러에서 DTO화해서 반환
-    @Transactional
-    public CheckUserValidateResponse checkValidate(String userId, String studentNum, String email) {
-        List<Boolean> result = new ArrayList<>();
-        boolean idExists = userRepository.existsByUserId(userId);
-
-        // 2. 아이디가 없으면 모두 false로 반환
-        if (!idExists) {
-            return new CheckUserValidateResponse(false, false, false);
-        }
-        return new CheckUserValidateResponse(
-                true,
-                userRepository.existsByUserIdAndEmail(userId, email),
-                userRepository.existsByUserIdAndStudentNum(userId, studentNum)
-        );
     }
 }
