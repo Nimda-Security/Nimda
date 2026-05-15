@@ -8,6 +8,7 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 
 import javax.crypto.SecretKey;
+import java.security.Key;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.Map;
@@ -21,6 +22,8 @@ public class JwtUtil {
 
     @Value("${jwt.expiration:86400000}") // 24시간
     private Long expiration;
+
+    private Key key;
 
     /**
      * JWT 토큰 생성
@@ -120,6 +123,14 @@ public class JwtUtil {
         });
     }
 
+    public String extractSubject(String token) {
+        Claims claims = Jwts.parserBuilder()
+                .setSigningKey(key)
+                .build()
+                .parseClaimsJws(token)
+                .getBody();
+        return claims.getSubject();
+    }
     /**
      * 토큰에서 권한 목록 추출
      * 
@@ -171,6 +182,10 @@ public class JwtUtil {
                 .getBody();
     }
 
+    public String extractClaimByKey(String token,String key) {
+        return extractClaim(token, claims -> claims.get(key, String.class));
+    }
+
     /**
      * 토큰 만료 여부 확인
      * 
@@ -191,6 +206,24 @@ public class JwtUtil {
     public Boolean validateToken(String token, String nickname) {
         final String extractedNickname = extractNickname(token);
         return (extractedNickname.equals(nickname) && !isTokenExpired(token));
+    }
+
+    // 비밀번호 재설정 시 사용
+    public Boolean validateToken(String token, String nickname, String studentNum,
+                                 String email) {
+        try {
+            final Claims claims = extractAllClaims(token);
+            String tokenNickname = claims.get("nickname", String.class);
+            String tokenStudentNum = claims.get("studentNum", String.class);
+            String tokenEmail = claims.get("email", String.class);
+
+            return nickname.equals(tokenNickname)
+                    && studentNum.equals(tokenStudentNum)
+                    && email.equals(tokenEmail);
+
+        } catch (Exception e) {
+            return false;
+        }
     }
 
     /**
@@ -215,4 +248,6 @@ public class JwtUtil {
         byte[] keyBytes = secret.getBytes();
         return Keys.hmacShaKeyFor(keyBytes);
     }
+
+
 }
