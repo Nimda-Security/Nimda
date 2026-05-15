@@ -22,6 +22,8 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDateTime;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Optional;
 
 @Service
@@ -252,5 +254,17 @@ public class AuthService {
 
         // Dirty Checking에 의해 자동 UPDATE
         return user;
+    }
+
+    // 컨트롤러에서 DTO화해서 반환
+    @Transactional
+    public List<Boolean> checkValidate(String userId, String studentNum, String email) {
+        List<Boolean> result = new ArrayList<>();
+
+        result.add(userRepository.existsByUserId(userId));
+        result.add(userRepository.existsByUserIdAndEmail(userId,email));
+        result.add(userRepository.existsByUserIdAndStudentNum(userId,studentNum));
+
+        return result;
     }
 }
