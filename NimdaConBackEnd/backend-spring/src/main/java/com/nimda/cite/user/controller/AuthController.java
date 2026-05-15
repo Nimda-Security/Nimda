@@ -1,5 +1,8 @@
 package com.nimda.cite.user.controller;
 
+import com.nimda.cite.common.response.ApiResponse;
+import com.nimda.cite.user.dto.ChangePassword.CheckUserValidateRequest;
+import com.nimda.cite.user.dto.ChangePassword.CheckUserValidateResponse;
 import com.nimda.cite.user.dto.LoginDTO;
 import com.nimda.cite.user.dto.LoginResponseDTO;
 import com.nimda.cite.user.dto.MyPageResponseDTO;
@@ -24,6 +27,7 @@ import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 
@@ -347,5 +351,13 @@ public class AuthController {
             error.put("message", "설정 변경 중 오류가 발생했습니다.");
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(error);
         }
+    }
+
+    // 비밀번호 변경 시 유저 정보 확인 API
+    @PostMapping("/password-change/info-check")
+    public ResponseEntity<?> checkUserInfo(@RequestBody CheckUserValidateRequest req) {
+        CheckUserValidateResponse dto =
+                authService.checkValidate(req.getUserId(),req.getStudentNum(),req.getEmail());
+        return ApiResponse.ok(dto).toResponse();
     }
 }
