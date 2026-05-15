@@ -3,6 +3,7 @@ package com.nimda.cite.user.service;
 import com.nimda.cite.Verfication.Service.VerificationService;
 import com.nimda.cite.domain.point.entity.UserBalance;
 import com.nimda.cite.domain.point.repositroy.UserBalanceRepository;
+import com.nimda.cite.user.dto.ChangePassword.CheckUserValidateResponse;
 import com.nimda.cite.user.dto.LoginResponseDTO;
 import com.nimda.cite.user.entity.User;
 import com.nimda.cite.user.enums.ApprovalStatus;
@@ -258,13 +259,18 @@ public class AuthService {
 
     // 컨트롤러에서 DTO화해서 반환
     @Transactional
-    public List<Boolean> checkValidate(String userId, String studentNum, String email) {
+    public CheckUserValidateResponse checkValidate(String userId, String studentNum, String email) {
         List<Boolean> result = new ArrayList<>();
+        boolean idExists = userRepository.existsByUserId(userId);
 
-        result.add(userRepository.existsByUserId(userId));
-        result.add(userRepository.existsByUserIdAndEmail(userId,email));
-        result.add(userRepository.existsByUserIdAndStudentNum(userId,studentNum));
-
-        return result;
+        // 2. 아이디가 없으면 모두 false로 반환
+        if (!idExists) {
+            return new CheckUserValidateResponse(false, false, false);
+        }
+        return new CheckUserValidateResponse(
+                true,
+                userRepository.existsByUserIdAndEmail(userId, email),
+                userRepository.existsByUserIdAndStudentNum(userId, studentNum)
+        );
     }
 }
