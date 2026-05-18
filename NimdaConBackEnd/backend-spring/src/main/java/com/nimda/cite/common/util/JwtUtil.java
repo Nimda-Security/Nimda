@@ -3,7 +3,9 @@ package com.nimda.cite.common.util;
 import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.SignatureAlgorithm;
+import io.jsonwebtoken.io.Decoders;
 import io.jsonwebtoken.security.Keys;
+import jakarta.annotation.PostConstruct;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 
@@ -25,6 +27,13 @@ public class JwtUtil {
 
     private Key key;
 
+    @PostConstruct
+    public void init() {
+        // TokenProvider랑 같은 방식으로 통일
+        byte[] keyBytes = Decoders.BASE64.decode(secret);
+        this.key = Keys.hmacShaKeyFor(keyBytes);
+    }
+    
     /**
      * JWT 토큰 생성
      * 
@@ -176,7 +185,7 @@ public class JwtUtil {
      */
     private Claims extractAllClaims(String token) {
         return Jwts.parserBuilder()
-                .setSigningKey(getSigningKey())
+                .setSigningKey(this.key)
                 .build()
                 .parseClaimsJws(token)
                 .getBody();
@@ -208,16 +217,16 @@ public class JwtUtil {
         return (extractedNickname.equals(nickname) && !isTokenExpired(token));
     }
 
-    // 비밀번호 재설정 시 사용
-    public Boolean validateToken(String token, String nickname, String studentNum,
+/*    // 비밀번호 재설정 시 사용
+    public Boolean validateToken(String token, String userId, String studentNum,
                                  String email) {
         try {
             final Claims claims = extractAllClaims(token);
-            String tokenNickname = claims.get("nickname", String.class);
+            String tokenUserId = claims.get("userId", String.class);
             String tokenStudentNum = claims.get("studentNum", String.class);
             String tokenEmail = claims.get("email", String.class);
 
-            return nickname.equals(tokenNickname)
+            return userId.equals(tokenUserId)
                     && studentNum.equals(tokenStudentNum)
                     && email.equals(tokenEmail);
 
@@ -225,6 +234,36 @@ public class JwtUtil {
             return false;
         }
     }
+    */
+// 비밀번호 재설정 시 사용
+public Boolean validateToken(String token, String userId, String studentNum,
+                             String email) {
+    try {
+        final Claims claims = extractAllClaims(token);
+        String tokenUserId = claims.get("userId", String.class);
+        String tokenStudentNum = claims.get("studentNum", String.class);
+        String tokenEmail = claims.get("email", String.class);
+
+        // --- 디버깅 로그 추가 ---
+        System.out.println("========= JWT 검증 디버깅 =========");
+        System.out.println("1. UserId     | 입력: [" + userId + "] vs 토큰: [" + tokenUserId + "]");
+        System.out.println("2. StudentNum | 입력: [" + studentNum + "] vs 토큰: [" + tokenStudentNum + "]");
+        System.out.println("3. Email      | 입력: [" + email + "] vs 토큰: [" + tokenEmail + "]");
+
+        boolean isMatch = userId.equals(tokenUserId)
+                && studentNum.equals(tokenStudentNum)
+                && email.equals(tokenEmail);
+
+        System.out.println("결과: " + (isMatch ? "✅ 일치함" : "❌ 불일치함"));
+        System.out.println("=================================");
+
+        return isMatch;
+
+    } catch (Exception e) {
+        System.out.println("❌ 검증 중 에러 발생: " + e.getMessage());
+        return false;
+    }
+}
 
     /**
      * 토큰 유효성 검증 (하위 호환성 유지)
