@@ -3,9 +3,11 @@ package com.nimda.cite.user.service;
 import com.nimda.cite.user.entity.User;
 import com.nimda.cite.user.repository.UserRepository;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpStatus;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.web.server.ResponseStatusException;
 
 import java.util.Optional;
 
@@ -56,6 +58,16 @@ public class UserService {
         // 승인 시 AdminUserController에서 ROLE_USER 권한 부여
 
         return userRepository.save(user);
+    }
+
+    @Transactional
+    public void changePassword(String userId, String password) {
+        User user = userRepository.findByUserId(userId).orElseThrow(
+                () -> new ResponseStatusException(HttpStatus.NOT_FOUND)
+        );
+
+        String encodedPassword = passwordEncoder.encode(password);
+        user.setPassword(encodedPassword);
     }
 
     // 사용자 중복 확인
