@@ -149,6 +149,12 @@
             <version>2.20.0</version>
         </dependency>
 
+        <!-- 메일에 디자인 넣는 의존성       -->
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-thymeleaf</artifactId>
+        </dependency>
+
     </dependencies>
 
 
