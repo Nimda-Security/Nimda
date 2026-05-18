@@ -97,7 +97,7 @@ public class TokenProvider implements InitializingBean {
             .compact();
     }
 
-    public String createTokenForPasswordChange(String userId, String studentNum, String email) {
+    public String createTokenForPasswordChange(String userId, String studentNum, String email, boolean isEmailVerified) {
         Date now = new Date();
         Date validity = new Date(now.getTime() + 600000);
 
@@ -106,6 +106,7 @@ public class TokenProvider implements InitializingBean {
                 .claim("userId",userId)
                 .claim("studentNum",studentNum)
                 .claim("email",email)
+                .claim("isEmailVerified", isEmailVerified)
                 .setIssuedAt(now)
                 .setExpiration(validity)
                 .signWith(key, SignatureAlgorithm.HS256)

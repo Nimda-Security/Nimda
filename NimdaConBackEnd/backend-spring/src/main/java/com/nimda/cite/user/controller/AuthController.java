@@ -1,6 +1,6 @@
 package com.nimda.cite.user.controller;
 
-import com.nimda.cite.aws.SES.MailService;
+import com.nimda.cite.common.util.MailService;
 import com.nimda.cite.common.util.TokenProvider;
 import com.nimda.cite.user.dto.LoginDTO;
 import com.nimda.cite.user.dto.LoginResponseDTO;
@@ -26,7 +26,6 @@ import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.HashMap;
-import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 
