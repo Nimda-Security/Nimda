@@ -85,7 +85,7 @@ server:
 # JWT 설정
 jwt:
   header: Authorization # JWT Token을 Request Header에서 탐색할 때 사용할 헤더 이름 
-  secret: ${JWT_SECRET:RAMDOMSECRTSTRING} # JWT 토큰 서명 검증키 (Base64 인코딩됨)
+  secret: ${JWT_SECRET:} # JWT 토큰 서명 검증키 (Base64 인코딩됨)
   token-validity-in-seconds: 86400 # JWT 토큰 만료 시간 24시간 (초)
 
 auth:
