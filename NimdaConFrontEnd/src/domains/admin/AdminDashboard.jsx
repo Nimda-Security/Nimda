@@ -32,8 +32,10 @@ import PinPostManagement from './sections/PinPostManagement';
 import TagManagement from './sections/TagManagement';
 import ProfileDecorationManagement from './sections/ProfileDecorationManagement';
 import AdminSidebar from './components/AdminSidebar';
-import MileagePaymentForm from './components/MileagePaymentForm';
-import { updatePointManual } from '@/api/point';
+// import MileagePaymentForm from './components/MileagePaymentForm';
+// import { updatePointManual } from '@/api/point';
+import BulkMileagePaymentForm from './components/BulkMileagePaymentForm.jsx';
+import { updatePointManualBulk } from '@/api/point';
 import './AdminDashboard.css';
 
 function AdminDashboard() {
@@ -1015,23 +1017,21 @@ function AdminDashboard() {
         return (
           <div>
             <div className="admin__header-row">
-              <h2 className="admin__section-title">마일리지 지급</h2>
+              <h2 className="admin__section-title">마일리지 일괄 지급</h2>
             </div>
-            <MileagePaymentForm
-              onGrant={async (data) => {
-                const { studentId, mileageAmount, reason } = data;
-                const result = await updatePointManual(
-                  studentId,
-                  reason,
-                  Number(mileageAmount)
-                );
-                if (result.success) {
-                  alert(
-                    `[지급 성공]\n학번: ${studentId}\n금액: ${mileageAmount}\n사유: ${reason}`
-                  );
-                } else {
-                  alert(`[지급 실패]\n${result.message}`);
-                }
+            <BulkMileagePaymentForm
+              onGrant={async (dataList) => {
+                const requests = dataList.map(({ studentId, mileageAmount, reason }) => ({
+                  studentNum: studentId,
+                  description: reason,
+                  amount: Number(mileageAmount),
+                }));
+                const result = await updatePointManualBulk(requests);
+                  if (result.success) {
+                    alert(`[일괄 지급 성공]\n총 ${requests.length}명 지급 완료`);
+                  } else {
+                    alert(`[지급 실패]\n${result.message}`);
+                  }
               }}
             />
             <div style={{ marginTop: '32px', fontSize: '13px', color: '#999' }}>
