@@ -4,6 +4,7 @@ import com.nimda.cite.aws.SES.MailService;
 import com.nimda.cite.common.response.ApiResponse;
 import com.nimda.cite.common.util.JwtUtil;
 import com.nimda.cite.common.util.TokenProvider;
+import com.nimda.cite.user.dto.ChangePassword.CheckAuthCodeRequest;
 import com.nimda.cite.user.dto.ChangePassword.CheckUserValidateRequest;
 import com.nimda.cite.user.dto.ChangePassword.CheckUserValidateResponse;
 import com.nimda.cite.user.service.UserRecoveryService;
@@ -72,20 +73,18 @@ public class UserRecoveryController {
 
     // 인증 버튼과 연결
     @PostMapping("/check-authcode")
-    public ResponseEntity<?> checkAuthCode(@RequestBody String authCode,
+    public ResponseEntity<?> checkAuthCode(@RequestBody CheckAuthCodeRequest req,
                                            @CookieValue(name = "password_change_token") String token) {
 
         // 1. 토큰이 유효한지 먼저 체크하고, 토큰 내부에 저장된 이메일을 꺼냅니다.
         if (!tokenProvider.validateToken(token)) {
             return ResponseEntity.status(HttpStatus.FORBIDDEN).body("인증 세션이 만료되었습니다.");
         }
+
         String emailFromToken = jwtUtil.extractClaimByKey(token, "email");
-        boolean isCodeValid = mailService.verifyCode(emailFromToken, authCode);
+        boolean isCodeValid = mailService.verifyCode(emailFromToken, req.getAuthCode());
 
         if (isCodeValid) {
-            // 인증 성공!
-            // 여기서 팁: 성공했다는 표식으로 새로운 '인증완료 토큰'을 주거나,
-            // 기존 쿠키를 유지하여 다음 '비밀번호 변경 제출' 단계에서 활용합니다.
             return ResponseEntity.ok("인증이 완료되었습니다.");
         }
 
