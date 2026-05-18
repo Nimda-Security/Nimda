@@ -23,6 +23,22 @@ services:
       timeout: 5s
       retries: 5
 
+  # Redis 인메모리 데이터베이스 서비스
+  redis:
+    image: redis:7.0-alpine
+    container_name: nimda-redis
+    restart: always
+    command: redis-server --requirepass ${REDIS_PASSWORD}
+    expose:
+      - "6379" # 서버 내부 접근만 가능
+    volumes:
+      - redis_data:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "-a", "${REDIS_PASSWORD}", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
   # Spring Boot 백엔드 서비스
   backend:
     image: xtkww971/nimda-backend:latest
