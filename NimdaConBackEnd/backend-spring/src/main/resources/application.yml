@@ -1,4 +1,9 @@
 spring:
+  data:
+    redis:
+      host: ${SPRING_REDIS_HOST:localhost}
+      port: ${SPRING_REDIS_PORT:6379}
+      password: ${SPRING_REDIS_PASSWORD:}
   application:
     name: nimda-cup
   # 이메일 설정 (Spring Mail)
@@ -37,12 +42,12 @@ spring:
     hibernate:
       ddl-auto: none
       open-in-view: false
-    show-sql: true
+    show-sql: false
     properties:
       hibernate:
         dialect: org.hibernate.dialect.MySQL8Dialect
         format_sql: true # sql Formatting
-        show_sql: true
+        show_sql: false
     defer-datasource-initialization: false
 
   
