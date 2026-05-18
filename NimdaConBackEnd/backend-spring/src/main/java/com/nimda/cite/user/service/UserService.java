@@ -60,16 +60,6 @@ public class UserService {
         return userRepository.save(user);
     }
 
-    @Transactional
-    public void changePassword(String userId, String password) {
-        User user = userRepository.findByUserId(userId).orElseThrow(
-                () -> new ResponseStatusException(HttpStatus.NOT_FOUND)
-        );
-
-        String encodedPassword = passwordEncoder.encode(password);
-        user.setPassword(encodedPassword);
-    }
-
     // 사용자 중복 확인
     private void validateUserUniqueness(String userId, String nickname, String email) {
 
