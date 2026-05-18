@@ -109,6 +109,13 @@ public class JwtUtil {
         return extractNickname(token);
     }
 
+
+    public String extractId(String token) {
+        Claims claims = extractAllClaims(token);
+
+        return claims.get("userId", String.class);
+    }
+
     /**
      * 토큰에서 사용자 ID 추출
      * 
