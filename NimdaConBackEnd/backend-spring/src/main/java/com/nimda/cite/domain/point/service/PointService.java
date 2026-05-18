@@ -1,5 +1,6 @@
 package com.nimda.cite.domain.point.service;
 
+import com.nimda.cite.domain.point.dto.ManualBalanceUpdateRequest;
 import com.nimda.cite.domain.point.entity.PointDetail;
 import com.nimda.cite.domain.point.entity.UserBalance;
 import com.nimda.cite.domain.point.enums.PointTypes;
@@ -14,6 +15,7 @@ import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.server.ResponseStatusException;
 
 import java.time.LocalDateTime;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 
@@ -103,6 +105,20 @@ public class PointService {
 
         pointDetailRepository.save(pointDetail);
         return balance;
+    }
+
+    @Transactional
+    public List<UserBalance> updateBalanceManualBulk(List<ManualBalanceUpdateRequest> requests) {
+        List<UserBalance> results = new ArrayList<>();
+
+        for (ManualBalanceUpdateRequest req : requests) {
+            UserBalance balance = updateBalanceManual(
+                    req.getStudentNum(), req.getDescription(), req.getAmount()
+            );
+            results.add(balance);
+        }
+
+        return results;
     }
 
     @Transactional(readOnly = true)

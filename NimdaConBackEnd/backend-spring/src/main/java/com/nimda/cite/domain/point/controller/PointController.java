@@ -17,6 +17,7 @@ import org.springframework.web.bind.annotation.*;
 import org.springframework.web.server.ResponseStatusException;
 
 import java.util.List;
+import java.util.stream.Collectors;
 
 @RestController
 @RequestMapping("/api/cite/point")
@@ -72,6 +73,22 @@ public class PointController {
                 );
         return ApiResponse.ok("마일리지 지급이 완료되었습니다.",dto).toResponse();
     }
+
+
+    @PostMapping("/bulk")
+    @PreAuthorize("hasRole('ADMIN')")
+    public ResponseEntity<?> updateUserBalanceManualBulk(
+            @AuthenticationPrincipal CustomUserDetails userDetails,
+            @RequestBody List<ManualBalanceUpdateRequest> requests) {
+
+        List<BalanceResponse> results = pointService.updateBalanceManualBulk(requests)
+                .stream()
+                .map(BalanceResponse::from)
+                .collect(Collectors.toList());
+
+        return ApiResponse.ok("마일리지 일괄 지급이 완료되었습니다.", results).toResponse();
+    }
+
 
     /**
      * 닉네임으로 특정 유저 마일리지 잔액 조회 (공개 프로필용, 인증 불필요)
