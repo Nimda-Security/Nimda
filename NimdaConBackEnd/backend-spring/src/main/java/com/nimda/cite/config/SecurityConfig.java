@@ -94,6 +94,7 @@ public class SecurityConfig {
                         .requestMatchers(HttpMethod.GET, "/api/cite/category/**").permitAll()
                         .requestMatchers(HttpMethod.GET, "/api/cite/attachments/*/download-url").permitAll()
                         .requestMatchers("/api/cite/mail/**").permitAll()
+                        .requestMatchers("api/cite/passwordChange/**").permitAll()
                         .requestMatchers("/error").permitAll()
 
                         // [우선순위 4] 인증 필수 API (로그인하지 않으면 접근 불가)
