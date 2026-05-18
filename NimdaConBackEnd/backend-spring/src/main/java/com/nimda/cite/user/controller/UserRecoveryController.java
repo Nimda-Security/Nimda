@@ -1,6 +1,6 @@
 package com.nimda.cite.user.controller;
 
-import com.nimda.cite.aws.SES.MailService;
+import com.nimda.cite.common.util.MailService;
 import com.nimda.cite.common.response.ApiResponse;
 import com.nimda.cite.common.util.JwtUtil;
 import com.nimda.cite.common.util.TokenProvider;
@@ -10,7 +10,6 @@ import com.nimda.cite.user.dto.ChangePassword.CheckUserValidateRequest;
 import com.nimda.cite.user.dto.ChangePassword.CheckUserValidateResponse;
 import com.nimda.cite.user.service.AuthService;
 import com.nimda.cite.user.service.UserRecoveryService;
-import com.nimda.cite.user.service.UserService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;

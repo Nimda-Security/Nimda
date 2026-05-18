@@ -1,9 +1,8 @@
 package com.nimda.cite.user.service;
 
-import com.nimda.cite.common.util.RedisUtil;
+import com.nimda.cite.common.util.Redis.RedisUtil;
 import com.nimda.cite.domain.point.entity.UserBalance;
 import com.nimda.cite.domain.point.repositroy.UserBalanceRepository;
-import com.nimda.cite.user.dto.ChangePassword.CheckUserValidateResponse;
 import com.nimda.cite.user.dto.LoginResponseDTO;
 import com.nimda.cite.user.entity.User;
 import com.nimda.cite.user.enums.ApprovalStatus;
