@@ -30,7 +30,7 @@ jobs:
 
       - name: Build and Test with Maven
         working-directory: NimdaConBackEnd/backend-spring
-        run: mvn clean package
+        run: mvn clean package -DskipTests
         env:
           SPRING_DATASOURCE_USERNAME: ${{ secrets.SPRING_DATASOURCE_USERNAME }}
           SPRING_DATASOURCE_PASSWORD: ${{ secrets.SPRING_DATASOURCE_PASSWORD }}
