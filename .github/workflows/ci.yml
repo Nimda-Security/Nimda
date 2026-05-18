@@ -43,7 +43,7 @@ jobs:
           AWS_S3_SECRET_KEY: ${{ secrets.AWS_SECRET_KEY }}
           AWS_S3_BUCKET: ${{ secrets.AWS_S3_BUCKET }}
           AWS_S3_REGION: ${{ secrets.AWS_REGION }}
-          SPRING_REDIS_PASSWORD: ${{secrets.SPRING_REDIS_PASSWORD}}
+          REDIS_PASSWORD: ${{secrets.REDIS_PASSWORD}}
 
       - name: Upload JAR artifact
         uses: actions/upload-artifact@v4
