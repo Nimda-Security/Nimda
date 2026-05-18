@@ -44,9 +44,9 @@ public class MailService {
         // 발신자 주소는 반드시 SES에서 인증(Verified)받은 이메일이어야 합니다.
         try {
             MimeMessageHelper helper = new MimeMessageHelper(message, true, "UTF-8");
-            helper.setFrom("xtkww97178@gmail.com");
+            helper.setFrom("nimda0410@gmail.com");
             helper.setTo(email);
-            helper.setSubject("[Nimda] 회원가입 인증번호 안내");
+            helper.setSubject("[Nimda] 비밀번호 재설정 인증번호 안내");
 
             // 인증 코드 변수로 넣기
             Context context = new Context();
