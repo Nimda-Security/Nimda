@@ -4,10 +4,13 @@ import com.nimda.cite.aws.SES.MailService;
 import com.nimda.cite.common.response.ApiResponse;
 import com.nimda.cite.common.util.JwtUtil;
 import com.nimda.cite.common.util.TokenProvider;
+import com.nimda.cite.user.dto.ChangePassword.ChangePasswordRequest;
 import com.nimda.cite.user.dto.ChangePassword.CheckAuthCodeRequest;
 import com.nimda.cite.user.dto.ChangePassword.CheckUserValidateRequest;
 import com.nimda.cite.user.dto.ChangePassword.CheckUserValidateResponse;
+import com.nimda.cite.user.service.AuthService;
 import com.nimda.cite.user.service.UserRecoveryService;
+import com.nimda.cite.user.service.UserService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
@@ -20,6 +23,8 @@ import org.springframework.web.bind.annotation.*;
 public class UserRecoveryController {
     @Autowired
     private UserRecoveryService userRecoveryService;
+    @Autowired
+    private AuthService authService;
     @Autowired
     private TokenProvider tokenProvider;
     @Autowired
@@ -35,13 +40,13 @@ public class UserRecoveryController {
 
         if(dto.isValidateEmail() && dto.isValidateUserId() && dto.isValidateStudentNum()) {
             String passwordToken =
-                tokenProvider.createTokenForPasswordChange(req.getUserId(), req.getStudentNum(), req.getEmail());
+                tokenProvider.createTokenForPasswordChange(req.getUserId(), req.getStudentNum(), req.getEmail(),false);
 
             ResponseCookie cookie = ResponseCookie.from("password_change_token", passwordToken)
                 .httpOnly(true)
                 .secure(true)
                 .path("/api/cite/passwordChange")
-                .maxAge(10 * 60) // 10분 (600초)
+                .maxAge(5 * 60) // 5분
                 .sameSite("Strict")
                 .build();
 
@@ -85,10 +90,45 @@ public class UserRecoveryController {
         boolean isCodeValid = mailService.verifyCode(emailFromToken, req.getAuthCode());
 
         if (isCodeValid) {
-            return ResponseEntity.ok("인증이 완료되었습니다.");
+            String userId = jwtUtil.extractClaimByKey(token, "userId");
+            String studentNum = jwtUtil.extractClaimByKey(token, "studentNum");
+            String emailVerifiedToken = tokenProvider.createTokenForPasswordChange(userId, studentNum, emailFromToken, true);
+
+            // 인증 완료 토큰 재발급
+            ResponseCookie cookie = ResponseCookie.from("password_change_token", emailVerifiedToken)
+                    .httpOnly(true)
+                    .secure(true)
+                    .path("/api/cite/passwordChange")
+                    .maxAge(5 * 60)
+                    .sameSite("Strict")
+                    .build();
+
+            return ResponseEntity.ok()
+                    .header(HttpHeaders.SET_COOKIE, cookie.toString())
+                    .body("인증이 완료되었습니다.");
         }
 
         // 3. 인증 실패 시
         return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("인증에 실패했습니다.");
+    }
+
+    @PostMapping("/change-password")
+    public ResponseEntity<?> changePassword(@CookieValue(name = "password_change_token") String token,
+                                            @RequestBody ChangePasswordRequest req) {
+        if (!tokenProvider.validateToken(token)) {
+            return ResponseEntity.status(HttpStatus.FORBIDDEN).body("인증 세션이 만료되었습니다.");
+        }
+
+        Boolean isEmailVerified =
+                jwtUtil.extractClaim(token, claims -> claims.get("isEmailVerified", Boolean.class));
+
+        if (isEmailVerified == null || !isEmailVerified) {
+            // 인증하지 않고 우회한 경우
+            return ResponseEntity.status(HttpStatus.FORBIDDEN).body("이메일 인증이 완료되지 않은 요청입니다.");
+        }
+        
+        String userId = jwtUtil.extractId(token);
+        authService.changePassword(userId, req.getPassword());
+        return ResponseEntity.ok("비밀번호가 재설정되었습니다.");
     }
 }
