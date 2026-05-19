@@ -54,7 +54,7 @@ public class BoardService {
 
         boardRepository.save(board);
 
-Long categoryId = board.getCategory() != null ? board.getCategory().getId() : null;
+        Long categoryId = board.getCategory() != null ? board.getCategory().getId() : null;
         if (attachmentIds != null) {
             if (isNew) {
                 attachmentService.linkAttachmentsToBoard(attachmentIds, board.getId(), categoryId, author.getId());

@@ -93,6 +93,9 @@ public class SecurityConfig {
                         .requestMatchers(HttpMethod.GET, "/api/cite/attendance/today").permitAll()
                         .requestMatchers(HttpMethod.GET, "/api/cite/category/**").permitAll()
                         .requestMatchers(HttpMethod.GET, "/api/cite/attachments/*/download-url").permitAll()
+                        .requestMatchers("/api/cite/mail/**").permitAll()
+                        .requestMatchers("api/cite/passwordChange/**").permitAll()
+                        .requestMatchers("/error").permitAll()
 
                         // [우선순위 4] 인증 필수 API (로그인하지 않으면 접근 불가)
                         // 게시판 조회(GET)를 포함한 모든 게시판 활동은 인증 필요

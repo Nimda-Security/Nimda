@@ -119,6 +119,7 @@
 
 /* contenteditable 에디터 */
 .comment-input__editor {
+  position: relative;
   overflow-y: auto;
   cursor: text;
   white-space: pre-wrap;
@@ -126,9 +127,11 @@
 
 .comment-input__editor--empty::before {
   content: attr(data-placeholder);
+  position: absolute;
+  top: 12px;
+  left: 16px;
   color: var(--color-gray-500);
   pointer-events: none;
-  display: block;
 }
 
 .comment-input__footer {
@@ -583,6 +586,9 @@
   bottom: calc(100% + 8px);
   left: 0;
   z-index: 200;
+  box-sizing: border-box;
+  max-height: 264px;
+  overflow-y: auto;
   padding: 8px;
   background: #ffffff;
   border: 1px solid var(--color-gray-200);
@@ -591,6 +597,19 @@
     0 8px 16px -4px rgba(0, 0, 0, 0.12),
     0 4px 8px -2px rgba(0, 0, 0, 0.06);
   animation: dropdown-in 0.12s ease-out;
+}
+
+.emoticon-picker__panel::-webkit-scrollbar {
+  width: 6px;
+}
+
+.emoticon-picker__panel::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.emoticon-picker__panel::-webkit-scrollbar-thumb {
+  border-radius: 999px;
+  background: var(--color-gray-300);
 }
 
 .emoticon-picker__grid {

@@ -1,6 +1,28 @@
 spring:
+  data:
+    redis:
+      host: ${SPRING_REDIS_HOST:localhost}
+      port: ${SPRING_REDIS_PORT:6379}
+      password: ${SPRING_REDIS_PASSWORD:}
   application:
     name: nimda-cup
+  # 이메일 설정 (Spring Mail)
+  mail:
+    host: ${MAIL_HOST:smtp.gmail.com}
+    port: ${MAIL_PORT:587}
+    username: ${MAIL_USERNAME:applicationMailUserName}
+    password: ${MAIL_PASSWORD:applicationMailPassword}
+    protocol: smtp
+    properties:
+      mail:
+        smtp:
+          auth: true
+          starttls:
+            enable: true
+            required: true
+          connectiontimeout: 5000
+          timeout: 5000
+          writetimeout: 5000
 
   datasource:
     url: ${SPRING_DATASOURCE_URL:jdbc:mysql://localhost:3306/nimda_con?useSSL=false&serverTimezone=Asia/Seoul&allowPublicKeyRetrieval=true}
@@ -20,12 +42,12 @@ spring:
     hibernate:
       ddl-auto: none
       open-in-view: false
-    show-sql: true
+    show-sql: false
     properties:
       hibernate:
         dialect: org.hibernate.dialect.MySQL8Dialect
         format_sql: true # sql Formatting
-        show_sql: true
+        show_sql: false
     defer-datasource-initialization: false
 
   
@@ -63,7 +85,7 @@ server:
 # JWT 설정
 jwt:
   header: Authorization # JWT Token을 Request Header에서 탐색할 때 사용할 헤더 이름 
-  secret: ${JWT_SECRET} # JWT 토큰 서명 검증키 (Base64 인코딩됨)
+  secret: ${JWT_SECRET:} # JWT 토큰 서명 검증키 (Base64 인코딩됨)
   token-validity-in-seconds: 86400 # JWT 토큰 만료 시간 24시간 (초)
 
 auth:
@@ -92,8 +114,7 @@ aws:
     # 파일 크기 제한 
     max-file-size: 10485760 # 10mb
     allowed-image-types: jpg,jpeg,png,gif,webp # 허용 이미지 타입
-    allowed-file-types: pdf,doc,docx,xls,xlsx,zip  # 허용된 파일 타입 
-
+    allowed-file-types: pdf,doc,docx,xls,xlsx,zip  # 허용된 파일 타입
 
 logging:
   level:

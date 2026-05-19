@@ -15,12 +15,12 @@ import java.util.stream.Collectors;
 
 /**
  * 관리자용 사용자 관리 서비스
- * 
+ *
  * [역할]
  * - 사용자 승인/거부
  * - 승인 대기 사용자 목록 조회
  * - 모든 사용자 조회
- * 
+ *
  * [책임 분리]
  * - 일반 사용자 기능: UserService
  * - 관리자 기능: AdminUserService
@@ -40,6 +40,15 @@ public class AdminUserService {
     @Transactional(readOnly = true)
     public List<User> findAll() {
         return userRepository.findAll();
+    }
+
+    /**
+     * ID로 사용자 조회
+     */
+    @Transactional(readOnly = true)
+    public User findById(Long userId) {
+        return userRepository.findById(userId)
+                .orElseThrow(() -> new RuntimeException("사용자를 찾을 수 없습니다: " + userId));
     }
 
     /**
@@ -100,7 +109,7 @@ public class AdminUserService {
                 .collect(Collectors.toList());
     }
 
-  /**
+    /**
      * 사용자에게 권한 1개를 추가 부여한다. (기존 권한은 유지)
      */
     @Transactional
@@ -121,7 +130,7 @@ public class AdminUserService {
                 .orElseThrow(() -> new RuntimeException("사용자를 찾을 수 없습니다. ID: " + userId));
 
         // final 변수로 선언하여 람다식 내부에서 안전하게 사용
-        final String finalRoleName = normalizedRole; 
+        final String finalRoleName = normalizedRole;
         Authority authority = authorityRepository.findByAuthorityName(finalRoleName)
                 .orElseThrow(() -> new RuntimeException("서버에 존재하지 않는 권한입니다: " + finalRoleName));
 

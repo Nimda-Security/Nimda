@@ -178,8 +178,18 @@ function CommentInput({
     if (!editor) return;
     const text = serialize(editor);
     lastEmittedRef.current = text;
-    setIsEmpty(!text.trim());
+    const nextIsEmpty = !text.trim();
+    if (nextIsEmpty && editor.innerHTML !== '') {
+      editor.innerHTML = '';
+    }
+    setIsEmpty(nextIsEmpty);
     onChange(text);
+  };
+
+  const handleFocus = () => {
+    const editor = editorRef.current;
+    if (!editor || !isEmpty) return;
+    editor.innerHTML = '';
   };
 
   const handlePaste = (e: React.ClipboardEvent<HTMLDivElement>) => {
@@ -250,6 +260,7 @@ function CommentInput({
           ref={editorRef}
           contentEditable
           suppressContentEditableWarning
+          onFocus={handleFocus}
           onInput={handleInput}
           onPaste={handlePaste}
           data-placeholder={placeholder ?? '댓글을 입력하세요.'}

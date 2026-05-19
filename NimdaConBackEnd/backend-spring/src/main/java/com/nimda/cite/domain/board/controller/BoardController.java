@@ -104,23 +104,13 @@ public class BoardController {
         if (dtos != null) dtos.forEach(this::resolveProfileImage);
     }
 
-    // "카르텔" 카테고리(자신 또는 부모)인지 확인
-    private boolean isCartelCategory(Category category) {
-        if ("카르텔".equals(category.getName())) return true;
-        if (category.getParentId() != null) {
-            Category parent = categoryRepository.findById(category.getParentId()).orElse(null);
-            if (parent != null && "카르텔".equals(parent.getName())) return true;
-        }
-        return false;
-    }
-
-    // "배너" 카테고리(자신 또는 부모)인지 확인
-    private boolean isBannerCategory(Category category) {
+    // 카테고리(자신 또는 부모)의 slug가 일치하는지 확인
+    private boolean isCategoryMatch(Category category, String slug) {
         if (category == null) return false;
-        if ("banner".equalsIgnoreCase(category.getSlug())) return true;
+        if (slug.equalsIgnoreCase(category.getSlug())) return true;
         if (category.getParentId() != null) {
             Category parent = categoryRepository.findById(category.getParentId()).orElse(null);
-            if (parent != null && "banner".equalsIgnoreCase(parent.getSlug())) return true;
+            if (parent != null && slug.equalsIgnoreCase(parent.getSlug())) return true;
         }
         return false;
     }
@@ -163,7 +153,7 @@ public class BoardController {
             User user = userDetails != null ? userDetails.getUser() : null;
 
             // "카르텔" 카테고리 접근 권한 확인
-            if (isCartelCategory(category)) {
+            if (isCategoryMatch(category, "cartel")) {
                 if (!hasRole(user, "ROLE_CARTEL") && !hasRole(user, "ROLE_ADMIN")) {
                     return ApiResponse.fail("접근 권한이 없습니다.").toResponse(HttpStatus.FORBIDDEN);
                 }
@@ -359,41 +349,45 @@ public class BoardController {
             Category category = categoryRepository.findById(categoryId)
                     .orElseThrow(() -> new RuntimeException("카테고리를 찾을 수 없습니다: " + categoryId));
 
-            // "새 소식" 카테고리(자신 또는 부모)는 ADMIN만 작성 가능
-            boolean isNewsCategory = "새 소식".equals(category.getName());
-            if (!isNewsCategory && category.getParentId() != null) {
-                Category parentCategory = categoryRepository.findById(category.getParentId()).orElse(null);
-                if (parentCategory != null && "새 소식".equals(parentCategory.getName())) {
-                    isNewsCategory = true;
-                }
-            }
-            if (isNewsCategory) {
-                boolean isAdmin = author.getAuthorities().stream()
-                        .anyMatch(a -> a.getAuthorityName().equals("ROLE_ADMIN"));
-                if (!isAdmin) {
-                    return ApiResponse.fail("새 소식 게시판은 관리자만 작성할 수 있습니다.").toResponse(HttpStatus.FORBIDDEN);
-                }
-            }
-
-            // "배너" 카테고리(자신 또는 부모)는 ADMIN만 작성 가능
-            if (isBannerCategory(category) && !hasRole(author, "ROLE_ADMIN")) {
-                return ApiResponse.fail("배너 게시판은 관리자만 작성할 수 있습니다.").toResponse(HttpStatus.FORBIDDEN);
-            }
-
-            // "카르텔" 카테고리 접근 권한 확인
-            if (isCartelCategory(category)) {
-                if (!hasRole(author, "ROLE_CARTEL") && !hasRole(author, "ROLE_ADMIN")) {
-                    return ApiResponse.fail("접근 권한이 없습니다.").toResponse(HttpStatus.FORBIDDEN);
-                }
-            }
-
             // validation. tagId가 있으면 해당 카테고리 소속인지 검증
             Tag tagEntity = null;
             if (tagId != null) {
                 tagEntity = tagRepository.findById(tagId)
                         .orElseThrow(() -> new RuntimeException("태그를 찾을 수 없습니다: " + tagId));
                 if (!tagEntity.getCategory().getId().equals(category.getId())) {
-                    return ApiResponse.fail("이 태그는 해당 카테고리에 속하지 않습니다.").toResponse(HttpStatus.BAD_REQUEST);
+                    return ApiResponse.fail("이 태그는 해당 카테고리에 속하지 않습니다.")
+                            .toResponse(HttpStatus.BAD_REQUEST);
+                }
+            }
+
+            // news 권한 체크
+            if (isCategoryMatch(category, "news")) {
+                boolean isAdmin = hasRole(author, "ROLE_ADMIN");
+                boolean isDevAllowed = false;
+
+                // ROLE_DEV인 경우, "news - notice - #패치" 에 글을 쓸 수 있음
+                if (hasRole(author, "ROLE_DEV")) {
+                    boolean isNoticeCategory = "notice".equalsIgnoreCase(category.getSlug());
+                    boolean isParentNews = false;
+                    if (category.getParentId() != null) {
+                        Category parent = categoryRepository.findById(category.getParentId()).orElse(null);
+                        isParentNews = parent != null && "news".equalsIgnoreCase(parent.getSlug());
+                    }
+                    boolean isPatchTag = tagEntity != null && "패치".equals(tagEntity.getTagName());
+
+                    isDevAllowed = isNoticeCategory && isParentNews && isPatchTag;
+                }
+
+                if (!isAdmin && !isDevAllowed) {
+                    return ApiResponse.fail("접근 권한이 없습니다.")
+                            .toResponse(HttpStatus.FORBIDDEN);
+                }
+            }
+
+            // "카르텔" 카테고리 접근 권한 확인
+            if (isCategoryMatch(category, "cartel")) {
+                if (!hasRole(author, "ROLE_CARTEL") && !hasRole(author, "ROLE_ADMIN")) {
+                    return ApiResponse.fail("접근 권한이 없습니다.").toResponse(HttpStatus.FORBIDDEN);
                 }
             }
 
@@ -446,7 +440,7 @@ public class BoardController {
             User user = userDetails != null ? userDetails.getUser() : null;
 
             // "카르텔" 카테고리 접근 권한 확인
-            if (board.getCategory() != null && isCartelCategory(board.getCategory())) {
+            if (board.getCategory() != null && isCategoryMatch(board.getCategory(), "cartel")) {
                 if (!hasRole(user, "ROLE_CARTEL") && !hasRole(user, "ROLE_ADMIN")) {
                     return ApiResponse.fail("접근 권한이 없습니다.").toResponse(HttpStatus.FORBIDDEN);
                 }
@@ -487,8 +481,7 @@ public class BoardController {
             }
             User currentUser = userDetails.getUser();
 
-            boolean isAdmin = currentUser.getAuthorities().stream()
-                    .anyMatch(authority -> authority.getAuthorityName().equals("ROLE_ADMIN"));
+            boolean isAdmin = hasRole(currentUser, "ROLE_ADMIN");
 
             if (!isAdmin && !boardTemp.getAuthor().getId().equals(currentUser.getId())) {
                 return ApiResponse.fail("게시글을 수정할 권한이 없습니다.").toResponse(HttpStatus.FORBIDDEN);
@@ -497,15 +490,8 @@ public class BoardController {
             Category category = categoryRepository.findById(categoryId)
                     .orElseThrow(() -> new RuntimeException("카테고리를 찾을 수 없습니다: " + categoryId));
 
-            if (isBannerCategory(category) && !isAdmin) {
-                return ApiResponse.fail("배너 게시판은 관리자만 수정할 수 있습니다.").toResponse(HttpStatus.FORBIDDEN);
-            }
-
-            // "카르텔" 카테고리 접근 권한 확인
-            if (isCartelCategory(category)) {
-                if (!hasRole(currentUser, "ROLE_CARTEL") && !isAdmin) {
-                    return ApiResponse.fail("접근 권한이 없습니다.").toResponse(HttpStatus.FORBIDDEN);
-                }
+            if (isCategoryMatch(category, "news") && !isAdmin) {
+                return ApiResponse.fail("새 소식 게시판은 관리자만 수정할 수 있습니다.").toResponse(HttpStatus.FORBIDDEN);
             }
 
             // Validation. tagId가 있으면 해당 카테고리 소속인지 검증
@@ -515,6 +501,34 @@ public class BoardController {
                         .orElseThrow(() -> new RuntimeException("태그를 찾을 수 없습니다: " + tagId));
                 if (!tagEntity.getCategory().getId().equals(category.getId())) {
                     return ApiResponse.fail("이 태그는 해당 카테고리에 속하지 않습니다.").toResponse(HttpStatus.BAD_REQUEST);
+                }
+            }
+
+            // news 권한 체크
+            if (isCategoryMatch(category, "news")) {
+                boolean isDevAllowed = false;
+
+                if (hasRole(currentUser, "ROLE_DEV")) {
+                    boolean isNoticeCategory = "notice".equalsIgnoreCase(category.getSlug());
+                    boolean isParentNews = false;
+                    if (category.getParentId() != null) {
+                        Category parent = categoryRepository.findById(category.getParentId()).orElse(null);
+                        isParentNews = parent != null && "news".equalsIgnoreCase(parent.getSlug());
+                    }
+                    boolean isPatchTag = tagEntity != null && "패치".equals(tagEntity.getTagName());
+
+                    isDevAllowed = isNoticeCategory && isParentNews && isPatchTag;
+                }
+
+                if (!isAdmin && !isDevAllowed) {
+                    return ApiResponse.fail("새 소식 게시판은 관리자만 수정할 수 있습니다.").toResponse(HttpStatus.FORBIDDEN);
+                }
+            }
+
+            // "카르텔" 카테고리 접근 권한 확인
+            if (isCategoryMatch(category, "cartel")) {
+                if (!hasRole(currentUser, "ROLE_CARTEL") && !isAdmin) {
+                    return ApiResponse.fail("접근 권한이 없습니다.").toResponse(HttpStatus.FORBIDDEN);
                 }
             }
 
@@ -560,11 +574,33 @@ public class BoardController {
             }
             User currentUser = userDetails.getUser();
 
-            boolean isAdmin = currentUser.getAuthorities().stream()
-                    .anyMatch(authority -> authority.getAuthorityName().equals("ROLE_ADMIN"));
+            boolean isAdmin = hasRole(currentUser, "ROLE_ADMIN");
 
             if (!isAdmin && !board.getAuthor().getId().equals(currentUser.getId())) {
                 return ApiResponse.fail("게시글을 삭제할 권한이 없습니다.").toResponse(HttpStatus.FORBIDDEN);
+            }
+
+            // news 카테고리 삭제 권한 체크
+            Category category = board.getCategory();
+            if (isCategoryMatch(category, "news")) {
+                boolean isDevAllowed = false;
+
+                if (hasRole(currentUser, "ROLE_DEV")) {
+                    boolean isNoticeCategory = "notice".equalsIgnoreCase(category.getSlug());
+                    boolean isParentNews = false;
+                    if (category.getParentId() != null) {
+                        Category parent = categoryRepository.findById(category.getParentId()).orElse(null);
+                        isParentNews = parent != null && "news".equalsIgnoreCase(parent.getSlug());
+                    }
+                    Tag tag = board.getTag();
+                    boolean isPatchTag = tag != null && "패치".equals(tag.getTagName());
+
+                    isDevAllowed = isNoticeCategory && isParentNews && isPatchTag;
+                }
+
+                if (!isAdmin && !isDevAllowed) {
+                    return ApiResponse.fail("새 소식 게시판은 관리자만 삭제할 수 있습니다.").toResponse(HttpStatus.FORBIDDEN);
+                }
             }
 
             boardService.boardDelete(id);

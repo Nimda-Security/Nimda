@@ -17,7 +17,7 @@ const parseJsonSafe = async (response) => {
  */
 export const getAllUsersAPI = async () => {
   try {
-    const response = await fetch(`${API_BASE_URL}/users`, {
+    const response = await fetch(`${API_BASE_URL}/admin/users`, {
       method: "GET",
       headers: {
         "Content-Type": "application/json",
@@ -51,7 +51,7 @@ export const getAllUsersAPI = async () => {
  */
 export const getAdminUserDetailAPI = async (userId) => {
   try {
-    const response = await fetch(`${API_BASE_URL}/users/${userId}`, {
+    const response = await fetch(`${API_BASE_URL}/admin/users/${userId}`, {
       method: "GET",
       headers: {
         "Content-Type": "application/json",
@@ -62,7 +62,7 @@ export const getAdminUserDetailAPI = async (userId) => {
     const result = await parseJsonSafe(response);
 
     if (response.ok) {
-      return { success: true, user: result };
+      return { success: true, user: result.user };
     }
 
     return {
@@ -83,7 +83,7 @@ export const getAdminUserDetailAPI = async (userId) => {
  */
 export const deleteUserAPI = async (userId) => {
   try {
-    const response = await fetch(`${API_BASE_URL}/users/${userId}`, {
+    const response = await fetch(`${API_BASE_URL}/admin/users/${userId}`, {
       method: "DELETE",
       headers: {
         "Content-Type": "application/json",

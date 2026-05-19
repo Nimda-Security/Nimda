@@ -161,3 +161,47 @@ export const updatePointManual = async (studentNum: string, description: string,
     return { success: false, message: "서버 통신 중 오류가 발생했습니다." };
   }
 };
+
+/**
+ * 5. [관리자용] 마일리지 일괄 지급 (POST /api/cite/point/bulk)
+ */
+export const updatePointManualBulk = async (
+  requests: { studentNum: string; description: string; amount: number }[]
+) => {
+  try {
+    const response = await fetch(`${API_BASE_URL}/bulk`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      credentials: "include",
+      body: JSON.stringify(requests),
+    });
+
+    const contentType = response.headers.get("content-type");
+    let result: any = {};
+
+    if (contentType && contentType.includes("application/json")) {
+      result = await response.json();
+    } else {
+      const text = await response.text();
+      result = text ? { message: text } : {};
+    }
+
+    if (response.ok) {
+      return {
+        success: true,
+        message: result.message || "마일리지 일괄 지급이 완료되었습니다.",
+        data: result.data || null,
+      };
+    }
+
+    return {
+      success: false,
+      message: result.message || `마일리지 일괄 지급 실패 (에러 코드: ${response.status})`,
+    };
+  } catch (error) {
+    console.error("일괄 지급 오류:", error);
+    return { success: false, message: "서버 통신 중 오류가 발생했습니다." };
+  }
+};

@@ -1,5 +1,7 @@
 package com.nimda.cite.user.controller;
 
+import com.nimda.cite.common.util.MailService;
+import com.nimda.cite.common.util.TokenProvider;
 import com.nimda.cite.user.dto.LoginDTO;
 import com.nimda.cite.user.dto.LoginResponseDTO;
 import com.nimda.cite.user.dto.MyPageResponseDTO;
@@ -35,9 +37,14 @@ public class AuthController {
 
     @Autowired
     private AuthService authService;
+    @Autowired
+    private MailService mailService;
 
     @Autowired(required = false)
     private S3Service s3Service;
+
+    @Autowired
+    private TokenProvider tokenProvider;
 
     @Value("${auth.cookie.secure:true}")
     private boolean secureAuthCookie;

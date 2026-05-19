@@ -22,7 +22,6 @@ public interface UserRepository extends JpaRepository<User, Long> {
 
     // 학번으로 유저 정보 조회
     Optional<User> findByStudentNum(String studentNum);
-
     /**
      * user_id로 사용자 찾기
      */
@@ -68,5 +67,6 @@ public interface UserRepository extends JpaRepository<User, Long> {
      * = 'APPROVED'
      */
     List<User> findByStatus(ApprovalStatus status);
-
+    Boolean existsByUserIdAndEmail(String userId, String email);
+    Boolean existsByUserIdAndStudentNum(String userId, String studentNum);
 }

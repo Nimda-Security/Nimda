@@ -1,7 +1,10 @@
 package com.nimda.cite;
 
 import org.junit.jupiter.api.Test;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.data.redis.core.StringRedisTemplate;
+import org.springframework.data.redis.core.ValueOperations;
 import org.springframework.test.context.ActiveProfiles;
 
 /**
@@ -19,5 +22,27 @@ class NimdaCiteApplicationTests {
     void contextLoads() {
         // 애플리케이션 컨텍스트가 정상적으로 로드되는지 확인
         // H2 인메모리 데이터베이스를 사용하여 실제 MySQL 없이 테스트 가능
+    }
+}
+
+@SpringBootTest
+class RedisTest {
+
+    @Autowired
+    private StringRedisTemplate redisTemplate;
+
+    @Test
+    void redisConnectionTest() {
+        // Given
+        ValueOperations<String, String> valueOperations = redisTemplate.opsForValue();
+        String key = "testKey";
+        String value = "helloRedis";
+
+        // When
+        valueOperations.set(key, value);
+
+        // Then
+        String result = valueOperations.get(key);
+        System.out.println("Result: " + result); // helloRedis가 출력되어야 함
     }
 }

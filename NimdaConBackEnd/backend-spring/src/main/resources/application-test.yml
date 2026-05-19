@@ -11,3 +11,17 @@ cloud:
       static: ${AWS_REGION}
     stack:
       auto: false
+
+spring:
+  # ... 기존 설정들 ...
+  mail:
+    host: localhost
+    port: 25
+    username: {MAIL_USERNAME}
+    password: {MAIL_PASSWORD}
+    properties:
+      mail:
+        smtp:
+          auth: false
+          starttls:
+            enable: false

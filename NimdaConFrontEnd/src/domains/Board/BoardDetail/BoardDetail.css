@@ -231,6 +231,32 @@
   text-decoration: none;
 }
 
+.board-detail__body ul,
+.board-detail__body ol {
+  margin: 8px 0;
+  padding-left: 24px;
+}
+
+.board-detail__body ul {
+  list-style: disc;
+}
+
+.board-detail__body ol {
+  list-style: decimal;
+}
+
+.board-detail__body li {
+  padding-left: 2px;
+}
+
+.board-detail__body li + li {
+  margin-top: 4px;
+}
+
+.board-detail__body li p {
+  margin: 0;
+}
+
 .board-detail__body .comment-emoticon-inline {
   width: 160px;
   height: 160px;

@@ -39,7 +39,7 @@ public class User extends BaseTimeEntity {
     // 실명
 
     @NotBlank
-    @Size(min = 3, max = 20)
+    @Size(min = 2, max = 20)
     @Column(name = "nickname", unique = true, nullable = false, length = 20)
     private String nickname;
     // 닉네임 (변경 가능, 표시용)

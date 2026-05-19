@@ -3,11 +3,14 @@ package com.nimda.cite.common.util;
 import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.SignatureAlgorithm;
+import io.jsonwebtoken.io.Decoders;
 import io.jsonwebtoken.security.Keys;
+import jakarta.annotation.PostConstruct;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 
 import javax.crypto.SecretKey;
+import java.security.Key;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.Map;
@@ -22,6 +25,15 @@ public class JwtUtil {
     @Value("${jwt.expiration:86400000}") // 24시간
     private Long expiration;
 
+    private Key key;
+
+    @PostConstruct
+    public void init() {
+        // TokenProvider랑 같은 방식으로 통일
+        byte[] keyBytes = Decoders.BASE64.decode(secret);
+        this.key = Keys.hmacShaKeyFor(keyBytes);
+    }
+    
     /**
      * JWT 토큰 생성
      * 
@@ -71,7 +83,7 @@ public class JwtUtil {
                 .setSubject(subject)
                 .setIssuedAt(new Date(System.currentTimeMillis()))
                 .setExpiration(new Date(System.currentTimeMillis() + expiration))
-                .signWith(getSigningKey(), SignatureAlgorithm.HS256)
+                .signWith(this.key, SignatureAlgorithm.HS256)
                 .compact();
     }
 
@@ -97,6 +109,13 @@ public class JwtUtil {
         return extractNickname(token);
     }
 
+
+    public String extractId(String token) {
+        Claims claims = extractAllClaims(token);
+
+        return claims.get("userId", String.class);
+    }
+
     /**
      * 토큰에서 사용자 ID 추출
      * 
@@ -120,6 +139,14 @@ public class JwtUtil {
         });
     }
 
+    public String extractSubject(String token) {
+        Claims claims = Jwts.parserBuilder()
+                .setSigningKey(key)
+                .build()
+                .parseClaimsJws(token)
+                .getBody();
+        return claims.getSubject();
+    }
     /**
      * 토큰에서 권한 목록 추출
      * 
@@ -165,10 +192,14 @@ public class JwtUtil {
      */
     private Claims extractAllClaims(String token) {
         return Jwts.parserBuilder()
-                .setSigningKey(getSigningKey())
+                .setSigningKey(this.key)
                 .build()
                 .parseClaimsJws(token)
                 .getBody();
+    }
+
+    public String extractClaimByKey(String token,String key) {
+        return extractClaim(token, claims -> claims.get(key, String.class));
     }
 
     /**
@@ -193,6 +224,54 @@ public class JwtUtil {
         return (extractedNickname.equals(nickname) && !isTokenExpired(token));
     }
 
+/*    // 비밀번호 재설정 시 사용
+    public Boolean validateToken(String token, String userId, String studentNum,
+                                 String email) {
+        try {
+            final Claims claims = extractAllClaims(token);
+            String tokenUserId = claims.get("userId", String.class);
+            String tokenStudentNum = claims.get("studentNum", String.class);
+            String tokenEmail = claims.get("email", String.class);
+
+            return userId.equals(tokenUserId)
+                    && studentNum.equals(tokenStudentNum)
+                    && email.equals(tokenEmail);
+
+        } catch (Exception e) {
+            return false;
+        }
+    }
+    */
+// 비밀번호 재설정 시 사용
+public Boolean validateToken(String token, String userId, String studentNum,
+                             String email) {
+    try {
+        final Claims claims = extractAllClaims(token);
+        String tokenUserId = claims.get("userId", String.class);
+        String tokenStudentNum = claims.get("studentNum", String.class);
+        String tokenEmail = claims.get("email", String.class);
+
+        // --- 디버깅 로그 추가 ---
+        System.out.println("========= JWT 검증 디버깅 =========");
+        System.out.println("1. UserId     | 입력: [" + userId + "] vs 토큰: [" + tokenUserId + "]");
+        System.out.println("2. StudentNum | 입력: [" + studentNum + "] vs 토큰: [" + tokenStudentNum + "]");
+        System.out.println("3. Email      | 입력: [" + email + "] vs 토큰: [" + tokenEmail + "]");
+
+        boolean isMatch = userId.equals(tokenUserId)
+                && studentNum.equals(tokenStudentNum)
+                && email.equals(tokenEmail);
+
+        System.out.println("결과: " + (isMatch ? "✅ 일치함" : "❌ 불일치함"));
+        System.out.println("=================================");
+
+        return isMatch;
+
+    } catch (Exception e) {
+        System.out.println("❌ 검증 중 에러 발생: " + e.getMessage());
+        return false;
+    }
+}
+
     /**
      * 토큰 유효성 검증 (하위 호환성 유지)
      * 
@@ -215,4 +294,6 @@ public class JwtUtil {
         byte[] keyBytes = secret.getBytes();
         return Keys.hmacShaKeyFor(keyBytes);
     }
+
+
 }

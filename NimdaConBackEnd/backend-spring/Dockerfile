@@ -1,42 +1,25 @@
-# Stage 1: Build the application using Maven
+# Stage 1: Build (기존과 동일)
 FROM maven:3.8-openjdk-17 AS build
 WORKDIR /app
-# Copy pom.xml and source code (현재 디렉토리에서 복사)
 COPY pom.xml .
 COPY src ./src
 RUN mvn package -DskipTests
 
 # Stage 2: Create the final runtime image
-FROM eclipse-temurin:17-jre 
+FROM eclipse-temurin:17-jre
 
-# 시간대 설정 및 비대화형 모드 설정
-ENV DEBIAN_FRONTEND=noninteractive
+USER root
+
+# [핵심 수정] 무거운 컴파일러 설치 제거 및 시간대 설정만 유지
+# tzdata 설치 없이 바로 심볼릭 링크 설정 시도 (기본 이미지에 포함된 경우 대비)
 ENV TZ=Asia/Seoul
+RUN ln -snf /usr/share/zoneinfo/Asia/Seoul /etc/localtime && \
+    echo Asia/Seoul > /etc/timezone
 
 WORKDIR /app
 
-# 필수 패키지 설치 (비대화형 모드)
-USER root
-
-# 1. 패키지 서버를 한국(카카오) 미러로 변경 (속도 하이패스)
-RUN sed -i 's/archive.ubuntu.com/mirror.kakao.com/g' /etc/apt/sources.list && \
-    sed -i 's/security.ubuntu.com/mirror.kakao.com/g' /etc/apt/sources.list
-
-# 2. 패키지 업데이트 및 설치
-RUN apt-get update && \
-    apt-get install -y --no-install-recommends \
-    g++ \
-    build-essential \
-    tzdata \
-    curl && \
-    # 시간대 설정
-    ln -snf /usr/share/zoneinfo/Asia/Seoul /etc/localtime && \
-    echo Asia/Seoul > /etc/timezone && \
-    # 캐시 정리 (이미지 용량 감소)
-    apt-get clean && \
-    rm -rf /var/lib/apt/lists/* /var/cache/apt/* /tmp/* /var/tmp/*
-# Copy the built jar from the build stage
+# 빌드 스테이지에서 생성된 jar 복사
 COPY --from=build /app/target/*.jar app.jar
 
-EXPOSE 8080
+EXPOSE 80
 ENTRYPOINT ["java", "-jar", "app.jar"]
