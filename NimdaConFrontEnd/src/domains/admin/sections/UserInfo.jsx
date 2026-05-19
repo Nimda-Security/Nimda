@@ -22,7 +22,8 @@ const UserInfo = ({
   const [selectedRoleToGrant, setSelectedRoleToGrant] = React.useState('');
 
   React.useEffect(() => {
-    setSelectedRoleToGrant('');
+    const roles = selectedUser ? getUserRoles(selectedUser) : [];
+    setSelectedRoleToGrant(roles.length > 0 ? roles[0] : '');
   }, [selectedUser?.id]);
 
   return (
