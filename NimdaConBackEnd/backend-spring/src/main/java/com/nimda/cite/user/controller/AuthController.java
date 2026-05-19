@@ -66,7 +66,7 @@ public class AuthController {
                 LoginResponseDTO loginData = authService.login(userOpt.get());
                 String token = loginData.getAccessToken(); // DTO에서 토큰 추출
 
-                ResponseCookie cookie = createAuthCookie(token, 60 * 60);
+                ResponseCookie cookie = createAuthCookie(token, 60 * 60 * 24);
 
                 // 2. 응답 헤더에 쿠키 추가 및 바디 응답
                 // 이제 프론트엔드에 토큰을 바디로 줄 필요가 없으므로 DTO에서 토큰을 제외하거나 유지해도 됨
