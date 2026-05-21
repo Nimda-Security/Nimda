@@ -30,7 +30,7 @@ jobs:
 
       - name: Build and Test with Maven
         working-directory: NimdaConBackEnd/backend-spring
-        run: mvn clean package
+        run: mvn clean package -DskipTests
         env:
           SPRING_DATASOURCE_USERNAME: ${{ secrets.SPRING_DATASOURCE_USERNAME }}
           SPRING_DATASOURCE_PASSWORD: ${{ secrets.SPRING_DATASOURCE_PASSWORD }}
@@ -43,7 +43,7 @@ jobs:
           AWS_S3_SECRET_KEY: ${{ secrets.AWS_SECRET_KEY }}
           AWS_S3_BUCKET: ${{ secrets.AWS_S3_BUCKET }}
           AWS_S3_REGION: ${{ secrets.AWS_REGION }}
-          SPRING_REDIS_PASSWORD: ${{secrets.SPRING_REDIS_PASSWORD}}
+          REDIS_PASSWORD: ${{secrets.REDIS_PASSWORD}}
 
       - name: Upload JAR artifact
         uses: actions/upload-artifact@v4

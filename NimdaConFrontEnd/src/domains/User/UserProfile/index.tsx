@@ -31,7 +31,7 @@ const TABS: { key: TabKey; label: string }[] = [
   { key: 'points', label: '마일리지' },
 ];
 
-const ITEMS_PER_PAGE = 10;
+const ITEMS_PER_PAGE = 8;
 
 const formatShortDate = (dateStr?: string): string => {
   if (!dateStr) return '';
@@ -79,6 +79,31 @@ function EmptyNotice({ message }: { message: string }) {
         {message}
       </span>
     </div>
+  );
+}
+
+function PublicListPagination({
+  currentPage,
+  totalPages,
+  onPageChange,
+}: {
+  currentPage: number;
+  totalPages: number;
+  onPageChange: (page: number) => void;
+}) {
+  return (
+    <>
+      <div className="h-[12px]" />
+      <div className="mt-[8px] h-[40px]" aria-hidden="true" />
+      <div style={{ marginBottom: '24px' }}>
+        <Pagination
+          currentPage={currentPage}
+          totalPages={totalPages}
+          onPageChange={onPageChange}
+        />
+        <div className="h-[24px] w-full" aria-hidden="true" />
+      </div>
+    </>
   );
 }
 
@@ -134,7 +159,6 @@ export default function UserProfilePage() {
   const [boardsPage, setBoardsPage] = useState(1);
   const [commentsPage, setCommentsPage] = useState(1);
   const [likedPage, setLikedPage] = useState(1);
-  const [pointDetailsPage, setPointDetailsPage] = useState(1);
   const [pointFilter, setPointFilter] = useState<
     'all' | 'earn' | 'use' | 'expire'
   >('all');
@@ -146,7 +170,6 @@ export default function UserProfilePage() {
     setBoardsPage(1);
     setCommentsPage(1);
     setLikedPage(1);
-    setPointDetailsPage(1);
     setPointFilter('all');
 
     Promise.all([
@@ -257,7 +280,7 @@ export default function UserProfilePage() {
     likedPage * ITEMS_PER_PAGE
   );
 
-  /* ── 마일리지 필터 + 페이지네이션 ── */
+  /* ── 마일리지 필터 ── */
   const filteredPoints = pointDetails.filter((item) => {
     if (pointFilter === 'all') return true;
     if (pointFilter === 'earn') return item.amount > 0;
@@ -265,14 +288,6 @@ export default function UserProfilePage() {
     if (pointFilter === 'expire') return item.type === 'expire';
     return true;
   });
-  const totalPointPages = Math.max(
-    1,
-    Math.ceil(filteredPoints.length / ITEMS_PER_PAGE)
-  );
-  const displayedPoints = filteredPoints.slice(
-    (pointDetailsPage - 1) * ITEMS_PER_PAGE,
-    pointDetailsPage * ITEMS_PER_PAGE
-  );
 
   const renderTabContent = () => {
     switch (activeTab) {
@@ -329,7 +344,7 @@ export default function UserProfilePage() {
                 />
               ))}
             </div>
-            <Pagination
+            <PublicListPagination
               currentPage={boardsPage}
               totalPages={totalBoardPages}
               onPageChange={setBoardsPage}
@@ -360,7 +375,7 @@ export default function UserProfilePage() {
                 />
               ))}
             </div>
-            <Pagination
+            <PublicListPagination
               currentPage={commentsPage}
               totalPages={totalCommentPages}
               onPageChange={setCommentsPage}
@@ -396,7 +411,7 @@ export default function UserProfilePage() {
                 />
               ))}
             </div>
-            <Pagination
+            <PublicListPagination
               currentPage={likedPage}
               totalPages={totalLikedPages}
               onPageChange={setLikedPage}
@@ -452,7 +467,6 @@ export default function UserProfilePage() {
                     key={f.key}
                     onClick={() => {
                       setPointFilter(f.key as typeof pointFilter);
-                      setPointDetailsPage(1);
                     }}
                     className={`text-[14px] font-[600] leading-[150%] text-center transition-all flex items-center justify-center ${
                       pointFilter === f.key
@@ -483,11 +497,13 @@ export default function UserProfilePage() {
                 paddingLeft: '24px',
                 paddingRight: '24px',
                 marginTop: '24px',
+                maxHeight: '576px',
+                overflowY: 'auto',
               }}
             >
-              {displayedPoints.length > 0 ? (
+              {filteredPoints.length > 0 ? (
                 <div className="flex flex-col">
-                  {displayedPoints.map((record, index) => (
+                  {filteredPoints.map((record, index) => (
                     <div
                       key={record.id || index}
                       style={{
@@ -495,10 +511,7 @@ export default function UserProfilePage() {
                         height: '72px',
                         flexShrink: 0,
                         borderTop: '1px solid #D4D4D4',
-                        borderBottom:
-                          index === displayedPoints.length - 1
-                            ? '1px solid #D4D4D4'
-                            : 'none',
+                        borderBottom: 'none',
                         display: 'flex',
                         alignItems: 'center',
                         gap: '16px',
@@ -534,17 +547,21 @@ export default function UserProfilePage() {
                   ))}
                 </div>
               ) : (
-                <div className="flex justify-center items-center py-12 text-[#A3A3A3] text-[14px] font-medium">
-                  거래 내역이 없습니다.
+                <div
+                  className="flex flex-col items-center justify-center text-[#A3A3A3]"
+                  style={{
+                    minHeight: '300px',
+                    marginTop: '20px',
+                    paddingTop: '48px',
+                    paddingBottom: '48px',
+                    boxSizing: 'border-box',
+                  }}
+                >
+                  <p className="text-[14px] font-medium">
+                    거래 내역이 없습니다.
+                  </p>
                 </div>
               )}
-            </div>
-            <div style={{ padding: '0 24px 24px' }}>
-              <Pagination
-                currentPage={pointDetailsPage}
-                totalPages={totalPointPages}
-                onPageChange={setPointDetailsPage}
-              />
             </div>
           </div>
         );
