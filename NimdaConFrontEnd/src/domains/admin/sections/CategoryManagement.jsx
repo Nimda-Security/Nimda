@@ -420,6 +420,48 @@ const CategoryManagement = ({
                 </div>
               </div>
 
+              <div className="admin__catorder-form-row">
+                <label className="admin__catorder-form-label">마일리지 구매</label>
+                <div className="admin__catorder-form-field">
+                  <label className="admin__catorder-checkbox-label">
+                    <input
+                      type="checkbox"
+                      checked={Boolean(selectedCategoryData.shopEnabled)}
+                      onChange={async (event) => {
+                        if (!selectedCategoryId) return;
+                        setSavingTags(true);
+                        try {
+                          const result = await updateCategoryAPI(selectedCategoryId, {
+                            name: selectedCategoryData.name,
+                            slug: selectedCategoryData.slug,
+                            parentId: selectedCategoryData.parentId,
+                            sortOrder: selectedCategoryData.sortOrder,
+                            isActive: selectedCategoryData.isActive,
+                            redirectUrl: selectedCategoryData.redirectUrl || null,
+                            shopEnabled: event.target.checked,
+                          });
+                          if (result.success) {
+                            await loadCategories();
+                          } else {
+                            alert(result.message || '마일리지 구매 화면 설정에 실패했습니다.');
+                          }
+                        } catch (error) {
+                          console.error('마일리지 구매 화면 저장 오류:', error);
+                          alert('마일리지 구매 화면 저장 중 오류가 발생했습니다.');
+                        } finally {
+                          setSavingTags(false);
+                        }
+                      }}
+                      disabled={savingTags}
+                    />
+                    <span>이 카테고리를 아이템 구매 화면으로 보여줍니다.</span>
+                  </label>
+                  <p style={{ marginTop: '4px', fontSize: '11px', color: '#999', fontFamily: 'Pretendard, sans-serif' }}>
+                    켜면 게시글 제목은 상품명, 태그는 상품 종류, 첨부 이미지는 상품 이미지, 가격은 작성/수정 화면에서 입력한 NC로 표시됩니다.
+                  </p>
+                </div>
+              </div>
+
               {/* 카테고리 옆에 글 개수 표시 */}
               <div className="admin__catorder-form-row">
                 <label className="admin__catorder-form-label"></label>

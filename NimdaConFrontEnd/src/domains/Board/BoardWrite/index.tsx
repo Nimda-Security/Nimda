@@ -54,6 +54,7 @@ function BoardWritePage() {
 
   const [title, setTitle] = useState('');
   const [content, setContent] = useState(EMPTY_DOC);
+  const [itemPrice, setItemPrice] = useState('');
   const [tagId, setTagId] = useState<number | null>(null);
   const [attachedFiles, setAttachedFiles] = useState<
     { id: number; name: string; size: number; isInline?: boolean }[]
@@ -175,6 +176,7 @@ function BoardWritePage() {
         .filter((category) => category.parentId === null && category.isActive)
         .filter((category) => !['바로가기', '대회'].includes(category.name))
         .filter((category) => category.name !== '새 소식' || isAdmin())
+        .filter((category) => !category.shopEnabled || isAdmin())
         .filter(
           (category) =>
             category.name !== '카르텔' || hasRole('ROLE_CARTEL') || isAdmin()
@@ -192,6 +194,7 @@ function BoardWritePage() {
     (category) => category.id === subCategoryId
   );
   const targetCategoryId = currentSubCat?.id ?? currentParentCat?.id ?? null;
+  const isShopCategory = Boolean(currentSubCat?.shopEnabled ?? currentParentCat?.shopEnabled);
 
   const pushRecentColor = (color: string) => {
     setRecentColors((prev) => {
@@ -302,6 +305,12 @@ function BoardWritePage() {
       return;
     }
 
+    if (matchedCategory?.shopEnabled && !isAdmin()) {
+      alert('상품 등록은 관리자만 가능합니다.');
+      navigate(`/board/${matchedCategory.slug}`);
+      return;
+    }
+
     if (isEditMode && editId) {
       const loadBoard = async () => {
         try {
@@ -310,6 +319,7 @@ function BoardWritePage() {
             const board = response.board;
             setEditBoardId(board.id);
             setTitle(board.title);
+            setItemPrice(board.itemPrice != null ? String(board.itemPrice) : '');
             setTagId(board.tag?.id ?? null);
             setAttachedFiles(
               board.attachments?.map((attachment) => ({
@@ -568,6 +578,12 @@ function BoardWritePage() {
       return;
     }
 
+    const parsedItemPrice = itemPrice.trim() ? Number(itemPrice) : null;
+    if (isShopCategory && (!Number.isFinite(parsedItemPrice) || !parsedItemPrice || parsedItemPrice <= 0)) {
+      setError('상품 가격을 1 NC 이상으로 입력해주세요.');
+      return;
+    }
+
     if (currentTagList.length > 0 && tagId === null) {
       setError(null);
       requestAnimationFrame(() => {
@@ -595,6 +611,7 @@ function BoardWritePage() {
           content: latestContent,
           tagId: tagId ?? undefined,
           attachmentIds,
+          itemPrice: isShopCategory ? parsedItemPrice : null,
         });
 
         if (response.success && 'board' in response) {
@@ -613,6 +630,7 @@ function BoardWritePage() {
         content: latestContent,
         tagId: tagId ?? undefined,
         attachmentIds,
+        itemPrice: isShopCategory ? parsedItemPrice : null,
       });
 
       if (response.success && 'board' in response) {
@@ -681,6 +699,25 @@ function BoardWritePage() {
               required
             />
           </div>
+
+          {isShopCategory && (
+            <>
+              <div className="bw-divider" />
+              <div className="bw-title-area">
+                <input
+                  id="bw-item-price"
+                  type="number"
+                  min="1"
+                  step="1"
+                  value={itemPrice}
+                  onChange={(event) => setItemPrice(event.target.value)}
+                  placeholder="상품 가격을 입력하세요. 예: 1200"
+                  className="bw-title-input"
+                  required
+                />
+              </div>
+            </>
+          )}
 
           <div className="bw-divider" />
 

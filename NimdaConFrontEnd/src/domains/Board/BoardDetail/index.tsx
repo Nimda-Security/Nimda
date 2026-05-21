@@ -4,12 +4,13 @@ import DOMPurify, { type Config as DOMPurifyConfig } from 'dompurify';
 import { MessageBox } from '@/components/icons/MessageBox';
 import { VerticalDots } from '@/components/icons/VerticalDots';
 import Layout from '@/components/Layout';
-import { openAttachmentDownloadInNewTab } from '@/api/attachments';
+import { getAttachmentPresignedUrl, openAttachmentDownloadInNewTab } from '@/api/attachments';
 import {
   getBoardDetailAPI,
   deleteBoardAPI,
   getFileDownloadURL,
   getBoardLikeStatusAPI,
+  purchaseBoardItemAPI,
 } from '@/api/board';
 import { getAllCategoriesAPI } from '@/api/category';
 import { hasRole, isAdmin, getCurrentNickname } from '@/utils/jwt';
@@ -22,6 +23,16 @@ import { highlightCodeBlocks } from '@/utils/codeHighlight';
 import './BoardDetail.css';
 
 const MAX_VIEWER_FONT_SIZE_PX = 24;
+const IMAGE_EXTENSIONS = ['jpg', 'jpeg', 'png', 'gif', 'webp', 'bmp', 'svg'];
+
+const getFirstImageAttachmentId = (board: Board): number | null => {
+  if (!board.attachments || board.attachments.length === 0) return null;
+  for (const attachment of board.attachments) {
+    const ext = attachment.originFilename?.split('.').pop()?.toLowerCase() || '';
+    if (!attachment.originFilename || IMAGE_EXTENSIONS.includes(ext)) return attachment.id;
+  }
+  return null;
+};
 
 const normalizeViewerFontSize = (size: string, fallbackPx = 14) => {
   const match = size
@@ -149,6 +160,8 @@ function BoardDetailPage() {
   const [isLiked, setIsLiked] = useState(false);
   const [menuOpen, setMenuOpen] = useState(false);
   const [showAttachments, setShowAttachments] = useState(false);
+  const [shopImageUrl, setShopImageUrl] = useState<string | null>(null);
+  const [isPurchasing, setIsPurchasing] = useState(false);
   const normalizedViewerContent = sanitizeViewerContent(board?.content ?? '');
   const bodyRef = useRef<HTMLDivElement>(null);
 
@@ -162,6 +175,34 @@ function BoardDetailPage() {
       highlightCodeBlocks(body);
     }
   }, [normalizedViewerContent]);
+
+  useEffect(() => {
+    let cancelled = false;
+    const loadShopImage = async () => {
+      if (!board?.category?.shopEnabled) {
+        setShopImageUrl(null);
+        return;
+      }
+
+      const attachmentId = getFirstImageAttachmentId(board);
+      if (!attachmentId) {
+        setShopImageUrl(null);
+        return;
+      }
+
+      try {
+        const url = await getAttachmentPresignedUrl(attachmentId);
+        if (!cancelled) setShopImageUrl(url);
+      } catch {
+        if (!cancelled) setShopImageUrl(null);
+      }
+    };
+
+    loadShopImage();
+    return () => {
+      cancelled = true;
+    };
+  }, [board]);
 
   const fetchBoard = async (boardId: number) => {
     try {
@@ -253,6 +294,33 @@ function BoardDetailPage() {
     }
   };
 
+  const handlePurchase = async () => {
+    if (!board || isPurchasing) return;
+    const price = board.itemPrice ?? 0;
+    if (price <= 0) {
+      alert('상품 가격이 설정되지 않았습니다.');
+      return;
+    }
+    if (!window.confirm(`${board.title} 상품을 ${price.toLocaleString()} NC에 구매하시겠습니까?`)) {
+      return;
+    }
+
+    setIsPurchasing(true);
+    try {
+      const result = await purchaseBoardItemAPI(board.id);
+      if (result.success) {
+        const remaining = 'data' in result && result.data?.remainingAmount != null
+          ? `\n잔여 마일리지: ${result.data.remainingAmount.toLocaleString()} NC`
+          : '';
+        alert(`${result.message}${remaining}`);
+      } else {
+        alert(result.message || '구매에 실패했습니다.');
+      }
+    } finally {
+      setIsPurchasing(false);
+    }
+  };
+
   const isAuthor = () =>
     !!board &&
     !!board.author?.nickname &&
@@ -291,6 +359,102 @@ function BoardDetailPage() {
           >
             목록으로
           </button>
+        </div>
+      </Layout>
+    );
+  }
+
+  if (board.category?.shopEnabled) {
+    return (
+      <Layout>
+        <div className="board-detail__shop">
+          <button
+            type="button"
+            onClick={handleGoBack}
+            className="board-detail__back"
+          >
+            ← {board.category?.name ?? '마일리지 상점'}
+          </button>
+
+          <section className="board-detail__shop-top">
+            <div className="board-detail__shop-image-wrap">
+              {shopImageUrl ? (
+                <img src={shopImageUrl} alt={board.title} className="board-detail__shop-image" />
+              ) : (
+                <div className="board-detail__shop-image-placeholder" />
+              )}
+            </div>
+
+            <div className="board-detail__shop-panel">
+              {board.tag?.tagName && (
+                <span className="board-detail__shop-tag">{board.tag.tagName}</span>
+              )}
+              <div className="board-detail__title-row">
+                <h1 className="board-detail__shop-title">{board.title}</h1>
+                {(isAuthor() || isAdmin()) && (
+                  <div className="board-detail__menu-wrap">
+                    <button
+                      type="button"
+                      className="board-detail__more-btn"
+                      aria-label="더보기"
+                      onClick={() => setMenuOpen((prev) => !prev)}
+                    >
+                      <VerticalDots size={24} />
+                    </button>
+                    {menuOpen && (
+                      <ul className="board-detail__menu">
+                        {isAuthor() && (
+                          <li>
+                            <button
+                              type="button"
+                              onClick={() => {
+                                setMenuOpen(false);
+                                handleEdit();
+                              }}
+                            >
+                              수정
+                            </button>
+                          </li>
+                        )}
+                        <li>
+                          <button
+                            type="button"
+                            onClick={() => {
+                              setMenuOpen(false);
+                              void handleDelete();
+                            }}
+                            disabled={isDeleting}
+                          >
+                            {isDeleting ? '삭제 중...' : '삭제'}
+                          </button>
+                        </li>
+                      </ul>
+                    )}
+                  </div>
+                )}
+              </div>
+              <div className="board-detail__shop-price">
+                {(board.itemPrice ?? 0).toLocaleString()} NC
+              </div>
+              <button
+                type="button"
+                className="board-detail__shop-buy"
+                onClick={handlePurchase}
+                disabled={isPurchasing}
+              >
+                {isPurchasing ? '구매 처리 중...' : '구매하기'}
+              </button>
+            </div>
+          </section>
+
+          <section className="board-detail__shop-description">
+            <h2>상품 상세설명</h2>
+            <div
+              ref={bodyRef}
+              className="board-detail__body board-detail__content-scope"
+              dangerouslySetInnerHTML={{ __html: normalizedViewerContent }}
+            />
+          </section>
         </div>
       </Layout>
     );

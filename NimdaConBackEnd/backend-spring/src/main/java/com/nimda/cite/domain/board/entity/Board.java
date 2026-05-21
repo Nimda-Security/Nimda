@@ -118,6 +118,9 @@ public class Board extends BaseTimeEntity {
     @Column(length = 500)
     private String filepath;
 
+    @Column(name = "item_price", nullable = false)
+    private Long itemPrice = 0L;
+
     // ========== [Soft Delete 지원] ==========
     // [신규] 게시글 상태 필드 추가
     // [이유] 삭제 시 실제 DB 삭제 대신 상태를 DELETED로 변경 (soft delete)
