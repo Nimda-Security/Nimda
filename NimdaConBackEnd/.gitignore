@@ -101,3 +101,5 @@ Thumbs.db
 
 # 로컬 전용 설정 파일 제외
 src/main/resources/application-local.yml
+# 구동 중인 백엔드 서버 정보
+nginx/conf.d/active-backend.inc
