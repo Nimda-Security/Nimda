@@ -118,7 +118,6 @@ public class CategoryService {
                 .isActive(createDTO.getIsActive() != null ? createDTO.getIsActive() : true)
                 .postCount(0)
                 .redirectUrl(createDTO.getRedirectUrl() != null && !createDTO.getRedirectUrl().isBlank() ? createDTO.getRedirectUrl().trim() : null)
-                .shopEnabled(createDTO.getShopEnabled() != null ? createDTO.getShopEnabled() : false)
                 .build();
 
         // 4. 저장 및 반환
@@ -185,9 +184,6 @@ public class CategoryService {
         if (updateDTO.getRedirectUrl() != null) {
             // 빈 문자열이면 null로 설정 (URL 제거), 아니면 트림 후 저장
             category.setRedirectUrl(updateDTO.getRedirectUrl().isBlank() ? null : updateDTO.getRedirectUrl().trim());
-        }
-        if (updateDTO.getShopEnabled() != null) {
-            category.setShopEnabled(updateDTO.getShopEnabled());
         }
 
         // 5. 저장 및 반환

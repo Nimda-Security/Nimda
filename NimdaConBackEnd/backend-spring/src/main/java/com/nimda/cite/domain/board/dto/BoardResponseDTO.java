@@ -39,7 +39,6 @@ public class BoardResponseDTO {
     private TagInfo tag; // 게시글 태그 (Tag 엔티티 관계)
     private String filename;
     private String filepath;
-    private Long itemPrice;
 
     /** 상세 조회 시에만 채움 — 게시글에 연결된 첨부(S3+Attachment) */
     private List<AttachmentResponseDto> attachments;
@@ -130,7 +129,6 @@ public class BoardResponseDTO {
                 .tag(tagInfo)
                 .filename(board.getFilename())
                 .filepath(board.getFilepath())
-                .itemPrice(board.getItemPrice())
                 .attachments(attachments)
                 .createdAt(board.getCreatedAt())
                 .updatedAt(board.getUpdatedAt())

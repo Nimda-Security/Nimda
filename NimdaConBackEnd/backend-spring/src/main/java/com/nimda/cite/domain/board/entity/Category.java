@@ -81,8 +81,4 @@ public class Category extends BaseTimeEntity {
     @Column(name = "redirect_url", nullable = true, length = 500)
     private String redirectUrl;
 
-    @Column(name = "shop_enabled", nullable = false)
-    @Builder.Default
-    private Boolean shopEnabled = false;
-
 }

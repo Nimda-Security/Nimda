@@ -17,8 +17,6 @@ import com.nimda.cite.domain.comment.repository.CommentRepository;
 import com.nimda.cite.common.response.ApiResponse;
 import com.nimda.cite.common.s3.S3Service;
 import com.nimda.cite.domain.like.service.BoardLikeService;
-import com.nimda.cite.domain.point.entity.UserBalance;
-import com.nimda.cite.domain.point.service.PointService;
 import com.nimda.cite.user.entity.User;
 import com.nimda.cite.user.repository.UserRepository;
 import com.nimda.cite.user.security.CustomUserDetails;
@@ -32,7 +30,6 @@ import org.springframework.data.web.PageableDefault;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
-import org.springframework.web.server.ResponseStatusException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
@@ -90,9 +87,6 @@ public class BoardController {
 
     @Autowired
     private CommentRepository commentRepository;
-
-    @Autowired
-    private PointService pointService;
 
     @Autowired(required = false)
     private S3Service s3Service;
@@ -345,8 +339,7 @@ public class BoardController {
             @RequestParam("content") String content,
             @RequestParam(value = "tagId", required = false) Long tagId,
             @RequestParam(value = "attachmentIds", required = false) List<Long> attachmentIds,
-            @RequestParam(value = "pinned", required = false) Boolean pinned,
-            @RequestParam(value = "itemPrice", required = false) Long itemPrice) {
+            @RequestParam(value = "pinned", required = false) Boolean pinned) {
         try {
             if (userDetails == null) {
                 return ApiResponse.fail("로그인이 필요합니다.").toResponse(HttpStatus.UNAUTHORIZED);
@@ -398,21 +391,11 @@ public class BoardController {
                 }
             }
 
-            if (Boolean.TRUE.equals(category.getShopEnabled())) {
-                if (!hasRole(author, "ROLE_ADMIN")) {
-                    return ApiResponse.fail("상품 등록은 관리자만 가능합니다.").toResponse(HttpStatus.FORBIDDEN);
-                }
-                if (itemPrice == null || itemPrice <= 0) {
-                    return ApiResponse.fail("상품 가격을 1 NC 이상으로 입력해주세요.").toResponse(HttpStatus.BAD_REQUEST);
-                }
-            }
-
             Board board = new Board();
             board.setTitle(title);
             board.setContent(content);
             board.setCategory(category);
             board.setTag(tagEntity);
-            board.setItemPrice(Boolean.TRUE.equals(category.getShopEnabled()) ? itemPrice : 0L);
 
             // 관리자만 고정 여부 설정 가능
             if (pinned != null) {
@@ -489,8 +472,7 @@ public class BoardController {
             @RequestParam("content") String content,
             @RequestParam(value = "tagId", required = false) Long tagId,
             @RequestParam(value = "attachmentIds", required = false) List<Long> attachmentIds,
-            @RequestParam(value = "pinned", required = false) Boolean pinned,
-            @RequestParam(value = "itemPrice", required = false) Long itemPrice) {
+            @RequestParam(value = "pinned", required = false) Boolean pinned) {
         try {
             Board boardTemp = boardService.boardView(id);
 
@@ -550,20 +532,10 @@ public class BoardController {
                 }
             }
 
-            if (Boolean.TRUE.equals(category.getShopEnabled())) {
-                if (!isAdmin) {
-                    return ApiResponse.fail("상품 수정은 관리자만 가능합니다.").toResponse(HttpStatus.FORBIDDEN);
-                }
-                if (itemPrice == null || itemPrice <= 0) {
-                    return ApiResponse.fail("상품 가격을 1 NC 이상으로 입력해주세요.").toResponse(HttpStatus.BAD_REQUEST);
-                }
-            }
-
             boardTemp.setTitle(title);
             boardTemp.setContent(content);
             boardTemp.setCategory(category);
             boardTemp.setTag(tagEntity);
-            boardTemp.setItemPrice(Boolean.TRUE.equals(category.getShopEnabled()) ? itemPrice : 0L);
 
             // 관리자만 고정 여부 설정 가능
             if (pinned != null && isAdmin) {
@@ -586,51 +558,6 @@ public class BoardController {
         } catch (Exception e) {
             log.error("게시글 수정 오류", e);
             return ApiResponse.fail("게시글 수정 중 오류가 발생했습니다.")
-                    .toResponse(HttpStatus.INTERNAL_SERVER_ERROR);
-        }
-    }
-
-    @PostMapping("/{id}/purchase")
-    public ResponseEntity<?> purchase(
-            @AuthenticationPrincipal CustomUserDetails userDetails,
-            @PathVariable("id") Long id) {
-        try {
-            if (userDetails == null) {
-                return ApiResponse.fail("로그인이 필요합니다.").toResponse(HttpStatus.UNAUTHORIZED);
-            }
-
-            Board board = boardService.boardView(id);
-            if (board.getStatus() != BoardStatus.ACTIVE) {
-                return ApiResponse.fail("구매할 수 없는 상품입니다.").toResponse(HttpStatus.BAD_REQUEST);
-            }
-            if (board.getCategory() == null || !Boolean.TRUE.equals(board.getCategory().getShopEnabled())) {
-                return ApiResponse.fail("마일리지 구매 상품이 아닙니다.").toResponse(HttpStatus.BAD_REQUEST);
-            }
-            if (board.getItemPrice() == null || board.getItemPrice() <= 0) {
-                return ApiResponse.fail("상품 가격이 설정되지 않았습니다.").toResponse(HttpStatus.BAD_REQUEST);
-            }
-
-            User currentUser = userDetails.getUser();
-            UserBalance balance = pointService.spendBalance(
-                    currentUser.getId(),
-                    "아이템 구매: " + board.getTitle(),
-                    board.getItemPrice()
-            );
-
-            return ApiResponse.ok("구매가 완료되었습니다.", Map.of(
-                    "boardId", board.getId(),
-                    "itemName", board.getTitle(),
-                    "price", board.getItemPrice(),
-                    "remainingAmount", balance.getTotalAmount()
-            )).toResponse();
-        } catch (ResponseStatusException e) {
-            HttpStatus status = HttpStatus.valueOf(e.getStatusCode().value());
-            return ApiResponse.fail(e.getReason() != null ? e.getReason() : "구매에 실패했습니다.").toResponse(status);
-        } catch (RuntimeException e) {
-            return ApiResponse.fail(e.getMessage()).toResponse(HttpStatus.BAD_REQUEST);
-        } catch (Exception e) {
-            log.error("상품 구매 오류", e);
-            return ApiResponse.fail("상품 구매 중 오류가 발생했습니다.")
                     .toResponse(HttpStatus.INTERNAL_SERVER_ERROR);
         }
     }
