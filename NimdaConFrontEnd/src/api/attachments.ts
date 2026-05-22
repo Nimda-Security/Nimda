@@ -3,6 +3,8 @@
  * @see AttachmentController /presigned, /register
  */
 
+import { addVersionToHeaders } from '../constants/version';
+
 const ATTACHMENTS_BASE = '/api/cite/attachments';
 
 const IMAGE_RE_ENCODE_TYPES = new Set([
@@ -105,9 +107,9 @@ export const requestPresignedUpload = async (
 
   const response = await fetch(`${ATTACHMENTS_BASE}/presigned`, {
     method: 'POST',
-    headers: {
+    headers: addVersionToHeaders({
       'Content-Type': 'application/x-www-form-urlencoded',
-    },
+    }),
     credentials: 'include',
     body: params.toString(),
   });
@@ -170,9 +172,9 @@ export const registerAttachmentAfterS3 = async (
 ): Promise<{ ok: true; attachmentId: number } | { ok: false; message: string }> => {
   const response = await fetch(`${ATTACHMENTS_BASE}/register`, {
     method: 'POST',
-    headers: {
+    headers: addVersionToHeaders({
       'Content-Type': 'application/json',
-    },
+    }),
     credentials: 'include',
     body: JSON.stringify({
       key: body.key,
@@ -210,6 +212,7 @@ const uploadBoardFileLocally = async (
 
   const response = await fetch(`${ATTACHMENTS_BASE}/upload`, {
     method: 'POST',
+    headers: addVersionToHeaders(),
     credentials: 'include',
     body: formData,
   });
@@ -276,7 +279,10 @@ export const getAttachmentPresignedUrl = async (
   attachmentId: number
 ): Promise<string | null> => {
   try {
-    const response = await fetch(`${ATTACHMENTS_BASE}/${attachmentId}/download-url`, { credentials: 'include' });
+    const response = await fetch(`${ATTACHMENTS_BASE}/${attachmentId}/download-url`, {
+      headers: addVersionToHeaders(),
+      credentials: 'include',
+    });
     const result = await parseJsonSafe(response);
     if (!response.ok || !result?.success) return null;
     const data = result.data ?? result;
@@ -293,7 +299,10 @@ export const getAttachmentPresignedUrl = async (
 export const openAttachmentDownloadInNewTab = async (
   attachmentId: number
 ): Promise<{ ok: true } | { ok: false; message: string }> => {
-  const response = await fetch(`${ATTACHMENTS_BASE}/${attachmentId}/download-url`, { credentials: 'include' });
+  const response = await fetch(`${ATTACHMENTS_BASE}/${attachmentId}/download-url`, {
+    headers: addVersionToHeaders(),
+    credentials: 'include',
+  });
   const result = await parseJsonSafe(response);
   if (!response.ok || !result?.success) {
     return {

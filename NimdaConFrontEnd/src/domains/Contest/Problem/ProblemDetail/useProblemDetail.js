@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import { getAllSubmissionsAPI } from '@/api/judge';
+import { addVersionToHeaders } from '@/constants/version';
 
 export function useProblemDetail(id) {
   const [problem, setProblem] = useState(null);
@@ -21,7 +22,10 @@ export function useProblemDetail(id) {
     setError(null);
     try {
       // 1. 문제 정보 가져오기
-      const response = await fetch(`/api/problems/${encodeURIComponent(id)}`, { credentials: 'include' });
+      const response = await fetch(`/api/problems/${encodeURIComponent(id)}`, {
+        headers: addVersionToHeaders(),
+        credentials: 'include',
+      });
 
       if (!response.ok) {
         throw new Error(

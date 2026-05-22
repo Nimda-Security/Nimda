@@ -1,5 +1,6 @@
 // 댓글 관련 API 함수들
 
+import { addVersionToHeaders } from '../constants/version';
 import type {
   CommentCreateRequest,
   CommentUpdateRequest,
@@ -76,9 +77,9 @@ export const createCommentAPI = async (
   try {
     const response = await fetch(`${API_BASE_URL}/board/${boardId}/comments`, {
       method: 'POST',
-      headers: {
+      headers: addVersionToHeaders({
         'Content-Type': 'application/json',
-      },
+      }),
       credentials: 'include',
       body: JSON.stringify(data),
     });
@@ -127,9 +128,9 @@ export const getCommentsAPI = async (
   try {
     const response = await fetch(`${API_BASE_URL}/board/${boardId}/comments`, {
       method: 'GET',
-      headers: {
+      headers: addVersionToHeaders({
         'Content-Type': 'application/json',
-      },
+      }),
       credentials: 'include',
     });
 
@@ -169,9 +170,9 @@ export const updateCommentAPI = async (
   try {
     const response = await fetch(`${API_BASE_URL}/comments/${commentId}`, {
       method: 'PATCH',
-      headers: {
+      headers: addVersionToHeaders({
         'Content-Type': 'application/json',
-      },
+      }),
       credentials: 'include',
       body: JSON.stringify(data),
     });
@@ -216,9 +217,9 @@ export const updateCommentStatusAPI = async (
   try {
     const response = await fetch(`${API_BASE_URL}/comments/${commentId}/status`, {
       method: 'PATCH',
-      headers: {
+      headers: addVersionToHeaders({
         'Content-Type': 'application/json',
-      },
+      }),
       credentials: 'include',
       body: JSON.stringify(data),
     });
@@ -261,9 +262,9 @@ export const deleteCommentAPI = async (
   try {
     const response = await fetch(`${API_BASE_URL}/comments/${commentId}`, {
       method: 'DELETE',
-      headers: {
+      headers: addVersionToHeaders({
         'Content-Type': 'application/json',
-      },
+      }),
       credentials: 'include',
     });
 
@@ -299,9 +300,9 @@ export const getMyCommentsAPI = async (): Promise<MyComment[]> => {
   try {
     const response = await fetch(`${API_BASE_URL}/my-page/comments`, {
       method: 'GET',
-      headers: {
+      headers: addVersionToHeaders({
         'Content-Type': 'application/json',
-      },
+      }),
       credentials: 'include',
     });
 
@@ -321,9 +322,9 @@ export const deleteMyCommentsAPI = async (commentIds: number[]): Promise<{ succe
   try {
     const response = await fetch(`${API_BASE_URL}/my-page/comments`, {
       method: 'DELETE',
-      headers: {
+      headers: addVersionToHeaders({
         'Content-Type': 'application/json',
-      },
+      }),
       credentials: 'include',
       body: JSON.stringify({ commentIds }),
     });
@@ -344,9 +345,9 @@ export const getMyCommentCountAPI = async (): Promise<number> => {
   try {
     const response = await fetch(`${API_BASE_URL}/comments/my/count`, {
       method: 'GET',
-      headers: {
+      headers: addVersionToHeaders({
         'Content-Type': 'application/json',
-      },
+      }),
       credentials: 'include',
     });
 

@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { addVersionToHeaders } from '@/constants/version';
 import NavBar from '@/components/Layout/Header/NavBar';
 import Footer from '@/components/Layout/Footer';
 import { useNavigate, useLocation } from 'react-router-dom';
@@ -32,10 +33,8 @@ import PinPostManagement from './sections/PinPostManagement';
 import TagManagement from './sections/TagManagement';
 import ProfileDecorationManagement from './sections/ProfileDecorationManagement';
 import AdminSidebar from './components/AdminSidebar';
-// import MileagePaymentForm from './components/MileagePaymentForm';
-// import { updatePointManual } from '@/api/point';
-import BulkMileagePaymentForm from './components/BulkMileagePaymentForm.jsx';
-import { updatePointManualBulk } from '@/api/point';
+import MileagePaymentForm from './components/MileagePaymentForm';
+import { updatePointManual } from '@/api/point';
 import './AdminDashboard.css';
 
 function AdminDashboard() {
@@ -99,13 +98,9 @@ function AdminDashboard() {
     setLoading(true);
     try {
       const result = await getAllUsersAPI();
-      console.log("[loadUsers] API 결과:", result);
       if (result.success) {
-        console.log("[loadUsers] 로드된 사용자 수:", result.users?.length || 0);
-        console.log("[loadUsers] 사용자 목록:", result.users);
         setUsers(result.users || []);
       } else {
-        console.error("[loadUsers] 실패:", result.message);
         alert('사용자 목록을 불러오는데 실패했습니다: ' + result.message);
       }
     } catch (error) {
@@ -432,9 +427,9 @@ function AdminDashboard() {
         `/api/users/me/profile-image/presigned-url`,
         {
           method: 'POST',
-          headers: {
+          headers: addVersionToHeaders({
             'Content-Type': 'application/json',
-          },
+          }),
           credentials: 'include',
           body: JSON.stringify({
             fileName: file.name,
@@ -465,9 +460,9 @@ function AdminDashboard() {
 
       const dbUpdateResponse = await fetch(`/api/users/me/profile-image`, {
         method: 'PUT',
-        headers: {
+        headers: addVersionToHeaders({
           'Content-Type': 'application/json',
-        },
+        }),
         credentials: 'include',
         body: JSON.stringify({
           imageUrl: presignedResult.imageUrl,
@@ -1017,21 +1012,23 @@ function AdminDashboard() {
         return (
           <div>
             <div className="admin__header-row">
-              <h2 className="admin__section-title">마일리지 일괄 지급</h2>
+              <h2 className="admin__section-title">마일리지 지급</h2>
             </div>
-            <BulkMileagePaymentForm
-              onGrant={async (dataList) => {
-                const requests = dataList.map(({ studentId, mileageAmount, reason }) => ({
-                  studentNum: studentId,
-                  description: reason,
-                  amount: Number(mileageAmount),
-                }));
-                const result = await updatePointManualBulk(requests);
-                  if (result.success) {
-                    alert(`[일괄 지급 성공]\n총 ${requests.length}명 지급 완료`);
-                  } else {
-                    alert(`[지급 실패]\n${result.message}`);
-                  }
+            <MileagePaymentForm
+              onGrant={async (data) => {
+                const { studentId, mileageAmount, reason } = data;
+                const result = await updatePointManual(
+                  studentId,
+                  reason,
+                  Number(mileageAmount)
+                );
+                if (result.success) {
+                  alert(
+                    `[지급 성공]\n학번: ${studentId}\n금액: ${mileageAmount}\n사유: ${reason}`
+                  );
+                } else {
+                  alert(`[지급 실패]\n${result.message}`);
+                }
               }}
             />
             <div style={{ marginTop: '32px', fontSize: '13px', color: '#999' }}>

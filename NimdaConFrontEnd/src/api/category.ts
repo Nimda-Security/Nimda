@@ -1,6 +1,7 @@
-﻿// 카테고리 관련 API 함수들
+// 카테고리 관련 API 함수들
 
 import type { Category } from '@/domains/Board/types';
+import { addVersionToHeaders } from '../constants/version';
 
 const API_BASE_URL = '/api/cite/category';
 
@@ -33,9 +34,9 @@ export const getCategoryBySlugAPI = async (slug: string): Promise<Category | nul
   try {
     const response = await fetch(`${API_BASE_URL}/slug/${slug}`, {
       method: 'GET',
-      headers: {
+      headers: addVersionToHeaders({
         'Content-Type': 'application/json',
-      },
+      }),
       credentials: 'include',
     });
 
@@ -81,9 +82,9 @@ export const getAllCategoriesAPI = async (): Promise<Category[]> => {
   try {
     const response = await fetch(`${API_BASE_URL}`, {
       method: 'GET',
-      headers: {
+      headers: addVersionToHeaders({
         'Content-Type': 'application/json',
-      },
+      }),
       credentials: 'include',
     });
 
@@ -117,7 +118,7 @@ export const getAllCategoriesAdminAPI = async (): Promise<Category[]> => {
   try {
     const response = await fetch(`${API_BASE_URL}/all`, {
       method: 'GET',
-      headers: { 'Content-Type': 'application/json' },
+      headers: addVersionToHeaders({ 'Content-Type': 'application/json' }),
       credentials: 'include',
     });
 
@@ -205,7 +206,7 @@ export const createCategoryAPI = async (
   try {
     const response = await fetch(API_BASE_URL, {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
+      headers: addVersionToHeaders({ 'Content-Type': 'application/json' }),
       credentials: 'include',
       body: JSON.stringify(data),
     });
@@ -251,7 +252,7 @@ export const updateCategoryAPI = async (
   try {
     const response = await fetch(`${API_BASE_URL}/${id}`, {
       method: 'PUT',
-      headers: { 'Content-Type': 'application/json' },
+      headers: addVersionToHeaders({ 'Content-Type': 'application/json' }),
       credentials: 'include',
       body: JSON.stringify(data),
     });
@@ -309,7 +310,7 @@ export const updateCategorySortOrderAPI = async (
   try {
     const response = await fetch(`${API_BASE_URL}/sort-order`, {
       method: 'PUT',
-      headers: { 'Content-Type': 'application/json' },
+      headers: addVersionToHeaders({ 'Content-Type': 'application/json' }),
       credentials: 'include',
       body: JSON.stringify(sortOrders),
     });
@@ -340,7 +341,7 @@ export const deleteCategoryAPI = async (
   try {
     const response = await fetch(`${API_BASE_URL}/${id}`, {
       method: 'DELETE',
-      headers: { 'Content-Type': 'application/json' },
+      headers: addVersionToHeaders({ 'Content-Type': 'application/json' }),
       credentials: 'include',
     });
 

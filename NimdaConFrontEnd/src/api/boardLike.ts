@@ -1,3 +1,5 @@
+import { addVersionToHeaders } from '../constants/version';
+
 const API_BASE_URL = "/api/like/board";
 
 export interface BoardLikeResponse {
@@ -17,9 +19,9 @@ export const getPushedBoardLikesCount = async (): Promise<number> => {
   try {
     const response = await fetch(`${API_BASE_URL}/pushedLikes/count`, {
       method: "GET",
-      headers: {
+      headers: addVersionToHeaders({
         "Content-Type": "application/json",
-      },
+      }),
       credentials: "include",
     });
 
@@ -43,9 +45,9 @@ export const toggleBoardLike = async (boardId: number): Promise<BoardLikeRespons
   try {
     const response = await fetch(`${API_BASE_URL}/${boardId}`, {
       method: "POST",
-      headers: {
+      headers: addVersionToHeaders({
         "Content-Type": "application/json",
-      },
+      }),
       credentials: "include",
     });
 
@@ -76,9 +78,9 @@ export const getBoardLikeStatus = async (boardId: number): Promise<BoardLikeResp
   try {
     const response = await fetch(`${API_BASE_URL}/${boardId}/likeStatus`, {
       method: "GET",
-      headers: {
+      headers: addVersionToHeaders({
         "Content-Type": "application/json",
-      },
+      }),
       credentials: "include",
     });
 
@@ -121,9 +123,9 @@ export const getLikedBoardsAPI = async (): Promise<LikedBoard[]> => {
   try {
     const response = await fetch(`${API_BASE_URL}/pushedLikes`, {
       method: "GET",
-      headers: {
+      headers: addVersionToHeaders({
         "Content-Type": "application/json",
-      },
+      }),
       credentials: "include",
     });
 

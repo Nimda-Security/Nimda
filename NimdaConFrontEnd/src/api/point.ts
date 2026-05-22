@@ -3,6 +3,8 @@
  * 경로: @/api/point.ts
  */
 
+import { addVersionToHeaders } from '../constants/version';
+
 const API_BASE_URL = "/api/cite/point";
 
 export interface PointHistoryItem {
@@ -27,9 +29,9 @@ export const getUserBalance = async () => {
   try {
     const response = await fetch(`${API_BASE_URL}`, {
       method: "GET",
-      headers: {
+      headers: addVersionToHeaders({
         "Content-Type": "application/json",
-      },
+      }),
       credentials: "include",
     });
 
@@ -55,9 +57,9 @@ export const getPointDetailsAPI = async (): Promise<PointHistoryItem[]> => {
   try {
     const response = await fetch(`${API_BASE_URL}/pointDetails`, {
       method: "GET",
-      headers: {
+      headers: addVersionToHeaders({
         "Content-Type": "application/json",
-      },
+      }),
       credentials: "include",
     });
 
@@ -94,9 +96,9 @@ export const getAllBalance = async () => {
   try {
     const response = await fetch(`${API_BASE_URL}/allBalance`, {
       method: "GET",
-      headers: {
+      headers: addVersionToHeaders({
         "Content-Type": "application/json",
-      },
+      }),
       credentials: "include",
     });
 
@@ -120,9 +122,9 @@ export const updatePointManual = async (studentNum: string, description: string,
   try {
     const response = await fetch(`${API_BASE_URL}`, {
       method: "POST",
-      headers: {
+      headers: addVersionToHeaders({
         "Content-Type": "application/json",
-      },
+      }),
       credentials: "include",
       body: JSON.stringify({
         studentNum: studentNum,
@@ -171,9 +173,9 @@ export const updatePointManualBulk = async (
   try {
     const response = await fetch(`${API_BASE_URL}/bulk`, {
       method: "POST",
-      headers: {
+      headers: addVersionToHeaders({
         "Content-Type": "application/json",
-      },
+      }),
       credentials: "include",
       body: JSON.stringify(requests),
     });
