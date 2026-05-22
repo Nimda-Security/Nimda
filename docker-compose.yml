@@ -1,20 +1,21 @@
 version: '3.8'
 
 services:
-  # MySQL 데이터베이스 서비스
   mysql:
     image: mysql:8.0
     container_name: nimda-mysql
+    networks:
+      - nimda-network
     restart: always
     environment:
       MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD}
       MYSQL_DATABASE: ${MYSQL_DATABASE}
       MYSQL_USER: ${MYSQL_USER}
       MYSQL_PASSWORD: ${MYSQL_PASSWORD}
-      # 메모리 제한 설정 (1GB RAM 환경)
+      # 메모리 설정 최적화 (1GB RAM 환경)
       MYSQL_INNODB_BUFFER_POOL_SIZE: 256M
     expose:
-      - "3306" # 기존 ports에서 expose로 변경(외부에서 직접 접근 차단)
+      - "3306" # DB 외부 접근 차단
     volumes:
       - mysql_data:/var/lib/mysql
     healthcheck:
@@ -23,14 +24,15 @@ services:
       timeout: 5s
       retries: 5
 
-  # Redis 인메모리 데이터베이스 서비스
   redis:
     image: redis:7.0-alpine
     container_name: nimda-redis
     restart: always
     command: redis-server --requirepass ${REDIS_PASSWORD}
     expose:
-      - "6379" # 서버 내부 접근만 가능
+      - "6379"
+    networks:
+      - nimda-network
     volumes:
       - redis_data:/data
     healthcheck:
@@ -39,20 +41,32 @@ services:
       timeout: 5s
       retries: 5
 
-  # Spring Boot 백엔드 서비스
+  # 기존 서버
   backend-blue:
     image: xtkww971/nimda-backend:latest
     container_name: backend-blue
+    # DB 실행 조건 설정
     depends_on:
       mysql:
-        condition: service_healthy # MySQL이 준비될 때까지 대기
-    # 포트 매핑 제거 (내부 네트워크에서만 접근, nginx를 통해 접근)
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    # 내부 컨테이너만 접근 가능하게 설정
     ports:
       - "127.0.0.1:8081:8080"
+    networks:
+      - nimda-network
+    healthcheck:
+      test: [ "CMD", "curl", "-f", "http://localhost:8080/actuator/health" ]
+      interval: 10s
+      timeout: 5s
+      retries: 3
+      start_period: 30s
+
     environment:
-      # 시간대 설정 (한국 시간)
+      # 시간대 설정
       - TZ=Asia/Seoul
-      # MySQL 연결 정보 (docker-compose 내부 네트워크에서 서비스 이름으로 접근)
+      # MySQL
       - SPRING_DATASOURCE_URL=jdbc:mysql://mysql:3306/${MYSQL_DATABASE}?useSSL=false&serverTimezone=Asia/Seoul&allowPublicKeyRetrieval=true
       - SPRING_DATASOURCE_USERNAME=${MYSQL_USER}
       - SPRING_DATASOURCE_PASSWORD=${MYSQL_PASSWORD}
@@ -63,9 +77,9 @@ services:
       - AWS_S3_REGION=${AWS_S3_REGION}
       - AWS_S3_ACCESS_KEY=${AWS_S3_ACCESS_KEY}
       - AWS_S3_SECRET_KEY=${AWS_S3_SECRET_KEY}
-      # JWT 시크릿 (반드시 .env 파일에 안전한 값으로 설정)
+      # JWT 토큰 설정
       - JWT_SECRET=${JWT_SECRET}
-      # 이메일 설정 (SMTP)
+      # 이메일 설정
       - MAIL_HOST=${MAIL_HOST}
       - MAIL_PORT=${MAIL_PORT}
       - MAIL_USERNAME=${MAIL_USERNAME}
@@ -75,12 +89,24 @@ services:
   backend-green:
     image: xtkww971/nimda-backend:latest
     container_name: backend-green
+    networks:
+      - nimda-network
     ports:
       - "127.0.0.1:8082:8080"
+    depends_on:
+      mysql:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    healthcheck:
+      test: [ "CMD", "curl", "-f", "http://localhost:8080/actuator/health" ]
+      interval: 10s
+      timeout: 5s
+      retries: 3
+      start_period: 30s
     environment:
-      # 시간대 설정 (한국 시간)
       - TZ=Asia/Seoul
-      # MySQL 연결 정보 (docker-compose 내부 네트워크에서 서비스 이름으로 접근)
+      # MySQL 연결 정보
       - SPRING_DATASOURCE_URL=jdbc:mysql://mysql:3306/${MYSQL_DATABASE}?useSSL=false&serverTimezone=Asia/Seoul&allowPublicKeyRetrieval=true
       - SPRING_DATASOURCE_USERNAME=${MYSQL_USER}
       - SPRING_DATASOURCE_PASSWORD=${MYSQL_PASSWORD}
@@ -91,28 +117,32 @@ services:
       - AWS_S3_REGION=${AWS_S3_REGION}
       - AWS_S3_ACCESS_KEY=${AWS_S3_ACCESS_KEY}
       - AWS_S3_SECRET_KEY=${AWS_S3_SECRET_KEY}
-      # JWT 시크릿 (반드시 .env 파일에 안전한 값으로 설정)
+      # JWT 토큰 설정
       - JWT_SECRET=${JWT_SECRET}
-      # 이메일 설정 (SMTP)
+      # 이메일 설정
       - MAIL_HOST=${MAIL_HOST}
       - MAIL_PORT=${MAIL_PORT}
       - MAIL_USERNAME=${MAIL_USERNAME}
       - MAIL_PASSWORD=${MAIL_PASSWORD}
     restart: always
 
-  # Nginx 리버스 프록시 서비스
   nginx:
     image: nginx:alpine
     container_name: nimda-nginx
     depends_on:
-      - backend # 백엔드가 준비될 때까지 대기
+      - backend-blue
+      - backend-green
     ports:
       - "80:80" # HTTP
       - "443:443" # HTTPS
+    networks:
+      - nimda-network
     volumes:
       - ./nginx/nginx.conf:/etc/nginx/nginx.conf:ro # nginx 설정 파일 마운트
       - ./certbot/www:/var/www/certbot
       - ./certbot/conf:/etc/letsencrypt
+      # blue - green의 주소가 담긴 설정 파일
+      - ./nginx/conf.d:/etc/nginx/conf.d:ro
     restart: always
 
 # 볼륨 정의 (데이터 영속성)
@@ -120,3 +150,8 @@ volumes:
   mysql_data:
   certbot-www: # Let's Encrypt 인증용 웹루트
   certbot-conf: # Let's Encrypt 인증서 저장소
+
+# 도커 컨테이너 네트워크 설정
+networks:
+  nimda-network:
+    driver: bridge
