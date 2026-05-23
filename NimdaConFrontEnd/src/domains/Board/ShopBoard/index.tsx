@@ -15,6 +15,12 @@ const PAGE_SIZE = 12;
 
 const getFirstImageAttachmentId = (board: Board): number | null => {
   if (!board.attachments || board.attachments.length === 0) return null;
+  if (
+    board.thumbnailAttachmentId &&
+    board.attachments.some((attachment) => attachment.id === board.thumbnailAttachmentId)
+  ) {
+    return board.thumbnailAttachmentId;
+  }
   for (const attachment of board.attachments) {
     const ext = attachment.originFilename?.split('.').pop()?.toLowerCase() || '';
     if (!attachment.originFilename || IMAGE_EXTENSIONS.includes(ext)) return attachment.id;
@@ -179,6 +185,12 @@ const ShopBoard: React.FC<ShopBoardProps> = ({ boardSlug }) => {
                   <div className="shop-board__image-wrap">
                     {thumbnails[post.id] ? (
                       <img src={thumbnails[post.id] || ''} alt={post.title} className="shop-board__image" />
+                    ) : post.itemType === 'BADGE' && post.profileDecoration ? (
+                      <img
+                        src={post.profileDecoration.src}
+                        alt={post.profileDecoration.label}
+                        className="shop-board__image"
+                      />
                     ) : (
                       <div className="shop-board__image-placeholder" />
                     )}

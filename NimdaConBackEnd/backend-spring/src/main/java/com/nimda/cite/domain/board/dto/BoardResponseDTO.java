@@ -2,6 +2,7 @@ package com.nimda.cite.domain.board.dto;
 
 import com.nimda.cite.domain.attachment.dto.AttachmentResponseDto;
 import com.nimda.cite.domain.board.entity.Board;
+import com.nimda.cite.domain.profiledecoration.ProfileDecoration;
 import com.nimda.cite.domain.tag.entity.Tag;
 import com.nimda.cite.user.entity.User;
 import lombok.AllArgsConstructor;
@@ -40,6 +41,9 @@ public class BoardResponseDTO {
     private String filename;
     private String filepath;
     private Long itemPrice;
+    private String itemType;
+    private ProfileDecorationInfo profileDecoration;
+    private Long thumbnailAttachmentId;
 
     /** 상세 조회 시에만 채움 — 게시글에 연결된 첨부(S3+Attachment) */
     private List<AttachmentResponseDto> attachments;
@@ -75,6 +79,18 @@ public class BoardResponseDTO {
         private String email;
         private String profileImage;
         private String profileDecoration;
+    }
+
+    @Getter
+    @Setter
+    @Builder
+    @NoArgsConstructor
+    @AllArgsConstructor
+    public static class ProfileDecorationInfo {
+        private Long id;
+        private String key;
+        private String label;
+        private String src;
     }
 
     /**
@@ -115,6 +131,15 @@ public class BoardResponseDTO {
 
         Tag tag = board.getTag();
         TagInfo tagInfo = tag != null ? TagInfo.builder().id(tag.getId()).tagName(tag.getTagName()).build() : null;
+        ProfileDecoration decoration = board.getProfileDecoration();
+        ProfileDecorationInfo decorationInfo = decoration != null
+                ? ProfileDecorationInfo.builder()
+                        .id(decoration.getId())
+                        .key(decoration.getKey())
+                        .label(decoration.getLabel())
+                        .src("/api/cite/profile-decorations/" + decoration.getKey() + "/image")
+                        .build()
+                : null;
 
         return BoardResponseDTO.builder()
                 .id(board.getId())
@@ -131,6 +156,9 @@ public class BoardResponseDTO {
                 .filename(board.getFilename())
                 .filepath(board.getFilepath())
                 .itemPrice(board.getItemPrice())
+                .itemType(board.getItemType() != null ? board.getItemType().name() : null)
+                .profileDecoration(decorationInfo)
+                .thumbnailAttachmentId(board.getThumbnailAttachmentId())
                 .attachments(attachments)
                 .createdAt(board.getCreatedAt())
                 .updatedAt(board.getUpdatedAt())

@@ -11,6 +11,7 @@ public class ProfileDecorationDto {
     private String label;
     private String src;
     private String requiredRole;
+    private boolean purchaseRequired;
     private boolean active;
 
     public static ProfileDecorationDto from(ProfileDecoration decoration) {
@@ -20,6 +21,7 @@ public class ProfileDecorationDto {
                 .label(decoration.getLabel())
                 .src("/api/cite/profile-decorations/" + decoration.getKey() + "/image")
                 .requiredRole(decoration.getRequiredRole())
+                .purchaseRequired(decoration.isPurchaseRequired())
                 .active(decoration.isActive())
                 .build();
     }

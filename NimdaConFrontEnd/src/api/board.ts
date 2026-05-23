@@ -190,6 +190,15 @@ export const createBoardAPI = async (
     if (data.itemPrice != null) {
       formData.append('itemPrice', String(data.itemPrice));
     }
+    if (data.itemType) {
+      formData.append('itemType', data.itemType);
+    }
+    if (data.profileDecorationId != null) {
+      formData.append('profileDecorationId', String(data.profileDecorationId));
+    }
+    if (data.thumbnailAttachmentId != null) {
+      formData.append('thumbnailAttachmentId', String(data.thumbnailAttachmentId));
+    }
     // multipart `file` 제거됨 — 이유: 백엔드는 S3 presigned 후 `attachmentIds`만 받음.
     if (data.attachmentIds !== undefined && data.attachmentIds.length > 0) {
       for (const aid of data.attachmentIds) {
@@ -260,6 +269,15 @@ export const updateBoardAPI = async (
     }
     if (data.itemPrice != null) {
       formData.append('itemPrice', String(data.itemPrice));
+    }
+    if (data.itemType) {
+      formData.append('itemType', data.itemType);
+    }
+    if (data.profileDecorationId != null) {
+      formData.append('profileDecorationId', String(data.profileDecorationId));
+    }
+    if (data.thumbnailAttachmentId != null) {
+      formData.append('thumbnailAttachmentId', String(data.thumbnailAttachmentId));
     }
     // 수정 시 생략하면 첨부 동기화 안 함. 전달 시 최종 목록으로 동기화(빈 배열 = 전부 삭제).
     if (data.attachmentIds !== undefined) {
@@ -620,6 +638,8 @@ export interface BoardPurchaseResponse {
     itemName: string;
     price: number;
     remainingAmount: number;
+    itemType?: string;
+    profileDecorationKey?: string | null;
   };
 }
 

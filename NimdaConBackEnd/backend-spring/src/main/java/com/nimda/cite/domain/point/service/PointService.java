@@ -108,36 +108,6 @@ public class PointService {
     }
 
     @Transactional
-    public UserBalance spendBalance(Long userId, String description, Long pointAmount) {
-        if (pointAmount == null || pointAmount <= 0) {
-            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "차감할 마일리지가 올바르지 않습니다.");
-        }
-
-        UserBalance balance = userBalanceRepository.findById(userId).orElseThrow(
-                () -> new ResponseStatusException(HttpStatus.NOT_FOUND, "포인트 계좌가 존재하지 않습니다.")
-        );
-
-        if (balance.getTotalAmount() < pointAmount) {
-            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "보유 마일리지가 부족합니다.");
-        }
-
-        balance.setUpdatedAt(LocalDateTime.now());
-        balance.setTotalAmount(balance.getTotalAmount() - pointAmount);
-
-        PointDetail pointDetail = PointDetail.builder()
-                .userBalance(balance)
-                .amount(-pointAmount)
-                .description(description)
-                .createdAt(LocalDateTime.now())
-                .expiredAt(LocalDateTime.now().plusYears(1L))
-                .remainingAmount(balance.getTotalAmount())
-                .build();
-
-        pointDetailRepository.save(pointDetail);
-        return balance;
-    }
-
-    @Transactional
     public List<UserBalance> updateBalanceManualBulk(List<ManualBalanceUpdateRequest> requests) {
         List<UserBalance> results = new ArrayList<>();
 

@@ -69,6 +69,14 @@ export interface Board {
   filename?: string | null;
   filepath?: string | null;
   itemPrice?: number | null;
+  itemType?: 'GENERAL' | 'BADGE' | string | null;
+  profileDecoration?: {
+    id: number;
+    key: string;
+    label: string;
+    src: string;
+  } | null;
+  thumbnailAttachmentId?: number | null;
   /** S3+Attachment 연동 시 상세 조회에 포함 */
   attachments?: BoardAttachmentMeta[];
   createdAt: string;
@@ -126,6 +134,9 @@ export interface BoardWriteRequest {
   attachmentIds?: number[];
   pinned?: boolean; // 게시글 고정 여부 (관리자만 설정 가능)
   itemPrice?: number | null;
+  itemType?: 'GENERAL' | 'BADGE';
+  profileDecorationId?: number | null;
+  thumbnailAttachmentId?: number | null;
 }
 
 /**

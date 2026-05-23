@@ -305,6 +305,47 @@ public class AttachmentService {
                 .collect(Collectors.toList());
     }
 
+    public Long resolveThumbnailAttachmentId(List<Long> attachmentIds, Long requestedThumbnailAttachmentId) {
+        if (attachmentIds == null || attachmentIds.isEmpty()) {
+            return null;
+        }
+
+        List<Attachment> imageAttachments = attachmentIds.stream()
+                .filter(id -> id != null)
+                .map(id -> attachmentRepository.findById(id)
+                        .orElseThrow(() -> new RuntimeException("첨부를 찾을 수 없습니다: " + id)))
+                .filter(this::isImage)
+                .sorted((left, right) -> left.getId().compareTo(right.getId()))
+                .toList();
+
+        if (imageAttachments.isEmpty()) {
+            return null;
+        }
+
+        if (requestedThumbnailAttachmentId == null) {
+            return imageAttachments.get(0).getId();
+        }
+
+        return imageAttachments.stream()
+                .filter(attachment -> attachment.getId().equals(requestedThumbnailAttachmentId))
+                .findFirst()
+                .orElseThrow(() -> new RuntimeException("썸네일은 첨부된 이미지 중에서 선택해야 합니다."))
+                .getId();
+    }
+
+    private boolean isImage(Attachment attachment) {
+        String extension = attachment.getExtension();
+        if (extension == null || extension.isBlank()) {
+            String filename = attachment.getOriginFilename();
+            extension = filename != null && filename.contains(".")
+                    ? filename.substring(filename.lastIndexOf('.') + 1)
+                    : "";
+        }
+
+        return List.of("jpg", "jpeg", "png", "gif", "webp", "bmp", "svg")
+                .contains(extension.toLowerCase());
+    }
+
     /**
      * 게시글 삭제 시 — 연결된 모든 첨부 물리·DB 삭제
      */

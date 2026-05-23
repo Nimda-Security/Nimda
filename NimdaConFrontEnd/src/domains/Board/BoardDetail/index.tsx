@@ -312,7 +312,10 @@ function BoardDetailPage() {
         const remaining = 'data' in result && result.data?.remainingAmount != null
           ? `\n잔여 마일리지: ${result.data.remainingAmount.toLocaleString()} NC`
           : '';
-        alert(`${result.message}${remaining}`);
+        const badge = 'data' in result && result.data?.profileDecorationKey
+          ? '\n구매한 배지가 마이페이지에 지급되었습니다.'
+          : '';
+        alert(`${result.message}${badge}${remaining}`);
       } else {
         alert(result.message || '구매에 실패했습니다.');
       }
@@ -436,6 +439,11 @@ function BoardDetailPage() {
               <div className="board-detail__shop-price">
                 {(board.itemPrice ?? 0).toLocaleString()} NC
               </div>
+              {board.itemType === 'BADGE' && board.profileDecoration && (
+                <div className="board-detail__shop-price" style={{ fontSize: '14px' }}>
+                  지급 배지: {board.profileDecoration.label}
+                </div>
+              )}
               <button
                 type="button"
                 className="board-detail__shop-buy"

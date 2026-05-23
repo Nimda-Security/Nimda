@@ -12,6 +12,7 @@ import {
   setProfileDecorationOptions,
 } from "@/constants/profileDecorations";
 import {
+  getMyProfileDecorationsAPI,
   getProfileDecorationsAPI,
   type ProfileDecorationOption,
 } from "@/api/profileDecorations";
@@ -61,12 +62,21 @@ const ProfileHeader: React.FC<ProfileHeaderProps> = ({
     if (!showDecorationModal) return;
 
     const loadDecorations = async () => {
-      const result = await getProfileDecorationsAPI();
+      const [result, ownedResult] = await Promise.all([
+        getProfileDecorationsAPI(),
+        getMyProfileDecorationsAPI(),
+      ]);
       if (result.success && result.decorations.length > 0) {
         const roles = new Set<string>(userInfo?.roles ?? []);
+        const ownedKeys = new Set(
+          ownedResult.success
+            ? ownedResult.decorations.map((decoration) => decoration.key)
+            : []
+        );
         const availableDecorations = result.decorations.filter(
           (decoration) =>
-            !decoration.requiredRole || roles.has(decoration.requiredRole)
+            (!decoration.requiredRole || roles.has(decoration.requiredRole)) &&
+            (!decoration.purchaseRequired || ownedKeys.has(decoration.key))
         );
         setDecorationOptions(availableDecorations);
         setProfileDecorationOptions(availableDecorations);

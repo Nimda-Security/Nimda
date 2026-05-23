@@ -2100,6 +2100,79 @@ body {
   color: #d64454;
 }
 
+.bw-thumbnail-picker {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  padding: 14px;
+  border: 1px solid #e5e5e5;
+  border-radius: 8px;
+  background: #fafafa;
+}
+
+.bw-thumbnail-picker__header {
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+  align-items: baseline;
+}
+
+.bw-thumbnail-picker__header span {
+  font-size: 14px;
+  font-weight: 700;
+  color: #404040;
+}
+
+.bw-thumbnail-picker__header small {
+  font-size: 12px;
+  color: #8f8f8f;
+  text-align: right;
+}
+
+.bw-thumbnail-picker__grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(96px, 1fr));
+  gap: 10px;
+}
+
+.bw-thumbnail-option {
+  position: relative;
+  height: 96px;
+  padding: 0;
+  overflow: hidden;
+  border: 2px solid transparent;
+  border-radius: 8px;
+  background: #eeeeee;
+  cursor: pointer;
+}
+
+.bw-thumbnail-option img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+}
+
+.bw-thumbnail-option span {
+  position: absolute;
+  left: 6px;
+  bottom: 6px;
+  padding: 4px 7px;
+  border-radius: 999px;
+  background: rgba(0, 0, 0, 0.72);
+  color: #ffffff;
+  font-size: 11px;
+  font-weight: 700;
+}
+
+.bw-thumbnail-option--selected {
+  border-color: #d97399;
+}
+
+.bw-thumbnail-option--auto {
+  border-color: #9ca3af;
+}
+
 /* ── 고정 옵션 체크박스 ── */
 .bw-checkbox-label {
   display: flex;
