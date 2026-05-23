@@ -1,5 +1,8 @@
-package com.nimda.cite.domain.profiledecoration;
+package com.nimda.cite.domain.profiledecoration.service;
 
+import com.nimda.cite.domain.profiledecoration.repository.ProfileDecorationRepository;
+import com.nimda.cite.domain.profiledecoration.dto.ProfileDecorationCreateRequest;
+import com.nimda.cite.domain.profiledecoration.entity.ProfileDecoration;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;

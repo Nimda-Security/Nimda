@@ -1,7 +1,11 @@
-package com.nimda.cite.domain.profiledecoration;
+package com.nimda.cite.domain.profiledecoration.controller;
 
 import com.nimda.cite.common.response.ApiResponse;
 import com.nimda.cite.common.s3.S3Service;
+import com.nimda.cite.domain.profiledecoration.service.ProfileDecorationService;
+import com.nimda.cite.domain.profiledecoration.dto.ProfileDecorationCreateRequest;
+import com.nimda.cite.domain.profiledecoration.dto.ProfileDecorationDto;
+import com.nimda.cite.domain.profiledecoration.entity.ProfileDecoration;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;

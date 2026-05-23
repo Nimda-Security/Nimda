@@ -1,4 +1,4 @@
-package com.nimda.cite.domain.profiledecoration;
+package com.nimda.cite.domain.profiledecoration.entity;
 
 import com.nimda.cite.common.entity.BaseTimeEntity;
 import jakarta.persistence.*;

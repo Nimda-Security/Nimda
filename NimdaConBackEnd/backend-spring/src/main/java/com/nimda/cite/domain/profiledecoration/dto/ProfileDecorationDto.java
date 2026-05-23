@@ -1,5 +1,6 @@
-package com.nimda.cite.domain.profiledecoration;
+package com.nimda.cite.domain.profiledecoration.dto;
 
+import com.nimda.cite.domain.profiledecoration.entity.ProfileDecoration;
 import lombok.Builder;
 import lombok.Getter;
 

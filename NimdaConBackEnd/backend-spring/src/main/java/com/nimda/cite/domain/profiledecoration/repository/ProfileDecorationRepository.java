@@ -1,5 +1,6 @@
-package com.nimda.cite.domain.profiledecoration;
+package com.nimda.cite.domain.profiledecoration.repository;
 
+import com.nimda.cite.domain.profiledecoration.entity.ProfileDecoration;
 import org.springframework.data.jpa.repository.JpaRepository;
 
 import java.util.List;
