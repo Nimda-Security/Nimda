@@ -1,4 +1,4 @@
-package com.nimda.cite.domain.profiledecoration;
+package com.nimda.cite.domain.profiledecoration.entity;
 
 import com.nimda.cite.common.entity.BaseTimeEntity;
 import jakarta.persistence.*;
@@ -31,6 +31,9 @@ public class ProfileDecoration extends BaseTimeEntity {
     @Column(nullable = false)
     private boolean active = true;
 
+    @Column(name = "purchase_required", nullable = false)
+    private boolean purchaseRequired = false;
+
     public ProfileDecoration(String key, String label, String filePath) {
         this.key = key;
         this.label = label;
@@ -42,5 +45,9 @@ public class ProfileDecoration extends BaseTimeEntity {
         this.filePath = filePath;
         this.requiredRole = requiredRole;
         this.active = active;
+    }
+
+    public void setPurchaseRequired(boolean purchaseRequired) {
+        this.purchaseRequired = purchaseRequired;
     }
 }

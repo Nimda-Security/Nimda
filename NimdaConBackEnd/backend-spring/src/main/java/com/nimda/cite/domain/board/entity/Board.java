@@ -33,6 +33,8 @@ package com.nimda.cite.domain.board.entity;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.nimda.cite.domain.board.enums.BoardStatus;
+import com.nimda.cite.domain.board.enums.ShopItemType;
+import com.nimda.cite.domain.profiledecoration.ProfileDecoration;
 import com.nimda.cite.domain.tag.entity.Tag;
 import com.nimda.cite.common.entity.BaseTimeEntity;
 import com.nimda.cite.user.entity.User;
@@ -117,6 +119,21 @@ public class Board extends BaseTimeEntity {
     // [기존] 파일 경로 - 변경 없음 (파일 업로드 기능 유지)
     @Column(length = 500)
     private String filepath;
+
+    @Column(name = "item_price", nullable = false)
+    private Long itemPrice = 0L;
+
+    @Enumerated(EnumType.STRING)
+    @Column(name = "item_type", nullable = false, length = 30)
+    private ShopItemType itemType = ShopItemType.GENERAL;
+
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "profile_decoration_id")
+    @JsonIgnoreProperties({ "hibernateLazyInitializer", "handler" })
+    private ProfileDecoration profileDecoration;
+
+    @Column(name = "thumbnail_attachment_id")
+    private Long thumbnailAttachmentId;
 
     // ========== [Soft Delete 지원] ==========
     // [신규] 게시글 상태 필드 추가

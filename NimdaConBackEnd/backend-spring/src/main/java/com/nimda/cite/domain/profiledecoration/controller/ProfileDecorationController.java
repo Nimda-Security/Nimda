@@ -1,12 +1,15 @@
-package com.nimda.cite.domain.profiledecoration;
+package com.nimda.cite.domain.profiledecoration.controller;
 
 import com.nimda.cite.common.response.ApiResponse;
 import com.nimda.cite.common.s3.S3Service;
+import com.nimda.cite.domain.profiledecoration.ownership.ProfileDecorationOwnershipService;
+import com.nimda.cite.user.security.CustomUserDetails;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 
 @RestController
@@ -14,12 +17,16 @@ import org.springframework.web.bind.annotation.*;
 public class ProfileDecorationController {
 
     private final ProfileDecorationService service;
+    private final ProfileDecorationOwnershipService ownershipService;
 
     @Autowired(required = false)
     private S3Service s3Service;
 
-    public ProfileDecorationController(ProfileDecorationService profileDecorationService) {
+    public ProfileDecorationController(
+            ProfileDecorationService profileDecorationService,
+            ProfileDecorationOwnershipService ownershipService) {
         this.service = profileDecorationService;
+        this.ownershipService = ownershipService;
     }
 
     @GetMapping("/profile-decorations")
@@ -50,6 +57,19 @@ public class ProfileDecorationController {
         return ResponseEntity.status(HttpStatus.FOUND)
                 .header(HttpHeaders.LOCATION, url)
                 .build();
+    }
+
+    @GetMapping("/profile-decorations/me")
+    public ResponseEntity<?> getMyDecorations(@AuthenticationPrincipal CustomUserDetails userDetails) {
+        if (userDetails == null) {
+            return ApiResponse.fail("로그인이 필요합니다.").toResponse(HttpStatus.UNAUTHORIZED);
+        }
+
+        return ApiResponse.ok(
+                ownershipService.getOwnedDecorations(userDetails.getUser().getId()).stream()
+                        .map(ProfileDecorationDto::from)
+                        .toList()
+        ).toResponse();
     }
 
     @PreAuthorize("hasRole('ADMIN')")

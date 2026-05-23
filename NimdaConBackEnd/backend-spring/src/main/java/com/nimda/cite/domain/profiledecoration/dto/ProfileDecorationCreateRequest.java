@@ -1,4 +1,4 @@
-package com.nimda.cite.domain.profiledecoration;
+package com.nimda.cite.domain.profiledecoration.dto;
 
 import lombok.Getter;
 import lombok.Setter;
@@ -10,4 +10,5 @@ public class ProfileDecorationCreateRequest {
     private String label;
     private String filePath;
     private String requiredRole;
+    private Boolean purchaseRequired;
 }

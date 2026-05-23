@@ -1,5 +1,8 @@
-package com.nimda.cite.domain.profiledecoration;
+package com.nimda.cite.domain.profiledecoration.service;
 
+import com.nimda.cite.domain.profiledecoration.repository.ProfileDecorationRepository;
+import com.nimda.cite.domain.profiledecoration.dto.ProfileDecorationCreateRequest;
+import com.nimda.cite.domain.profiledecoration.entity.ProfileDecoration;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -35,6 +38,7 @@ public class ProfileDecorationService {
         String label = request.getLabel() == null ? "" : request.getLabel().trim();
         String filePath = request.getFilePath() == null ? "" : request.getFilePath().trim();
         String requiredRole = normalizeRole(request.getRequiredRole());
+        boolean purchaseRequired = Boolean.TRUE.equals(request.getPurchaseRequired());
 
         if (key.isBlank()) {
             throw new IllegalArgumentException("배지 키를 입력해주세요.");
@@ -54,6 +58,7 @@ public class ProfileDecorationService {
 
         ProfileDecoration decoration = new ProfileDecoration(key, label, filePath);
         decoration.update(label, filePath, requiredRole, true);
+        decoration.setPurchaseRequired(purchaseRequired);
         return repository.save(decoration);
     }
 

@@ -9,6 +9,7 @@ import com.nimda.cite.user.enums.ApprovalStatus;
 import com.nimda.cite.user.exception.UserNotApprovedException;
 import com.nimda.cite.domain.profiledecoration.ProfileDecoration;
 import com.nimda.cite.domain.profiledecoration.ProfileDecorationRepository;
+import com.nimda.cite.domain.profiledecoration.ownership.ProfileDecorationOwnershipService;
 import com.nimda.cite.common.util.JwtUtil;
 import com.nimda.cite.user.repository.UserRepository;
 import com.nimda.cite.user.security.CustomUserDetails;
@@ -43,6 +44,9 @@ public class AuthService {
     private UserRepository userRepository;
     @Autowired
     private ProfileDecorationRepository profileDecorationRepository;
+
+    @Autowired
+    private ProfileDecorationOwnershipService profileDecorationOwnershipService;
     @Autowired
     private RedisUtil redisUtil;
 
@@ -212,6 +216,10 @@ public class AuthService {
             if (!allowed) {
                 throw new SecurityException("이 프로필 장식을 사용할 권한이 없습니다.");
             }
+        }
+        if (decoration.isPurchaseRequired()
+                && !profileDecorationOwnershipService.owns(userId, decoration.getId())) {
+            throw new SecurityException("구매한 프로필 장식만 사용할 수 있습니다.");
         }
 
         user.setProfileDecoration(

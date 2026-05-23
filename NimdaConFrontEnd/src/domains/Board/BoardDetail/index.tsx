@@ -253,6 +253,36 @@ function BoardDetailPage() {
     }
   };
 
+  const handlePurchase = async () => {
+    if (!board || isPurchasing) return;
+    const price = board.itemPrice ?? 0;
+    if (price <= 0) {
+      alert('상품 가격이 설정되지 않았습니다.');
+      return;
+    }
+    if (!window.confirm(`${board.title} 상품을 ${price.toLocaleString()} NC에 구매하시겠습니까?`)) {
+      return;
+    }
+
+    setIsPurchasing(true);
+    try {
+      const result = await purchaseBoardItemAPI(board.id);
+      if (result.success) {
+        const remaining = 'data' in result && result.data?.remainingAmount != null
+          ? `\n잔여 마일리지: ${result.data.remainingAmount.toLocaleString()} NC`
+          : '';
+        const badge = 'data' in result && result.data?.profileDecorationKey
+          ? '\n구매한 배지가 마이페이지에 지급되었습니다.'
+          : '';
+        alert(`${result.message}${badge}${remaining}`);
+      } else {
+        alert(result.message || '구매에 실패했습니다.');
+      }
+    } finally {
+      setIsPurchasing(false);
+    }
+  };
+
   const isAuthor = () =>
     !!board &&
     !!board.author?.nickname &&
@@ -291,6 +321,107 @@ function BoardDetailPage() {
           >
             목록으로
           </button>
+        </div>
+      </Layout>
+    );
+  }
+
+  if (board.category?.shopEnabled) {
+    return (
+      <Layout>
+        <div className="board-detail__shop">
+          <button
+            type="button"
+            onClick={handleGoBack}
+            className="board-detail__back"
+          >
+            ← {board.category?.name ?? '마일리지 상점'}
+          </button>
+
+          <section className="board-detail__shop-top">
+            <div className="board-detail__shop-image-wrap">
+              {shopImageUrl ? (
+                <img src={shopImageUrl} alt={board.title} className="board-detail__shop-image" />
+              ) : (
+                <div className="board-detail__shop-image-placeholder" />
+              )}
+            </div>
+
+            <div className="board-detail__shop-panel">
+              {board.tag?.tagName && (
+                <span className="board-detail__shop-tag">{board.tag.tagName}</span>
+              )}
+              <div className="board-detail__title-row">
+                <h1 className="board-detail__shop-title">{board.title}</h1>
+                {(isAuthor() || isAdmin()) && (
+                  <div className="board-detail__menu-wrap">
+                    <button
+                      type="button"
+                      className="board-detail__more-btn"
+                      aria-label="더보기"
+                      onClick={() => setMenuOpen((prev) => !prev)}
+                    >
+                      <VerticalDots size={24} />
+                    </button>
+                    {menuOpen && (
+                      <ul className="board-detail__menu">
+                        {isAuthor() && (
+                          <li>
+                            <button
+                              type="button"
+                              onClick={() => {
+                                setMenuOpen(false);
+                                handleEdit();
+                              }}
+                            >
+                              수정
+                            </button>
+                          </li>
+                        )}
+                        <li>
+                          <button
+                            type="button"
+                            onClick={() => {
+                              setMenuOpen(false);
+                              void handleDelete();
+                            }}
+                            disabled={isDeleting}
+                          >
+                            {isDeleting ? '삭제 중...' : '삭제'}
+                          </button>
+                        </li>
+                      </ul>
+                    )}
+                  </div>
+                )}
+              </div>
+              <div className="board-detail__shop-price">
+                {(board.itemPrice ?? 0).toLocaleString()} NC
+              </div>
+              {board.itemType === 'BADGE' && board.profileDecoration && (
+                <div className="board-detail__shop-price" style={{ fontSize: '14px' }}>
+                  지급 배지: {board.profileDecoration.label}
+                </div>
+              )}
+              <button
+                type="button"
+                className="board-detail__shop-buy"
+                onClick={handlePurchase}
+                disabled={isPurchasing}
+              >
+                {isPurchasing ? '구매 처리 중...' : '구매하기'}
+              </button>
+            </div>
+          </section>
+
+          <section className="board-detail__shop-description">
+            <h2>상품 상세설명</h2>
+            <div
+              ref={bodyRef}
+              className="board-detail__body board-detail__content-scope"
+              dangerouslySetInnerHTML={{ __html: normalizedViewerContent }}
+            />
+          </section>
         </div>
       </Layout>
     );

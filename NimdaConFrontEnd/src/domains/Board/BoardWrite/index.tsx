@@ -13,6 +13,10 @@ import { uploadBoardFileViaS3 } from '@/api/attachments';
 import { getAllCategoriesAPI } from '@/api/category';
 import { getTagsByCategoryAPI } from '@/api/tag';
 import type { TagResponse } from '@/api/tag';
+import {
+  getAdminProfileDecorationsAPI,
+  type ProfileDecorationOption,
+} from '@/api/profileDecorations';
 import { getEmoticonSrc } from '@/domains/Comment/EmoticonPicker';
 import { hasRole, isAdmin } from '@/utils/jwt';
 import CategorySelector from './CategorySelector';
@@ -24,6 +28,14 @@ import { FontSize, ResolvedTextStyle, RichCodeBlock, RichImage, lowlight } from 
 import { getSanitizedEditorHtml } from './editorUtils';
 
 const EMPTY_DOC = '<p></p>';
+const IMAGE_EXTENSIONS = ['jpg', 'jpeg', 'png', 'gif', 'webp', 'bmp', 'svg'];
+
+type AttachedFile = { id: number; name: string; size: number; isInline?: boolean };
+
+const isImageAttachment = (file: AttachedFile) => {
+  const ext = file.name.split('.').pop()?.toLowerCase() || '';
+  return IMAGE_EXTENSIONS.includes(ext);
+};
 
 const normalizeLinkUrl = (value: string) => {
   const trimmed = value.trim();
@@ -35,6 +47,13 @@ const normalizeLinkUrl = (value: string) => {
 const hasMeaningfulContent = (html: string) => {
   const textOnly = html.replace(/<[^>]*>/g, '').replace(/&nbsp;/g, ' ').trim();
   return textOnly.length > 0 || /<img\b/i.test(html);
+};
+
+const isShopCategoryGroup = (category: Category, categories: Category[]) => {
+  if (category.shopEnabled) return true;
+  if (category.parentId == null) return false;
+  const parent = categories.find((item) => item.id === category.parentId);
+  return Boolean(parent?.shopEnabled);
 };
 
 function BoardWritePage() {
@@ -54,10 +73,13 @@ function BoardWritePage() {
 
   const [title, setTitle] = useState('');
   const [content, setContent] = useState(EMPTY_DOC);
+  const [itemPrice, setItemPrice] = useState('');
+  const [itemType, setItemType] = useState<'GENERAL' | 'BADGE'>('GENERAL');
+  const [profileDecorationId, setProfileDecorationId] = useState<number | null>(null);
+  const [profileDecorations, setProfileDecorations] = useState<ProfileDecorationOption[]>([]);
+  const [thumbnailAttachmentId, setThumbnailAttachmentId] = useState<number | null>(null);
   const [tagId, setTagId] = useState<number | null>(null);
-  const [attachedFiles, setAttachedFiles] = useState<
-    { id: number; name: string; size: number; isInline?: boolean }[]
-  >([]);
+  const [attachedFiles, setAttachedFiles] = useState<AttachedFile[]>([]);
   const [editBoardId, setEditBoardId] = useState<number | null>(null);
   const [isDragOver, setIsDragOver] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -175,6 +197,7 @@ function BoardWritePage() {
         .filter((category) => category.parentId === null && category.isActive)
         .filter((category) => !['바로가기', '대회'].includes(category.name))
         .filter((category) => category.name !== '새 소식' || isAdmin())
+        .filter((category) => !isShopCategoryGroup(category, allCategories) || isAdmin())
         .filter(
           (category) =>
             category.name !== '카르텔' || hasRole('ROLE_CARTEL') || isAdmin()
@@ -192,6 +215,36 @@ function BoardWritePage() {
     (category) => category.id === subCategoryId
   );
   const targetCategoryId = currentSubCat?.id ?? currentParentCat?.id ?? null;
+  const selectedCategory = currentSubCat ?? currentParentCat ?? null;
+  const isShopCategory = selectedCategory
+    ? isShopCategoryGroup(selectedCategory, allCategories)
+    : false;
+
+  useEffect(() => {
+    if (!isShopCategory || !isAdmin()) {
+      setProfileDecorations([]);
+      setItemType('GENERAL');
+      setProfileDecorationId(null);
+      return;
+    }
+
+    let cancelled = false;
+
+    const loadProfileDecorations = async () => {
+      const result = await getAdminProfileDecorationsAPI();
+      if (!cancelled && result.success) {
+        setProfileDecorations(
+          result.decorations.filter((decoration) => decoration.active !== false)
+        );
+      }
+    };
+
+    void loadProfileDecorations();
+
+    return () => {
+      cancelled = true;
+    };
+  }, [isShopCategory]);
 
   const pushRecentColor = (color: string) => {
     setRecentColors((prev) => {
@@ -302,6 +355,12 @@ function BoardWritePage() {
       return;
     }
 
+    if (matchedCategory && isShopCategoryGroup(matchedCategory, allCategories) && !isAdmin()) {
+      alert('상품 등록은 관리자만 가능합니다.');
+      navigate(`/board/${matchedCategory.slug}`);
+      return;
+    }
+
     if (isEditMode && editId) {
       const loadBoard = async () => {
         try {
@@ -310,6 +369,10 @@ function BoardWritePage() {
             const board = response.board;
             setEditBoardId(board.id);
             setTitle(board.title);
+            setItemPrice(board.itemPrice != null ? String(board.itemPrice) : '');
+            setItemType(board.itemType === 'BADGE' ? 'BADGE' : 'GENERAL');
+            setProfileDecorationId(board.profileDecoration?.id ?? null);
+            setThumbnailAttachmentId(board.thumbnailAttachmentId ?? null);
             setTagId(board.tag?.id ?? null);
             setAttachedFiles(
               board.attachments?.map((attachment) => ({
@@ -499,6 +562,7 @@ function BoardWritePage() {
 
   const handleRemoveFile = (attachmentId: number) => {
     setAttachedFiles((prev) => prev.filter((file) => file.id !== attachmentId));
+    setThumbnailAttachmentId((current) => (current === attachmentId ? null : current));
   };
 
   const handleDragOver = (event: React.DragEvent) => {
@@ -568,6 +632,25 @@ function BoardWritePage() {
       return;
     }
 
+    const parsedItemPrice = itemPrice.trim() ? Number(itemPrice) : null;
+    if (isShopCategory && (!Number.isFinite(parsedItemPrice) || !parsedItemPrice || parsedItemPrice <= 0)) {
+      setError('상품 가격을 1 NC 이상으로 입력해주세요.');
+      return;
+    }
+    if (isShopCategory && itemType === 'BADGE' && !profileDecorationId) {
+      setError('배지 상품으로 등록하려면 지급할 배지를 선택해주세요.');
+      return;
+    }
+    const imageAttachments = attachedFiles.filter(isImageAttachment);
+    const resolvedThumbnailAttachmentId =
+      thumbnailAttachmentId && imageAttachments.some((file) => file.id === thumbnailAttachmentId)
+        ? thumbnailAttachmentId
+        : null;
+    if (isShopCategory && imageAttachments.length === 0) {
+      setError('마일리지 상점 상품은 썸네일로 사용할 이미지를 첨부해야 합니다.');
+      return;
+    }
+
     if (currentTagList.length > 0 && tagId === null) {
       setError(null);
       requestAnimationFrame(() => {
@@ -595,6 +678,10 @@ function BoardWritePage() {
           content: latestContent,
           tagId: tagId ?? undefined,
           attachmentIds,
+          itemPrice: isShopCategory ? parsedItemPrice : null,
+          itemType: isShopCategory ? itemType : 'GENERAL',
+          profileDecorationId: isShopCategory && itemType === 'BADGE' ? profileDecorationId : null,
+          thumbnailAttachmentId: isShopCategory ? resolvedThumbnailAttachmentId : null,
         });
 
         if (response.success && 'board' in response) {
@@ -613,6 +700,10 @@ function BoardWritePage() {
         content: latestContent,
         tagId: tagId ?? undefined,
         attachmentIds,
+        itemPrice: isShopCategory ? parsedItemPrice : null,
+        itemType: isShopCategory ? itemType : 'GENERAL',
+        profileDecorationId: isShopCategory && itemType === 'BADGE' ? profileDecorationId : null,
+        thumbnailAttachmentId: isShopCategory ? resolvedThumbnailAttachmentId : null,
       });
 
       if (response.success && 'board' in response) {
@@ -682,6 +773,73 @@ function BoardWritePage() {
             />
           </div>
 
+          {isShopCategory && (
+            <>
+              <div className="bw-divider" />
+              <div className="bw-title-area">
+                <input
+                  id="bw-item-price"
+                  type="number"
+                  min="1"
+                  step="1"
+                  value={itemPrice}
+                  onChange={(event) => setItemPrice(event.target.value)}
+                  placeholder="상품 가격을 입력하세요. 예: 1200"
+                  className="bw-title-input"
+                  required
+                />
+              </div>
+              <div
+                style={{
+                  display: 'grid',
+                  gridTemplateColumns: 'minmax(0, 180px) minmax(0, 1fr)',
+                  gap: '14px',
+                  alignItems: 'center',
+                }}
+              >
+                <select
+                  value={itemType}
+                  onChange={(event) => {
+                    const nextType = event.target.value as 'GENERAL' | 'BADGE';
+                    setItemType(nextType);
+                    if (nextType !== 'BADGE') {
+                      setProfileDecorationId(null);
+                    }
+                  }}
+                  className="bw-title-input"
+                  aria-label="상품 종류"
+                  style={{ fontSize: '16px' }}
+                >
+                  <option value="GENERAL">일반 상품</option>
+                  <option value="BADGE">배지 상품</option>
+                </select>
+                <select
+                  value={profileDecorationId ?? ''}
+                  onChange={(event) =>
+                    setProfileDecorationId(
+                      event.target.value ? Number(event.target.value) : null
+                    )
+                  }
+                  className="bw-title-input"
+                  aria-label="지급 배지"
+                  disabled={itemType !== 'BADGE'}
+                  style={{ fontSize: '16px', opacity: itemType === 'BADGE' ? 1 : 0.45 }}
+                >
+                  <option value="">
+                    {itemType === 'BADGE'
+                      ? '구매자에게 지급할 배지를 선택하세요'
+                      : '배지 상품일 때만 선택'}
+                  </option>
+                  {profileDecorations.map((decoration) => (
+                    <option key={decoration.id ?? decoration.key} value={decoration.id}>
+                      {decoration.label} ({decoration.key})
+                    </option>
+                  ))}
+                </select>
+              </div>
+            </>
+          )}
+
           <div className="bw-divider" />
 
           <Toolbar
@@ -727,6 +885,9 @@ function BoardWritePage() {
             setTagId={setTagId}
             detailCategoryWarningRef={detailCategoryWarningRef}
             attachedFiles={attachedFiles}
+            isShopCategory={isShopCategory}
+            thumbnailAttachmentId={thumbnailAttachmentId}
+            setThumbnailAttachmentId={setThumbnailAttachmentId}
             isDragOver={isDragOver}
             isUploading={isUploading}
             handleDragOver={handleDragOver}

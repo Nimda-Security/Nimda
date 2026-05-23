@@ -187,6 +187,18 @@ export const createBoardAPI = async (
     if (data.pinned !== undefined) {
       formData.append('pinned', String(data.pinned));
     }
+    if (data.itemPrice != null) {
+      formData.append('itemPrice', String(data.itemPrice));
+    }
+    if (data.itemType) {
+      formData.append('itemType', data.itemType);
+    }
+    if (data.profileDecorationId != null) {
+      formData.append('profileDecorationId', String(data.profileDecorationId));
+    }
+    if (data.thumbnailAttachmentId != null) {
+      formData.append('thumbnailAttachmentId', String(data.thumbnailAttachmentId));
+    }
     // multipart `file` 제거됨 — 이유: 백엔드는 S3 presigned 후 `attachmentIds`만 받음.
     if (data.attachmentIds !== undefined && data.attachmentIds.length > 0) {
       for (const aid of data.attachmentIds) {
@@ -254,6 +266,18 @@ export const updateBoardAPI = async (
     }
     if (data.pinned !== undefined) {
       formData.append('pinned', String(data.pinned));
+    }
+    if (data.itemPrice != null) {
+      formData.append('itemPrice', String(data.itemPrice));
+    }
+    if (data.itemType) {
+      formData.append('itemType', data.itemType);
+    }
+    if (data.profileDecorationId != null) {
+      formData.append('profileDecorationId', String(data.profileDecorationId));
+    }
+    if (data.thumbnailAttachmentId != null) {
+      formData.append('thumbnailAttachmentId', String(data.thumbnailAttachmentId));
     }
     // 수정 시 생략하면 첨부 동기화 안 함. 전달 시 최종 목록으로 동기화(빈 배열 = 전부 삭제).
     if (data.attachmentIds !== undefined) {
@@ -602,6 +626,54 @@ export const toggleBoardLikeAPI = async (
     return {
       success: false,
       message: '좋아요를 처리할 수 없습니다.',
+    };
+  }
+};
+
+export interface BoardPurchaseResponse {
+  success: boolean;
+  message: string;
+  data?: {
+    boardId: number;
+    itemName: string;
+    price: number;
+    remainingAmount: number;
+    itemType?: string;
+    profileDecorationKey?: string | null;
+  };
+}
+
+export const purchaseBoardItemAPI = async (
+  boardId: number
+): Promise<BoardPurchaseResponse | BoardErrorResponse> => {
+  try {
+    const response = await fetch(`${API_BASE_URL}/${boardId}/purchase`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      credentials: 'include',
+    });
+
+    const result = await parseJsonSafe(response);
+
+    if (response.ok && result?.success) {
+      return {
+        success: true,
+        message: result.message || '구매가 완료되었습니다.',
+        data: result.data || result,
+      };
+    }
+
+    return {
+      success: false,
+      message: (result?.message as string) || '구매에 실패했습니다.',
+    };
+  } catch (error) {
+    console.error('상품 구매 API 오류:', error);
+    return {
+      success: false,
+      message: '상품 구매 중 오류가 발생했습니다.',
     };
   }
 };

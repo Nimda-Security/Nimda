@@ -23,6 +23,7 @@ export interface Category {
   sortOrder: number;
   postCount: number;
   redirectUrl?: string | null;  // 바로가기 URL (외부 링크, null이면 일반 게시판)
+  shopEnabled?: boolean;
   createdAt: string;
   updatedAt: string;
 }
@@ -67,6 +68,15 @@ export interface Board {
   tag?: { id: number; tagName: string } | null; // Tag 엔티티 참조
   filename?: string | null;
   filepath?: string | null;
+  itemPrice?: number | null;
+  itemType?: 'GENERAL' | 'BADGE' | string | null;
+  profileDecoration?: {
+    id: number;
+    key: string;
+    label: string;
+    src: string;
+  } | null;
+  thumbnailAttachmentId?: number | null;
   /** S3+Attachment 연동 시 상세 조회에 포함 */
   attachments?: BoardAttachmentMeta[];
   createdAt: string;
@@ -123,6 +133,10 @@ export interface BoardWriteRequest {
    */
   attachmentIds?: number[];
   pinned?: boolean; // 게시글 고정 여부 (관리자만 설정 가능)
+  itemPrice?: number | null;
+  itemType?: 'GENERAL' | 'BADGE';
+  profileDecorationId?: number | null;
+  thumbnailAttachmentId?: number | null;
 }
 
 /**
