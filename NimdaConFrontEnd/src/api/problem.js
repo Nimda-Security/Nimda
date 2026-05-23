@@ -1,4 +1,6 @@
-﻿// 문제 관련 API 함수들 (JavaScript)
+// 문제 관련 API 함수들 (JavaScript)
+
+import { addVersionToHeaders } from '../constants/version';
 
 const API_BASE_URL = "/api";
 
@@ -22,9 +24,9 @@ export const createProblemAPI = async (problemData) => {
   try {
     const response = await fetch(`${API_BASE_URL}/problems`, {
       method: "POST",
-      headers: {
+      headers: addVersionToHeaders({
         "Content-Type": "application/json",
-      },
+      }),
       credentials: "include",
       body: JSON.stringify(problemData),
     });
@@ -65,9 +67,9 @@ export const getAllProblemsAPI = async () => {
   try {
     const response = await fetch(`${API_BASE_URL}/problems`, {
       method: "GET",
-      headers: {
+      headers: addVersionToHeaders({
         "Content-Type": "application/json",
-      },
+      }),
       credentials: "include",
     });
 
@@ -99,9 +101,9 @@ export const getProblemByIdAPI = async (id) => {
   try {
     const response = await fetch(`${API_BASE_URL}/problems/${id}`, {
       method: "GET",
-      headers: {
+      headers: addVersionToHeaders({
         "Content-Type": "application/json",
-      },
+      }),
       credentials: "include",
     });
 
@@ -131,9 +133,9 @@ export const getProblemByIdForAdminAPI = async (id) => {
   try {
     const response = await fetch(`${API_BASE_URL}/problems/${id}/admin`, {
       method: "GET",
-      headers: {
+      headers: addVersionToHeaders({
         "Content-Type": "application/json",
-      },
+      }),
       credentials: "include",
     });
 
@@ -165,9 +167,9 @@ export const updateProblemAPI = async (id, problemData) => {
   try {
     const response = await fetch(`${API_BASE_URL}/problems/${id}`, {
       method: "PUT",
-      headers: {
+      headers: addVersionToHeaders({
         "Content-Type": "application/json",
-      },
+      }),
       credentials: "include",
       body: JSON.stringify(problemData),
     });

@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { addVersionToHeaders } from '@/constants/version';
 import Layout from '@/components/Layout';
 import ProblemItem, { type Problem } from './components/ProblemItem';
 
@@ -13,7 +14,10 @@ const useProblems = () => {
     const fetchProblems = async () => {
       try {
         setLoading(true);
-        const res = await fetch('/api/problems', { credentials: 'include' });
+        const res = await fetch('/api/problems', {
+          headers: addVersionToHeaders(),
+          credentials: 'include',
+        });
         if (!res.ok) throw new Error('응답 에러');
         const data = await res.json();
         if (data.problems && Array.isArray(data.problems)) {

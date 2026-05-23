@@ -1,4 +1,6 @@
-﻿// 관리자 관련 API 함수들
+// 관리자 관련 API 함수들
+
+import { addVersionToHeaders } from '../../constants/version.ts';
 
 const API_BASE_URL = "/api";
 
@@ -19,9 +21,9 @@ export const getAllUsersAPI = async () => {
   try {
     const response = await fetch(`${API_BASE_URL}/admin/users`, {
       method: "GET",
-      headers: {
+      headers: addVersionToHeaders({
         "Content-Type": "application/json",
-      },
+      }),
       credentials: "include",
     });
 
@@ -53,16 +55,16 @@ export const getAdminUserDetailAPI = async (userId) => {
   try {
     const response = await fetch(`${API_BASE_URL}/admin/users/${userId}`, {
       method: "GET",
-      headers: {
+      headers: addVersionToHeaders({
         "Content-Type": "application/json",
-      },
+      }),
       credentials: "include",
     });
 
     const result = await parseJsonSafe(response);
 
     if (response.ok) {
-      return { success: true, user: result.user };
+      return { success: true, user: result };
     }
 
     return {
@@ -85,9 +87,9 @@ export const deleteUserAPI = async (userId) => {
   try {
     const response = await fetch(`${API_BASE_URL}/admin/users/${userId}`, {
       method: "DELETE",
-      headers: {
+      headers: addVersionToHeaders({
         "Content-Type": "application/json",
-      },
+      }),
       credentials: "include",
     });
 
@@ -117,9 +119,9 @@ export const updateUserRoleAPI = async (userId, role) => {
   try {
     const response = await fetch(`${API_BASE_URL}/admin/users/${userId}/role`, {
       method: "PUT",
-      headers: {
+      headers: addVersionToHeaders({
         "Content-Type": "application/json",
-      },
+      }),
       credentials: "include",
       body: JSON.stringify({ role }),
     });
@@ -153,9 +155,9 @@ export const removeUserRoleAPI = async (userId, role) => {
   try {
     const response = await fetch(`${API_BASE_URL}/admin/users/${userId}/role/remove`, {
       method: "PUT",
-      headers: {
+      headers: addVersionToHeaders({
         "Content-Type": "application/json",
-      },
+      }),
       credentials: "include",
       body: JSON.stringify({ role }),
     });
@@ -189,9 +191,9 @@ export const getAvailableRolesAPI = async () => {
   try {
     const response = await fetch(`${API_BASE_URL}/admin/users/roles`, {
       method: "GET",
-      headers: {
+      headers: addVersionToHeaders({
         "Content-Type": "application/json",
-      },
+      }),
       credentials: "include",
     });
 
@@ -226,9 +228,9 @@ export const getPendingUsersAPI = async () => {
   try {
     const response = await fetch(`${API_BASE_URL}/admin/users/pending`, {
       method: "GET",
-      headers: {
+      headers: addVersionToHeaders({
         "Content-Type": "application/json",
-      },
+      }),
       credentials: "include",
     });
 
@@ -260,10 +262,11 @@ export const approveUserAPI = async (userId) => {
   try {
     const response = await fetch(`${API_BASE_URL}/admin/users/${userId}/approve`, {
       method: "PUT",
-      headers: {
+      headers: addVersionToHeaders({
         "Content-Type": "application/json",
-      },
+      }),
       credentials: "include",
+      body: JSON.stringify({}),
     });
 
     const result = await parseJsonSafe(response);
@@ -294,10 +297,11 @@ export const rejectUserAPI = async (userId) => {
   try {
     const response = await fetch(`${API_BASE_URL}/admin/users/${userId}/reject`, {
       method: "PUT",
-      headers: {
+      headers: addVersionToHeaders({
         "Content-Type": "application/json",
-      },
+      }),
       credentials: "include",
+      body: JSON.stringify({}),
     });
 
     const result = await parseJsonSafe(response);
@@ -328,9 +332,9 @@ export const getAllGroupsAPI = async () => {
   try {
     const response = await fetch(`${API_BASE_URL}/groups`, {
       method: "GET",
-      headers: {
+      headers: addVersionToHeaders({
         "Content-Type": "application/json",
-      },
+      }),
       credentials: "include",
     });
 
@@ -366,9 +370,9 @@ export const createGroupAPI = async (groupData) => {
   try {
     const response = await fetch(`${API_BASE_URL}/groups`, {
       method: "POST",
-      headers: {
+      headers: addVersionToHeaders({
         "Content-Type": "application/json",
-      },
+      }),
       credentials: "include",
       body: JSON.stringify(groupData),
     });
@@ -407,7 +411,7 @@ export const getTagStatsAPI = async (categoryId) => {
       `${API_BASE_URL}/admin/boards/tag-stats?categoryId=${categoryId}`,
       {
         method: "GET",
-        headers: { "Content-Type": "application/json" },
+        headers: addVersionToHeaders({ "Content-Type": "application/json" }),
         credentials: "include",
       }
     );
@@ -435,7 +439,7 @@ export const deactivateBoardsByTagAPI = async (categoryId, tagId) => {
       `${API_BASE_URL}/admin/boards/deactivate-by-tag?categoryId=${categoryId}&tagId=${tagId}`,
       {
         method: "PUT",
-        headers: { "Content-Type": "application/json" },
+        headers: addVersionToHeaders({ "Content-Type": "application/json" }),
         credentials: "include",
       }
     );
@@ -463,7 +467,7 @@ export const activateBoardsByTagAPI = async (categoryId, tagId) => {
       `${API_BASE_URL}/admin/boards/activate-by-tag?categoryId=${categoryId}&tagId=${tagId}`,
       {
         method: "PUT",
-        headers: { "Content-Type": "application/json" },
+        headers: addVersionToHeaders({ "Content-Type": "application/json" }),
         credentials: "include",
       }
     );

@@ -1,5 +1,7 @@
 const API_BASE_URL = "/api/like/comment";
 
+import { addVersionToHeaders } from '../constants/version';
+
 export interface CommentLikeResponse {
   success: boolean;
   message: string;
@@ -17,10 +19,11 @@ export const toggleCommentLike = async (commentId: number): Promise<CommentLikeR
   try {
     const response = await fetch(`${API_BASE_URL}/${commentId}`, {
       method: "POST",
-      headers: {
+      headers: addVersionToHeaders({
         "Content-Type": "application/json",
-      },
+      }),
       credentials: "include",
+      body: JSON.stringify({}),
     });
 
     if (!response.ok) {
@@ -51,9 +54,9 @@ export const getCommentLikeCount = async (commentId: number): Promise<CommentLik
   try {
     const response = await fetch(`${API_BASE_URL}/${commentId}/likeCount`, {
       method: "GET",
-      headers: {
+      headers: addVersionToHeaders({
         "Content-Type": "application/json",
-      },
+      }),
     });
 
     if (!response.ok) {

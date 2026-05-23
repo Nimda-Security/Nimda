@@ -1,10 +1,12 @@
-﻿// 인증 관련 API 함수들
+// 인증 관련 API 함수들
+import { addVersionToHeaders } from '../constants/version';
 
 const API_BASE_URL = "/api";
 
 export interface LoginRequest {
   userId: string;
   password: string;
+  clientVersion?: string;
 }
 
 export interface LoginResponse {
@@ -57,6 +59,7 @@ export interface RegisterRequest {
   major: string;
   bojId?: string;
   birth?: string;
+  clientVersion?: string;
 }
 
 /**
@@ -68,9 +71,9 @@ export const loginAPI = async (
   try {
     const response = await fetch(`${API_BASE_URL}/auth/login`, {
       method: "POST",
-      headers: {
+      headers: addVersionToHeaders({
         "Content-Type": "application/json",
-      },
+      }),
       credentials: "include",
       body: JSON.stringify(loginData),
     });
@@ -161,9 +164,9 @@ export const registerAPI = async (
     // 2. 서버 API 호출
     const response = await fetch(`${API_BASE_URL}/auth/register`, {
       method: "POST",
-      headers: {
+      headers: addVersionToHeaders({
         "Content-Type": "application/json",
-      },
+      }),
       credentials: "include",
       body: JSON.stringify(cleanedData),
     });
@@ -215,7 +218,11 @@ export const registerAPI = async (
  */
 export const logoutAPI = async () => {
   try {
-    await fetch(`${API_BASE_URL}/auth/logout`, { method: "POST", credentials: "include" });
+    await fetch(`${API_BASE_URL}/auth/logout`, {
+      method: "POST",
+      headers: addVersionToHeaders(),
+      credentials: "include",
+    });
   } catch {
     // 서버 응답 실패 시도 로컬 정리 진행
   }
@@ -227,7 +234,7 @@ export const logoutAPI = async () => {
 /**
  * 현재 로그인된 사용자 정보 가져오기 (localStorage)
  */
-export const getCurrentUser = () => {
+export const getCurrentUser = (): Record<string, any> | null => {
   const userStr = localStorage.getItem("user");
   return userStr ? JSON.parse(userStr) : null;
 };
@@ -239,9 +246,9 @@ export const getMyPageInfo = async () => {
   try {
     const response = await fetch(`${API_BASE_URL}/auth/me`, {
       method: "GET",
-      headers: {
+      headers: addVersionToHeaders({
         "Content-Type": "application/json",
-      },
+      }),
       credentials: "include",
     });
 
@@ -272,9 +279,9 @@ export const toggleEmailHide = async () => {
   try {
     const response = await fetch(`${API_BASE_URL}/auth/email-hide`, {
       method: "POST",
-      headers: {
+      headers: addVersionToHeaders({
         "Content-Type": "application/json",
-      },
+      }),
       credentials: "include",
       body: JSON.stringify({}),
     });
@@ -340,7 +347,7 @@ export const validateSession = async (): Promise<boolean> => {
   try {
     const response = await fetch(`${API_BASE_URL}/auth/me`, {
       method: "GET",
-      headers: { "Content-Type": "application/json" },
+      headers: addVersionToHeaders({ "Content-Type": "application/json" }),
       credentials: "include",
     });
     if (response.ok) return true;
@@ -372,9 +379,9 @@ export const updateProfileAPI = async (
   try {
     const response = await fetch(`${API_BASE_URL}/auth/me`, {
       method: "PUT",
-      headers: {
+      headers: addVersionToHeaders({
         "Content-Type": "application/json",
-      },
+      }),
       credentials: "include",
       body: JSON.stringify(data),
     });
@@ -419,9 +426,9 @@ export const updateProfileImageAPI = async (
   try {
     const response = await fetch(`${API_BASE_URL}/auth/profile-image`, {
       method: "PUT",
-      headers: {
+      headers: addVersionToHeaders({
         "Content-Type": "application/json",
-      },
+      }),
       credentials: "include",
       body: JSON.stringify({ profileImageKey }),
     });
@@ -472,9 +479,9 @@ export const updateProfileDecorationAPI = async (
   try {
     const response = await fetch(`${API_BASE_URL}/auth/profile-decoration`, {
       method: 'PUT',
-      headers: {
+      headers: addVersionToHeaders({
         'Content-Type': 'application/json',
-      },
+      }),
       credentials: 'include',
       body: JSON.stringify({ profileDecorationKey }),
     });

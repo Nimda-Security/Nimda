@@ -2,6 +2,7 @@ import {
   putFileToPresignedUrl,
   requestPresignedUpload,
 } from '@/api/attachments';
+import { addVersionToHeaders } from '@/constants/version';
 
 export interface ProfileDecorationOption {
   id?: number;
@@ -31,6 +32,7 @@ export const getProfileDecorationsAPI = async (): Promise<{
   try {
     const response = await fetch('/api/cite/profile-decorations', {
       method: 'GET',
+      headers: addVersionToHeaders(),
       credentials: 'include',
     });
     const result = await parseJsonSafe(response);
@@ -57,6 +59,7 @@ export const getAdminProfileDecorationsAPI = async () => {
   try {
     const response = await fetch('/api/cite/admin/profile-decorations', {
       method: 'GET',
+      headers: addVersionToHeaders(),
       credentials: 'include',
     });
     const result = await parseJsonSafe(response);
@@ -121,7 +124,7 @@ export const createProfileDecorationAPI = async ({
   try {
     const response = await fetch('/api/cite/admin/profile-decorations', {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
+      headers: addVersionToHeaders({ 'Content-Type': 'application/json' }),
       credentials: 'include',
       body: JSON.stringify({ key, label, requiredRole, filePath, purchaseRequired }),
     });

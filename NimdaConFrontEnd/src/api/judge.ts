@@ -1,5 +1,7 @@
 // 채점 관련 API 함수들
 
+import { addVersionToHeaders } from '../constants/version';
+
 const API_BASE_URL = "/api";
 
 export interface SubmissionRequest {
@@ -11,6 +13,7 @@ export interface SubmissionRequest {
   flag?: string;
   hints?: string;
   points?: number;
+  clientVersion?: string;
 }
 
 export interface JudgeResponse {
@@ -38,9 +41,9 @@ export const submitCodeAPI = async (
   try {
     const response = await fetch(`${API_BASE_URL}/judge/submit`, {
       method: "POST",
-      headers: {
+      headers: addVersionToHeaders({
         "Content-Type": "application/json",
-      },
+      }),
       credentials: "include",
       body: JSON.stringify(submissionData),
     });
@@ -75,7 +78,9 @@ export const submitCodeAPI = async (
  */
 export const getSupportedLanguagesAPI = async () => {
   try {
-    const response = await fetch(`${API_BASE_URL}/judge/languages`);
+    const response = await fetch(`${API_BASE_URL}/judge/languages`, {
+      headers: addVersionToHeaders(),
+    });
     return await response.json();
   } catch (error) {
     console.error("언어 목록 조회 오류:", error);
@@ -90,6 +95,7 @@ export const getSupportedLanguagesAPI = async () => {
 export const getAllSubmissionsAPI = async () => {
   try {
     const response = await fetch(`${API_BASE_URL}/judge/submissions`, {
+      headers: addVersionToHeaders(),
       credentials: "include",
     });
     const result = await response.json();

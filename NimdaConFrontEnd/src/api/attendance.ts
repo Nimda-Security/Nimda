@@ -3,6 +3,8 @@
 * 백엔드: com.nimda.cite.attendance.controller.AttendanceController 매칭
 */
 
+import { addVersionToHeaders } from '../constants/version';
+
 // --- [인터페이스 정의] ---
 
 /** 오늘 방문자 정보 (TodayVisitorResponse DTO 매칭) */
@@ -46,11 +48,11 @@ export const checkIn = async (): Promise<ApiResponse<string>> => {
 try {
 const response = await fetch(`${API_BASE_URL}/checkIn`, {
 method: "POST",
-headers: {
+headers: addVersionToHeaders({
 "Content-Type": "application/json",
-// 이제 Authorization 헤더는 넣지 않습니다.
-},
+}),
 credentials: "include", // [중요] 쿠키 기반 인증을 위해 추가
+body: JSON.stringify({}),
 });
 
 if (!response.ok) {
@@ -78,9 +80,9 @@ export const getTodayVisitors = async (): Promise<AttendanceLog[]> => {
   try {
     const response = await fetch(`${API_BASE_URL}/today`, {
       method: "GET",
-      headers: {
+      headers: addVersionToHeaders({
         "Content-Type": "application/json",
-      },
+      }),
     });
 
     if (!response.ok) return [];
@@ -100,7 +102,7 @@ export const getConsecutiveRank = async (): Promise<Attendance[]> => {
   try {
     const response = await fetch(`${API_BASE_URL}/rank/consecutive`, {
       method: "GET",
-      headers: { "Content-Type": "application/json" },
+      headers: addVersionToHeaders({ "Content-Type": "application/json" }),
     });
     const result: ApiResponse<Attendance[]> = await response.json();
     return result.success ? result.data : [];
@@ -117,7 +119,7 @@ export const getTotalRank = async (): Promise<Attendance[]> => {
   try {
     const response = await fetch(`${API_BASE_URL}/rank/total`, {
       method: "GET",
-      headers: { "Content-Type": "application/json" },
+      headers: addVersionToHeaders({ "Content-Type": "application/json" }),
     });
     const result: ApiResponse<Attendance[]> = await response.json();
     return result.success ? result.data : [];
@@ -134,9 +136,9 @@ export const getMyAttendance = async (): Promise<ApiResponse<Attendance>> => {
   try {
     const response = await fetch(`${API_BASE_URL}/me`, {
       method: "GET",
-      headers: {
+      headers: addVersionToHeaders({
         "Content-Type": "application/json",
-      },
+      }),
       credentials: "include",
     });
     return await response.json();
@@ -153,9 +155,9 @@ export const getMyLogs = async (): Promise<AttendanceDetailLog[]> => {
   try {
     const response = await fetch(`${API_BASE_URL}/me/logs`, {
       method: "GET",
-      headers: {
+      headers: addVersionToHeaders({
         "Content-Type": "application/json",
-      },
+      }),
       credentials: "include",
     });
     const result: ApiResponse<AttendanceDetailLog[]> = await response.json();
@@ -174,9 +176,9 @@ export const getMyTotalAttendanceCount = async (): Promise<number> => {
   try {
     const response = await fetch(`${API_BASE_URL}`, {
       method: "GET",
-      headers: {
+      headers: addVersionToHeaders({
         "Content-Type": "application/json",
-      },
+      }),
       credentials: "include",
     });
 

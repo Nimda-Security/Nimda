@@ -1,4 +1,5 @@
 import axios from 'axios';
+import { addVersionToHeaders } from '../constants/version';
 
 // 백엔드 NotificationResponse DTO 매핑
 // ApiResponse<T> = { success: boolean, message?: string, data?: T }
@@ -24,6 +25,14 @@ interface ApiResponseWrapper<T> {
 const api = axios.create({
   baseURL: '/api/notifications',
   withCredentials: true,
+});
+
+api.interceptors.request.use((config) => {
+  const versionHeaders = addVersionToHeaders();
+  Object.entries(versionHeaders).forEach(([key, value]) => {
+    config.headers.set(key, value);
+  });
+  return config;
 });
 
 export const notificationApi = {
@@ -66,6 +75,7 @@ export const notificationApi = {
     (async () => {
       try {
         const response = await fetch('/api/alarm/subscribe', {
+          headers: addVersionToHeaders(),
           credentials: 'include',
           signal: controller.signal,
         });

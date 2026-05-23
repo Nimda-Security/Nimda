@@ -1,5 +1,7 @@
 // 태그 관련 API 함수들 (Tag 엔티티 기반)
 
+import { addVersionToHeaders } from '../constants/version';
+
 export interface TagResponse {
   id: number;
   tagName: string;
@@ -33,7 +35,7 @@ export const getAllTagsAPI = async (): Promise<TagResponse[]> => {
   try {
     const response = await fetch(API_BASE_URL, {
       method: 'GET',
-      headers: { 'Content-Type': 'application/json' },
+      headers: addVersionToHeaders({ 'Content-Type': 'application/json' }),
       credentials: 'include',
     });
 
@@ -57,7 +59,7 @@ export const getTagsByCategoryAPI = async (categoryId: number): Promise<TagRespo
   try {
     const response = await fetch(`${API_BASE_URL}/${categoryId}`, {
       method: 'GET',
-      headers: { 'Content-Type': 'application/json' },
+      headers: addVersionToHeaders({ 'Content-Type': 'application/json' }),
       credentials: 'include',
     });
 
@@ -81,7 +83,7 @@ export const addTagAPI = async (data: TagRequest): Promise<{ success: boolean; t
   try {
     const response = await fetch(`${API_BASE_URL}/add-tag`, {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
+      headers: addVersionToHeaders({ 'Content-Type': 'application/json' }),
       credentials: 'include',
       body: JSON.stringify(data),
     });
@@ -107,7 +109,7 @@ export const deleteTagAPI = async (tagId: number): Promise<{ success: boolean; m
   try {
     const response = await fetch(`${API_BASE_URL}/${tagId}`, {
       method: 'DELETE',
-      headers: { 'Content-Type': 'application/json' },
+      headers: addVersionToHeaders({ 'Content-Type': 'application/json' }),
       credentials: 'include',
     });
 
@@ -133,7 +135,7 @@ export const updateTagAPI = async (
   try {
     const response = await fetch(`${API_BASE_URL}/${tagId}`, {
       method: 'PATCH',
-      headers: { 'Content-Type': 'application/json' },
+      headers: addVersionToHeaders({ 'Content-Type': 'application/json' }),
       credentials: 'include',
       body: JSON.stringify(data),
     });

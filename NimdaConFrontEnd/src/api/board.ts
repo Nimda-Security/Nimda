@@ -10,6 +10,7 @@ import type {
   BoardDeleteResponse,
   BoardErrorResponse,
 } from '@/domains/Board/types';
+import { addVersionToHeaders } from '@/constants/version';
 
 const API_BASE_URL = '/api/cite/board';
 
@@ -71,9 +72,9 @@ export const getBoardListAPI = async (
 
     const response = await fetch(`${API_BASE_URL}?${queryParams.toString()}`, {
       method: 'GET',
-      headers: {
+      headers: addVersionToHeaders({
         'Content-Type': 'application/json',
-      },
+      }),
       credentials: 'include',
     });
 
@@ -128,9 +129,9 @@ export const getBoardDetailAPI = async (
   try {
     const response = await fetch(`${API_BASE_URL}/${id}`, {
       method: 'GET',
-      headers: {
+      headers: addVersionToHeaders({
         'Content-Type': 'application/json',
-      },
+      }),
       credentials: 'include',
     });
 
@@ -215,6 +216,7 @@ export const createBoardAPI = async (
 
     const response = await fetch(API_BASE_URL, {
       method: 'POST',
+      headers: addVersionToHeaders(),
       credentials: 'include',
       body: formData,
     });
@@ -288,6 +290,7 @@ export const updateBoardAPI = async (
 
     const response = await fetch(`${API_BASE_URL}/${id}`, {
       method: 'PUT',
+      headers: addVersionToHeaders(),
       credentials: 'include',
       body: formData,
     });
@@ -328,9 +331,9 @@ export const deleteBoardAPI = async (
   try {
     const response = await fetch(`${API_BASE_URL}/${id}`, {
       method: 'DELETE',
-      headers: {
+      headers: addVersionToHeaders({
         'Content-Type': 'application/json',
-      },
+      }),
       credentials: 'include',
     });
 
@@ -391,9 +394,9 @@ export const getPinnedPostsAPI = async (
 
     const response = await fetch(`${API_BASE_URL}/pinned?${queryParams.toString()}`, {
       method: 'GET',
-      headers: {
+      headers: addVersionToHeaders({
         'Content-Type': 'application/json',
-      },
+      }),
       credentials: 'include',
     });
 
@@ -458,9 +461,9 @@ export const getPopularPostsAPI = async (
 
     const response = await fetch(`${API_BASE_URL}/popular?${queryParams.toString()}`, {
       method: 'GET',
-      headers: {
+      headers: addVersionToHeaders({
         'Content-Type': 'application/json',
-      },
+      }),
       credentials: 'include',
     });
 
@@ -560,9 +563,9 @@ export const getBoardLikeStatusAPI = async (
   try {
     const response = await fetch(`${LIKE_API_BASE_URL}/${boardId}/likeStatus`, {
       method: 'GET',
-      headers: {
+      headers: addVersionToHeaders({
         'Content-Type': 'application/json',
-      },
+      }),
       credentials: 'include',
     });
 
@@ -601,9 +604,9 @@ export const toggleBoardLikeAPI = async (
   try {
     const response = await fetch(`${LIKE_API_BASE_URL}/${boardId}`, {
       method: 'POST',
-      headers: {
+      headers: addVersionToHeaders({
         'Content-Type': 'application/json',
-      },
+      }),
       credentials: 'include',
     });
 
@@ -690,9 +693,9 @@ export const toggleBoardPinAPI = async (
   try {
     const response = await fetch(`${API_BASE_URL}/${boardId}/pin`, {
       method: 'PATCH',
-      headers: {
+      headers: addVersionToHeaders({
         'Content-Type': 'application/json',
-      },
+      }),
       credentials: 'include',
     });
 
@@ -729,9 +732,9 @@ export const getMyBoardCountAPI = async (): Promise<number> => {
   try {
     const response = await fetch(`${API_BASE_URL}/my/board-count`, {
       method: 'GET',
-      headers: {
+      headers: addVersionToHeaders({
         'Content-Type': 'application/json',
-      },
+      }),
       credentials: 'include',
     });
 
@@ -767,9 +770,9 @@ export const getMyBoardsAPI = async (): Promise<MyBoard[]> => {
   try {
     const response = await fetch(`${API_BASE_URL}/my/boards`, {
       method: 'GET',
-      headers: {
+      headers: addVersionToHeaders({
         'Content-Type': 'application/json',
-      },
+      }),
       credentials: 'include',
     });
 
@@ -804,9 +807,9 @@ export const getMyCommentedBoardsAPI = async (): Promise<MyBoard[]> => {
   try {
     const response = await fetch(`${API_BASE_URL}/my/commented-boards`, {
       method: 'GET',
-      headers: {
+      headers: addVersionToHeaders({
         'Content-Type': 'application/json',
-      },
+      }),
       credentials: 'include',
     });
 
@@ -841,9 +844,9 @@ export const deleteMyBoardsAPI = async (boardIds: number[]): Promise<{ success: 
   try {
     const response = await fetch(`${API_BASE_URL}/my/boards`, {
       method: 'DELETE',
-      headers: {
+      headers: addVersionToHeaders({
         'Content-Type': 'application/json',
-      },
+      }),
       credentials: 'include',
       body: JSON.stringify({ boardIds }),
     });

@@ -1,5 +1,6 @@
 // [New] 스코어보드 API 호출 유틸
 import type { ScoreboardResponse } from "@/domains/Contest/Scoreboard/types";
+import { addVersionToHeaders } from "@/constants/version";
 
 // API 루트와 엔드포인트를 분리해서 원하는 주소로 쉽게 변경할 수 있도록 함
 const API_BASE_URL = (
@@ -18,9 +19,9 @@ export const getScoreboardAPI = async (): Promise<ScoreboardResponse> => {
   try {
     const response = await fetch(`${API_BASE_URL}${SCOREBOARD_ENDPOINT}`, {
       method: "GET",
-      headers: {
+      headers: addVersionToHeaders({
         "Content-Type": "application/json",
-      },
+      }),
       credentials: "include",
     });
 
