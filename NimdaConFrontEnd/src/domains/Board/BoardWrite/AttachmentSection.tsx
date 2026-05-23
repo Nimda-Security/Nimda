@@ -2,6 +2,13 @@ import React from 'react';
 import type { TagResponse } from '@/api/tag';
 import { formatFileSize } from './constants';
 
+const IMAGE_EXTENSIONS = ['jpg', 'jpeg', 'png', 'gif', 'webp', 'bmp', 'svg'];
+
+const isImageFile = (file: { name: string }) => {
+  const ext = file.name.split('.').pop()?.toLowerCase() || '';
+  return IMAGE_EXTENSIONS.includes(ext);
+};
+
 interface AttachmentSectionProps {
   // Tags
   currentTagList: TagResponse[];
@@ -11,6 +18,9 @@ interface AttachmentSectionProps {
 
   // Files
   attachedFiles: { id: number; name: string; size: number; isInline?: boolean }[];
+  isShopCategory: boolean;
+  thumbnailAttachmentId: number | null;
+  setThumbnailAttachmentId: (id: number | null) => void;
   isDragOver: boolean;
   isUploading: boolean;
   handleDragOver: (e: React.DragEvent) => void;
@@ -29,6 +39,9 @@ export default function AttachmentSection({
   setTagId,
   detailCategoryWarningRef,
   attachedFiles,
+  isShopCategory,
+  thumbnailAttachmentId,
+  setThumbnailAttachmentId,
   isDragOver,
   isUploading,
   handleDragOver,
@@ -40,6 +53,11 @@ export default function AttachmentSection({
   handleFileSelect,
   handleImageSelect,
 }: AttachmentSectionProps) {
+  const imageFiles = attachedFiles
+    .filter(isImageFile)
+    .sort((left, right) => left.id - right.id);
+  const automaticThumbnailId = imageFiles[0]?.id ?? null;
+
   return (
     <>
       {/* ── 태그 선택 (Tag 엔티티 기반) ── */}
@@ -85,6 +103,42 @@ export default function AttachmentSection({
       {/* ── 첨부파일 ── */}
       <div className="bw-section">
         <span className="bw-section-label">첨부파일</span>
+        {isShopCategory && (
+          <div className="bw-thumbnail-picker">
+            <div className="bw-thumbnail-picker__header">
+              <span>상품 썸네일</span>
+              <small>
+                사진을 클릭하면 썸네일로 지정되고, 다시 클릭하면 자동 지정으로 돌아갑니다.
+              </small>
+            </div>
+            {imageFiles.length > 0 ? (
+              <div className="bw-thumbnail-picker__grid">
+                {imageFiles.map((file) => {
+                  const selected = thumbnailAttachmentId === file.id;
+                  const automatic = thumbnailAttachmentId == null && automaticThumbnailId === file.id;
+                  return (
+                    <button
+                      key={file.id}
+                      type="button"
+                      className={`bw-thumbnail-option ${selected ? 'bw-thumbnail-option--selected' : ''} ${automatic ? 'bw-thumbnail-option--auto' : ''}`}
+                      onClick={() => setThumbnailAttachmentId(selected ? null : file.id)}
+                    >
+                      <img
+                        src={`/api/cite/attachments/${file.id}/download?disposition=inline`}
+                        alt={file.name}
+                      />
+                      {(selected || automatic) && (
+                        <span>{selected ? '썸네일' : '자동 썸네일'}</span>
+                      )}
+                    </button>
+                  );
+                })}
+              </div>
+            ) : (
+              <p className="bw-tag-hint">마일리지 상점 상품은 이미지 첨부가 필요합니다.</p>
+            )}
+          </div>
+        )}
         {attachedFiles.some((f) => !f.isInline) && (
           <div className="bw-file-list">
             {attachedFiles

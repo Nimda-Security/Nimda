@@ -10,4 +10,5 @@ public class ProfileDecorationCreateRequest {
     private String label;
     private String filePath;
     private String requiredRole;
+    private Boolean purchaseRequired;
 }

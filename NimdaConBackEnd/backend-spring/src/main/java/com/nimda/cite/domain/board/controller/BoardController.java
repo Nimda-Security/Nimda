@@ -8,8 +8,11 @@ import com.nimda.cite.domain.board.dto.CategoryResponseDTO;
 import com.nimda.cite.domain.board.entity.Board;
 import com.nimda.cite.domain.board.entity.Category;
 import com.nimda.cite.domain.board.enums.BoardStatus;
+import com.nimda.cite.domain.board.enums.ShopItemType;
 import com.nimda.cite.domain.board.repository.CategoryRepository;
 import com.nimda.cite.domain.board.service.BoardService;
+import com.nimda.cite.domain.profiledecoration.ProfileDecoration;
+import com.nimda.cite.domain.profiledecoration.ProfileDecorationRepository;
 import com.nimda.cite.domain.tag.entity.Tag;
 import com.nimda.cite.domain.tag.repository.TagRepository;
 import com.nimda.cite.domain.comment.enums.STATUS;
@@ -88,6 +91,9 @@ public class BoardController {
     @Autowired
     private CommentRepository commentRepository;
 
+    @Autowired
+    private ProfileDecorationRepository profileDecorationRepository;
+
     @Autowired(required = false)
     private S3Service s3Service;
 
@@ -115,6 +121,16 @@ public class BoardController {
         return false;
     }
 
+    private boolean isShopCategory(Category category) {
+        if (category == null) return false;
+        if (Boolean.TRUE.equals(category.getShopEnabled())) return true;
+        if (category.getParentId() != null) {
+            Category parent = categoryRepository.findById(category.getParentId()).orElse(null);
+            return parent != null && Boolean.TRUE.equals(parent.getShopEnabled());
+        }
+        return false;
+    }
+
     // 사용자가 특정 역할을 보유하는지 확인
     private boolean hasRole(User user, String role) {
         return user != null && user.getAuthorities().stream()
@@ -124,6 +140,36 @@ public class BoardController {
     // 사용자가 해당 게시글을 좋아요 눌렀는지 확인
     private boolean isLiked(Board board, User user) {
         return user != null && boardLikeService.isUserLiked(user.getId(), board.getId());
+    }
+
+    private ShopItemType parseShopItemType(String itemType) {
+        if (itemType == null || itemType.isBlank()) {
+            return ShopItemType.GENERAL;
+        }
+
+        try {
+            return ShopItemType.valueOf(itemType.trim().toUpperCase());
+        } catch (IllegalArgumentException e) {
+            throw new IllegalArgumentException("지원하지 않는 상품 종류입니다.");
+        }
+    }
+
+    private ProfileDecoration resolveShopProfileDecoration(ShopItemType itemType, Long profileDecorationId) {
+        if (itemType != ShopItemType.BADGE) {
+            return null;
+        }
+        if (profileDecorationId == null) {
+            throw new IllegalArgumentException("배지 상품은 배지를 선택해야 합니다.");
+        }
+
+        ProfileDecoration decoration = profileDecorationRepository.findById(profileDecorationId)
+                .orElseThrow(() -> new IllegalArgumentException("존재하지 않는 배지입니다."));
+        if (!decoration.isActive()) {
+            throw new IllegalArgumentException("비활성화된 배지는 상품으로 등록할 수 없습니다.");
+        }
+        decoration.setPurchaseRequired(true);
+        profileDecorationRepository.save(decoration);
+        return decoration;
     }
 
     @GetMapping
@@ -339,7 +385,11 @@ public class BoardController {
             @RequestParam("content") String content,
             @RequestParam(value = "tagId", required = false) Long tagId,
             @RequestParam(value = "attachmentIds", required = false) List<Long> attachmentIds,
-            @RequestParam(value = "pinned", required = false) Boolean pinned) {
+            @RequestParam(value = "pinned", required = false) Boolean pinned,
+            @RequestParam(value = "itemPrice", required = false) Long itemPrice,
+            @RequestParam(value = "itemType", required = false) String itemType,
+            @RequestParam(value = "profileDecorationId", required = false) Long profileDecorationId,
+            @RequestParam(value = "thumbnailAttachmentId", required = false) Long thumbnailAttachmentId) {
         try {
             if (userDetails == null) {
                 return ApiResponse.fail("로그인이 필요합니다.").toResponse(HttpStatus.UNAUTHORIZED);
@@ -391,11 +441,39 @@ public class BoardController {
                 }
             }
 
+            boolean isShopCategory = isShopCategory(category);
+            if (isShopCategory) {
+                if (!hasRole(author, "ROLE_ADMIN")) {
+                    return ApiResponse.fail("상품 등록은 관리자만 가능합니다.").toResponse(HttpStatus.FORBIDDEN);
+                }
+                if (itemPrice == null || itemPrice <= 0) {
+                    return ApiResponse.fail("상품 가격을 1 NC 이상으로 입력해주세요.").toResponse(HttpStatus.BAD_REQUEST);
+                }
+            }
+
+            ShopItemType resolvedItemType = isShopCategory
+                    ? parseShopItemType(itemType)
+                    : ShopItemType.GENERAL;
+            ProfileDecoration shopDecoration = isShopCategory
+                    ? resolveShopProfileDecoration(resolvedItemType, profileDecorationId)
+                    : null;
+            Long resolvedThumbnailAttachmentId = isShopCategory
+                    ? attachmentService.resolveThumbnailAttachmentId(attachmentIds, thumbnailAttachmentId)
+                    : null;
+            if (isShopCategory && resolvedThumbnailAttachmentId == null) {
+                return ApiResponse.fail("마일리지 상점 상품은 썸네일 이미지가 필요합니다.")
+                        .toResponse(HttpStatus.BAD_REQUEST);
+            }
+
             Board board = new Board();
             board.setTitle(title);
             board.setContent(content);
             board.setCategory(category);
             board.setTag(tagEntity);
+            board.setItemPrice(isShopCategory ? itemPrice : 0L);
+            board.setItemType(resolvedItemType);
+            board.setProfileDecoration(shopDecoration);
+            board.setThumbnailAttachmentId(resolvedThumbnailAttachmentId);
 
             // 관리자만 고정 여부 설정 가능
             if (pinned != null) {
@@ -472,7 +550,11 @@ public class BoardController {
             @RequestParam("content") String content,
             @RequestParam(value = "tagId", required = false) Long tagId,
             @RequestParam(value = "attachmentIds", required = false) List<Long> attachmentIds,
-            @RequestParam(value = "pinned", required = false) Boolean pinned) {
+            @RequestParam(value = "pinned", required = false) Boolean pinned,
+            @RequestParam(value = "itemPrice", required = false) Long itemPrice,
+            @RequestParam(value = "itemType", required = false) String itemType,
+            @RequestParam(value = "profileDecorationId", required = false) Long profileDecorationId,
+            @RequestParam(value = "thumbnailAttachmentId", required = false) Long thumbnailAttachmentId) {
         try {
             Board boardTemp = boardService.boardView(id);
 
@@ -532,10 +614,38 @@ public class BoardController {
                 }
             }
 
+            boolean isShopCategory = isShopCategory(category);
+            if (isShopCategory) {
+                if (!isAdmin) {
+                    return ApiResponse.fail("상품 수정은 관리자만 가능합니다.").toResponse(HttpStatus.FORBIDDEN);
+                }
+                if (itemPrice == null || itemPrice <= 0) {
+                    return ApiResponse.fail("상품 가격을 1 NC 이상으로 입력해주세요.").toResponse(HttpStatus.BAD_REQUEST);
+                }
+            }
+
+            ShopItemType resolvedItemType = isShopCategory
+                    ? parseShopItemType(itemType)
+                    : ShopItemType.GENERAL;
+            ProfileDecoration shopDecoration = isShopCategory
+                    ? resolveShopProfileDecoration(resolvedItemType, profileDecorationId)
+                    : null;
+            Long resolvedThumbnailAttachmentId = isShopCategory
+                    ? attachmentService.resolveThumbnailAttachmentId(attachmentIds, thumbnailAttachmentId)
+                    : null;
+            if (isShopCategory && resolvedThumbnailAttachmentId == null) {
+                return ApiResponse.fail("마일리지 상점 상품은 썸네일 이미지가 필요합니다.")
+                        .toResponse(HttpStatus.BAD_REQUEST);
+            }
+
             boardTemp.setTitle(title);
             boardTemp.setContent(content);
             boardTemp.setCategory(category);
             boardTemp.setTag(tagEntity);
+            boardTemp.setItemPrice(isShopCategory ? itemPrice : 0L);
+            boardTemp.setItemType(resolvedItemType);
+            boardTemp.setProfileDecoration(shopDecoration);
+            boardTemp.setThumbnailAttachmentId(resolvedThumbnailAttachmentId);
 
             // 관리자만 고정 여부 설정 가능
             if (pinned != null && isAdmin) {

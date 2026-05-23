@@ -9,6 +9,7 @@ export interface ProfileDecorationOption {
   label: string;
   src: string;
   requiredRole?: string | null;
+  purchaseRequired?: boolean;
   active?: boolean;
 }
 
@@ -76,23 +77,53 @@ export const getAdminProfileDecorationsAPI = async () => {
   }
 };
 
+export const getMyProfileDecorationsAPI = async (): Promise<{
+  success: boolean;
+  message?: string;
+  decorations: ProfileDecorationOption[];
+}> => {
+  try {
+    const response = await fetch('/api/cite/profile-decorations/me', {
+      method: 'GET',
+      credentials: 'include',
+    });
+    const result = await parseJsonSafe(response);
+    if (response.ok && result?.success) {
+      return { success: true, decorations: result.data ?? [] };
+    }
+    return {
+      success: false,
+      message: result?.message || '보유한 프로필 배지 목록을 불러오지 못했습니다.',
+      decorations: [],
+    };
+  } catch {
+    return {
+      success: false,
+      message: '보유한 프로필 배지 목록을 불러오지 못했습니다.',
+      decorations: [],
+    };
+  }
+};
+
 export const createProfileDecorationAPI = async ({
   key,
   label,
   requiredRole,
   filePath,
+  purchaseRequired,
 }: {
   key: string;
   label: string;
   requiredRole?: string | null;
   filePath: string;
+  purchaseRequired?: boolean;
 }) => {
   try {
     const response = await fetch('/api/cite/admin/profile-decorations', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       credentials: 'include',
-      body: JSON.stringify({ key, label, requiredRole, filePath }),
+      body: JSON.stringify({ key, label, requiredRole, filePath, purchaseRequired }),
     });
     const result = await parseJsonSafe(response);
     if (response.ok && result?.success) {
