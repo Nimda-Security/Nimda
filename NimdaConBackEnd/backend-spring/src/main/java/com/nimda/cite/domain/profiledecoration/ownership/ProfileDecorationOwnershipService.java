@@ -1,6 +1,6 @@
 package com.nimda.cite.domain.profiledecoration.ownership;
 
-import com.nimda.cite.domain.profiledecoration.ProfileDecoration;
+import com.nimda.cite.domain.profiledecoration.entity.ProfileDecoration;
 import com.nimda.cite.user.entity.User;
 import com.nimda.cite.user.repository.UserRepository;
 import lombok.RequiredArgsConstructor;

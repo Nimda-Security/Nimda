@@ -34,7 +34,7 @@ import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.nimda.cite.domain.board.enums.BoardStatus;
 import com.nimda.cite.domain.board.enums.ShopItemType;
-import com.nimda.cite.domain.profiledecoration.ProfileDecoration;
+import com.nimda.cite.domain.profiledecoration.entity.ProfileDecoration;
 import com.nimda.cite.domain.tag.entity.Tag;
 import com.nimda.cite.common.entity.BaseTimeEntity;
 import com.nimda.cite.user.entity.User;

@@ -9,7 +9,7 @@ import com.nimda.cite.domain.point.entity.UserBalance;
 import com.nimda.cite.domain.point.repositroy.PointDetailRepository;
 import com.nimda.cite.domain.point.repositroy.UserBalanceRepository;
 import com.nimda.cite.domain.point.usage.dto.PointUsageResponse;
-import com.nimda.cite.domain.profiledecoration.ProfileDecoration;
+import com.nimda.cite.domain.profiledecoration.entity.ProfileDecoration;
 import com.nimda.cite.domain.profiledecoration.ownership.ProfileDecorationOwnershipService;
 import lombok.RequiredArgsConstructor;
 import org.slf4j.Logger;

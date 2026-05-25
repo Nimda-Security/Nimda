@@ -3,7 +3,7 @@ package com.nimda.cite.domain.profiledecoration.ownership;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
-
+import com.nimda.cite.domain.profiledecoration.entity.ProfileDecoration;
 import java.util.List;
 
 public interface UserProfileDecorationRepository extends JpaRepository<UserProfileDecoration, Long> {
@@ -17,5 +17,5 @@ public interface UserProfileDecorationRepository extends JpaRepository<UserProfi
             where upd.user.id = :userId
             order by upd.acquiredAt desc
             """)
-    List<com.nimda.cite.domain.profiledecoration.ProfileDecoration> findDecorationsByUserId(@Param("userId") Long userId);
+    List<ProfileDecoration> findDecorationsByUserId(@Param("userId") Long userId);
 }

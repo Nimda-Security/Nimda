@@ -2,7 +2,7 @@ package com.nimda.cite.domain.board.dto;
 
 import com.nimda.cite.domain.attachment.dto.AttachmentResponseDto;
 import com.nimda.cite.domain.board.entity.Board;
-import com.nimda.cite.domain.profiledecoration.ProfileDecoration;
+import com.nimda.cite.domain.profiledecoration.entity.ProfileDecoration;
 import com.nimda.cite.domain.tag.entity.Tag;
 import com.nimda.cite.user.entity.User;
 import lombok.AllArgsConstructor;
