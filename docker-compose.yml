@@ -57,7 +57,7 @@ services:
     networks:
       - nimda-network
     healthcheck:
-      test: [ "CMD", "curl", "-f", "http://localhost:8080/actuator/health" ]
+      test: [ "CMD", "curl", "-f", "http://localhost:8080/api/actuator/health" ]
       interval: 10s
       timeout: 5s
       retries: 3
@@ -99,7 +99,7 @@ services:
       redis:
         condition: service_healthy
     healthcheck:
-      test: [ "CMD", "curl", "-f", "http://localhost:8080/actuator/health" ]
+      test: [ "CMD", "curl", "-f", "http://localhost:8080/api/actuator/health" ]
       interval: 10s
       timeout: 5s
       retries: 3
@@ -148,6 +148,7 @@ services:
 # 볼륨 정의 (데이터 영속성)
 volumes:
   mysql_data:
+  redis_data:
   certbot-www: # Let's Encrypt 인증용 웹루트
   certbot-conf: # Let's Encrypt 인증서 저장소
 

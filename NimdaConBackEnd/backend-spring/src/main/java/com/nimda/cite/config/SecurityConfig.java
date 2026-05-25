@@ -86,7 +86,7 @@ public class SecurityConfig {
                                 "/api/auth/profile-image",
                                 "/api/auth/profile-decoration"
                         ).authenticated()
-
+                        .requestMatchers("/api/actuator/**").permitAll()
                         // [우선순위 3] 비로그인 허용 (Public API - 정보성 데이터)
                         // 메인 페이지 구성에 필요한 기초 정보들은 로그인 없이 GET 허용
                         .requestMatchers(HttpMethod.GET, "/api/cite/profile-decorations/**").permitAll()
