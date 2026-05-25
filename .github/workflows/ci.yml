@@ -33,7 +33,6 @@ jobs:
           username: ${{ secrets.DOCKER_HUB_USERNAME }}
           password: ${{ secrets.DOCKER_HUB_PASSWORD }}
 
-      # 3. 도커 빌드 컨텍스트와 Dockerfile 경로도 하위 폴더에 맞게 수정합니다.
       - name: 도커 이미지 빌드 및 푸시
         uses: docker/build-push-action@v5
         with:
@@ -50,9 +49,9 @@ jobs:
           host: ${{ secrets.SERVER_HOST }}
           username: ${{ secrets.SERVER_USER }}
           key: ${{ secrets.SERVER_SSH_KEY }}
-          source: "NimdaConBackEnd/backend-spring/deploy.sh" # Repository 내 deploy.sh 경로
+          source: "deploy.sh"
           target: "/home/ubuntu/app"
-          strip_components: 2 # 하위 폴더 경로 무시하고 파일만 전송
+          strip_components: 2
 
       - name: 운영 서버 배포
         uses: appleboy/ssh-action@v1.0.3
