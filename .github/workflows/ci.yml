@@ -44,6 +44,16 @@ jobs:
             xtkww971/nimda-backend:latest
             xtkww971/nimda-backend:${{ steps.vars.outputs.sha_short }}
 
+      - name: 배포 스크립트 전송
+        uses: appleboy/scp-action@v0.1.7
+        with:
+          host: ${{ secrets.SERVER_HOST }}
+          username: ${{ secrets.SERVER_USER }}
+          key: ${{ secrets.SERVER_SSH_KEY }}
+          source: "NimdaConBackEnd/backend-spring/deploy.sh" # Repository 내 deploy.sh 경로
+          target: "/home/ubuntu/app"
+          strip_components: 2 # 하위 폴더 경로 무시하고 파일만 전송
+
       - name: 운영 서버 배포
         uses: appleboy/ssh-action@v1.0.3
         with:
@@ -52,5 +62,5 @@ jobs:
           key: ${{ secrets.SERVER_SSH_KEY }}
           script: |
             cd /home/ubuntu/app
-            git pull origin main
+            chmod +x deploy.sh
             ./deploy.sh
