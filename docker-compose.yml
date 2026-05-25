@@ -57,7 +57,7 @@ services:
     networks:
       - nimda-network
     healthcheck:
-      test: [ "CMD", "curl", "-f", "http://localhost:8080/api/actuator/health" ]
+      test: [ "CMD", "curl", "http://localhost:8080/error" ]
       interval: 10s
       timeout: 5s
       retries: 3
@@ -99,7 +99,7 @@ services:
       redis:
         condition: service_healthy
     healthcheck:
-      test: [ "CMD", "curl", "-f", "http://localhost:8080/api/actuator/health" ]
+      test: [ "CMD", "curl", "http://localhost:8080/error" ]
       interval: 10s
       timeout: 5s
       retries: 3
