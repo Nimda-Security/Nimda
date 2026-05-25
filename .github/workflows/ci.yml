@@ -51,7 +51,7 @@ jobs:
           key: ${{ secrets.SERVER_SSH_KEY }}
           source: "deploy.sh"
           target: "/home/ubuntu/app"
-          strip_components: 2
+
 
       - name: 운영 서버 배포
         uses: appleboy/ssh-action@v1.0.3
