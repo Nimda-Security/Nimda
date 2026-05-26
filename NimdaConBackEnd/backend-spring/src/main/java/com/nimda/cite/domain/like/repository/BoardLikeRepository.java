@@ -28,7 +28,8 @@ public interface BoardLikeRepository extends JpaRepository<BoardLike, Long> {
 
         @Query("SELECT bl FROM BoardLike bl JOIN FETCH bl.board " +
                 "WHERE bl.liker.id = :userId " +
-                "AND bl.board.status != com.nimda.cite.domain.board.enums.BoardStatus.DELETED")
+                "AND bl.board.status != com.nimda.cite.domain.board.enums.BoardStatus.DELETED " +
+                "ORDER BY bl.createdAt DESC")
         List<BoardLike> findAllByLikerId(@Param("userId") Long userId);
 
         // 게시글 삭제 시 해당 게시글의 모든 좋아요 데이터를 물리적으로 삭제
