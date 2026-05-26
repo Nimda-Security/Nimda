@@ -572,10 +572,6 @@ public class BoardController {
             Category category = categoryRepository.findById(categoryId)
                     .orElseThrow(() -> new RuntimeException("카테고리를 찾을 수 없습니다: " + categoryId));
 
-            if (isCategoryMatch(category, "news") && !isAdmin) {
-                return ApiResponse.fail("새 소식 게시판은 관리자만 수정할 수 있습니다.").toResponse(HttpStatus.FORBIDDEN);
-            }
-
             // Validation. tagId가 있으면 해당 카테고리 소속인지 검증
             Tag tagEntity = null;
             if (tagId != null) {
@@ -677,44 +673,19 @@ public class BoardController {
             @AuthenticationPrincipal CustomUserDetails userDetails,
             @PathVariable("id") Long id) {
         try {
-            Board board = boardService.boardView(id);
-
             if (userDetails == null) {
                 return ApiResponse.fail("로그인이 필요합니다.").toResponse(HttpStatus.UNAUTHORIZED);
             }
             User currentUser = userDetails.getUser();
 
+            Board board = boardService.boardView(id);
             boolean isAdmin = hasRole(currentUser, "ROLE_ADMIN");
 
             if (!isAdmin && !board.getAuthor().getId().equals(currentUser.getId())) {
                 return ApiResponse.fail("게시글을 삭제할 권한이 없습니다.").toResponse(HttpStatus.FORBIDDEN);
             }
 
-            // news 카테고리 삭제 권한 체크
-            Category category = board.getCategory();
-            if (isCategoryMatch(category, "news")) {
-                boolean isDevAllowed = false;
-
-                if (hasRole(currentUser, "ROLE_DEV")) {
-                    boolean isNoticeCategory = "notice".equalsIgnoreCase(category.getSlug());
-                    boolean isParentNews = false;
-                    if (category.getParentId() != null) {
-                        Category parent = categoryRepository.findById(category.getParentId()).orElse(null);
-                        isParentNews = parent != null && "news".equalsIgnoreCase(parent.getSlug());
-                    }
-                    Tag tag = board.getTag();
-                    boolean isPatchTag = tag != null && "패치".equals(tag.getTagName());
-
-                    isDevAllowed = isNoticeCategory && isParentNews && isPatchTag;
-                }
-
-                if (!isAdmin && !isDevAllowed) {
-                    return ApiResponse.fail("새 소식 게시판은 관리자만 삭제할 수 있습니다.").toResponse(HttpStatus.FORBIDDEN);
-                }
-            }
-
             boardService.boardDelete(id);
-
             return ApiResponse.ok("게시글이 성공적으로 삭제되었습니다.").toResponse();
 
         } catch (RuntimeException e) {
