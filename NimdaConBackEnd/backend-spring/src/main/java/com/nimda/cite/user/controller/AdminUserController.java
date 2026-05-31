@@ -3,6 +3,7 @@ package com.nimda.cite.user.controller;
 import com.nimda.cite.domain.board.service.BoardService;
 import com.nimda.cite.user.dto.AdminUserDetailResponseDTO;
 import com.nimda.cite.user.dto.AdminUserListResponseDTO;
+import com.nimda.cite.user.dto.UserSuggestionResponseDTO;
 import com.nimda.cite.user.entity.Authority;
 import com.nimda.cite.user.entity.User;
 import com.nimda.cite.user.enums.ApprovalStatus;
@@ -325,6 +326,39 @@ public class AdminUserController {
             Map<String, Object> error = new HashMap<>();
             error.put("success", false);
             error.put("message", "태그 제거 중 오류가 발생했습니다.");
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(error);
+        }
+    }
+
+    /**
+     * 마일리지 유저 추천 목록
+     */
+    @GetMapping("/suggestions")
+    public ResponseEntity<?> getUserSuggestions() {
+        try {
+            // 1. 서비스 레이어에서 전체 유저(학생) 목록을 조회합니다.
+            List<User> users = adminUserService.findAll();
+
+            // 2. 스트림을 이용해 학번과 이름만 담긴 전용 DTO 리스트로 변환합니다.
+            List<UserSuggestionResponseDTO> dtoList = users.stream()
+                    .map(user -> UserSuggestionResponseDTO.builder()
+                            .studentNum(user.getStudentNum())
+                            .name(user.getNickname())
+                            .build())
+                    .collect(Collectors.toList());
+
+            // 3. 기존 포맷과 동일하게 Map을 활용하여 성공 응답을 구성합니다.
+            Map<String, Object> response = new HashMap<>();
+            response.put("success", true);
+            response.put("users", dtoList);
+
+            return ResponseEntity.ok(response);
+        }
+
+        catch (Exception e) {
+            Map<String, Object> error = new HashMap<>();
+            error.put("success", false);
+            error.put("message", "학생 목록 조회 중 오류가 발생했습니다.");
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(error);
         }
     }
