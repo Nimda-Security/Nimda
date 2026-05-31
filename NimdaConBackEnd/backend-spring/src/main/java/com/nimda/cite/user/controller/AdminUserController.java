@@ -1,6 +1,9 @@
 package com.nimda.cite.user.controller;
 
 import com.nimda.cite.domain.board.service.BoardService;
+import com.nimda.cite.user.dto.AdminUserDetailResponseDTO;
+import com.nimda.cite.user.dto.AdminUserListResponseDTO;
+import com.nimda.cite.user.entity.Authority;
 import com.nimda.cite.user.entity.User;
 import com.nimda.cite.user.enums.ApprovalStatus;
 import com.nimda.cite.user.service.AdminUserService;
@@ -16,6 +19,7 @@ import org.slf4j.LoggerFactory;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.stream.Collectors;
 
 /**
  * 관리자용 사용자 관리 컨트롤러
@@ -52,9 +56,18 @@ public class AdminUserController {
         try {
             List<User> users = adminUserService.findAll();
 
+            List<AdminUserListResponseDTO> dtoList = users.stream()
+                    .map(user -> AdminUserListResponseDTO.builder()
+                            .id(user.getId())
+                            .nickname(user.getNickname())
+                            .email(user.getEmail())
+                            .createdAt(user.getCreatedAt())
+                            .build())
+                    .collect(Collectors.toList());
+
             Map<String, Object> response = new HashMap<>();
             response.put("success", true);
-            response.put("users", users);
+            response.put("users", dtoList);
 
             return ResponseEntity.ok(response);
         }
@@ -262,9 +275,30 @@ public class AdminUserController {
         try {
             User user = adminUserService.findById(id);
 
+            AdminUserDetailResponseDTO detailDTO = AdminUserDetailResponseDTO.builder()
+                    .id(user.getId())
+                    .userId(user.getUserId())
+                    .name(user.getName())
+                    .nickname(user.getNickname())
+                    .email(user.getEmail())
+                    .studentNum(user.getStudentNum())
+                    .major(user.getMajor())
+                    .birth(user.getBirth())
+                    .status(user.getStatus())
+                    .createdAt(user.getCreatedAt())
+                    .updatedAt(user.getUpdatedAt())
+
+                    .roles(user.getAuthorities().stream()
+                            .map(Authority::getAuthorityName)
+                            .collect(Collectors.toList()))
+
+                    .profileImage(user.getProfileImage())
+                    .profileDecoration(user.getProfileDecoration())
+                    .build();
+
             Map<String, Object> response = new HashMap<>();
             response.put("success", true);
-            response.put("user", user);
+            response.put("user", detailDTO);
 
             return ResponseEntity.ok(response);
         } catch (RuntimeException e) {

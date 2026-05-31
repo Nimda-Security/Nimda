@@ -168,7 +168,6 @@ public class AuthController {
 
             // DTO로 변환 (민감 정보 제외)
             MyPageResponseDTO response = MyPageResponseDTO.builder()
-                    .id(user.getId())
                     .userId(user.getUserId())
                     .name(user.getName())
                     .nickname(user.getNickname())
@@ -179,11 +178,6 @@ public class AuthController {
                     .studentNum(user.getStudentNum())
                     .profileImage(profileImageUrl)
                     .profileDecoration(user.getProfileDecoration())
-                    .roles(user.getAuthorities().stream()
-                            .map(authority -> authority.getAuthorityName())
-                            .toList())
-                    .createdAt(user.getCreatedAt())
-                    .updatedAt(user.getUpdatedAt())
                     .emailHide(user.isEmailHide())
                     .build();
 
@@ -218,7 +212,6 @@ public class AuthController {
             );
 
             MyPageResponseDTO response = MyPageResponseDTO.builder()
-                    .id(updated.getId())
                     .userId(updated.getUserId())
                     .name(updated.getName())
                     .nickname(updated.getNickname())
@@ -229,11 +222,6 @@ public class AuthController {
                     .studentNum(updated.getStudentNum())
                     .profileImage(updated.getProfileImage())
                     .profileDecoration(updated.getProfileDecoration())
-                    .roles(updated.getAuthorities().stream()
-                            .map(authority -> authority.getAuthorityName())
-                            .toList())
-                    .createdAt(updated.getCreatedAt())
-                    .updatedAt(updated.getUpdatedAt())
                     .emailHide(updated.isEmailHide())
                     .build();
 
