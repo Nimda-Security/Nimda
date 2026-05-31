@@ -22,7 +22,7 @@ const UserInfo = ({
   const [selectedRoleToGrant, setSelectedRoleToGrant] = React.useState('');
 
   React.useEffect(() => {
-    const roles = selectedUser ? getUserRoles(selectedUser) : [];
+    const roles = selectedUser?.roles || [];
     setSelectedRoleToGrant(roles.length > 0 ? roles[0] : '');
   }, [selectedUser?.id]);
 
@@ -52,10 +52,10 @@ const UserInfo = ({
                   <td>{user.id}</td>
                   <td style={{ textAlign: 'left' }}>
                     <span>{user.nickname || user.userId}</span>
-                    {hasRole(user, 'ADMIN') && (
+                    {user.roles?.includes('ROLE_ADMIN') && (
                       <span className="admin__role admin__role--admin" style={{ marginLeft: 8 }}>ADMIN</span>
                     )}
-                    {hasRole(user, 'USER') && (
+                    {user.roles?.includes('ROLE_USER') && (
                       <span className="admin__role admin__role--user" style={{ marginLeft: 8 }}>USER</span>
                     )}
                   </td>
@@ -145,7 +145,7 @@ const UserInfo = ({
               <div>
                 <p className="admin__modal-label">권한</p>
                 <div style={{ display: 'flex', gap: 8, marginTop: 4 }}>
-                  {getUserRoles(selectedUser).map((role, idx) => (
+                  {(selectedUser.roles || []).map((role, idx) => (
                     <span key={idx} className={`admin__role ${role.includes('ADMIN') ? 'admin__role--admin' : 'admin__role--user'}`}>
                       {role}
                     </span>
