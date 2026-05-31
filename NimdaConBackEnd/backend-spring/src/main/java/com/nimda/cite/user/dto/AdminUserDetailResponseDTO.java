@@ -1,35 +1,38 @@
 package com.nimda.cite.user.dto;
 
+import com.nimda.cite.user.enums.ApprovalStatus;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
-import lombok.Setter;
 
 import java.time.LocalDateTime;
 import java.util.List;
 
 /**
- * 마이페이지 응답 DTO
- * 현재 로그인한 사용자의 정보를 반환할 때 사용
- * 민감 정보(password)는 제외
+ * 어드민 페이지 유저 상세 정보 조회 응답 DTO
  */
 @Getter
 @Builder
 @NoArgsConstructor
 @AllArgsConstructor
-public class MyPageResponseDTO {
+public class AdminUserDetailResponseDTO {
 
+    private Long id;
     private String userId;
     private String name;
     private String nickname;
     private String email;
-    private String major;
-    private String bojId;
-    private String birth;
     private String studentNum;
-    private boolean emailHide;
+    private String major;
+    private String birth;
+
+    private ApprovalStatus status;
+    private LocalDateTime createdAt;
+    private LocalDateTime updatedAt;
+    private List<String> roles;
 
     private String profileImage;
     private String profileDecoration;
+
 }
