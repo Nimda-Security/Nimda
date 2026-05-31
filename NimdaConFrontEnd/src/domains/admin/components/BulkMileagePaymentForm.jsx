@@ -1,10 +1,31 @@
-import { useState } from 'react';
+import { useState, useEffect, useRef } from 'react';
 
 const BulkMileagePaymentForm = ({ onGrant, initialStudentId }) => {
   const [studentIds, setStudentIds] = useState([initialStudentId || '']);
   const [mileageAmount, setMileageAmount] = useState('');
   const [reason, setReason] = useState('');
   const [loading, setLoading] = useState(false);
+  const [suggestions, setSuggestions] = useState([]);
+  const datalistId = useRef(`student-suggestions-${Math.random().toString(36).slice(2)}`);
+
+  useEffect(() => {
+    const fetchSuggestions = async () => {
+      try {
+        const res = await fetch('/api/admin/users/suggestions');
+        const data = await res.json();
+        if (data.success) setSuggestions(data.users);
+      } catch (e) {
+        console.error('추천 목록 조회 실패:', e);
+      }
+    };
+    fetchSuggestions();
+  }, []);
+
+  // 학번으로 이름 반환
+  const getNameByStudentNum = (studentNum) => {
+    const found = suggestions.find((u) => u.studentNum === studentNum);
+    return found ? found.name : null;
+  };
 
   const handleStudentIdChange = (index, value) => {
     setStudentIds((prev) => prev.map((id, i) => (i === index ? value : id)));
@@ -54,9 +75,15 @@ const BulkMileagePaymentForm = ({ onGrant, initialStudentId }) => {
   return (
     <div className="w-[874px] bg-white shadow-[0px_4px_4px_0px_rgba(0,0,0,0.25)] mt-4 rounded-sm overflow-hidden">
 
+      {/* datalist — 전역 1개로 모든 입력 필드에서 재사용 */}
+      <datalist id={datalistId.current}>
+        {suggestions.map((u) => (
+          <option key={u.studentNum} value={u.studentNum} label={u.name} />
+        ))}
+      </datalist>
+
       {/* 공통 입력 영역 */}
       <div className="px-6 pt-6 pb-5 flex items-center gap-4 border-b border-stone-100">
-        {/* 지급 마일리지 */}
         <div className="flex flex-col gap-1">
           <span className="text-xs text-gray-400 font-medium">지급 마일리지</span>
           <input
@@ -71,7 +98,6 @@ const BulkMileagePaymentForm = ({ onGrant, initialStudentId }) => {
 
         <div className="w-px h-10 bg-stone-200 mt-4"></div>
 
-        {/* 사유 */}
         <div className="flex flex-col gap-1 flex-1">
           <span className="text-xs text-gray-400 font-medium">지급 사유</span>
           <input
@@ -92,25 +118,35 @@ const BulkMileagePaymentForm = ({ onGrant, initialStudentId }) => {
 
       {/* 학번 목록 */}
       <div className="flex flex-col gap-2 px-6 pb-4 max-h-[240px] overflow-y-auto">
-        {studentIds.map((studentId, index) => (
-          <div key={index} className="flex items-center gap-2">
-            <span className="text-xs text-gray-300 w-5 text-right shrink-0">{index + 1}</span>
-            <input
-              type="text"
-              className="flex-1 h-9 px-3 text-sm text-neutral-800 border border-stone-200 rounded-md outline-none focus:border-rose-300 focus:ring-1 focus:ring-rose-100 bg-stone-50 transition"
-              value={studentId}
-              placeholder="학번 입력"
-              onChange={(e) => handleStudentIdChange(index, e.target.value)}
-            />
-            <button
-              className="w-7 h-7 flex items-center justify-center rounded-full text-gray-300 hover:text-red-400 hover:bg-red-50 disabled:opacity-20 transition"
-              onClick={() => handleRemoveRow(index)}
-              disabled={studentIds.length === 1}
-            >
-              ✕
-            </button>
-          </div>
-        ))}
+        {studentIds.map((studentId, index) => {
+          const matchedName = getNameByStudentNum(studentId);
+          return (
+            <div key={index} className="flex items-center gap-2">
+              <span className="text-xs text-gray-300 w-5 text-right shrink-0">{index + 1}</span>
+              <input
+                type="text"
+                list={datalistId.current}
+                className="flex-1 h-9 px-3 text-sm text-neutral-800 border border-stone-200 rounded-md outline-none focus:border-rose-300 focus:ring-1 focus:ring-rose-100 bg-stone-50 transition"
+                value={studentId}
+                placeholder="학번 입력"
+                onChange={(e) => handleStudentIdChange(index, e.target.value)}
+              />
+              {/* 학번 매칭 시 이름 표시 */}
+              {matchedName && (
+                <span className="text-xs text-rose-400 font-medium whitespace-nowrap">
+                  {matchedName}
+                </span>
+              )}
+              <button
+                className="w-7 h-7 flex items-center justify-center rounded-full text-gray-300 hover:text-red-400 hover:bg-red-50 disabled:opacity-20 transition"
+                onClick={() => handleRemoveRow(index)}
+                disabled={studentIds.length === 1}
+              >
+                ✕
+              </button>
+            </div>
+          );
+        })}
       </div>
 
       {/* 하단 버튼 영역 */}
