@@ -5,7 +5,17 @@
       "destination": "http://43.200.36.32/api/:path*"
     },
     {
-      "source": "/(.*)",
+      "source": "/:path*",
+      "has": [
+        {
+          "type": "host",
+          "value": "about.nimda.kr"
+        }
+      ],
+      "destination": "/about/:path*"
+    },
+    {
+      "source": "/((?!api|about).*|.*)",
       "destination": "/index.html"
     }
   ]
