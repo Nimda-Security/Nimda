@@ -67,4 +67,10 @@ public class CategoryUpdateDTO {
      */
     @Size(max = 500, message = "URL은 500자를 초과할 수 없습니다")
     private String redirectUrl;
+
+    /**
+     * 마일리지 상점 카테고리 여부
+     * - null이면 기존 값 유지
+     */
+    private Boolean shopEnabled;
 }

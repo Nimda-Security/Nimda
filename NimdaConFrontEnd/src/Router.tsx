@@ -18,7 +18,7 @@ import ProtectedRoute from "@/components/ProtectedRoute";
 import ForbiddenPage from "@/domains/Error/403";
 
 import ContestHome from "@/domains/Contest/Home";
-import BoardListPage from "@/domains/Board/BoardList";
+import BoardRoutePage from "@/domains/Board/BoardRoute";
 import BoardDetailPage from "@/domains/Board/BoardDetail";
 import BoardWritePage from "@/domains/Board/BoardWrite";
 import BoardEditPage from "@/domains/Board/BoardEdit";
@@ -48,7 +48,7 @@ const Router = () => {
         <Route path="/user/:nickname" element={<UserProfilePage />} />
         <Route path="/board/picture-board" element={<PhotoGalleryBoard boardSlug="picture-board" boardTitle="사진첩" />} />
         <Route path="/board/banner" element={<PhotoGalleryBoard boardSlug="banner" boardTitle="배너" adminOnlyWrite={true} />} />
-        <Route path="/board/:boardType" element={<BoardListPage />} />
+        <Route path="/board/:boardType" element={<BoardRoutePage />} />
         <Route path="/board/:boardType/:id" element={<BoardDetailPage />} />
 
         {/* 로그인 필수 경로 */}

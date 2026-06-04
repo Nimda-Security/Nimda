@@ -162,6 +162,7 @@ export interface CategoryCreateRequest {
   parentId?: number | null;
   sortOrder?: number | null;
   isActive?: boolean | null;
+  shopEnabled?: boolean | null;
 }
 
 /**
@@ -173,6 +174,7 @@ export interface CategoryUpdateRequest {
   parentId?: number | null;
   sortOrder?: number | null;
   isActive?: boolean | null;
+  shopEnabled?: boolean | null;
 }
 
 /**

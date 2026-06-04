@@ -4,12 +4,13 @@ import DOMPurify, { type Config as DOMPurifyConfig } from 'dompurify';
 import { MessageBox } from '@/components/icons/MessageBox';
 import { VerticalDots } from '@/components/icons/VerticalDots';
 import Layout from '@/components/Layout';
-import { openAttachmentDownloadInNewTab } from '@/api/attachments';
+import { getAttachmentPresignedUrl, openAttachmentDownloadInNewTab } from '@/api/attachments';
 import {
   getBoardDetailAPI,
   deleteBoardAPI,
   getFileDownloadURL,
   getBoardLikeStatusAPI,
+  purchaseBoardItemAPI,
 } from '@/api/board';
 import { getAllCategoriesAPI } from '@/api/category';
 import { hasRole, isAdmin, getCurrentNickname } from '@/utils/jwt';
@@ -22,6 +23,22 @@ import { highlightCodeBlocks } from '@/utils/codeHighlight';
 import './BoardDetail.css';
 
 const MAX_VIEWER_FONT_SIZE_PX = 24;
+const IMAGE_EXTENSIONS = ['jpg', 'jpeg', 'png', 'gif', 'webp', 'bmp', 'svg'];
+
+const getFirstImageAttachmentId = (board: Board): number | null => {
+  if (!board.attachments || board.attachments.length === 0) return null;
+  if (
+    board.thumbnailAttachmentId &&
+    board.attachments.some((attachment) => attachment.id === board.thumbnailAttachmentId)
+  ) {
+    return board.thumbnailAttachmentId;
+  }
+  for (const attachment of board.attachments) {
+    const ext = attachment.originFilename?.split('.').pop()?.toLowerCase() || '';
+    if (!attachment.originFilename || IMAGE_EXTENSIONS.includes(ext)) return attachment.id;
+  }
+  return null;
+};
 
 const normalizeViewerFontSize = (size: string, fallbackPx = 14) => {
   const match = size
@@ -149,6 +166,8 @@ function BoardDetailPage() {
   const [isLiked, setIsLiked] = useState(false);
   const [menuOpen, setMenuOpen] = useState(false);
   const [showAttachments, setShowAttachments] = useState(false);
+  const [shopImageUrl, setShopImageUrl] = useState<string | null>(null);
+  const [isPurchasing, setIsPurchasing] = useState(false);
   const normalizedViewerContent = sanitizeViewerContent(board?.content ?? '');
   const bodyRef = useRef<HTMLDivElement>(null);
 
@@ -162,6 +181,34 @@ function BoardDetailPage() {
       highlightCodeBlocks(body);
     }
   }, [normalizedViewerContent]);
+
+  useEffect(() => {
+    let cancelled = false;
+    const loadShopImage = async () => {
+      if (!board?.category?.shopEnabled) {
+        setShopImageUrl(null);
+        return;
+      }
+
+      const attachmentId = getFirstImageAttachmentId(board);
+      if (!attachmentId) {
+        setShopImageUrl(null);
+        return;
+      }
+
+      try {
+        const url = await getAttachmentPresignedUrl(attachmentId);
+        if (!cancelled) setShopImageUrl(url);
+      } catch {
+        if (!cancelled) setShopImageUrl(null);
+      }
+    };
+
+    loadShopImage();
+    return () => {
+      cancelled = true;
+    };
+  }, [board]);
 
   const fetchBoard = async (boardId: number) => {
     try {

@@ -68,4 +68,10 @@ public class CategoryCreateDTO {
      */
     @Size(max = 500, message = "URL은 500자를 초과할 수 없습니다")
     private String redirectUrl;
+
+    /**
+     * 마일리지 상점 카테고리 여부
+     * - true이면 상품 등록/구매 화면으로 동작
+     */
+    private Boolean shopEnabled;
 }

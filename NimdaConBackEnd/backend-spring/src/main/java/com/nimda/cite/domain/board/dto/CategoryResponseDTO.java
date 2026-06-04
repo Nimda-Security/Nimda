@@ -29,6 +29,7 @@ public class CategoryResponseDTO {
     private Integer sortOrder;
     private Integer postCount;
     private String redirectUrl;  // 바로가기 URL (외부 링크, null이면 일반 게시판)
+    private Boolean shopEnabled;
     private LocalDateTime createdAt;
     private LocalDateTime updatedAt;
 
@@ -53,6 +54,7 @@ public class CategoryResponseDTO {
                 .sortOrder(category.getSortOrder())
                 .postCount(category.getPostCount())
                 .redirectUrl(category.getRedirectUrl())
+                .shopEnabled(category.getShopEnabled())
                 .createdAt(category.getCreatedAt())
                 .updatedAt(category.getUpdatedAt())
                 .build();
