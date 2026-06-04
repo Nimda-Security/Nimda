@@ -164,6 +164,54 @@ export const deleteProfileDecorationAPI = async (id: number) => {
   }
 };
 
+export const grantProfileDecorationAPI = async ({
+  studentNum,
+  decorationId,
+}: {
+  studentNum: string;
+  decorationId: number;
+}) => {
+  try {
+    const response = await fetch('/api/cite/admin/profile-decorations/ownership/grant', {
+      method: 'POST',
+      headers: addVersionToHeaders({ 'Content-Type': 'application/json' }),
+      credentials: 'include',
+      body: JSON.stringify({ studentNum, decorationId }),
+    });
+    const result = await parseJsonSafe(response);
+    if (response.ok && result?.success) {
+      return { success: true, message: result.message || '프로필 배지가 지급되었습니다.' };
+    }
+    return { success: false, message: result?.message || '프로필 배지 지급에 실패했습니다.' };
+  } catch {
+    return { success: false, message: '프로필 배지 지급에 실패했습니다.' };
+  }
+};
+
+export const revokeProfileDecorationAPI = async ({
+  studentNum,
+  decorationId,
+}: {
+  studentNum: string;
+  decorationId: number;
+}) => {
+  try {
+    const response = await fetch('/api/cite/admin/profile-decorations/ownership/revoke', {
+      method: 'POST',
+      headers: addVersionToHeaders({ 'Content-Type': 'application/json' }),
+      credentials: 'include',
+      body: JSON.stringify({ studentNum, decorationId }),
+    });
+    const result = await parseJsonSafe(response);
+    if (response.ok && result?.success) {
+      return { success: true, message: result.message || '프로필 배지가 회수되었습니다.' };
+    }
+    return { success: false, message: result?.message || '프로필 배지 회수에 실패했습니다.' };
+  } catch {
+    return { success: false, message: '프로필 배지 회수에 실패했습니다.' };
+  }
+};
+
 export const uploadProfileDecorationImageAPI = async (file: File) => {
   const presigned = await requestPresignedUpload('profile-decoration', file.name);
   if (!presigned.ok) return presigned;

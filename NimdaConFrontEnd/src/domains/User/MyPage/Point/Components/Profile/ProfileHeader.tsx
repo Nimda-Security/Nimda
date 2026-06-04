@@ -13,7 +13,6 @@ import {
 } from "@/constants/profileDecorations";
 import {
   getMyProfileDecorationsAPI,
-  getProfileDecorationsAPI,
   type ProfileDecorationOption,
 } from "@/api/profileDecorations";
 
@@ -62,29 +61,15 @@ const ProfileHeader: React.FC<ProfileHeaderProps> = ({
     if (!showDecorationModal) return;
 
     const loadDecorations = async () => {
-      const [result, ownedResult] = await Promise.all([
-        getProfileDecorationsAPI(),
-        getMyProfileDecorationsAPI(),
-      ]);
-      if (result.success && result.decorations.length > 0) {
-        const roles = new Set<string>(userInfo?.roles ?? []);
-        const ownedKeys = new Set(
-          ownedResult.success
-            ? ownedResult.decorations.map((decoration) => decoration.key)
-            : []
-        );
-        const availableDecorations = result.decorations.filter(
-          (decoration) =>
-            (!decoration.requiredRole || roles.has(decoration.requiredRole)) &&
-            (!decoration.purchaseRequired || ownedKeys.has(decoration.key))
-        );
-        setDecorationOptions(availableDecorations);
-        setProfileDecorationOptions(availableDecorations);
+      const ownedResult = await getMyProfileDecorationsAPI();
+      if (ownedResult.success) {
+        setDecorationOptions(ownedResult.decorations);
+        setProfileDecorationOptions(ownedResult.decorations);
       }
     };
 
     void loadDecorations();
-  }, [showDecorationModal, userInfo?.roles]);
+  }, [showDecorationModal]);
 
   useEffect(() => {
     if (!showAvatarMenu) return;
@@ -187,11 +172,11 @@ const ProfileHeader: React.FC<ProfileHeaderProps> = ({
 
   return (
     <div className="w-full flex flex-col gap-[36px]">
-      <div className="inline-flex pl-8 pr-[510px] items-start gap-6">
-        <div ref={avatarMenuRef} className="relative pt-3">
+      <div className="inline-flex pl-8 pr-[510px] items-start gap-6 overflow-visible">
+        <div ref={avatarMenuRef} className="relative overflow-visible">
           <button
             type="button"
-            className="relative cursor-pointer group"
+            className="relative inline-flex cursor-pointer group overflow-visible"
             onClick={handleAvatarClick}
             aria-haspopup="menu"
             aria-expanded={showAvatarMenu || showDecorationModal}
@@ -201,18 +186,19 @@ const ProfileHeader: React.FC<ProfileHeaderProps> = ({
               decorationKey={userInfo?.profileDecoration}
               size={96}
               decorationScale={1.18}
+              reserveDecorationSpace
               className={`transition-opacity ${
                 uploading ? "opacity-50" : "group-hover:opacity-80"
               }`}
             />
-            <div className="absolute inset-0 flex items-center justify-center rounded-full bg-black/30 opacity-0 group-hover:opacity-100 transition-opacity">
+            <div className="absolute left-1/2 top-1/2 flex h-24 w-24 -translate-x-1/2 -translate-y-1/2 items-center justify-center rounded-full bg-black/30 opacity-0 group-hover:opacity-100 transition-opacity">
               <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
                 <path d="M23 19C23 19.5304 22.7893 20.0391 22.4142 20.4142C22.0391 20.7893 21.5304 21 21 21H3C2.46957 21 1.96086 20.7893 1.58579 20.4142C1.21071 20.0391 1 19.5304 1 19V8C1 7.46957 1.21071 6.96086 1.58579 6.58579C1.96086 6.21071 2.46957 6 3 6H7L9 3H15L17 6H21C21.5304 6 22.0391 6.21071 22.4142 6.58579C22.7893 6.96086 23 7.46957 23 8V19Z" stroke="white" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
                 <path d="M12 17C14.2091 17 16 15.2091 16 13C16 10.7909 14.2091 9 12 9C9.79086 9 8 10.7909 8 13C8 15.2091 9.79086 17 12 17Z" stroke="white" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
               </svg>
             </div>
             {uploading && (
-              <div className="absolute inset-0 flex items-center justify-center rounded-full">
+              <div className="absolute left-1/2 top-1/2 flex h-24 w-24 -translate-x-1/2 -translate-y-1/2 items-center justify-center rounded-full">
                 <div className="w-6 h-6 border-2 border-white border-t-transparent rounded-full animate-spin" />
               </div>
             )}

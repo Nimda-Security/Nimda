@@ -9,6 +9,7 @@ interface AvatarProps {
   className?: string;
   wrapperClassName?: string;
   decorationScale?: number;
+  reserveDecorationSpace?: boolean;
 }
 
 const DEFAULT_PROFILE = '/default_user_profile.svg';
@@ -21,16 +22,38 @@ const Avatar: React.FC<AvatarProps> = ({
   className = '',
   wrapperClassName = '',
   decorationScale = 1.24,
+  reserveDecorationSpace = false,
 }) => {
+  const shouldReserveDecorationSpace =
+    reserveDecorationSpace && typeof size === 'number' && decorationScale > 1;
+  const reservedSize =
+    shouldReserveDecorationSpace && typeof size === 'number'
+      ? size * decorationScale
+      : size;
+
   const sizeStyle =
-    typeof size === 'number'
-      ? { width: `${size}px`, height: `${size}px` }
-      : { width: size, height: size };
+    typeof reservedSize === 'number'
+      ? { width: `${reservedSize}px`, height: `${reservedSize}px` }
+      : { width: reservedSize, height: reservedSize };
 
   const effectiveSrc = src?.trim() ? src : DEFAULT_PROFILE;
   const decorationSrc = resolveProfileDecorationSrc(decorationKey);
-  const decorationOffset = `${((1 - decorationScale) / 2) * 100}%`;
-  const decorationSize = `${decorationScale * 100}%`;
+  const decorationOffset = shouldReserveDecorationSpace
+    ? '0px'
+    : `${((1 - decorationScale) / 2) * 100}%`;
+  const decorationSize = shouldReserveDecorationSpace
+    ? '100%'
+    : `${decorationScale * 100}%`;
+  const profileImageStyle: React.CSSProperties | undefined =
+    shouldReserveDecorationSpace && typeof size === 'number'
+      ? {
+          position: 'absolute',
+          left: `${((decorationScale - 1) / 2) * size}px`,
+          top: `${((decorationScale - 1) / 2) * size}px`,
+          width: `${size}px`,
+          height: `${size}px`,
+        }
+      : undefined;
 
   return (
     <span
@@ -43,6 +66,7 @@ const Avatar: React.FC<AvatarProps> = ({
         alt={alt}
         data-avatar-image="profile"
         className={`h-full w-full rounded-full border border-gray-100 object-cover ${className}`}
+        style={profileImageStyle}
         onError={(e) => {
           if (e.currentTarget.src !== DEFAULT_PROFILE) {
             e.currentTarget.src = DEFAULT_PROFILE;

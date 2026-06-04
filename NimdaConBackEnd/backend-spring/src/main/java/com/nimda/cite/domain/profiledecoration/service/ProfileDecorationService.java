@@ -32,13 +32,19 @@ public class ProfileDecorationService {
                 .orElseThrow(() -> new IllegalArgumentException("존재하지 않는 프로필 장식입니다."));
     }
 
+    @Transactional(readOnly = true)
+    public ProfileDecoration getById(Long id) {
+        return repository.findById(id)
+                .orElseThrow(() -> new IllegalArgumentException("존재하지 않는 프로필 배지입니다."));
+    }
+
     @Transactional
     public ProfileDecoration create(ProfileDecorationCreateRequest request) {
         String key = normalizeKey(request.getKey());
         String label = request.getLabel() == null ? "" : request.getLabel().trim();
         String filePath = request.getFilePath() == null ? "" : request.getFilePath().trim();
-        String requiredRole = normalizeRole(request.getRequiredRole());
-        boolean purchaseRequired = Boolean.TRUE.equals(request.getPurchaseRequired());
+        String requiredRole = null;
+        boolean purchaseRequired = true;
 
         if (key.isBlank()) {
             throw new IllegalArgumentException("배지 키를 입력해주세요.");

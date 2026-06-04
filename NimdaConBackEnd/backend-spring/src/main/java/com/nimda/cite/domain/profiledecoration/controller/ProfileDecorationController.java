@@ -15,6 +15,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
+import java.util.Map;
 
 @RestController
 @RequestMapping("/api/cite")
@@ -99,6 +100,34 @@ public class ProfileDecorationController {
     }
 
     @PreAuthorize("hasRole('ADMIN')")
+    @PostMapping("/admin/profile-decorations/ownership/grant")
+    public ResponseEntity<?> grantDecoration(@RequestBody Map<String, Object> request) {
+        try {
+            String studentNum = readRequiredString(request, "studentNum");
+            Long decorationId = readRequiredLong(request, "decorationId");
+            ProfileDecoration decoration = service.getById(decorationId);
+            ownershipService.grantByStudentNum(studentNum, decoration);
+            return ApiResponse.ok("프로필 배지가 지급되었습니다.").toResponse();
+        } catch (IllegalArgumentException e) {
+            return ApiResponse.fail(e.getMessage()).toResponse(HttpStatus.BAD_REQUEST);
+        }
+    }
+
+    @PreAuthorize("hasRole('ADMIN')")
+    @PostMapping("/admin/profile-decorations/ownership/revoke")
+    public ResponseEntity<?> revokeDecoration(@RequestBody Map<String, Object> request) {
+        try {
+            String studentNum = readRequiredString(request, "studentNum");
+            Long decorationId = readRequiredLong(request, "decorationId");
+            ProfileDecoration decoration = service.getById(decorationId);
+            ownershipService.revokeByStudentNum(studentNum, decoration);
+            return ApiResponse.ok("프로필 배지가 회수되었습니다.").toResponse();
+        } catch (IllegalArgumentException e) {
+            return ApiResponse.fail(e.getMessage()).toResponse(HttpStatus.BAD_REQUEST);
+        }
+    }
+
+    @PreAuthorize("hasRole('ADMIN')")
     @DeleteMapping("/admin/profile-decorations/{id}")
     public ResponseEntity<?> deleteDecoration(@PathVariable Long id) {
         try {
@@ -106,6 +135,31 @@ public class ProfileDecorationController {
             return ApiResponse.ok("프로필 배지가 삭제되었습니다.").toResponse();
         } catch (IllegalArgumentException e) {
             return ApiResponse.fail(e.getMessage()).toResponse(HttpStatus.NOT_FOUND);
+        }
+    }
+
+    private static String readRequiredString(Map<String, Object> request, String key) {
+        Object value = request != null ? request.get(key) : null;
+        String text = value != null ? String.valueOf(value).trim() : "";
+        if (text.isBlank()) {
+            throw new IllegalArgumentException(key + " 값이 필요합니다.");
+        }
+        return text;
+    }
+
+    private static Long readRequiredLong(Map<String, Object> request, String key) {
+        Object value = request != null ? request.get(key) : null;
+        if (value instanceof Number number) {
+            return number.longValue();
+        }
+        String text = value != null ? String.valueOf(value).trim() : "";
+        if (text.isBlank()) {
+            throw new IllegalArgumentException(key + " 값이 필요합니다.");
+        }
+        try {
+            return Long.parseLong(text);
+        } catch (NumberFormatException e) {
+            throw new IllegalArgumentException(key + " 값이 올바르지 않습니다.");
         }
     }
 }

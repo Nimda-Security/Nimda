@@ -209,17 +209,8 @@ public class AuthService {
             throw new IllegalArgumentException("사용할 수 없는 프로필 장식입니다.");
         }
 
-        String requiredRole = decoration.getRequiredRole();
-        if (requiredRole != null && !requiredRole.isBlank()) {
-            boolean allowed = user.getAuthorities().stream()
-                    .anyMatch(authority -> requiredRole.equals(authority.getAuthorityName()));
-            if (!allowed) {
-                throw new SecurityException("이 프로필 장식을 사용할 권한이 없습니다.");
-            }
-        }
-        if (decoration.isPurchaseRequired()
-                && !profileDecorationOwnershipService.owns(userId, decoration.getId())) {
-            throw new SecurityException("구매한 프로필 장식만 사용할 수 있습니다.");
+        if (!profileDecorationOwnershipService.owns(userId, decoration.getId())) {
+            throw new SecurityException("보유한 프로필 장식만 사용할 수 있습니다.");
         }
 
         user.setProfileDecoration(

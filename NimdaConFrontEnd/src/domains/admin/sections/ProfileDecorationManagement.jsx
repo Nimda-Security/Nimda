@@ -2,7 +2,9 @@ import React, { useEffect, useState } from 'react';
 import {
   createProfileDecorationAPI,
   deleteProfileDecorationAPI,
+  grantProfileDecorationAPI,
   getAdminProfileDecorationsAPI,
+  revokeProfileDecorationAPI,
   uploadProfileDecorationImageAPI,
 } from '@/api/profileDecorations';
 
@@ -18,10 +20,12 @@ const ProfileDecorationManagement = () => {
   const [loading, setLoading] = useState(false);
   const [saving, setSaving] = useState(false);
   const [deletingId, setDeletingId] = useState(null);
+  const [ownershipSubmitting, setOwnershipSubmitting] = useState(false);
   const [label, setLabel] = useState('');
   const [key, setKey] = useState('');
-  const [requiredRole, setRequiredRole] = useState('');
   const [file, setFile] = useState(null);
+  const [studentNum, setStudentNum] = useState('');
+  const [selectedDecorationId, setSelectedDecorationId] = useState('');
 
   const loadDecorations = async () => {
     setLoading(true);
@@ -72,8 +76,8 @@ const ProfileDecorationManagement = () => {
       const created = await createProfileDecorationAPI({
         key: key.trim(),
         label: label.trim(),
-        requiredRole: requiredRole.trim() || null,
         filePath: upload.data.key,
+        purchaseRequired: true,
       });
       if (!created.success) {
         alert(created.message);
@@ -82,7 +86,6 @@ const ProfileDecorationManagement = () => {
 
       setLabel('');
       setKey('');
-      setRequiredRole('');
       setFile(null);
       event.currentTarget.reset();
       await loadDecorations();
@@ -112,6 +115,32 @@ const ProfileDecorationManagement = () => {
       alert(result.message);
     } finally {
       setDeletingId(null);
+    }
+  };
+
+  const handleOwnershipSubmit = async (mode) => {
+    const trimmedStudentNum = studentNum.trim();
+    const decorationId = Number(selectedDecorationId);
+    if (!trimmedStudentNum) {
+      alert('학번을 입력해주세요.');
+      return;
+    }
+    if (!decorationId) {
+      alert('배지를 선택해주세요.');
+      return;
+    }
+
+    setOwnershipSubmitting(true);
+    try {
+      const result = mode === 'grant'
+        ? await grantProfileDecorationAPI({ studentNum: trimmedStudentNum, decorationId })
+        : await revokeProfileDecorationAPI({ studentNum: trimmedStudentNum, decorationId });
+      alert(result.message);
+      if (result.success) {
+        setStudentNum('');
+      }
+    } finally {
+      setOwnershipSubmitting(false);
     }
   };
 
@@ -154,20 +183,6 @@ const ProfileDecorationManagement = () => {
           />
         </label>
 
-        <label style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
-          <span className="admin__form-label">필요 권한</span>
-          <select
-            value={requiredRole}
-            onChange={(event) => setRequiredRole(event.target.value)}
-            className="admin__form-input"
-          >
-            <option value="">전체 사용자</option>
-            <option value="ROLE_ADMIN">ROLE_ADMIN</option>
-            <option value="ROLE_CARTEL">ROLE_CARTEL</option>
-            <option value="ROLE_USER">ROLE_USER</option>
-          </select>
-        </label>
-
         <label
           style={{
             display: 'flex',
@@ -190,6 +205,72 @@ const ProfileDecorationManagement = () => {
           </button>
         </div>
       </form>
+
+      <div
+        className="admin__content-card"
+        style={{
+          padding: '24px',
+          display: 'grid',
+          gridTemplateColumns: '1fr 1fr',
+          gap: '18px',
+          marginBottom: '28px',
+        }}
+      >
+        <div style={{ gridColumn: '1 / -1' }}>
+          <h3 style={{ margin: '0 0 6px', fontSize: '16px', fontWeight: 800 }}>
+            배지 지급/회수
+          </h3>
+          <p style={{ margin: 0, fontSize: '13px', color: '#8e8e8e' }}>
+            학번과 배지를 선택해 특정 사용자에게 배지를 지급하거나 회수합니다.
+          </p>
+        </div>
+
+        <label style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+          <span className="admin__form-label">학번</span>
+          <input
+            type="text"
+            value={studentNum}
+            onChange={(event) => setStudentNum(event.target.value)}
+            className="admin__form-input"
+            placeholder="예: 202400001"
+          />
+        </label>
+
+        <label style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+          <span className="admin__form-label">배지</span>
+          <select
+            value={selectedDecorationId}
+            onChange={(event) => setSelectedDecorationId(event.target.value)}
+            className="admin__form-input"
+          >
+            <option value="">배지를 선택하세요</option>
+            {decorations.map((decoration) => (
+              <option key={decoration.id ?? decoration.key} value={decoration.id}>
+                {decoration.label} ({decoration.key})
+              </option>
+            ))}
+          </select>
+        </label>
+
+        <div style={{ gridColumn: '1 / -1', display: 'flex', justifyContent: 'flex-end', gap: '8px' }}>
+          <button
+            type="button"
+            className="admin__btn admin__btn--primary"
+            disabled={ownershipSubmitting}
+            onClick={() => handleOwnershipSubmit('grant')}
+          >
+            지급
+          </button>
+          <button
+            type="button"
+            className="admin__btn admin__btn--danger"
+            disabled={ownershipSubmitting}
+            onClick={() => handleOwnershipSubmit('revoke')}
+          >
+            회수
+          </button>
+        </div>
+      </div>
 
       <div className="admin__content-card" style={{ padding: '24px' }}>
         {loading ? (
@@ -234,11 +315,9 @@ const ProfileDecorationManagement = () => {
                 <p style={{ fontSize: '12px', color: '#8e8e8e' }}>
                   {decoration.key}
                 </p>
-                {decoration.requiredRole && (
-                  <p style={{ fontSize: '12px', color: '#d97399', marginTop: '6px' }}>
-                    {decoration.requiredRole}
-                  </p>
-                )}
+                <p style={{ fontSize: '12px', color: '#d97399', marginTop: '6px' }}>
+                  지급/구매 필요
+                </p>
                 <button
                   type="button"
                   onClick={() => handleDelete(decoration)}

@@ -11,10 +11,13 @@ public interface UserProfileDecorationRepository extends JpaRepository<UserProfi
 
     List<UserProfileDecoration> findByUserIdOrderByAcquiredAtDesc(Long userId);
 
+    void deleteByUserIdAndProfileDecorationId(Long userId, Long profileDecorationId);
+
     @Query("""
             select upd.profileDecoration
             from UserProfileDecoration upd
             where upd.user.id = :userId
+              and upd.profileDecoration.active = true
             order by upd.acquiredAt desc
             """)
     List<ProfileDecoration> findDecorationsByUserId(@Param("userId") Long userId);
