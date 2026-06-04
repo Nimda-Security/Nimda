@@ -343,7 +343,7 @@ public class AdminUserController {
             List<UserSuggestionResponseDTO> dtoList = users.stream()
                     .map(user -> UserSuggestionResponseDTO.builder()
                             .studentNum(user.getStudentNum())
-                            .name(user.getNickname())
+                            .name(user.getName())
                             .build())
                     .collect(Collectors.toList());
 
