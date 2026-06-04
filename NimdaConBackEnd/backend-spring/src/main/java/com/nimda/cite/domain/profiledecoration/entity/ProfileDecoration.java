@@ -50,4 +50,8 @@ public class ProfileDecoration extends BaseTimeEntity {
     public void setPurchaseRequired(boolean purchaseRequired) {
         this.purchaseRequired = purchaseRequired;
     }
+
+    public void deactivate() {
+        this.active = false;
+    }
 }

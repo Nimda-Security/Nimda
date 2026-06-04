@@ -141,6 +141,29 @@ export const createProfileDecorationAPI = async ({
   }
 };
 
+export const deleteProfileDecorationAPI = async (id: number) => {
+  try {
+    const response = await fetch(`/api/cite/admin/profile-decorations/${id}`, {
+      method: 'DELETE',
+      headers: addVersionToHeaders(),
+      credentials: 'include',
+    });
+    const result = await parseJsonSafe(response);
+    if (response.ok && result?.success) {
+      return {
+        success: true,
+        message: result.message || '프로필 배지가 삭제되었습니다.',
+      };
+    }
+    return {
+      success: false,
+      message: result?.message || '프로필 배지 삭제에 실패했습니다.',
+    };
+  } catch {
+    return { success: false, message: '프로필 배지 삭제에 실패했습니다.' };
+  }
+};
+
 export const uploadProfileDecorationImageAPI = async (file: File) => {
   const presigned = await requestPresignedUpload('profile-decoration', file.name);
   if (!presigned.ok) return presigned;

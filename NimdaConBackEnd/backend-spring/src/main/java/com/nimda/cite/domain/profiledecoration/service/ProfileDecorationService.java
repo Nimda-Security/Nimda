@@ -52,14 +52,27 @@ public class ProfileDecorationService {
         if (filePath.isBlank()) {
             throw new IllegalArgumentException("배지 이미지 경로가 필요합니다.");
         }
-        if (repository.existsByKey(key)) {
-            throw new IllegalArgumentException("이미 존재하는 배지 키입니다.");
+        ProfileDecoration existing = repository.findByKey(key).orElse(null);
+        if (existing != null) {
+            if (existing.isActive()) {
+                throw new IllegalArgumentException("이미 존재하는 배지 키입니다.");
+            }
+            existing.update(label, filePath, requiredRole, true);
+            existing.setPurchaseRequired(purchaseRequired);
+            return existing;
         }
 
         ProfileDecoration decoration = new ProfileDecoration(key, label, filePath);
         decoration.update(label, filePath, requiredRole, true);
         decoration.setPurchaseRequired(purchaseRequired);
         return repository.save(decoration);
+    }
+
+    @Transactional
+    public void delete(Long id) {
+        ProfileDecoration decoration = repository.findById(id)
+                .orElseThrow(() -> new IllegalArgumentException("존재하지 않는 프로필 배지입니다."));
+        decoration.deactivate();
     }
 
     private String normalizeKey(String key) {

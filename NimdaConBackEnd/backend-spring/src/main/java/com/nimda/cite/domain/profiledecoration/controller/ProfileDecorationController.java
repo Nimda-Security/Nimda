@@ -81,6 +81,7 @@ public class ProfileDecorationController {
     public ResponseEntity<?> getAdminDecorations() {
         return ApiResponse.ok(
                 service.getAllDecorations().stream()
+                        .filter(ProfileDecoration::isActive)
                         .map(ProfileDecorationDto::from)
                         .toList()
         ).toResponse();
@@ -94,6 +95,17 @@ public class ProfileDecorationController {
             return ApiResponse.ok("프로필 배지가 등록되었습니다.", ProfileDecorationDto.from(decoration)).toResponse();
         } catch (IllegalArgumentException e) {
             return ApiResponse.fail(e.getMessage()).toResponse(HttpStatus.BAD_REQUEST);
+        }
+    }
+
+    @PreAuthorize("hasRole('ADMIN')")
+    @DeleteMapping("/admin/profile-decorations/{id}")
+    public ResponseEntity<?> deleteDecoration(@PathVariable Long id) {
+        try {
+            service.delete(id);
+            return ApiResponse.ok("프로필 배지가 삭제되었습니다.").toResponse();
+        } catch (IllegalArgumentException e) {
+            return ApiResponse.fail(e.getMessage()).toResponse(HttpStatus.NOT_FOUND);
         }
     }
 }

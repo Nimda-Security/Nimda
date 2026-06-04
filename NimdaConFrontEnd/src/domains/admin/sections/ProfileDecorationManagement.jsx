@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import {
   createProfileDecorationAPI,
+  deleteProfileDecorationAPI,
   getAdminProfileDecorationsAPI,
   uploadProfileDecorationImageAPI,
 } from '@/api/profileDecorations';
@@ -16,6 +17,7 @@ const ProfileDecorationManagement = () => {
   const [decorations, setDecorations] = useState([]);
   const [loading, setLoading] = useState(false);
   const [saving, setSaving] = useState(false);
+  const [deletingId, setDeletingId] = useState(null);
   const [label, setLabel] = useState('');
   const [key, setKey] = useState('');
   const [requiredRole, setRequiredRole] = useState('');
@@ -87,6 +89,29 @@ const ProfileDecorationManagement = () => {
       alert('프로필 배지가 등록되었습니다.');
     } finally {
       setSaving(false);
+    }
+  };
+
+  const handleDelete = async (decoration) => {
+    if (!decoration.id) {
+      alert('배지 ID를 찾을 수 없습니다.');
+      return;
+    }
+    if (!window.confirm(`"${decoration.label}" 배지를 삭제하시겠습니까?`)) {
+      return;
+    }
+
+    setDeletingId(decoration.id);
+    try {
+      const result = await deleteProfileDecorationAPI(decoration.id);
+      if (!result.success) {
+        alert(result.message);
+        return;
+      }
+      setDecorations((prev) => prev.filter((item) => item.id !== decoration.id));
+      alert(result.message);
+    } finally {
+      setDeletingId(null);
     }
   };
 
@@ -188,6 +213,9 @@ const ProfileDecorationManagement = () => {
                   padding: '18px',
                   background: '#fff',
                   textAlign: 'center',
+                  display: 'flex',
+                  flexDirection: 'column',
+                  alignItems: 'center',
                 }}
               >
                 <img
@@ -211,6 +239,19 @@ const ProfileDecorationManagement = () => {
                     {decoration.requiredRole}
                   </p>
                 )}
+                <button
+                  type="button"
+                  onClick={() => handleDelete(decoration)}
+                  disabled={deletingId === decoration.id}
+                  className="admin__btn admin__btn--danger"
+                  style={{
+                    width: '100%',
+                    marginTop: '14px',
+                    justifyContent: 'center',
+                  }}
+                >
+                  {deletingId === decoration.id ? '삭제 중...' : '삭제'}
+                </button>
               </div>
             ))}
           </div>

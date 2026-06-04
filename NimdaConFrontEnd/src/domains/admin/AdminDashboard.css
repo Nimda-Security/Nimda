@@ -225,6 +225,16 @@
   background-color: #333333;
 }
 
+.admin__btn--danger {
+  border-color: #f0c7c7;
+  background-color: #fff5f5;
+  color: #c73737;
+}
+
+.admin__btn--danger:hover:not(:disabled) {
+  background-color: #ffe8e8;
+}
+
 .admin__content-card {
   border: 1px solid var(--color-gray-100);
   border-radius: 8px;
