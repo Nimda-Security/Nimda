@@ -16,6 +16,7 @@ import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 
@@ -232,6 +233,15 @@ public class CategoryController {
             return ApiResponse.fail("오류가 발생했습니다.")
                     .toResponse(HttpStatus.INTERNAL_SERVER_ERROR);
         }
+    }
+
+    @PreAuthorize("hasRole('ADMIN')")
+    @PostMapping("/enable-shop/{id}")
+    public ResponseEntity<?> enableShop(@PathVariable long id) {
+        Category category = categoryService.setShopEnabled(id);
+
+        CategoryUpdateDTO dto = CategoryUpdateDTO.from(category);
+        return ApiResponse.ok(dto).toResponse();
     }
 }
 
