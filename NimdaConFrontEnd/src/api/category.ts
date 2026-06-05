@@ -9,6 +9,13 @@ const API_BASE_URL = '/api/cite/category';
  * Note0. parseJsonSafe
  * feat. JSON 응답 파싱 
  */
+
+export interface CategoryEnableShopResponse {
+success: boolean;
+message?: string;
+category?: Category;
+}
+
 const parseJsonSafe = async (response: Response) => {
   try {
     const text = await response.text(); // 응답 본문을 문자열로 읽는다. 
@@ -375,6 +382,54 @@ export const deleteCategoryAPI = async (
     return {
       success: false,
       message: '카테고리 삭제 중 오류가 발생했습니다.',
+    };
+  }
+};
+
+export const enableShopAPI = async (
+  id: number
+): Promise<CategoryEnableShopResponse> => {
+  try {
+    const response = await fetch(`${API_BASE_URL}/enable-shop/${id}`, {
+      method: 'POST', // 스프링 컨트롤러의 @PostMapping에 대응
+      headers: addVersionToHeaders({ 'Content-Type': 'application/json' }),
+      credentials: 'include',
+    });
+
+    const result = await parseJsonSafe(response);
+
+    if (response.ok) {
+      // ApiResponse.ok(dto) 구조 분해 핸들링 ({ success: true, data: { ... } } 또는 직접 객체)
+      const categoryData = (result && typeof result === 'object' && 'data' in result)
+        ? result.data
+        : result;
+
+      return {
+        success: true,
+        message: '상점이 성공적으로 활성화되었습니다.',
+        category: categoryData as Category,
+      };
+    }
+
+    // 에러 응답 처리
+    let errorMessage = result?.message || '상점 활성화에 실패했습니다.';
+    if (response.status === 401) {
+      errorMessage = '로그인이 필요합니다.';
+    } else if (response.status === 403) {
+      errorMessage = '관리자 권한이 필요합니다.';
+    } else if (response.status === 404) {
+      errorMessage = '존재하지 않는 카테고리입니다.';
+    }
+
+    return {
+      success: false,
+      message: errorMessage,
+    };
+  } catch (error) {
+    console.error('카테고리 상점 활성화 API 오류:', error);
+    return {
+      success: false,
+      message: '상점 활성화 중 오류가 발생했습니다.',
     };
   }
 };
