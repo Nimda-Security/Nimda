@@ -1,8 +1,10 @@
 package com.nimda.cite.domain.board.dto;
 
+import com.nimda.cite.domain.board.entity.Category;
 import com.nimda.cite.domain.tag.entity.Tag;
 import jakarta.validation.constraints.Size;
 import lombok.AllArgsConstructor;
+import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
@@ -15,6 +17,7 @@ import java.util.List;
 @Data
 @NoArgsConstructor
 @AllArgsConstructor
+@Builder
 public class CategoryUpdateDTO {
 
     /**
@@ -73,4 +76,14 @@ public class CategoryUpdateDTO {
      * - null이면 기존 값 유지
      */
     private Boolean shopEnabled;
+
+    public static CategoryUpdateDTO from (Category category) {
+        return CategoryUpdateDTO.builder()
+                .name(category.getName())
+                .slug(category.getSlug())
+                .parentId(category.getParentId())
+                .shopEnabled(category.getShopEnabled())
+                .sortOrder(category.getSortOrder())
+                .build();
+    }
 }
