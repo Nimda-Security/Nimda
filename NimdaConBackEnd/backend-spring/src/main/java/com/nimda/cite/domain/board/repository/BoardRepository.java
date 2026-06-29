@@ -109,6 +109,9 @@ public interface BoardRepository extends JpaRepository<Board, Long> { // [수정
     @EntityGraph(attributePaths = { "author", "category" })
     List<Board> findByAuthorAndStatusOrderByCreatedAtDesc(User author, BoardStatus status);
 
+    // 최신글 조회
+    List<Board> findTop10ByOrderByCreatedAtDesc();
+
     @Modifying(clearAutomatically = true)
     @Query("UPDATE Board b SET b.status = :status " +
             "WHERE b.category.id = :categoryId AND b.tag.id = :tagId AND b.status != :status")

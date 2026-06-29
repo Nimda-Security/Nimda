@@ -874,4 +874,28 @@ public class BoardController {
         }
     }
 
+    @GetMapping("/recent-boards")
+    public ResponseEntity<?> getRecentBoards(@AuthenticationPrincipal CustomUserDetails userDetails) {
+
+        User user = userDetails.getUser();
+
+        if(user == null) {
+            return ApiResponse.fail("유저 정보를 찾을 수 없습니다. 다시 로그인해주세요.")
+                    .toResponse(HttpStatus.BAD_REQUEST);
+        }
+        List<BoardResponseDTO> recentBoards = boardService.getRecentBoards()
+                .stream()
+                .map(board -> {
+                    // 모든 파라미터를 순서대로 전달
+                    long likeCount = boardLikeService.getLikeCount(board.getId());
+                    boolean isLiked = boardLikeService.isUserLiked(user.getId(), board.getId());
+                    long commentCount = commentRepository.countByBoardIdAndStatusNot(board.getId(), STATUS.DELETED);
+
+                    return BoardResponseDTO.from(board, likeCount, isLiked, commentCount);
+                })
+                .collect(Collectors.toList());
+
+        return ResponseEntity.ok(recentBoards);
+    }
+
 }

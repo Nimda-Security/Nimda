@@ -211,6 +211,11 @@ public class BoardService {
     }
 
     @Transactional(readOnly = true)
+    public List<Board> getRecentBoards() {
+        return boardRepository.findTop10ByOrderByCreatedAtDesc();
+    }
+
+    @Transactional(readOnly = true)
     public long countBoardsByTagAndStatus(Long categoryId, Long tagId, BoardStatus status) {
         return boardRepository.countByCategoryIdAndTagIdAndStatus(categoryId, tagId, status);
     }
