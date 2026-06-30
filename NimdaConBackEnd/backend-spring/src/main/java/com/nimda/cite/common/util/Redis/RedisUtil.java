@@ -19,6 +19,9 @@ public class RedisUtil {
         ValueOperations<String, String> valueOperations = redisTemplate.opsForValue();
         Duration expireDuration = Duration.ofSeconds(duration);
         valueOperations.set(key, value, expireDuration);
+
+        // 디버깅 로그
+        System.out.println(key+" "+value+" "+duration);
     }
 
     public String getData(String key) {

@@ -2,7 +2,7 @@
 import { addVersionToHeaders } from '../constants/version';
 
 const API_BASE_URL = "/api";
-
+let sessionTimeoutId: number | null = null;
 export interface LoginRequest {
   userId: string;
   password: string;
@@ -36,6 +36,23 @@ const setStoredUser = (user: Record<string, unknown> | null) => {
   }
   localStorage.setItem('user', JSON.stringify(user));
 };
+
+
+export function setSessionPopupTimer(): void {
+  if (sessionTimeoutId !== null) {
+    clearTimeout(sessionTimeoutId);
+  }
+
+  const delayTime: number = 24 * 60 * 60 * 1000;
+
+  sessionTimeoutId = window.setTimeout(showExtensionPopup, delayTime);
+}
+
+function showExtensionPopup(): void {
+  alert("세션이 만료되었습니다. 다시 로그인해주세요.");
+
+  window.location.href = "/login";
+}
 
 export const mergeStoredUser = (updates: Record<string, unknown>) => {
   const currentUser = getCurrentUser() ?? {};
@@ -102,6 +119,8 @@ export const loginAPI = async (
         }
       }
 
+      setSessionPopupTimer();
+
       return {
         success: true,
         message: "로그인 성공",
@@ -132,7 +151,6 @@ export const loginAPI = async (
     };
   }
 };
-
 
 /**
  * 회원가입 API 호출
