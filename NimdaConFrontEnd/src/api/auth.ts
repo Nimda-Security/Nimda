@@ -39,6 +39,7 @@ const setStoredUser = (user: Record<string, unknown> | null) => {
 
 
 export function setSessionPopupTimer(): void {
+alert("타이머 함수가 실행되었습니다!");
   if (sessionTimeoutId !== null) {
     clearTimeout(sessionTimeoutId);
   }
