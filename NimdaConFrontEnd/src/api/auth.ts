@@ -39,13 +39,11 @@ const setStoredUser = (user: Record<string, unknown> | null) => {
 
 
 export function setSessionPopupTimer(): void {
-alert("타이머 함수가 실행되었습니다!");
   if (sessionTimeoutId !== null) {
     clearTimeout(sessionTimeoutId);
   }
 
   const delayTime: number = 24 * 60 * 60 * 1000;
-  console.log("25분 뒤 세션 만료 경고 팝업이 예약되었습니다.");
   sessionTimeoutId = window.setTimeout(showExtensionPopup, delayTime);
 }
 
