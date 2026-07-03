@@ -1,0 +1,97 @@
+<svg width="1120" height="540" viewBox="0 0 1120 540" fill="none" xmlns="http://www.w3.org/2000/svg" role="img" aria-labelledby="title desc">
+  <title id="title">NIMDA framework architecture</title>
+  <desc id="desc">Architecture diagram showing clients, Nginx, React frontend, Spring Boot blue green backend, MySQL, Redis, S3, mail, and CI/CD.</desc>
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="1120" y2="540" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#0B1020" />
+      <stop offset="1" stop-color="#111827" />
+    </linearGradient>
+    <linearGradient id="primary" x1="0" y1="0" x2="1" y2="1">
+      <stop stop-color="#38BDF8" />
+      <stop offset="1" stop-color="#6366F1" />
+    </linearGradient>
+    <linearGradient id="green" x1="0" y1="0" x2="1" y2="1">
+      <stop stop-color="#34D399" />
+      <stop offset="1" stop-color="#10B981" />
+    </linearGradient>
+    <filter id="shadow" x="-20%" y="-20%" width="140%" height="140%">
+      <feDropShadow dx="0" dy="16" stdDeviation="16" flood-color="#000000" flood-opacity="0.28" />
+    </filter>
+    <marker id="arrow" markerWidth="10" markerHeight="10" refX="8" refY="5" orient="auto" markerUnits="strokeWidth">
+      <path d="M 0 0 L 10 5 L 0 10 z" fill="#94A3B8" />
+    </marker>
+  </defs>
+
+  <rect width="1120" height="540" rx="28" fill="url(#bg)" />
+  <rect x="22" y="22" width="1076" height="496" rx="22" stroke="#1F2937" stroke-width="2" />
+
+  <text x="560" y="62" text-anchor="middle" fill="#F8FAFC" font-family="Inter, Segoe UI, Arial, sans-serif" font-size="30" font-weight="800">NIMDA Framework</text>
+  <text x="560" y="92" text-anchor="middle" fill="#94A3B8" font-family="Inter, Segoe UI, Arial, sans-serif" font-size="15">Contest platform, community, admin operations, and zero-downtime deployment</text>
+
+  <g filter="url(#shadow)">
+    <rect x="60" y="172" width="150" height="92" rx="18" fill="#111827" stroke="#334155" />
+    <text x="135" y="207" text-anchor="middle" fill="#F8FAFC" font-family="Inter, Segoe UI, Arial, sans-serif" font-size="17" font-weight="700">Users</text>
+    <text x="135" y="233" text-anchor="middle" fill="#CBD5E1" font-family="Inter, Segoe UI, Arial, sans-serif" font-size="13">Browser / Mobile</text>
+  </g>
+
+  <g filter="url(#shadow)">
+    <rect x="278" y="154" width="172" height="128" rx="20" fill="#111827" stroke="#334155" />
+    <text x="364" y="194" text-anchor="middle" fill="#F8FAFC" font-family="Inter, Segoe UI, Arial, sans-serif" font-size="18" font-weight="700">Nginx</text>
+    <text x="364" y="222" text-anchor="middle" fill="#CBD5E1" font-family="Inter, Segoe UI, Arial, sans-serif" font-size="13">TLS termination</text>
+    <text x="364" y="244" text-anchor="middle" fill="#CBD5E1" font-family="Inter, Segoe UI, Arial, sans-serif" font-size="13">Blue/Green routing</text>
+  </g>
+
+  <g filter="url(#shadow)">
+    <rect x="520" y="122" width="190" height="98" rx="18" fill="url(#primary)" />
+    <text x="615" y="160" text-anchor="middle" fill="#FFFFFF" font-family="Inter, Segoe UI, Arial, sans-serif" font-size="18" font-weight="800">Frontend</text>
+    <text x="615" y="187" text-anchor="middle" fill="#E0F2FE" font-family="Inter, Segoe UI, Arial, sans-serif" font-size="13">React · Vite · Tailwind</text>
+  </g>
+
+  <g filter="url(#shadow)">
+    <rect x="520" y="280" width="190" height="116" rx="18" fill="url(#green)" />
+    <text x="615" y="320" text-anchor="middle" fill="#052E16" font-family="Inter, Segoe UI, Arial, sans-serif" font-size="18" font-weight="800">Backend API</text>
+    <text x="615" y="347" text-anchor="middle" fill="#064E3B" font-family="Inter, Segoe UI, Arial, sans-serif" font-size="13">Spring Boot · Security</text>
+    <text x="615" y="369" text-anchor="middle" fill="#064E3B" font-family="Inter, Segoe UI, Arial, sans-serif" font-size="13">Contest · Board · Admin</text>
+  </g>
+
+  <g filter="url(#shadow)">
+    <rect x="790" y="122" width="126" height="86" rx="16" fill="#111827" stroke="#334155" />
+    <text x="853" y="157" text-anchor="middle" fill="#F8FAFC" font-family="Inter, Segoe UI, Arial, sans-serif" font-size="16" font-weight="700">MySQL</text>
+    <text x="853" y="181" text-anchor="middle" fill="#CBD5E1" font-family="Inter, Segoe UI, Arial, sans-serif" font-size="12">core data</text>
+  </g>
+
+  <g filter="url(#shadow)">
+    <rect x="946" y="122" width="126" height="86" rx="16" fill="#111827" stroke="#334155" />
+    <text x="1009" y="157" text-anchor="middle" fill="#F8FAFC" font-family="Inter, Segoe UI, Arial, sans-serif" font-size="16" font-weight="700">Redis</text>
+    <text x="1009" y="181" text-anchor="middle" fill="#CBD5E1" font-family="Inter, Segoe UI, Arial, sans-serif" font-size="12">cache / auth</text>
+  </g>
+
+  <g filter="url(#shadow)">
+    <rect x="790" y="270" width="126" height="86" rx="16" fill="#111827" stroke="#334155" />
+    <text x="853" y="305" text-anchor="middle" fill="#F8FAFC" font-family="Inter, Segoe UI, Arial, sans-serif" font-size="16" font-weight="700">AWS S3</text>
+    <text x="853" y="329" text-anchor="middle" fill="#CBD5E1" font-family="Inter, Segoe UI, Arial, sans-serif" font-size="12">attachments</text>
+  </g>
+
+  <g filter="url(#shadow)">
+    <rect x="946" y="270" width="126" height="86" rx="16" fill="#111827" stroke="#334155" />
+    <text x="1009" y="305" text-anchor="middle" fill="#F8FAFC" font-family="Inter, Segoe UI, Arial, sans-serif" font-size="16" font-weight="700">Mail</text>
+    <text x="1009" y="329" text-anchor="middle" fill="#CBD5E1" font-family="Inter, Segoe UI, Arial, sans-serif" font-size="12">verification</text>
+  </g>
+
+  <g filter="url(#shadow)">
+    <rect x="278" y="354" width="172" height="92" rx="18" fill="#111827" stroke="#334155" />
+    <text x="364" y="389" text-anchor="middle" fill="#F8FAFC" font-family="Inter, Segoe UI, Arial, sans-serif" font-size="17" font-weight="700">GitHub Actions</text>
+    <text x="364" y="415" text-anchor="middle" fill="#CBD5E1" font-family="Inter, Segoe UI, Arial, sans-serif" font-size="13">build · image · deploy</text>
+  </g>
+
+  <line x1="210" y1="218" x2="278" y2="218" stroke="#94A3B8" stroke-width="2.5" marker-end="url(#arrow)" />
+  <line x1="450" y1="190" x2="520" y2="171" stroke="#94A3B8" stroke-width="2.5" marker-end="url(#arrow)" />
+  <line x1="450" y1="245" x2="520" y2="318" stroke="#94A3B8" stroke-width="2.5" marker-end="url(#arrow)" />
+  <line x1="710" y1="338" x2="790" y2="165" stroke="#94A3B8" stroke-width="2.5" marker-end="url(#arrow)" />
+  <line x1="710" y1="338" x2="946" y2="165" stroke="#94A3B8" stroke-width="2.5" marker-end="url(#arrow)" />
+  <line x1="710" y1="338" x2="790" y2="313" stroke="#94A3B8" stroke-width="2.5" marker-end="url(#arrow)" />
+  <line x1="710" y1="338" x2="946" y2="313" stroke="#94A3B8" stroke-width="2.5" marker-end="url(#arrow)" />
+  <line x1="364" y1="354" x2="520" y2="370" stroke="#94A3B8" stroke-width="2.5" stroke-dasharray="8 8" marker-end="url(#arrow)" />
+
+  <text x="560" y="478" text-anchor="middle" fill="#64748B" font-family="Inter, Segoe UI, Arial, sans-serif" font-size="13">Blue and Green backend containers run side-by-side; Nginx switches traffic after health checks.</text>
+</svg>
