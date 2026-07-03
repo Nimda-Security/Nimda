@@ -1,13 +1,7 @@
-<p align="center">
-  <a href="https://nimda.kr">
-    <img src="NimdaConFrontEnd/public/NimdaconBanner.png" alt="NIMDA contest banner" width="100%" />
-  </a>
-</p>
-
-<h1 align="center">NIMDA</h1>
+<h1 align="center">NIMDA SECURITY</h1>
 
 <p align="center">
-  A contest and community platform for the NIMDA Security club.
+  A contest and community platform for the NIMDA SECURITY club.
 </p>
 
 <p align="center">
@@ -30,9 +24,9 @@
 
 ---
 
-## What is NIMDA?
+## What is NIMDA SECURITY?
 
-NIMDA is the production web platform for the NIMDA Security club. It brings contest operations, problem solving, scoreboards, member activity, community boards, notifications, mileage rewards, and admin workflows into one service.
+NIMDA SECURITY is the production web platform for the NIMDA SECURITY club. It brings contest operations, problem solving, scoreboards, member activity, community boards, notifications, mileage rewards, and admin workflows into one service.
 
 ## Features
 
@@ -45,10 +39,10 @@ NIMDA is the production web platform for the NIMDA Security club. It brings cont
 ## Architecture
 
 <p align="center">
-  <img src="assets/readme/framework.svg" alt="NIMDA framework architecture" width="100%" />
+  <img src="assets/readme/framework.svg" alt="NIMDA SECURITY framework architecture" width="100%" />
 </p>
 
-NIMDA is centered on a React frontend and a Spring Boot API server. In production, Nginx routes traffic to the active Blue/Green backend, while GitHub Actions builds Docker images and triggers the deployment script.
+NIMDA SECURITY is centered on a React frontend and a Spring Boot API server. In production, Nginx routes traffic to the active Blue/Green backend, while GitHub Actions builds Docker images and triggers the deployment script.
 
 ## Tech Stack
 
@@ -139,11 +133,10 @@ See [DEPLOYMENT.md](DEPLOYMENT.md) for operational details.
 ## Design and Assets
 
 - Live service: [nimda.kr](https://nimda.kr)
-- Primary banner: `NimdaConFrontEnd/public/NimdaconBanner.png`
 - Architecture image: `assets/readme/framework.svg`
 - Product and brand assets live under the frontend and landing-page `public` directories.
 
-Design assets, logos, banners, and screenshots belong to the NIMDA project and should not be reused outside this project without permission from the maintainers.
+Design assets, logos, banners, and screenshots belong to the NIMDA SECURITY project and should not be reused outside this project without permission from the maintainers.
 
 ## Contributors
 
@@ -164,7 +157,7 @@ Major areas below are summarized from public GitHub PR and commit history.
 
 ## License and Copyright
 
-This repository does not currently include a repository-level open-source license file. Until a license is added, the source code, service design, logo, banners, images, and other project assets are copyright © NIMDA Security. All rights reserved.
+This repository does not currently include a repository-level open-source license file. Until a license is added, the source code, service design, logo, banners, images, and other project assets are copyright © NIMDA SECURITY. All rights reserved.
 
 ## Repository Layout
 

@@ -1,13 +1,7 @@
-<p align="center">
-  <a href="https://nimda.kr">
-    <img src="NimdaConFrontEnd/public/NimdaconBanner.png" alt="NIMDA contest banner" width="100%" />
-  </a>
-</p>
-
-<h1 align="center">NIMDA</h1>
+<h1 align="center">NIMDA SECURITY</h1>
 
 <p align="center">
-  NIMDA Security 동아리를 위한 대회·커뮤니티 통합 플랫폼입니다.
+  NIMDA SECURITY 동아리를 위한 대회·커뮤니티 통합 플랫폼입니다.
 </p>
 
 <p align="center">
@@ -30,9 +24,9 @@
 
 ---
 
-## NIMDA란?
+## NIMDA SECURITY란?
 
-NIMDA는 NIMDA Security 동아리의 운영 웹 플랫폼입니다. 알고리즘 대회, 문제 풀이, 스코어보드, 회원 활동, 커뮤니티 게시판, 알림, 마일리지 보상, 관리자 기능을 하나의 서비스로 제공합니다.
+NIMDA SECURITY는 NIMDA SECURITY 동아리의 운영 웹 플랫폼입니다. 알고리즘 대회, 문제 풀이, 스코어보드, 회원 활동, 커뮤니티 게시판, 알림, 마일리지 보상, 관리자 기능을 하나의 서비스로 제공합니다.
 
 ## 주요 기능
 
@@ -45,10 +39,10 @@ NIMDA는 NIMDA Security 동아리의 운영 웹 플랫폼입니다. 알고리즘
 ## 아키텍처
 
 <p align="center">
-  <img src="assets/readme/framework.svg" alt="NIMDA framework architecture" width="100%" />
+  <img src="assets/readme/framework.svg" alt="NIMDA SECURITY framework architecture" width="100%" />
 </p>
 
-NIMDA는 React 프론트엔드와 Spring Boot API 서버를 중심으로 구성됩니다. 운영 환경에서는 Nginx가 활성 Blue/Green 백엔드로 트래픽을 라우팅하고, GitHub Actions가 Docker 이미지를 빌드한 뒤 배포 스크립트를 실행합니다.
+NIMDA SECURITY는 React 프론트엔드와 Spring Boot API 서버를 중심으로 구성됩니다. 운영 환경에서는 Nginx가 활성 Blue/Green 백엔드로 트래픽을 라우팅하고, GitHub Actions가 Docker 이미지를 빌드한 뒤 배포 스크립트를 실행합니다.
 
 ## 기술 스택
 
@@ -139,11 +133,10 @@ docker compose up -d
 ## 디자인과 에셋
 
 - 실제 서비스: [nimda.kr](https://nimda.kr)
-- 대표 배너: `NimdaConFrontEnd/public/NimdaconBanner.png`
 - 아키텍처 이미지: `assets/readme/framework.svg`
 - 제품 및 브랜드 에셋은 프론트엔드와 랜딩 페이지의 `public` 디렉터리에 있습니다.
 
-디자인 에셋, 로고, 배너, 스크린샷은 NIMDA 프로젝트의 자산이며, 유지보수자의 허가 없이 프로젝트 외부에서 재사용하면 안 됩니다.
+디자인 에셋, 로고, 배너, 스크린샷은 NIMDA SECURITY 프로젝트의 자산이며, 유지보수자의 허가 없이 프로젝트 외부에서 재사용하면 안 됩니다.
 
 ## 기여자
 
@@ -164,7 +157,7 @@ docker compose up -d
 
 ## 라이선스와 저작권
 
-현재 이 저장소에는 루트 레벨 오픈소스 라이선스 파일이 포함되어 있지 않습니다. 라이선스가 추가되기 전까지 소스 코드, 서비스 디자인, 로고, 배너, 이미지, 기타 프로젝트 자산의 저작권은 NIMDA Security에 있으며 모든 권리가 보유됩니다.
+현재 이 저장소에는 루트 레벨 오픈소스 라이선스 파일이 포함되어 있지 않습니다. 라이선스가 추가되기 전까지 소스 코드, 서비스 디자인, 로고, 배너, 이미지, 기타 프로젝트 자산의 저작권은 NIMDA SECURITY에 있으며 모든 권리가 보유됩니다.
 
 ## 저장소 구조
 
