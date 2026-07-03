@@ -1,3 +1,6 @@
+<p align="center">
+  <img src="assets/readme/nimda-security-hero.png" alt="NIMDA SECURITY" width="100%" />
+</p>
 <h1 align="center">NIMDA SECURITY</h1>
 
 <p align="center">
