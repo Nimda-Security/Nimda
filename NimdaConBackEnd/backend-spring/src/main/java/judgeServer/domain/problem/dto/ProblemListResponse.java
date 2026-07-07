@@ -3,6 +3,8 @@ package judgeServer.domain.problem.dto;
 import com.google.api.client.util.DateTime;
 import judgeServer.domain.problem.entity.Problem;
 import java.time.LocalDateTime;
+
+import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Getter;
 
@@ -10,6 +12,7 @@ import java.time.ZoneId;
 
 @Getter
 @Builder
+@AllArgsConstructor
 public class ProblemListResponse {
     private Long id;
     private String title;

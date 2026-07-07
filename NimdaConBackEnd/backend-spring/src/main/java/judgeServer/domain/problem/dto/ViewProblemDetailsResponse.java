@@ -1,6 +1,7 @@
 package judgeServer.domain.problem.dto;
 
 import judgeServer.domain.problem.entity.Problem;
+import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Getter;
 
@@ -8,6 +9,7 @@ import java.time.LocalDateTime;
 
 @Getter
 @Builder
+@AllArgsConstructor
 public class ViewProblemDetailsResponse {
     private String title;
     private String description;
