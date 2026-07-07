@@ -2,7 +2,9 @@ package judgeServer.domain.problem.controller;
 
 import com.nimda.cite.common.response.ApiResponse;
 import judgeServer.domain.problem.dto.AddProblemsRequest;
-import judgeServer.domain.problem.dto.ViewProblemsResponse;
+import judgeServer.domain.problem.dto.ProblemListResponse;
+import judgeServer.domain.problem.dto.SearchProblemRequest;
+import judgeServer.domain.problem.dto.ViewProblemDetailsResponse;
 import judgeServer.domain.problem.service.ProblemService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
@@ -48,6 +50,31 @@ public class ProblemController {
 
         return ApiResponse.ok("문제 추가가 완료되었습니다.").toResponse();
     }
+
+    @GetMapping("/search-by-code")
+    public ResponseEntity<?> searchByCode(
+            @PageableDefault(size = 20, sort = "createdAt", direction = Sort.Direction.DESC) Pageable pageable
+            , @RequestBody SearchProblemRequest req) {
+        Page<ProblemListResponse> dto = problemService
+                .searchProblemByCode(req.getCode(), pageable)
+                .map(ProblemListResponse::from);
+
+        return ApiResponse.ok(dto).toResponse();
+    }
+
+    @GetMapping("/search-by-title")
+    public ResponseEntity<?> searchByTitle(
+            @PageableDefault(size = 20, sort = "createdAt", direction = Sort.Direction.DESC) Pageable pageable
+            , @RequestBody SearchProblemRequest req) {
+
+        Page<ProblemListResponse> dto = problemService
+                .searchProblemByTitle(req.getTitle(), pageable)
+                .map(ProblemListResponse::from);
+
+        return ApiResponse.ok(dto).toResponse();
+    }
+
+
 
     @PostMapping("/toggle-public/{id}")
     public ResponseEntity<?> toggleIsPublic(@PathVariable Long id) {
