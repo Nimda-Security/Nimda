@@ -63,6 +63,7 @@ public class ProblemService {
         return problemRepository.findByCodeContainingIgnoreCase(code, pageable);
     }
 
+    @Transactional
     public boolean toggleIsPublic(Long id) {
         Problem problem = problemRepository
                 .findById(id).orElseThrow(
