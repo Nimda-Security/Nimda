@@ -19,18 +19,20 @@ public class ProblemController {
     private ProblemService problemService;
 
     @GetMapping
-    public ResponseEntity<?> getProblems(
-            @PageableDefault(size = 10, sort = "createdAt", direction = Sort.Direction.DESC) Pageable pageable) {
-            Page<ViewProblemsResponse> dto =
-                    problemService.getProblems(pageable).map(
-                            ViewProblemsResponse::from
-                    );
-            return ApiResponse.ok(dto).toResponse();
+    public ResponseEntity<?> viewProblemList(
+            @PageableDefault(size = 20, sort = "createdAt", direction = Sort.Direction.DESC) Pageable pageable) {
+
+        Page<ProblemListResponse> dto =
+                problemService.getProblems(pageable).map(
+                        ProblemListResponse::from
+                );
+
+        return ApiResponse.ok(dto).toResponse();
     }
 
     @GetMapping("/{id}")
-    public ResponseEntity<?> viewProblem(@PathVariable Long id) {
-        ViewProblemsResponse dto = ViewProblemsResponse
+    public ResponseEntity<?> viewProblemDetails(@PathVariable Long id) {
+        ViewProblemDetailsResponse dto = ViewProblemDetailsResponse
                 .from(problemService.viewProblem(id));
 
         return ApiResponse.ok(dto).toResponse();
