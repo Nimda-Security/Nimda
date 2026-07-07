@@ -47,4 +47,13 @@ public class ProblemService {
         return problemRepository.findById(id)
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND));
     }
+
+    public boolean toggleIsPublic(Long id) {
+        Problem problem = problemRepository
+                .findById(id).orElseThrow(
+                        () -> new ResponseStatusException(HttpStatus.NOT_FOUND));
+
+        problem.setIsPublic(!problem.getIsPublic());
+        return problem.getIsPublic();
+    }
 }
