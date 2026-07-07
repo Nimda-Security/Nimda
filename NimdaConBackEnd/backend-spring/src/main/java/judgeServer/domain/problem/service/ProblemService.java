@@ -48,6 +48,14 @@ public class ProblemService {
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND));
     }
 
+    @Transactional
+    public void deleteProblem(Long id) {
+        if(!problemRepository.existsById(id)) {
+            throw new RuntimeException("삭제하려는 문제가 존재하지 않습니다.");
+        }
+        problemRepository.deleteById(id);
+    }
+
     public boolean toggleIsPublic(Long id) {
         Problem problem = problemRepository
                 .findById(id).orElseThrow(

@@ -53,4 +53,10 @@ public class ProblemController {
 
         return ApiResponse.ok(isPublic).toResponse();
     }
+
+    @DeleteMapping("/{id}")
+    public ResponseEntity<?> deleteProblem(@PathVariable Long id) {
+        problemService.deleteProblem(id);
+        return ApiResponse.ok("삭제가 완료되었습니다.").toResponse();
+    }
 }
