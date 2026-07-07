@@ -8,7 +8,7 @@ import java.time.LocalDateTime;
 
 @Getter
 @Builder
-public class ViewProblemsResponse {
+public class ViewProblemDetailsResponse {
     private String title;
     private String description;
     private Double timeLimit;
@@ -16,8 +16,8 @@ public class ViewProblemsResponse {
     private Integer points;
     private LocalDateTime createdAt;
 
-    public static ViewProblemsResponse from(Problem problem) {
-        return ViewProblemsResponse.builder()
+    public static ViewProblemDetailsResponse from(Problem problem) {
+        return ViewProblemDetailsResponse.builder()
                 .title(problem.getTitle())
                 .description(problem.getDescription())
                 .timeLimit(problem.getTimeLimit())
