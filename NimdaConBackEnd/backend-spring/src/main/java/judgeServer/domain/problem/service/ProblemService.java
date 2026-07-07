@@ -41,4 +41,10 @@ public class ProblemService {
 
         problemRepository.save(problem);
     }
+
+    @Transactional(readOnly = true)
+    public Problem viewProblem(Long id) {
+        return problemRepository.findById(id)
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND));
+    }
 }
