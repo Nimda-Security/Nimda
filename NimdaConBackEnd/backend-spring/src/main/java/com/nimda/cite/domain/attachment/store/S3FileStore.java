@@ -8,12 +8,16 @@ import org.slf4j.LoggerFactory;
 import org.springframework.context.annotation.Conditional;
 import org.springframework.context.annotation.Primary;
 import org.springframework.core.io.Resource;
+import software.amazon.awssdk.core.sync.ResponseTransformer;
 import software.amazon.awssdk.services.s3.S3Client;
 import org.springframework.stereotype.Component;
 import org.springframework.web.multipart.MultipartFile;
 import software.amazon.awssdk.services.s3.model.DeleteObjectRequest;
+import software.amazon.awssdk.services.s3.model.GetObjectRequest;
 import software.amazon.awssdk.services.s3.model.PutObjectRequest;
 import software.amazon.awssdk.core.sync.RequestBody;
+
+import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
 
@@ -133,6 +137,34 @@ public class S3FileStore implements FileStore {
         } catch (Exception e) {
             log.error("S3 파일 업로드 실패: {}", s3Key, e);
             throw new RuntimeException("S3 업로드에 실패했습니다: " + s3Key, e);
+        }
+    }
+
+    public byte[] getProblemHtml(String s3Locate) {
+        // 1. S3 기본 경로 설정 ("problems/")
+        String basePath = s3Properties.getProblemPath();
+        if (basePath == null || basePath.isBlank()) {
+            basePath = "problems/";
+        }
+        if (!basePath.endsWith("/")) {
+            basePath += "/";
+        }
+
+        // 2. S3 객체 키 생성 (예: problems/15/problem.html)
+        String s3Key = basePath + s3Locate + "/problem.html";
+
+        try {
+            // 3. S3 객체 가져오기 요청 생성
+            GetObjectRequest getObjectRequest = GetObjectRequest.builder()
+                    .bucket(s3Properties.getBucket())
+                    .key(s3Key)
+                    .build();
+
+            return s3Client.getObject(getObjectRequest, ResponseTransformer.toBytes()).asByteArray();
+
+        } catch (Exception e) {
+            log.error("S3에서 problem.html 불러오기 실패: {}", s3Key, e);
+            throw new RuntimeException("S3에서 문제 내용을 불러오는 데 실패했습니다: " + s3Key, e);
         }
     }
 
