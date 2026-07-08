@@ -4,6 +4,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.nimda.cite.domain.attachment.store.S3FileStore;
 import judgeServer.domain.problem.dto.AddProblemsRequest;
 import judgeServer.domain.problem.dto.ProblemZipMeta;
+import judgeServer.domain.problem.dto.ViewProblemDetailsResponse;
 import judgeServer.domain.problem.entity.Problem;
 import judgeServer.domain.problem.repository.ProblemRepository;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -38,6 +39,27 @@ public class ProblemService {
     @Transactional(readOnly = true)
     public Page<Problem> getProblems(Pageable pageable) {
         return problemRepository.findAll(pageable);
+    }
+
+    @Transactional(readOnly = true)
+    public Problem viewProblemDetails(Long id) {
+        return problemRepository.findById(id)
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "존재하지 않는 문제입니다."));
+    }
+
+    // S3에서 html 문서를 읽어서 보여주는 메소드
+    @Transactional(readOnly = true)
+    public byte[] viewProblemHtml(Long id) {
+        Problem problem = problemRepository.findById(id)
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "존재하지 않는 문제입니다."));
+
+        // 2. 엔티티에 저장된 url (s3Locate) 값 가져오기
+        String s3Locate = problem.getUrl();
+        if (s3Locate == null || s3Locate.isBlank()) {
+            throw new RuntimeException("해당 문제의 S3 저장 경로가 존재하지 않습니다.");
+        }
+
+        return fileStore.getProblemHtml(problem.getUrl());
     }
 
     @Transactional
@@ -97,12 +119,6 @@ public class ProblemService {
             // 10. 성공/실패 여부에 관계없이 사용이 끝난 임시 파일들 삭제
             deleteDirectory(tempDir);
         }
-    }
-
-    @Transactional(readOnly = true)
-    public Problem viewProblem(Long id) {
-        return problemRepository.findById(id)
-                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND));
     }
 
     @Transactional

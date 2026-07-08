@@ -34,10 +34,19 @@ public class ProblemController {
         return ApiResponse.ok(dto).toResponse();
     }
 
+    @GetMapping(value = "/{id}/html", produces = MediaType.TEXT_HTML_VALUE)
+    public ResponseEntity<?> viewProblemHtml(@PathVariable Long id) {
+        byte[] htmlBytes = problemService.viewProblemHtml(id);
+        return ResponseEntity.ok()
+                .contentType(MediaType.TEXT_HTML)
+                .body(htmlBytes);
+    }
+
     @GetMapping("/{id}")
     public ResponseEntity<?> viewProblemDetails(@PathVariable Long id) {
-        ViewProblemDetailsResponse dto = ViewProblemDetailsResponse
-                .from(problemService.viewProblem(id));
+        ViewProblemDetailsResponse dto = ViewProblemDetailsResponse.from(
+                problemService.viewProblemDetails(id)
+        );
 
         return ApiResponse.ok(dto).toResponse();
     }
