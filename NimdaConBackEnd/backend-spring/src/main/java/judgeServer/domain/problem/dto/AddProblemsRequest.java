@@ -1,18 +1,21 @@
 package judgeServer.domain.problem.dto;
 
-import lombok.AllArgsConstructor;
-import lombok.Builder;
-import lombok.Getter;
+import jakarta.validation.constraints.NotBlank;
+import lombok.*;
+import org.springframework.web.multipart.MultipartFile;
 
 @Getter
+@Setter
 @Builder
+@NoArgsConstructor
 @AllArgsConstructor
 public class AddProblemsRequest {
     private String code;
     private String title;
     private String description;
-    private Double timeLimit;
+    private Float timeLimit;
     private Integer memoryLimit;
     private Integer points;
-    private Boolean isPublic = false;
+    private MultipartFile zipFile;
+    private Boolean isPublic = true;
 }
