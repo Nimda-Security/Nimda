@@ -14,8 +14,8 @@ public class Problem {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    // 문제 고유 식별자 (예: "WEEK1-A", "DP-001")
-    @Column(unique = true, nullable = false, length = 50)
+    // 문제 고유 식별자 (추후 문제집을 만들 때 사용할 예정입니다.)
+    @Column(nullable = false, length = 50)
     private String code;
 
     @Column(nullable = false, length = 100)
@@ -43,8 +43,11 @@ public class Problem {
     @Column(name = "created_at", updatable = false)
     private LocalDateTime createdAt;
 
-    @Column(name = "url", updatable = false)
+    @Column(name = "url")
     private String url;
+
+    @Column(name = "reference_url")
+    private String referenceUrl;
 
     @PrePersist
     public void prePersist() {
