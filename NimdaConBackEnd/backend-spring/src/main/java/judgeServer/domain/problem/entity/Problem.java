@@ -43,6 +43,9 @@ public class Problem {
     @Column(name = "created_at", updatable = false)
     private LocalDateTime createdAt;
 
+    @Column(name = "url", updatable = false)
+    private String url;
+
     @PrePersist
     public void prePersist() {
         this.createdAt = LocalDateTime.now();
