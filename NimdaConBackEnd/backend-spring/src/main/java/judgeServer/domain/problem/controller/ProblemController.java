@@ -1,5 +1,6 @@
 package judgeServer.domain.problem.controller;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.nimda.cite.common.response.ApiResponse;
 import judgeServer.domain.problem.dto.AddProblemsRequest;
 import judgeServer.domain.problem.dto.ProblemListResponse;
@@ -11,6 +12,7 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
 import org.springframework.data.web.PageableDefault;
+import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
@@ -40,15 +42,17 @@ public class ProblemController {
         return ApiResponse.ok(dto).toResponse();
     }
 
-    @PostMapping
-    public ResponseEntity<?> addProblems(@RequestBody AddProblemsRequest req) {
-        try {
-            problemService.addProblems(req);
-        } catch (RuntimeException e) {
-            throw new RuntimeException(e);
+    @PostMapping(consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
+    public ResponseEntity<?> createProblem(@ModelAttribute AddProblemsRequest request) {
+        // 1. ZIP 파일 존재 여부 확인
+        if (request.getZipFile() == null || request.getZipFile().isEmpty()) {
+            return ResponseEntity.badRequest().body("ZIP 파일이 첨부되지 않았습니다.");
         }
 
-        return ApiResponse.ok("문제 추가가 완료되었습니다.").toResponse();
+        // 2. 서비스 계층으로 DTO와 파일 전달
+        problemService.addProblem(request);
+
+        return ResponseEntity.ok("문제가 성공적으로 등록되었습니다.");
     }
 
     @GetMapping("/search-by-code")

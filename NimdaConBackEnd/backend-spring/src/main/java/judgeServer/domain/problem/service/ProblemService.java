@@ -1,6 +1,9 @@
 package judgeServer.domain.problem.service;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.nimda.cite.domain.attachment.store.S3FileStore;
 import judgeServer.domain.problem.dto.AddProblemsRequest;
+import judgeServer.domain.problem.dto.ProblemZipMeta;
 import judgeServer.domain.problem.entity.Problem;
 import judgeServer.domain.problem.repository.ProblemRepository;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -38,21 +41,60 @@ public class ProblemService {
     }
 
     @Transactional
-    public void addProblems(AddProblemsRequest req) {
-        if(problemRepository.existsByCode(req.getCode()))
-            throw new IllegalStateException("문제 코드는 고유해야 합니다.");
+    public void addProblem(AddProblemsRequest request) {
+        Path tempDir = null;
+        try {
+            // 1. 격리된 임시 작업 디렉토리 생성
+            tempDir = Files.createTempDirectory("problem_");
+            // 2. 메인 ZIP 파일 (문제.zip) 압축 해제
+            try (InputStream mainZipIs = request.getZipFile().getInputStream()) {
+                unzip(mainZipIs, tempDir);
+            }
 
-        Problem problem = Problem.builder()
-                .code(req.getCode())
-                .title(req.getTitle())
-                .description(req.getDescription())
-                .points(req.getPoints())
-                .timeLimit(req.getTimeLimit())
-                .memoryLimit(req.getMemoryLimit())
-                .isPublic(req.getIsPublic())
-                .build();
+            // 3. problem.json 읽어와서 메타데이터 객체로 변환
+            Path jsonPath = tempDir.resolve("problem.json");
+            ProblemZipMeta metadata = objectMapper.readValue(jsonPath.toFile(), ProblemZipMeta.class);
 
-        problemRepository.save(problem);
+            // 4. tests.zip 압축 해제
+            Path testsZipPath = tempDir.resolve("tests.zip");
+            if (!Files.exists(testsZipPath)) {
+                throw new IOException("tests.zip 파일을 찾을 수 없습니다.");
+            }
+
+            Path testsDir = tempDir.resolve("tests_extracted");
+            try (InputStream testZipIs = Files.newInputStream(testsZipPath)) {
+                unzip(testZipIs, testsDir);
+            }
+
+            // 5. 문제 식별 코드 설정 및 S3 저장 위치(URL) 정의
+            String problemCode = request.getCode().isEmpty() ? metadata.getGroup() : request.getCode();
+            String s3ObjectLocation = "problems/" + problemCode; // S3 버킷 내 저장될 기본 디렉토리 경로
+
+            System.out.println(request.getDescription());
+            // 6. Problem 엔티티 생성
+            Problem problem = Problem.builder()
+                    .code(problemCode)
+                    .title(request.getTitle().isEmpty() ? metadata.getName() : request.getTitle())
+                    .description(request.getDescription().isEmpty() ? "설명이 없는 문제입니다." : request.getDescription())
+                    .timeLimit(request.getTimeLimit() > 0 ? request.getTimeLimit() : metadata.getTimeLimit())
+                    .memoryLimit(request.getMemoryLimit() > 0 ? request.getMemoryLimit() : metadata.getMemoryLimit())
+                    .points(request.getPoints())
+                    .isPublic(request.getIsPublic())
+                    .url(s3ObjectLocation) // <- DB에 S3 객체 위치 저장
+                    .build();
+
+            // 8. DB 저장
+            problemRepository.save(problem);
+
+            // 9. tests.zip에서 풀려난 테스트 케이스(1.in, 1.out) 및 html 파일을 S3에 업로드
+            uploadDirectoryToS3(testsDir, problemCode);
+
+        } catch (IOException e) {
+            throw new RuntimeException("문제 압축 해제, S3 업로드 및 엔티티 생성 실패", e);
+        } finally {
+            // 10. 성공/실패 여부에 관계없이 사용이 끝난 임시 파일들 삭제
+            deleteDirectory(tempDir);
+        }
     }
 
     @Transactional(readOnly = true)
