@@ -12,16 +12,16 @@ import software.amazon.awssdk.core.sync.ResponseTransformer;
 import software.amazon.awssdk.services.s3.S3Client;
 import org.springframework.stereotype.Component;
 import org.springframework.web.multipart.MultipartFile;
-import software.amazon.awssdk.services.s3.model.DeleteObjectRequest;
-import software.amazon.awssdk.services.s3.model.GetObjectRequest;
-import software.amazon.awssdk.services.s3.model.PutObjectRequest;
+import software.amazon.awssdk.services.s3.model.*;
 import software.amazon.awssdk.core.sync.RequestBody;
 
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
 
+import java.util.List;
 import java.util.Optional;
+import java.util.stream.Collectors;
 
 @Component
 @Primary
@@ -184,6 +184,62 @@ public class S3FileStore implements FileStore {
             return probedType != null ? probedType : "application/octet-stream";
         } catch (Exception e) {
             return "application/octet-stream";
+        }
+    }
+
+    public void deleteProblemDirectory(String s3Locate) {
+        // 1. 삭제할 S3 기본 경로 설정 ("problems/")
+        String basePath = s3Properties.getProblemPath() != null ? s3Properties.getProblemPath() : "problems/";
+        if (!basePath.endsWith("/")) {
+            basePath += "/";
+        }
+
+        // 2. 삭제할 대상의 Prefix 설정 (예: "problems/15/")
+        String prefix = basePath + s3Locate + "/";
+
+        try {
+            // 3. 해당 Prefix로 시작하는 파일 목록 가져오기 요청 생성
+            ListObjectsV2Request listRequest = ListObjectsV2Request.builder()
+                    .bucket(s3Properties.getBucket())
+                    .prefix(prefix)
+                    .build();
+
+            ListObjectsV2Response listResponse;
+
+            // 파일이 많을 경우 페이징 처리하여 모두 삭제
+            do {
+                listResponse = s3Client.listObjectsV2(listRequest);
+
+                // 4. 지울 대상이 있는지 확인
+                if (listResponse.contents().isEmpty()) {
+                    break;
+                }
+
+                // 5. 삭제할 파일들의 Key 목록 만들기
+                List<ObjectIdentifier> objectsToDelete = listResponse.contents().stream()
+                        .map(s3Object -> ObjectIdentifier.builder().key(s3Object.key()).build())
+                        .collect(Collectors.toList());
+
+                // 6. 일괄 삭제(DeleteObjects) 요청 실행
+                DeleteObjectsRequest deleteRequest = DeleteObjectsRequest.builder()
+                        .bucket(s3Properties.getBucket())
+                        .delete(Delete.builder().objects(objectsToDelete).build())
+                        .build();
+
+                s3Client.deleteObjects(deleteRequest);
+
+                // 다음 페이지가 있으면 토큰 갱신
+                listRequest = listRequest.toBuilder()
+                        .continuationToken(listResponse.nextContinuationToken())
+                        .build();
+
+            } while (listResponse.isTruncated());
+
+            log.debug("S3 문제 폴더 삭제 완료: {}", prefix);
+
+        } catch (Exception e) {
+            log.error("S3에서 문제 폴더 삭제 실패: {}", prefix, e);
+            throw new RuntimeException("S3 문제 파일 삭제에 실패했습니다.", e);
         }
     }
 }

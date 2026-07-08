@@ -1,6 +1,5 @@
 package judgeServer.domain.problem.controller;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
 import com.nimda.cite.common.response.ApiResponse;
 import judgeServer.domain.problem.dto.AddProblemsRequest;
 import judgeServer.domain.problem.dto.ProblemListResponse;
@@ -14,6 +13,7 @@ import org.springframework.data.domain.Sort;
 import org.springframework.data.web.PageableDefault;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 @RestController
@@ -51,6 +51,7 @@ public class ProblemController {
         return ApiResponse.ok(dto).toResponse();
     }
 
+    @PreAuthorize("hasRole('ADMIN')")
     @PostMapping(consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
     public ResponseEntity<?> createProblem(@ModelAttribute AddProblemsRequest request) {
         // 1. ZIP 파일 존재 여부 확인
@@ -96,6 +97,7 @@ public class ProblemController {
         return ApiResponse.ok(isPublic).toResponse();
     }
 
+    @PreAuthorize("hasRole('ADMIN')")
     @DeleteMapping("/{id}")
     public ResponseEntity<?> deleteProblem(@PathVariable Long id) {
         problemService.deleteProblem(id);

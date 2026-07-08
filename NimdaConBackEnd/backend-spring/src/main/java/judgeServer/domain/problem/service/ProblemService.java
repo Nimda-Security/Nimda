@@ -127,6 +127,8 @@ public class ProblemService {
             throw new RuntimeException("삭제하려는 문제가 존재하지 않습니다.");
         }
         problemRepository.deleteById(id);
+
+        fileStore.deleteProblemDirectory(id.toString());
     }
 
     @Transactional(readOnly = true)
