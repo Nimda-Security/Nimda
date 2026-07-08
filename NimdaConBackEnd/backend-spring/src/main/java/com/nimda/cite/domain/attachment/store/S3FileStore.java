@@ -12,6 +12,10 @@ import software.amazon.awssdk.services.s3.S3Client;
 import org.springframework.stereotype.Component;
 import org.springframework.web.multipart.MultipartFile;
 import software.amazon.awssdk.services.s3.model.DeleteObjectRequest;
+import software.amazon.awssdk.services.s3.model.PutObjectRequest;
+import software.amazon.awssdk.core.sync.RequestBody;
+import java.nio.file.Files;
+import java.nio.file.Path;
 
 import java.util.Optional;
 
@@ -91,5 +95,63 @@ public class S3FileStore implements FileStore {
 
     public S3Service.PresignedUpload getPresignedUpload(String type, String fileName) {
         return s3Service.createPresignedUpload(type, fileName);
+    }
+
+    /**
+     * [백엔드 전용] 로컬에 위치한 파일을 S3로 직접 업로드합니다. (예: 압축 해제된 문제 파일)
+     *
+     * @param problemCode 문제 식별 코드
+     * @param relativePath 문제 폴더 내부의 상대 경로 (예: "in/1.in")
+     * @param filePath 실제 파일의 로컬 경로
+     */
+    @Override
+    public void uploadProblemFile(String problemCode, String relativePath, Path filePath) {
+        String basePath = s3Properties.getProblemPath();
+        if (basePath == null || basePath.isBlank()) {
+            basePath = "problems/";
+        }
+        if (!basePath.endsWith("/")) {
+            basePath += "/";
+        }
+
+        // S3 Key 생성: problems/{problemCode}/{relativePath}
+        String s3Key = basePath + problemCode + "/" + relativePath.replace("\\", "/");
+
+        // Content-Type 결정
+        String contentType = determineContentType(filePath);
+
+        PutObjectRequest putObjectRequest = PutObjectRequest.builder()
+                .bucket(s3Properties.getBucket())
+                .key(s3Key)
+                .contentType(contentType)
+                .build();
+
+        try {
+            // S3Client를 이용하여 직접 파일 업로드
+            s3Client.putObject(putObjectRequest, RequestBody.fromFile(filePath));
+            log.debug("S3 파일 업로드 완료: {}", s3Key);
+        } catch (Exception e) {
+            log.error("S3 파일 업로드 실패: {}", s3Key, e);
+            throw new RuntimeException("S3 업로드에 실패했습니다: " + s3Key, e);
+        }
+    }
+
+    private String determineContentType(Path filePath) {
+        String fileName = filePath.getFileName().toString().toLowerCase();
+
+        if (fileName.endsWith(".html")) {
+            return "text/html; charset=utf-8";
+        } else if (fileName.endsWith(".json")) {
+            return "application/json; charset=utf-8";
+        } else if (fileName.endsWith(".in") || fileName.endsWith(".out") || fileName.endsWith(".txt")) {
+            return "text/plain; charset=utf-8";
+        }
+
+        try {
+            String probedType = Files.probeContentType(filePath);
+            return probedType != null ? probedType : "application/octet-stream";
+        } catch (Exception e) {
+            return "application/octet-stream";
+        }
     }
 }

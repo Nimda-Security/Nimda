@@ -41,4 +41,6 @@ public interface FileStore {
      * S3 등 외부 URL이면 empty 반환 → 클라이언트는 entity.filepath 로 직접 접근.
      */
     Optional<Resource> getResource(String storedFilename);
+
+    void uploadProblemFile(String problemCode, String relativePath, java.nio.file.Path filePath);
 }
