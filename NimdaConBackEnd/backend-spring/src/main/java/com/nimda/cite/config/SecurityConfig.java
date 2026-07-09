@@ -137,6 +137,9 @@ public class SecurityConfig {
                         .requestMatchers(HttpMethod.DELETE, "api/judge/problem").hasRole("ADMIN")
                         .requestMatchers(HttpMethod.GET, "/api/judge/problem/**").authenticated()
 
+                        // 재출 api
+                        .requestMatchers(HttpMethod.POST, "api/judge/submission").authenticated()
+
                         // [우선순위 7] 나머지 모든 요청은 기본적으로 인증 필요
                         .anyRequest().authenticated()
                 );
