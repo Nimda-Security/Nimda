@@ -1,4 +1,4 @@
-package judgeServer.domain.submission.status;
+package judgeServer.domain.submission.enums;
 
 public enum SubmissionStatus {
     PENDING,        // 채점 대기 중

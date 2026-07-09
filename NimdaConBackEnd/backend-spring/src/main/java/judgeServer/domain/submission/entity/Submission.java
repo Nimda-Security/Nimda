@@ -1,7 +1,7 @@
 package judgeServer.domain.submission.entity;
 
 import jakarta.persistence.*;
-import judgeServer.domain.submission.status.SubmissionStatus;
+import judgeServer.domain.submission.enums.SubmissionStatus;
 import lombok.*;
 
 import java.time.LocalDateTime;
@@ -17,11 +17,14 @@ public class Submission {
     private Long id;
 
     // 문제 식별자 (MSA 환경이므로 객체 참조 대신 ID만 저장)
-    @Column(nullable = false)
+    @Column(name = "problem_id" ,nullable = false)
     private Long problemId;
 
+    @Column(name = "problem_title",nullable = false)
+    private String problemTitle;
+
     // 제출자 식별자 (누가 제출했는지 알아야 하므로 필수)
-    @Column(nullable = false)
+    @Column(name = "user_id",nullable = false)
     private Long userId;
 
     // 제출 언어 (예: JAVA, PYTHON3, CPP 등)
@@ -29,7 +32,7 @@ public class Submission {
     private String language;
 
     // 사용자가 제출한 소스 코드
-    @Column(columnDefinition = "TEXT", nullable = false)
+    @Column(name = "source_code",columnDefinition = "TEXT", nullable = false)
     private String sourceCode;
 
     // 채점 상태 (PENDING, JUDGING, ACCEPTED, WRONG_ANSWER, COMPILE_ERROR 등)
@@ -47,6 +50,9 @@ public class Submission {
 
     @Column(name = "created_at", updatable = false)
     private LocalDateTime createdAt;
+
+    @Column(name = "error_message")
+    private String errorMessage;
 
     @PrePersist
     public void prePersist() {
