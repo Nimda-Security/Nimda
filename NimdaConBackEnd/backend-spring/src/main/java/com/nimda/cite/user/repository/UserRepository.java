@@ -2,7 +2,12 @@ package com.nimda.cite.user.repository;
 
 import com.nimda.cite.user.entity.User;
 import com.nimda.cite.user.enums.ApprovalStatus;
+import jakarta.persistence.LockModeType;
+import org.springframework.data.jpa.repository.Lock;
+import org.springframework.data.jpa.repository.Query;
+import org.springframework.data.repository.query.Param;
 import org.springframework.data.jpa.repository.EntityGraph;
+import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.lang.NonNull;
 import org.springframework.stereotype.Repository;
@@ -25,7 +30,25 @@ public interface UserRepository extends JpaRepository<User, Long> {
     /**
      * user_id로 사용자 찾기
      */
+    @EntityGraph(attributePaths = { "authorities" })
     Optional<User> findByUserId(String userId);
+    @Lock(LockModeType.PESSIMISTIC_WRITE)
+    @Query("select u from User u where u.userId = :userId")
+    Optional<User> findByUserIdForPasswordReset(@Param("userId") String userId);
+
+    @Lock(LockModeType.PESSIMISTIC_WRITE)
+    @EntityGraph(attributePaths = { "authorities" })
+    @Query("select u from User u where u.id = :userId")
+    Optional<User> findByIdForAuthMutation(@Param("userId") Long userId);
+
+    @Modifying(clearAutomatically = true, flushAutomatically = true)
+    @Query("""
+            update User u
+            set u.authVersion = u.authVersion + 1,
+                u.passwordResetTokenId = null
+            where u.id = :userId
+            """)
+    int incrementAuthVersion(@Param("userId") Long userId);
 
     /**
      * 이메일로 사용자 찾기
@@ -53,6 +76,7 @@ public interface UserRepository extends JpaRepository<User, Long> {
      * 이메일이 존재하는지 확인
      */
     boolean existsByEmail(String email);
+    boolean existsByProfileImage(String profileImage);
 
     /**
      * 여러 user_id 목록으로 사용자 조회
@@ -67,6 +91,5 @@ public interface UserRepository extends JpaRepository<User, Long> {
      * = 'APPROVED'
      */
     List<User> findByStatus(ApprovalStatus status);
-    Boolean existsByUserIdAndEmail(String userId, String email);
-    Boolean existsByUserIdAndStudentNum(String userId, String studentNum);
+    boolean existsByUserIdAndStudentNumAndEmail(String userId, String studentNum, String email);
 }

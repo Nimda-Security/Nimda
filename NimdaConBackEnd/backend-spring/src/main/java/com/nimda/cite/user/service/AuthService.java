@@ -53,90 +53,54 @@ public class AuthService {
     private AttachmentService attachmentService;
 
     /**
-     * 사용자 인증
-     * 
-     * @param userId   사용자 ID
-     * @param password 비밀번호
-     * @return 인증된 사용자 정보 (Optional)
-     * @throws UserNotApprovedException 승인되지 않은 사용자인 경우
+     * Validates credentials and issues a token from the same database snapshot.
+     * A concurrent password/status/role change rotates authVersion, so a token built
+     * from this snapshot is rejected rather than upgraded to the newer version.
      */
     @Transactional(readOnly = true)
-    public Optional<User> validateUser(String userId, String password) {
-        Optional<User> userOpt = userService.findByUserId(userId);
-
-        if (userOpt.isPresent()) {
-            User user = userOpt.get();
-
-            // 1. 비밀번호 확인
-            if (!passwordEncoder.matches(password, user.getPassword())) {
-                return Optional.empty(); // 비밀번호 오류
-            }
-
-            // 2. 승인 상태 확인
-            // Note. 유저의 현재 상태에 따른 커스텀 예회를 반환한다.
-            if (user.getStatus() == null || user.getStatus() != ApprovalStatus.APPROVED) {
-                if (user.getStatus() == ApprovalStatus.PENDING) {
-                    throw new UserNotApprovedException("승인 대기 중인 계정입니다. 관리자 승인 후 로그인할 수 있습니다.");
-                } else if (user.getStatus() == ApprovalStatus.REJECTED) {
-                    throw new UserNotApprovedException("승인이 거부된 계정입니다.");
-                } else {
-                    throw new UserNotApprovedException("승인되지 않은 계정입니다.");
-                }
-            }
-
-            // 3. 인증 성공 - 비밀번호를 제외한 사용자 정보 반환
-            User userWithoutPassword = new User();
-            userWithoutPassword.setId(user.getId());
-            userWithoutPassword.setUserId(user.getUserId());
-            userWithoutPassword.setNickname(user.getNickname());
-            userWithoutPassword.setEmail(user.getEmail());
-            return Optional.of(userWithoutPassword);
+    public Optional<LoginResponseDTO> authenticate(String userId, String password) {
+        Optional<User> userOpt = userRepository.findByUserId(userId);
+        if (userOpt.isEmpty()) {
+            passwordEncoder.matches(password, DUMMY_PASSWORD_HASH);
+            return Optional.empty();
         }
-        passwordEncoder.matches(password, DUMMY_PASSWORD_HASH);
 
-        return Optional.empty(); // 사용자를 찾을 수 없음
-    }
+        User user = userOpt.get();
+        if (!passwordEncoder.matches(password, user.getPassword())) {
+            return Optional.empty();
+        }
+        if (user.getStatus() == null || user.getStatus() != ApprovalStatus.APPROVED) {
+            throw new UserNotApprovedException("승인되지 않은 계정입니다.");
+        }
 
-    /* 로그인 처리 */
-
-    @Transactional(readOnly = true)
-    public LoginResponseDTO login(User user) {
-        // 권한 정보를 포함한 전체 User 객체 조회 (@EntityGraph로 권한 정보 함께 로드)
-        User fullUser = userService.findById(user.getId())
-                .orElseThrow(() -> new RuntimeException("User not found"));
-
-        CustomUserDetails userDetails = new CustomUserDetails(fullUser);
+        CustomUserDetails userDetails = new CustomUserDetails(user);
         Authentication authentication = new UsernamePasswordAuthenticationToken(
                 userDetails, null, userDetails.getAuthorities());
-
         eventPublisher.publishEvent(new AuthenticationSuccessEvent(authentication));
 
-        // 사용자의 권한 목록 추출 (@EntityGraph로 이미 로드됨)
-        java.util.List<String> authorities = fullUser.getAuthorities().stream()
+        java.util.List<String> authorities = user.getAuthorities().stream()
                 .map(authority -> authority.getAuthorityName())
                 .collect(java.util.stream.Collectors.toList());
-
-
         String token = jwtUtil.generateToken(
-                fullUser.getNickname(),
-                fullUser.getId(),
-                fullUser.getAuthVersion(),
-                authorities); // JWT 토큰 생성
+                user.getNickname(),
+                user.getId(),
+                user.getAuthVersion(),
+                authorities);
 
         LoginResponseDTO.UserInfo userInfo = LoginResponseDTO.UserInfo.builder()
-                .id(fullUser.getId())
-                .userId(fullUser.getUserId())
-                .nickname(fullUser.getNickname())
-                .email(fullUser.getEmail())
-                .profileImage(fullUser.getProfileImage())
-                .profileDecoration(fullUser.getProfileDecoration())
+                .id(user.getId())
+                .userId(user.getUserId())
+                .nickname(user.getNickname())
+                .email(user.getEmail())
+                .profileImage(user.getProfileImage())
+                .profileDecoration(user.getProfileDecoration())
                 .roles(authorities)
                 .build();
 
-        return LoginResponseDTO.builder()
+        return Optional.of(LoginResponseDTO.builder()
                 .accessToken(token)
                 .user(userInfo)
-                .build();
+                .build());
     }
 
     /**
@@ -170,16 +134,11 @@ public class AuthService {
     }
 
     @Transactional
-    public boolean toggleEmailHide(Long userId) {
-        // 1. 유저 조회 (없으면 예외 발생)
+    public boolean setEmailHide(Long userId, boolean emailHide) {
         User user = userRepository.findById(userId)
                 .orElseThrow(() -> new IllegalArgumentException("존재하지 않는 사용자입니다."));
-
-        // 2. 상태 반전 (Dirty Checking에 의해 메서드 종료 시 자동 UPDATE)
-        boolean newStatus = !user.isEmailHide();
-        user.setEmailHide(newStatus);
-
-        return newStatus;
+        user.setEmailHide(emailHide);
+        return user.isEmailHide();
     }
 
     /**
@@ -228,11 +187,11 @@ public class AuthService {
     }
 
     /**
-     * 프로필 정보 수정 (닉네임, 백준 ID, 생년월일, 학과, 학번)
+     * 프로필 정보 수정 (닉네임, 백준 ID, 생년월일, 학과)
      * null인 필드는 수정하지 않음 (부분 업데이트)
      */
     @Transactional
-    public User updateProfile(Long userId, String nickname, String bojId, String birth, String major, String studentNum) {
+    public User updateProfile(Long userId, String nickname, String bojId, String birth, String major) {
         User user = userRepository.findById(userId)
                 .orElseThrow(() -> new IllegalArgumentException("존재하지 않는 사용자입니다."));
 
@@ -256,29 +215,65 @@ public class AuthService {
             user.setMajor(major);
         }
 
-        if (studentNum != null && !studentNum.isBlank()) {
-            user.setStudentNum(studentNum);
-        }
-
         // Dirty Checking에 의해 자동 UPDATE
         return user;
     }
 
     @Transactional
-    public void changePassword(String userId, String password) {
-        User user = userRepository.findByUserId(userId).orElseThrow(
-                () -> new ResponseStatusException(HttpStatus.NOT_FOUND)
-        );
+    public void activatePasswordReset(
+            String userId,
+            String studentNum,
+            String email,
+            String passwordResetTokenId) {
+        User user = lockedRecoveryUser(userId);
+        requireMatchingRecoveryIdentity(user, studentNum, email);
+        user.setPasswordResetTokenId(passwordResetTokenId);
+    }
 
-        String encodedPassword = passwordEncoder.encode(password);
-        user.setPassword(encodedPassword);
+    @Transactional
+    public void changePassword(
+            String userId,
+            String studentNum,
+            String email,
+            String password,
+            String passwordResetTokenId) {
+        User user = lockedRecoveryUser(userId);
+        requireMatchingRecoveryIdentity(user, studentNum, email);
+
+        if (user.getPasswordResetTokenId() == null
+                || !user.getPasswordResetTokenId().equals(passwordResetTokenId)) {
+            throw new ResponseStatusException(
+                    HttpStatus.FORBIDDEN, "유효하지 않거나 이미 사용한 비밀번호 재설정 요청입니다.");
+        }
+
+        user.setPassword(passwordEncoder.encode(password));
+        user.setPasswordResetTokenId(null);
         user.rotateAuthVersion();
+    }
+
+    private User lockedRecoveryUser(String userId) {
+        return userRepository.findByUserIdForPasswordReset(userId)
+                .orElseThrow(() -> new ResponseStatusException(
+                        HttpStatus.NOT_FOUND, "사용자를 찾을 수 없습니다."));
+    }
+
+    private void requireMatchingRecoveryIdentity(
+            User user, String studentNum, String email) {
+        if (!user.getStudentNum().equals(studentNum) || !user.getEmail().equals(email)) {
+            throw new ResponseStatusException(
+                    HttpStatus.FORBIDDEN, "비밀번호 재설정 정보가 일치하지 않습니다.");
+        }
+    }
+
+    @Transactional(readOnly = true)
+    public boolean hasExactRecoveryIdentity(String userId, String studentNum, String email) {
+        return userRepository.existsByUserIdAndStudentNumAndEmail(userId, studentNum, email);
     }
 
     @Transactional
     public void rotateAuthVersion(Long userId) {
-        User user = userRepository.findById(userId)
-                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND));
-        user.rotateAuthVersion();
+        if (userRepository.incrementAuthVersion(userId) != 1) {
+            throw new ResponseStatusException(HttpStatus.NOT_FOUND);
+        }
     }
 }

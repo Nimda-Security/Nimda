@@ -2,7 +2,6 @@ package com.nimda.cite.domain.attachment.service;
 
 import com.nimda.cite.domain.attachment.dto.AttachmentResponseDto;
 import com.nimda.cite.domain.attachment.entity.Attachment;
-import com.nimda.cite.domain.attachment.entity.AttachmentDeletionTask;
 import com.nimda.cite.domain.attachment.repository.AttachmentRepository;
 import com.nimda.cite.domain.attachment.repository.AttachmentDeletionTaskRepository;
 import com.nimda.cite.domain.attachment.store.FileStore;
@@ -19,9 +18,12 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.transaction.support.TransactionSynchronization;
+import org.springframework.transaction.support.TransactionSynchronizationManager;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.io.IOException;
+import java.time.LocalDateTime;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
@@ -50,6 +52,7 @@ public class AttachmentService {
             "mp4", "avi", "mov", "mp3", "wav"
     );
     private static final long MAX_FILE_SIZE = 10L * 1024 * 1024;
+    private static final int MAX_ORIGINAL_FILENAME_LENGTH = 200;
     private static final String UNTRUSTED_STORAGE_QUARANTINE_REASON =
             "QUARANTINED: legacy storage key requires manual ownership verification";
 
@@ -70,7 +73,7 @@ public class AttachmentService {
      * - 유저 정보, 카테고리, 게시글 정보를 모두 받아 연결함
      */
     public Long uploadFile(MultipartFile file, Long boardId, Long categoryId, Long userId) {
-        if (userId == null) {
+        if (userId == null || userId <= 0) {
             throw new RuntimeException("로그인이 필요합니다.");
         }
         if (boardId != null) {
@@ -85,6 +88,7 @@ public class AttachmentService {
 
         // 1. 원본 파일명 및 확장자 추출
         String originName = file.getOriginalFilename();
+        validateOriginFilename(originName);
         String ext = extractExt(originName);
         if (ext.isBlank()) {
             throw new RuntimeException("파일 확장자가 없습니다. 업로드를 허용하지 않습니다.");
@@ -103,10 +107,17 @@ public class AttachmentService {
                 ext = ImageSanitizer.getOutputExtension(ext);
                 fileSize = sanitized.length;
 
-                String storedName = UUID.randomUUID().toString() + "." + ext;
-                String filepath = fileStore instanceof S3FileStore s3FileStore
-                        ? s3FileStore.storeBytes(sanitized, storedName, userId)
-                        : fileStore.storeBytes(sanitized, storedName);
+                String storedName = UUID.randomUUID() + "_upload." + ext;
+                String filepath;
+                if (fileStore instanceof S3FileStore s3FileStore) {
+                    filepath = s3FileStore.allocateActiveKey("attachments", ext, userId);
+                    storedName = extractStoredFilenameFromKey(filepath);
+                    registerRollbackStorageCleanup(filepath);
+                    s3FileStore.storeBytesAtKey(sanitized, filepath, userId);
+                } else {
+                    filepath = fileStore.storeBytes(sanitized, storedName);
+                    registerRollbackStorageCleanup(filepath);
+                }
 
                 Attachment attachment = Attachment.create(
                         originName, storedName, filepath, ext, fileSize,
@@ -119,10 +130,17 @@ public class AttachmentService {
         }
 
         // 4. 비이미지 파일: 기존 로직
-        String storedName = UUID.randomUUID().toString() + "." + ext;
-        String filepath = fileStore instanceof S3FileStore s3FileStore
-                ? s3FileStore.storeFile(file, storedName, userId)
-                : fileStore.storeFile(file, storedName);
+        String storedName = UUID.randomUUID() + "_upload." + ext;
+        String filepath;
+        if (fileStore instanceof S3FileStore s3FileStore) {
+            filepath = s3FileStore.allocateActiveKey("attachments", ext, userId);
+            storedName = extractStoredFilenameFromKey(filepath);
+            registerRollbackStorageCleanup(filepath);
+            s3FileStore.storeFileAtKey(file, filepath, userId);
+        } else {
+            filepath = fileStore.storeFile(file, storedName);
+            registerRollbackStorageCleanup(filepath);
+        }
 
         Attachment attachment = Attachment.create(
                 originName, storedName, filepath, ext, fileSize,
@@ -214,6 +232,15 @@ public class AttachmentService {
         return originalFilename.substring(pos + 1);
     }
 
+    private void validateOriginFilename(String originalFilename) {
+        if (originalFilename == null || originalFilename.isBlank()) {
+            throw new IllegalArgumentException("파일 이름이 필요합니다.");
+        }
+        if (originalFilename.length() > MAX_ORIGINAL_FILENAME_LENGTH) {
+            throw new IllegalArgumentException("파일 이름은 200자를 초과할 수 없습니다.");
+        }
+    }
+
     /**
      * S3 Presigned 업로드 후, key/메타정보만으로 첨부파일을 등록한다.
      * - 파일 본문은 이미 S3에 존재한다고 가정한다.
@@ -224,7 +251,7 @@ public class AttachmentService {
                                Long boardId,
                                Long categoryId,
                                Long userId) {
-        if (userId == null) {
+        if (userId == null || userId <= 0) {
             throw new RuntimeException("로그인이 필요합니다.");
         }
         if (key == null || key.isBlank()) {
@@ -243,6 +270,7 @@ public class AttachmentService {
         if (actualSize > MAX_FILE_SIZE || actualSize != fileSize) {
             throw new RuntimeException("S3 파일 크기 정보가 일치하지 않거나 허용 범위를 초과합니다.");
         }
+        validateOriginFilename(originFilename);
         if (attachmentRepository.existsByFilepath(key)) {
             throw new RuntimeException("이미 등록된 S3 파일입니다.");
         }
@@ -271,6 +299,7 @@ public class AttachmentService {
                 if (attachmentRepository.existsByFilepath(finalKey)) {
                     throw new RuntimeException("이미 등록된 S3 파일입니다.");
                 }
+                registerRollbackStorageCleanup(finalKey);
                 s3FileStore.replaceObject(key, finalKey, sanitized, userId);
                 key = finalKey;
                 storedFilename = extractStoredFilenameFromKey(key);
@@ -289,6 +318,7 @@ public class AttachmentService {
             if (attachmentRepository.existsByFilepath(finalKey)) {
                 throw new RuntimeException("이미 등록된 S3 파일입니다.");
             }
+            registerRollbackStorageCleanup(finalKey);
             s3FileStore.replaceObject(key, finalKey, storedBytes, userId);
             key = finalKey;
             storedFilename = extractStoredFilenameFromKey(key);
@@ -310,7 +340,7 @@ public class AttachmentService {
         return attachmentRepository.save(attachment).getId();
     }
     public String finalizeProfileImage(String key, Long userId) {
-        if (userId == null) {
+        if (userId == null || userId <= 0) {
             throw new IllegalArgumentException("로그인이 필요합니다.");
         }
         if (!(fileStore instanceof S3FileStore s3FileStore)) {
@@ -336,6 +366,7 @@ public class AttachmentService {
             String outputExtension = ImageSanitizer.getOutputExtension(extension);
             String finalKey = s3FileStore.activationKey(
                     key, "profile", outputExtension, userId);
+            registerRollbackStorageCleanup(finalKey);
             s3FileStore.replaceObject(key, finalKey, sanitized, userId);
             return finalKey;
         } catch (IOException exception) {
@@ -343,7 +374,7 @@ public class AttachmentService {
         }
     }
     public String finalizeProfileDecorationImage(String key, Long userId) {
-        if (userId == null) {
+        if (userId == null || userId <= 0) {
             throw new IllegalArgumentException("로그인이 필요합니다.");
         }
         if (!(fileStore instanceof S3FileStore s3FileStore)) {
@@ -369,6 +400,7 @@ public class AttachmentService {
             String outputExtension = ImageSanitizer.getOutputExtension(extension);
             String finalKey = s3FileStore.activationKey(
                     key, "decorations", outputExtension, userId);
+            registerRollbackStorageCleanup(finalKey);
             s3FileStore.replaceObject(key, finalKey, sanitized, userId);
             return finalKey;
         } catch (IOException exception) {
@@ -396,23 +428,24 @@ public class AttachmentService {
             quarantineStorageDeletion(storageKey);
             return;
         }
-        deletionTaskRepository.save(AttachmentDeletionTask.create(storageKey));
+        deletionTaskRepository.upsertByStorageKey(storageKey, false, null);
     }
 
     private boolean isCanonicalActiveKey(
             String storageKey,
             Long expectedOwnerId,
             String namespace) {
-        if (storageKey == null || storageKey.isBlank()) {
+        if (storageKey == null || storageKey.isBlank() || storageKey.length() > 512) {
             return false;
         }
 
+        // Active object keys are generation-qualified: UUID + "_" + sanitized original name.
         String[] parts = storageKey.split("/", -1);
         if (parts.length != 5
                 || !"users".equals(parts[0])
                 || !"active".equals(parts[2])
                 || !namespace.equals(parts[3])
-                || !isSafeLeaf(parts[4])) {
+                || !isGenerationQualifiedLeaf(parts[4])) {
             return false;
         }
 
@@ -425,9 +458,22 @@ public class AttachmentService {
         }
     }
 
+    private boolean isGenerationQualifiedLeaf(String value) {
+        if (!isSafeLeaf(value) || value.length() <= 37 || value.charAt(36) != '_') {
+            return false;
+        }
+        try {
+            UUID.fromString(value.substring(0, 36));
+            return true;
+        } catch (IllegalArgumentException exception) {
+            return false;
+        }
+    }
+
     private boolean isSafeLeaf(String value) {
         return value != null
                 && !value.isBlank()
+                && value.length() <= 512
                 && !value.contains("..")
                 && value.indexOf('/') < 0
                 && value.indexOf('\\') < 0
@@ -445,15 +491,55 @@ public class AttachmentService {
     }
 
     private void quarantineStorageDeletion(String storageKey) {
-        if (isNonStorageReference(storageKey) || storageKey.length() > 512) {
+        if (isNonStorageReference(storageKey)) {
             return;
         }
-        deletionTaskRepository.findFirstByStorageKey(storageKey)
-                .ifPresentOrElse(
-                        task -> task.markQuarantined(UNTRUSTED_STORAGE_QUARANTINE_REASON),
-                        () -> deletionTaskRepository.save(AttachmentDeletionTask.quarantine(
+        if (storageKey.length() > 512) {
+            throw new IllegalStateException(
+                    "저장소 키가 삭제 작업표 한도를 초과하여 메타데이터 삭제를 중단했습니다.");
+        }
+        deletionTaskRepository.upsertByStorageKey(
+                storageKey, true, UNTRUSTED_STORAGE_QUARANTINE_REASON);
+    }
+
+    boolean isSafeAutomaticDeletionKey(String storageKey) {
+        if (fileStore instanceof S3FileStore) {
+            return isCanonicalActiveKey(storageKey, null, "attachments")
+                    || isCanonicalActiveKey(storageKey, null, "profile")
+                    || isCanonicalActiveKey(storageKey, null, "decorations");
+        }
+        return isSafeLeaf(storageKey);
+    }
+
+    private void registerRollbackStorageCleanup(String storageKey) {
+        if (isNonStorageReference(storageKey)) {
+            return;
+        }
+        if (!TransactionSynchronizationManager.isSynchronizationActive()) {
+            throw new IllegalStateException("저장소 작업에 필요한 DB 트랜잭션이 활성화되지 않았습니다.");
+        }
+        TransactionSynchronizationManager.registerSynchronization(new TransactionSynchronization() {
+            @Override
+            public void afterCompletion(int status) {
+                if (status != TransactionSynchronization.STATUS_ROLLED_BACK) {
+                    return;
+                }
+                try {
+                    fileStore.deleteFile(storageKey);
+                } catch (RuntimeException exception) {
+                    try {
+                        deletionTaskRepository.upsertByStorageKey(
                                 storageKey,
-                                UNTRUSTED_STORAGE_QUARANTINE_REASON)));
+                                false,
+                                "Rollback compensation failed: "
+                                        + exception.getClass().getSimpleName());
+                    } catch (RuntimeException outboxException) {
+                        log.error("Could not retain rolled-back attachment cleanup task: {}",
+                                outboxException.getClass().getSimpleName());
+                    }
+                }
+            }
+        });
     }
 
     /**
@@ -469,7 +555,7 @@ public class AttachmentService {
             if (aid == null) {
                 continue;
             }
-            Attachment a = attachmentRepository.findById(aid)
+            Attachment a = attachmentRepository.findByIdForUpdate(aid)
                     .orElseThrow(() -> new RuntimeException("첨부를 찾을 수 없습니다: " + aid));
             if (a.getUserId() == null || !a.getUserId().equals(userId)) {
                 throw new RuntimeException("첨부 소유자만 글에 연결할 수 있습니다: " + aid);
@@ -512,7 +598,7 @@ public class AttachmentService {
 
         Map<Long, Attachment> wantedAttachments = new HashMap<>();
         for (Long attachmentId : wanted) {
-            Attachment attachment = attachmentRepository.findById(attachmentId)
+            Attachment attachment = attachmentRepository.findByIdForUpdate(attachmentId)
                     .orElseThrow(() -> new RuntimeException("첨부를 찾을 수 없습니다: " + attachmentId));
             boolean alreadyLinkedToTarget = boardId.equals(attachment.getBoardId());
             if (!alreadyLinkedToTarget
@@ -597,6 +683,25 @@ public class AttachmentService {
                 .contains(extension.toLowerCase());
     }
 
+    /**
+     * Deletes an unlinked attachment only after rechecking its orphan status under a row lock.
+     *
+     * @return true when the attachment was queued for deletion and removed
+     */
+    public boolean deleteOrphanedAttachment(Long attachmentId, LocalDateTime cutoff) {
+        if (attachmentId == null || cutoff == null) {
+            return false;
+        }
+        return attachmentRepository.findByIdForUpdate(attachmentId)
+                .filter(attachment -> attachment.getBoardId() == null)
+                .filter(attachment -> attachment.getCreatedAt().isBefore(cutoff))
+                .map(attachment -> {
+                    enqueueDeletion(attachment);
+                    attachmentRepository.delete(attachment);
+                    return true;
+                })
+                .orElse(false);
+    }
     /**
      * 게시글 삭제 시 — 연결된 모든 첨부 삭제 작업 등록 및 DB 삭제
      */
@@ -689,7 +794,7 @@ public class AttachmentService {
                 return;
             }
         }
-        deletionTaskRepository.save(AttachmentDeletionTask.create(key));
+        deletionTaskRepository.upsertByStorageKey(key, false, null);
     }
 
     private String extractStoredFilenameFromKey(String key) {

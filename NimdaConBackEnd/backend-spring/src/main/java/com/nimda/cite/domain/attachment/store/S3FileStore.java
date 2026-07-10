@@ -30,6 +30,8 @@ import java.util.UUID;
 @RequiredArgsConstructor
 public class S3FileStore implements FileStore {
     private static final long MAX_PRESIGNED_UPLOAD_SIZE = 10L * 1024 * 1024;
+    private static final int MAX_ORIGINAL_FILENAME_LENGTH = 200;
+    private static final int MAX_STORAGE_KEY_LENGTH = 512;
     private static final Set<String> ALLOWED_UPLOAD_PURPOSES =
             Set.of("board", "file", "profile", "profile-decoration");
     private static final Set<String> ATTACHMENT_UPLOAD_PURPOSES = Set.of("board", "file");
@@ -52,12 +54,11 @@ public class S3FileStore implements FileStore {
         }
     }
 
-    public String storeFile(MultipartFile file, String storedName, Long userId) {
-        String key = activeKey(userId, "attachments", storedName);
+    public void storeFileAtKey(MultipartFile file, String key, Long userId) {
+        validateDirectAttachmentKey(key, userId);
         try {
             s3Client.putObject(putRequest(key),
                     RequestBody.fromInputStream(file.getInputStream(), file.getSize()));
-            return key;
         } catch (IOException | RuntimeException e) {
             throw new RuntimeException("S3 파일 업로드에 실패했습니다.", e);
         }
@@ -74,11 +75,10 @@ public class S3FileStore implements FileStore {
         }
     }
 
-    public String storeBytes(byte[] data, String storedName, Long userId) {
-        String key = activeKey(userId, "attachments", storedName);
+    public void storeBytesAtKey(byte[] data, String key, Long userId) {
+        validateDirectAttachmentKey(key, userId);
         try {
             s3Client.putObject(putRequest(key), RequestBody.fromBytes(data));
-            return key;
         } catch (RuntimeException e) {
             throw new RuntimeException("S3 파일 업로드에 실패했습니다.", e);
         }
@@ -112,7 +112,7 @@ public class S3FileStore implements FileStore {
             String fileName,
             Long userId,
             long fileSize) {
-        if (userId == null) {
+        if (userId == null || userId <= 0) {
             throw new IllegalArgumentException("로그인이 필요합니다.");
         }
         if (!ALLOWED_UPLOAD_PURPOSES.contains(type)) {
@@ -137,6 +137,9 @@ public class S3FileStore implements FileStore {
 
         String safeName = fileName == null ? "upload" : fileName
                 .replace('\\', '_').replace('/', '_').replaceAll("[\\r\\n\\u0000]", "_");
+        if (safeName.length() > MAX_ORIGINAL_FILENAME_LENGTH) {
+            throw new IllegalArgumentException("파일 이름은 200자를 초과할 수 없습니다.");
+        }
         String key = pendingPrefix(userId) + type + "/" + UUID.randomUUID() + "_" + safeName;
         PutObjectRequest objectRequest = unsignedPutRequest(key, fileSize);
         PutObjectPresignRequest presignRequest = PutObjectPresignRequest.builder()
@@ -185,13 +188,26 @@ public class S3FileStore implements FileStore {
             String extension,
             Long userId) {
         validateOwnedKey(pendingKey, userId);
+        return allocateActiveKey(namespace, extension, userId);
+    }
+
+    public String allocateActiveKey(String namespace, String extension, Long userId) {
+        if (userId == null || userId <= 0) {
+            throw new IllegalArgumentException("로그인이 필요합니다.");
+        }
         if (!ACTIVE_NAMESPACES.contains(namespace)) {
             throw new IllegalArgumentException("허용되지 않는 활성 파일 영역입니다.");
         }
-        String filename = pendingKey.substring(pendingKey.lastIndexOf('/') + 1);
-        int dot = filename.lastIndexOf('.');
-        String base = dot > 0 ? filename.substring(0, dot) : filename;
-        String activeKey = activeKey(userId, namespace, base + "." + extension.toLowerCase());
+        String normalizedExtension = extension.toLowerCase();
+        if (!AttachmentService.isAllowedExtension(normalizedExtension)) {
+            throw new IllegalArgumentException("허용되지 않는 활성 파일 확장자입니다.");
+        }
+        String generatedFilename =
+                UUID.randomUUID() + "_upload." + normalizedExtension;
+        String activeKey = activeKey(userId, namespace, generatedFilename);
+        if (activeKey.length() > MAX_STORAGE_KEY_LENGTH) {
+            throw new IllegalArgumentException("활성 파일 저장소 키가 너무 깁니다.");
+        }
         validateOwnedKey(activeKey, userId);
         return activeKey;
     }
@@ -249,7 +265,7 @@ public class S3FileStore implements FileStore {
     }
 
     private void validateOwnedKey(String key, Long userId) {
-        if (key == null || userId == null) {
+        if (key == null || userId == null || userId <= 0) {
             throw new IllegalArgumentException("소유하지 않은 S3 key입니다.");
         }
 
@@ -287,6 +303,28 @@ public class S3FileStore implements FileStore {
                 && !parts[1].isBlank();
         if (!validPending && !validActive && !validLegacy) {
             throw new IllegalArgumentException("소유하지 않은 S3 key입니다.");
+        }
+    }
+    private void validateDirectAttachmentKey(String key, Long userId) {
+        validateOwnedKey(key, userId);
+        String prefix = activeKey(userId, "attachments", "");
+        if (!key.startsWith(prefix) || key.length() > MAX_STORAGE_KEY_LENGTH) {
+            throw new IllegalArgumentException("허용되지 않는 직접 업로드 S3 key입니다.");
+        }
+        String filename = key.substring(prefix.length());
+        int marker = filename.indexOf("_upload.");
+        if (marker != 36 || marker + 8 >= filename.length()) {
+            throw new IllegalArgumentException("허용되지 않는 직접 업로드 S3 key입니다.");
+        }
+        try {
+            UUID.fromString(filename.substring(0, marker));
+        } catch (IllegalArgumentException exception) {
+            throw new IllegalArgumentException("허용되지 않는 직접 업로드 S3 key입니다.", exception);
+        }
+        String extension = filename.substring(marker + 8);
+        if (!extension.equals(extension.toLowerCase())
+                || !AttachmentService.isAllowedExtension(extension)) {
+            throw new IllegalArgumentException("허용되지 않는 직접 업로드 S3 key입니다.");
         }
     }
 

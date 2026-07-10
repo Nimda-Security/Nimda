@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import {
   getMyPageInfo,
-  toggleEmailHide,
+  setEmailHide,
   updateProfileAPI,
   logoutAPI,
 } from '@/api/auth';
@@ -25,7 +25,7 @@ interface UserInfoContentProps {
   loading: boolean;
 }
 
-type EditableField = 'nickname' | 'bojId' | 'birth' | 'major' | 'studentNum';
+type EditableField = 'nickname' | 'bojId' | 'birth' | 'major';
 
 const getStringValue = (value: unknown): string =>
   typeof value === 'string' ? value : '';
@@ -86,8 +86,6 @@ const UserInfoContent: React.FC<UserInfoContentProps> = ({
   const [majorInput, setMajorInput] = useState('');
   const [isEditingMajor, setIsEditingMajor] = useState(false);
 
-  const [studentNumInput, setStudentNumInput] = useState('');
-  const [isEditingStudentNum, setIsEditingStudentNum] = useState(false);
 
   useEffect(() => {
     const fetchUserInfo = async () => {
@@ -114,7 +112,6 @@ const UserInfoContent: React.FC<UserInfoContentProps> = ({
           setBirthMonthInput(birthParts.month);
           setBirthDayInput(birthParts.day);
           setMajorInput(normalized.major || '');
-          setStudentNumInput(normalized.studentNum || '');
         }
       } catch (error) {
         console.error('유저 정보 조회 실패:', error);
@@ -128,13 +125,14 @@ const UserInfoContent: React.FC<UserInfoContentProps> = ({
   const handleToggleEmailHide = async () => {
     if (!user) return;
     try {
-      const res = await toggleEmailHide();
+      const requestedEmailHide = !getBooleanValue(user.emailHide);
+      const res = await setEmailHide(requestedEmailHide);
       if (res.success) {
         const responseEmailHide = (res as { emailHide?: unknown }).emailHide;
         const nextEmailHide =
           typeof responseEmailHide === 'boolean'
             ? responseEmailHide
-            : !getBooleanValue(user.emailHide);
+            : requestedEmailHide;
         setUser((prev) =>
           prev ? { ...prev, emailHide: nextEmailHide } : prev
         );
@@ -163,10 +161,6 @@ const UserInfoContent: React.FC<UserInfoContentProps> = ({
 
     if (field === 'birth' && trimmedValue && !isValidBirthDate(trimmedValue)) {
       alert('생년월일은 YYYYMMDD 형식의 올바른 날짜여야 합니다.');
-      return;
-    }
-
-    if (field === 'studentNum' && trimmedValue.length !== 9) {
       return;
     }
 
@@ -459,71 +453,10 @@ const UserInfoContent: React.FC<UserInfoContentProps> = ({
               />
             )}
 
-            {/* 학번 - 인라인 편집 */}
-            {isEditingStudentNum ? (
-              <div className="flex flex-col gap-2">
-                <span className="text-[16px] font-medium text-[#0c0c0c]">
-                  학번
-                </span>
-                <div className="flex items-center gap-3">
-                  <input
-                    type="text"
-                    autoFocus
-                    value={studentNumInput}
-                    onChange={(e) =>
-                      setStudentNumInput(e.target.value.replace(/[^0-9]/g, ''))
-                    }
-                    className="flex-1 h-[32px] border-2 border-[#d97399] rounded-[4px] pl-5 pr-3 text-[14px] font-medium text-[#525252] outline-none"
-                    style={{ paddingLeft: '16px' }}
-                    maxLength={9}
-                  />
-                  <button
-                    onClick={() =>
-                      handleSaveField(
-                        'studentNum',
-                        studentNumInput,
-                        setIsEditingStudentNum
-                      )
-                    }
-                    disabled={
-                      savingField === 'studentNum' ||
-                      studentNumInput.length !== 9
-                    }
-                    className="shrink-0"
-                    style={{
-                      opacity:
-                        savingField === 'studentNum' ||
-                        studentNumInput.length !== 9
-                          ? 0.3
-                          : 1,
-                    }}
-                  >
-                    <img src="/check 1.svg" alt="저장" className="w-5 h-5" />
-                  </button>
-                  <button
-                    onClick={() => {
-                      setStudentNumInput(user?.studentNum || '');
-                      setIsEditingStudentNum(false);
-                    }}
-                    className="shrink-0"
-                  >
-                    <img src="/no 1.svg" alt="취소" className="w-5 h-5" />
-                  </button>
-                </div>
-                {studentNumInput.length !== 9 && (
-                  <span className="text-[12px] text-[#d97399] font-medium pl-1">
-                    학번은 9자리로 입력해야 합니다.
-                  </span>
-                )}
-              </div>
-            ) : (
-              <InfoField
-                label="학번"
-                value={user?.studentNum || '-'}
-                editable
-                onEdit={() => setIsEditingStudentNum(true)}
-              />
-            )}
+            <InfoField
+              label="학번"
+              value={user?.studentNum || '-'}
+            />
 
             {/* 백준 ID - 인라인 편집 */}
             {isEditingBojId ? (

@@ -1,5 +1,5 @@
 import { lazy, Suspense } from "react";
-import { BrowserRouter, Routes, Route } from "react-router-dom";
+import { createBrowserRouter, Navigate, Outlet, RouterProvider } from "react-router-dom";
 import ScrollToTop from "@/components/ScrollToTop";
 import ProtectedRoute from "@/components/ProtectedRoute";
 
@@ -30,10 +30,7 @@ const NotFoundPage = lazy(async () => ({
         <h1 className="text-6xl font-bold text-gray-900 mb-4">404</h1>
         <h2 className="text-2xl font-medium text-gray-700 mb-2">페이지를 찾을 수 없습니다</h2>
         <p className="text-gray-500 mb-8">요청한 주소를 확인하거나 홈으로 이동해주세요.</p>
-        <a
-          href="/"
-          className="inline-block px-6 py-2 bg-gray-900 text-white rounded hover:bg-gray-800 transition"
-        >
+        <a href="/" className="inline-block px-6 py-2 bg-gray-900 text-white rounded hover:bg-gray-800 transition">
           홈으로
         </a>
       </div>
@@ -41,60 +38,47 @@ const NotFoundPage = lazy(async () => ({
   ),
 }));
 
-const Router = () => {
-  return (
-    <BrowserRouter>
-      <ScrollToTop />
-      <Suspense fallback={<div role="status" aria-live="polite">페이지를 불러오는 중...</div>}>
-      <Routes>
-        {/* 인증 불필요 경로 */}
-        <Route path="/login" element={<LoginPage />} />
-        <Route path="/signup" element={<SignUp />} />
-        <Route path="/403" element={<ForbiddenPage />} />
+const RouterShell = () => (
+  <>
+    <ScrollToTop />
+    <Suspense fallback={<div role="status" aria-live="polite">페이지를 불러오는 중...</div>}>
+      <Outlet />
+    </Suspense>
+  </>
+);
 
-        {/* 게스트 접근 가능 경로 */}
-        <Route path="/" element={<Home />} />
-        <Route path="/problems" element={<ProblemsPage />} />
-        <Route path="/problems/:id" element={<ProblemDetail />} />
-        <Route path="/judging-status" element={<JudgingStatusPage />} />
-        <Route path="/scoreboard" element={<Scoreboard />} />
-        <Route path="/contest" element={<ContestHome />} />
-        <Route path="/user/:nickname" element={<UserProfilePage />} />
-        <Route path="/board/picture-board" element={<PhotoGalleryBoard boardSlug="picture-board" boardTitle="사진첩" />} />
-        <Route path="/board/banner" element={<PhotoGalleryBoard boardSlug="banner" boardTitle="배너" adminOnlyWrite={true} />} />
-        <Route path="/board/:boardType" element={<BoardRoutePage />} />
-        <Route path="/board/:boardType/:id" element={<BoardDetailPage />} />
+const router = createBrowserRouter([
+  {
+    element: <RouterShell />,
+    children: [
+      { path: "/login", element: <LoginPage /> },
+      { path: "/signup", element: <SignUp /> },
+      { path: "/403", element: <ForbiddenPage /> },
+      { path: "/", element: <Home /> },
+      { path: "/problems", element: <ProblemsPage /> },
+      { path: "/problems/:id", element: <ProblemDetail /> },
+      { path: "/judging-status", element: <JudgingStatusPage /> },
+      { path: "/scoreboard", element: <Scoreboard /> },
+      { path: "/contest", element: <ContestHome /> },
+      { path: "/user/:nickname", element: <UserProfilePage /> },
+      { path: "/board/picture-board", element: <PhotoGalleryBoard boardSlug="picture-board" boardTitle="사진첩" /> },
+      { path: "/board/banner", element: <PhotoGalleryBoard boardSlug="banner" boardTitle="배너" adminOnlyWrite={true} /> },
+      { path: "/board/:boardType", element: <BoardRoutePage /> },
+      { path: "/board/:boardType/:id", element: <BoardDetailPage /> },
+      { path: "/mypage", element: <ProtectedRoute><MyPageMileage /></ProtectedRoute> },
+      { path: "/mileage", element: <Navigate to="/board/point" replace /> },
+      { path: "/problem-submit", element: <ProtectedRoute><ProblemSubmitPage /></ProtectedRoute> },
+      { path: "/problem-create", element: <ProtectedRoute><ProblemCreatePage /></ProtectedRoute> },
+      { path: "/problem-edit/:id", element: <ProtectedRoute><ProblemEditPage /></ProtectedRoute> },
+      { path: "/board/:boardType/write", element: <ProtectedRoute><BoardWritePage /></ProtectedRoute> },
+      { path: "/board/:boardType/edit/:id", element: <ProtectedRoute><BoardWritePage /></ProtectedRoute> },
+      { path: "/admin", element: <ProtectedRoute requireAdmin={true}><AdminDashboard /></ProtectedRoute> },
+      { path: "/admin/mileage", element: <ProtectedRoute requireAdmin={true}><AdminMileage /></ProtectedRoute> },
+      { path: "*", element: <NotFoundPage /> },
+    ],
+  },
+]);
 
-        {/* 로그인 필수 경로 */}
-        <Route path="/mypage" element={<ProtectedRoute><MyPageMileage /></ProtectedRoute>} />
-        <Route path="/problem-submit" element={<ProtectedRoute><ProblemSubmitPage /></ProtectedRoute>} />
-        <Route path="/problem-create" element={<ProtectedRoute><ProblemCreatePage /></ProtectedRoute>} />
-        <Route path="/problem-edit/:id" element={<ProtectedRoute><ProblemEditPage /></ProtectedRoute>} />
-        <Route path="/board/:boardType/write" element={<ProtectedRoute><BoardWritePage /></ProtectedRoute>} />
-        <Route path="/board/:boardType/edit/:id" element={<ProtectedRoute><BoardWritePage /></ProtectedRoute>} />
-
-        {/* 관리자 관련 경로 */}
-        <Route
-          path="/admin"
-          element={
-            <ProtectedRoute requireAdmin={true}>
-              <AdminDashboard />
-            </ProtectedRoute>
-          }
-        />
-        <Route
-          path="/admin/mileage"
-          element={
-            <ProtectedRoute requireAdmin={true}>
-              <AdminMileage />
-            </ProtectedRoute>
-          }
-        />
-        <Route path="*" element={<NotFoundPage />} />
-      </Routes>
-      </Suspense>
-    </BrowserRouter>
-  );
-};
+const Router = () => <RouterProvider router={router} />;
 
 export default Router;

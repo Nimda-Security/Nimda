@@ -24,6 +24,7 @@ import com.nimda.cite.user.entity.User;
 import com.nimda.cite.user.repository.UserRepository;
 import com.nimda.cite.user.security.CustomUserDetails;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
+import org.springframework.security.access.AccessDeniedException;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
@@ -51,6 +52,9 @@ public class BoardController {
     /** sort 파라미터로 허용된 Board 엔티티 필드명 화이트리스트 */
     private static final Set<String> ALLOWED_SORT_FIELDS = Set.of(
             "createdAt", "updatedAt", "title", "postView", "pinned"
+    );
+    private static final Set<String> PUBLIC_LEGAL_SLUGS = Set.of(
+            "terms", "privacy", "youth-protection", "site-rules"
     );
     private static final int MAX_TITLE_LENGTH = 200;
     private static final int MAX_CONTENT_LENGTH = 5_000_000;
@@ -606,6 +610,36 @@ public class BoardController {
         }
     }
 
+    @GetMapping("/legal/{legalSlug}")
+    public ResponseEntity<?> viewLegalDocument(@PathVariable String legalSlug) {
+        if (!PUBLIC_LEGAL_SLUGS.contains(legalSlug)) {
+            return ApiResponse.fail("법적 안내 문서를 찾을 수 없습니다.")
+                    .toResponse(HttpStatus.NOT_FOUND);
+        }
+
+        try {
+            Board board = boardService.getLegalDocument(legalSlug);
+            boardService.incrementViewCount(board);
+            long likeCount = boardLikeService.getLikeCount(board.getId());
+            long commentCount = commentRepository.countByBoardIdAndStatusNot(
+                    board.getId(), STATUS.DELETED);
+            var attachments = attachmentService.listAttachmentsForBoard(board.getId());
+            BoardResponseDTO boardDto = BoardResponseDTO.from(
+                    board, likeCount, false, commentCount, attachments);
+            resolveProfileImage(boardDto);
+            return ApiResponse.ok(
+                    "법적 안내 문서를 성공적으로 조회했습니다.",
+                    Map.of("board", boardDto)).toResponse();
+        } catch (RuntimeException exception) {
+            return ApiResponse.fail("법적 안내 문서를 찾을 수 없습니다.")
+                    .toResponse(HttpStatus.NOT_FOUND);
+        } catch (Exception exception) {
+            log.error("법적 안내 문서 조회 오류", exception);
+            return ApiResponse.fail("법적 안내 문서 조회 중 오류가 발생했습니다.")
+                    .toResponse(HttpStatus.INTERNAL_SERVER_ERROR);
+        }
+    }
+
     @GetMapping("/{id}")
     public ResponseEntity<?> view(
             @AuthenticationPrincipal CustomUserDetails userDetails,
@@ -761,6 +795,8 @@ public class BoardController {
 
             return ApiResponse.ok("게시글이 성공적으로 수정되었습니다.", Map.of("board", boardDto)).toResponse();
 
+        } catch (AccessDeniedException exception) {
+            return ApiResponse.fail(exception.getMessage()).toResponse(HttpStatus.FORBIDDEN);
         } catch (RuntimeException e) {
             return ApiResponse.fail(e.getMessage()).toResponse(HttpStatus.NOT_FOUND);
 
@@ -788,9 +824,11 @@ public class BoardController {
                 return ApiResponse.fail("게시글을 삭제할 권한이 없습니다.").toResponse(HttpStatus.FORBIDDEN);
             }
 
-            boardService.boardDelete(id);
+            boardService.boardDelete(id, currentUser);
             return ApiResponse.ok("게시글이 성공적으로 삭제되었습니다.").toResponse();
 
+        } catch (AccessDeniedException exception) {
+            return ApiResponse.fail(exception.getMessage()).toResponse(HttpStatus.FORBIDDEN);
         } catch (RuntimeException e) {
             return ApiResponse.fail(e.getMessage()).toResponse(HttpStatus.NOT_FOUND);
 
@@ -926,6 +964,8 @@ public class BoardController {
 
             boardService.deleteMyBoards(boardIds, currentUser);
             return ApiResponse.ok("게시글이 삭제되었습니다.", null).toResponse();
+        } catch (AccessDeniedException exception) {
+            return ApiResponse.fail(exception.getMessage()).toResponse(HttpStatus.FORBIDDEN);
         } catch (Exception e) {
             log.error("내 게시글 삭제 오류", e);
             return ApiResponse.fail("게시글 삭제 중 오류가 발생했습니다.")

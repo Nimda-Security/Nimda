@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useRef, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { EditorContent, useEditor } from '@tiptap/react';
 import StarterKit from '@tiptap/starter-kit';
 import Color from '@tiptap/extension-color';
@@ -6,10 +6,10 @@ import Link from '@tiptap/extension-link';
 import Placeholder from '@tiptap/extension-placeholder';
 import TextAlign from '@tiptap/extension-text-align';
 import Underline from '@tiptap/extension-underline';
-import { useNavigate, useParams } from 'react-router-dom';
+import { useBlocker, useNavigate, useParams } from 'react-router-dom';
 import Layout from '@/components/Layout';
 import { createBoardAPI, getBoardDetailAPI, updateBoardAPI } from '@/api/board';
-import { uploadBoardFileViaS3 } from '@/api/attachments';
+import { deleteAttachments, uploadBoardFileViaS3 } from '@/api/attachments';
 import { getAllCategoriesAPI } from '@/api/category';
 import { getTagsByCategoryAPI } from '@/api/tag';
 import type { TagResponse } from '@/api/tag';
@@ -56,6 +56,40 @@ const isShopCategoryGroup = (category: Category, categories: Category[]) => {
   const parent = categories.find((item) => item.id === category.parentId);
   return Boolean(parent?.shopEnabled);
 };
+const getDraftSignature = ({
+  parentCategoryId,
+  subCategoryId,
+  title,
+  content,
+  itemPrice,
+  itemType,
+  profileDecorationId,
+  thumbnailAttachmentId,
+  tagId,
+  attachmentIds,
+}: {
+  parentCategoryId: number | null;
+  subCategoryId: number | null;
+  title: string;
+  content: string;
+  itemPrice: string;
+  itemType: 'GENERAL' | 'BADGE';
+  profileDecorationId: number | null;
+  thumbnailAttachmentId: number | null;
+  tagId: number | null;
+  attachmentIds: number[];
+}) => JSON.stringify({
+  parentCategoryId,
+  subCategoryId,
+  title,
+  content,
+  itemPrice,
+  itemType,
+  profileDecorationId,
+  thumbnailAttachmentId,
+  tagId,
+  attachmentIds,
+});
 
 function BoardWritePage() {
   const navigate = useNavigate();
@@ -85,11 +119,19 @@ function BoardWritePage() {
   const [isDragOver, setIsDragOver] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [pendingUploadCount, setPendingUploadCount] = useState(0);
+  const [pendingAttachmentMutationCount, setPendingAttachmentMutationCount] = useState(0);
   const [editHydrationState, setEditHydrationState] = useState<EditHydrationState>(
     isEditMode ? 'loading' : 'ready'
   );
   const [error, setError] = useState<string | null>(null);
   const [currentTagList, setCurrentTagList] = useState<TagResponse[]>([]);
+  const [draftBaseline, setDraftBaseline] = useState<string | null>(null);
+  const [categoryLoadState, setCategoryLoadState] = useState<'loading' | 'ready' | 'failed'>('loading');
+  const [tagLoadState, setTagLoadState] = useState<'idle' | 'loading' | 'ready' | 'failed'>('idle');
+  const [categoryRetryKey, setCategoryRetryKey] = useState(0);
+  const [tagRetryKey, setTagRetryKey] = useState(0);
+  const [editRetryKey, setEditRetryKey] = useState(0);
+  const [loadedTagCategoryId, setLoadedTagCategoryId] = useState<number | null>(null);
 
   const [showFontSize, setShowFontSize] = useState(false);
   const [showColorPicker, setShowColorPicker] = useState(false);
@@ -107,6 +149,15 @@ function BoardWritePage() {
   const linkPopoverWrapRef = useRef<HTMLDivElement>(null);
   const detailCategoryWarningRef = useRef<HTMLParagraphElement>(null);
   const pendingUploadsRef = useRef(0);
+  const sessionNewAttachmentIdsRef = useRef(new Set<number>());
+  const mountedRef = useRef(true);
+  const navigationBypassRef = useRef(false);
+  const isDraftDirtyRef = useRef(false);
+  const blockerHandlingRef = useRef(false);
+  const removingAttachmentIdsRef = useRef(new Set<number>());
+  const discardUploadsRef = useRef(false);
+  const commitInFlightRef = useRef(false);
+  const pendingAttachmentMutationsRef = useRef(0);
 
   const editor = useEditor({
     immediatelyRender: false,
@@ -162,6 +213,9 @@ function BoardWritePage() {
         class: 'bw-content-input',
         dir: 'ltr',
         spellcheck: 'false',
+        role: 'textbox',
+        'aria-label': '내용',
+        'aria-multiline': 'true',
       },
       handlePaste: (_view, event) => {
         const text = event.clipboardData?.getData('text/plain');
@@ -197,18 +251,53 @@ function BoardWritePage() {
   });
 
   const isUploading = pendingUploadCount > 0;
+  const isAttachmentMutationPending = pendingAttachmentMutationCount > 0;
   const isEditHydrationBlocked = isEditMode && editHydrationState !== 'ready';
-  const isInteractionBlocked = isEditHydrationBlocked || isSubmitting;
+  const isInteractionBlocked =
+    isEditHydrationBlocked || isSubmitting || isAttachmentMutationPending;
 
   const beginUpload = () => {
     pendingUploadsRef.current += 1;
-    setPendingUploadCount((count) => count + 1);
+    if (mountedRef.current) {
+      setPendingUploadCount((count) => count + 1);
+    }
   };
 
   const finishUpload = () => {
     pendingUploadsRef.current = Math.max(0, pendingUploadsRef.current - 1);
-    setPendingUploadCount((count) => Math.max(0, count - 1));
+    if (mountedRef.current) {
+      setPendingUploadCount((count) => Math.max(0, count - 1));
+    }
   };
+
+  const beginAttachmentMutation = () => {
+    pendingAttachmentMutationsRef.current += 1;
+    if (mountedRef.current) {
+      setPendingAttachmentMutationCount((count) => count + 1);
+    }
+  };
+
+  const finishAttachmentMutation = () => {
+    pendingAttachmentMutationsRef.current = Math.max(
+      0,
+      pendingAttachmentMutationsRef.current - 1
+    );
+    if (mountedRef.current) {
+      setPendingAttachmentMutationCount((count) => Math.max(0, count - 1));
+    }
+  };
+  const rejectUploadWhileBusy = () => {
+    if (commitInFlightRef.current) {
+      setError('게시글을 저장하는 중입니다. 저장이 끝난 뒤 파일을 올려주세요.');
+      return true;
+    }
+    if (pendingAttachmentMutationsRef.current > 0) {
+      setError('첨부 파일을 처리하는 중입니다. 작업이 끝난 뒤 파일을 올려주세요.');
+      return true;
+    }
+    return false;
+  };
+
 
   useEffect(() => {
     editor?.setEditable(!isInteractionBlocked);
@@ -242,6 +331,184 @@ function BoardWritePage() {
   const isShopCategory = selectedCategory
     ? isShopCategoryGroup(selectedCategory, allCategories)
     : false;
+  const draftSignature = getDraftSignature({
+    parentCategoryId,
+    subCategoryId,
+    title,
+    content,
+    itemPrice,
+    itemType,
+    profileDecorationId,
+    thumbnailAttachmentId,
+    tagId,
+    attachmentIds: attachedFiles.map((file) => file.id),
+  });
+  const hasNewDraftInput =
+    title.trim().length > 0 ||
+    hasMeaningfulContent(content) ||
+    attachedFiles.length > 0 ||
+    itemPrice.trim().length > 0 ||
+    profileDecorationId !== null ||
+    thumbnailAttachmentId !== null ||
+    tagId !== null;
+  const isDraftDirty =
+    isUploading ||
+    (draftBaseline !== null
+      ? draftSignature !== draftBaseline
+      : !isEditMode && hasNewDraftInput);
+  isDraftDirtyRef.current = isDraftDirty;
+  const blocker = useBlocker(() => isDraftDirtyRef.current && !navigationBypassRef.current);
+
+  const removeInlineAttachment = (attachmentId: number) => {
+    if (!editor) return;
+
+    const positions: number[] = [];
+    editor.state.doc.descendants((node, position) => {
+      const src = node.attrs.src as string | undefined;
+      if (node.type.name === 'image' && src?.includes(`/attachments/${attachmentId}/`)) {
+        positions.push(position);
+      }
+    });
+
+    if (positions.length > 0) {
+      editor
+        .chain()
+        .focus()
+        .command(({ tr }) => {
+          positions.reverse().forEach((position) => tr.delete(position, position + 1));
+          return true;
+        })
+        .run();
+    }
+  };
+
+  const cleanupSessionAttachments = useCallback(async (
+    keepalive = false,
+    reportError = true
+  ): Promise<boolean> => {
+    if (commitInFlightRef.current) return true;
+
+    const fileIds = [...sessionNewAttachmentIdsRef.current];
+    if (fileIds.length === 0) return true;
+
+    pendingAttachmentMutationsRef.current += 1;
+    if (mountedRef.current) {
+      setPendingAttachmentMutationCount((count) => count + 1);
+    }
+
+    try {
+      const result = await deleteAttachments(fileIds, { keepalive });
+      if (!result.ok) {
+        if (reportError && mountedRef.current) {
+          setError(`업로드한 첨부 파일을 정리하지 못했습니다. ${result.message}`);
+        }
+        return false;
+      }
+
+      fileIds.forEach((fileId) => sessionNewAttachmentIdsRef.current.delete(fileId));
+      return true;
+    } catch {
+      if (reportError && mountedRef.current) {
+        setError('업로드한 첨부 파일을 정리하는 중 오류가 발생했습니다.');
+      }
+      return false;
+    } finally {
+      pendingAttachmentMutationsRef.current = Math.max(
+        0,
+        pendingAttachmentMutationsRef.current - 1
+      );
+      if (mountedRef.current) {
+        setPendingAttachmentMutationCount((count) => Math.max(0, count - 1));
+      }
+    }
+  }, []);
+
+  useEffect(() => {
+    mountedRef.current = true;
+    return () => {
+      mountedRef.current = false;
+    };
+  }, []);
+
+  useEffect(() => {
+    setDraftBaseline(null);
+    navigationBypassRef.current = false;
+    sessionNewAttachmentIdsRef.current.clear();
+    discardUploadsRef.current = false;
+  }, [editId, isEditMode, slug]);
+
+  useEffect(() => {
+    if (!isEditMode && draftBaseline === null && allCategories.length > 0 && targetCategoryId) {
+      setDraftBaseline(draftSignature);
+    }
+  }, [allCategories.length, draftBaseline, draftSignature, isEditMode, targetCategoryId]);
+
+  useEffect(() => {
+    if (blocker.state !== 'blocked' || blockerHandlingRef.current) return;
+
+    blockerHandlingRef.current = true;
+    if (commitInFlightRef.current) {
+      setError('게시글을 저장하는 중입니다. 저장이 끝난 뒤 이동해주세요.');
+      blocker.reset();
+      blockerHandlingRef.current = false;
+      return;
+    }
+    if (pendingUploadsRef.current > 0) {
+      setError('파일 업로드가 끝난 뒤 이동해주세요.');
+      blocker.reset();
+      blockerHandlingRef.current = false;
+      return;
+    }
+    if (pendingAttachmentMutationsRef.current > 0) {
+      setError('첨부 파일을 처리하는 중입니다. 작업이 끝난 뒤 이동해주세요.');
+      blocker.reset();
+      blockerHandlingRef.current = false;
+      return;
+    }
+    if (!window.confirm('작성 중인 내용이 있습니다. 나가시겠습니까? 업로드한 첨부 파일은 삭제됩니다.')) {
+      blocker.reset();
+      blockerHandlingRef.current = false;
+      return;
+    }
+    discardUploadsRef.current = true;
+
+    void cleanupSessionAttachments().then((cleaned) => {
+      if (cleaned) {
+        blocker.proceed();
+      } else {
+        discardUploadsRef.current = false;
+        blocker.reset();
+      }
+      blockerHandlingRef.current = false;
+    });
+  }, [blocker, cleanupSessionAttachments]);
+
+  useEffect(() => {
+    const handleBeforeUnload = (event: BeforeUnloadEvent) => {
+      if (!isDraftDirtyRef.current) return;
+      event.preventDefault();
+      event.returnValue = '';
+    };
+    const handlePageHide = (event: PageTransitionEvent) => {
+      if (event.persisted || commitInFlightRef.current) return;
+      discardUploadsRef.current = true;
+      void cleanupSessionAttachments(true, false);
+    };
+    const handlePageShow = (event: PageTransitionEvent) => {
+      if (event.persisted) {
+        discardUploadsRef.current = false;
+      }
+    };
+
+    window.addEventListener('beforeunload', handleBeforeUnload);
+    window.addEventListener('pagehide', handlePageHide);
+    window.addEventListener('pageshow', handlePageShow);
+    return () => {
+      window.removeEventListener('beforeunload', handleBeforeUnload);
+      window.removeEventListener('pagehide', handlePageHide);
+      window.removeEventListener('pageshow', handlePageShow);
+    };
+  }, [cleanupSessionAttachments]);
 
   useEffect(() => {
     if (!isShopCategory || !isAdmin()) {
@@ -316,7 +583,11 @@ function BoardWritePage() {
       editor
         .chain()
         .focus()
-        .insertContent(`<a href="${normalizedUrl}" target="_blank" rel="noopener noreferrer">${label}</a>`)
+        .insertContent({
+          type: 'text',
+          text: label,
+          marks: [{ type: 'link', attrs: { href: normalizedUrl } }],
+        })
         .run();
     } else {
       editor.chain().focus().extendMarkRange('link').setLink({ href: normalizedUrl }).run();
@@ -350,17 +621,27 @@ function BoardWritePage() {
   };
 
   useEffect(() => {
+    let cancelled = false;
     const loadCategories = async () => {
+      setCategoryLoadState('loading');
       try {
         const categories = await getAllCategoriesAPI();
-        setAllCategories(categories);
-      } catch (loadError) {
-        console.error('카테고리 목록 로드 오류:', loadError);
+        if (!cancelled) {
+          setAllCategories(categories);
+          setCategoryLoadState(categories.length > 0 ? 'ready' : 'failed');
+        }
+      } catch {
+        if (!cancelled) {
+          setCategoryLoadState('failed');
+        }
       }
     };
 
-    loadCategories();
-  }, []);
+    void loadCategories();
+    return () => {
+      cancelled = true;
+    };
+  }, [categoryRetryKey]);
 
   useEffect(() => {
     if (allCategories.length === 0) return;
@@ -440,6 +721,18 @@ function BoardWritePage() {
           const nextContent = board.content || EMPTY_DOC;
           setContent(nextContent);
           editor?.commands.setContent(nextContent, false);
+          setDraftBaseline(getDraftSignature({
+            parentCategoryId: board.category?.parentId ?? board.category?.id ?? null,
+            subCategoryId: board.category?.id ?? null,
+            title: board.title,
+            content: nextContent,
+            itemPrice: board.itemPrice != null ? String(board.itemPrice) : '',
+            itemType: board.itemType === 'BADGE' ? 'BADGE' : 'GENERAL',
+            profileDecorationId: board.profileDecoration?.id ?? null,
+            thumbnailAttachmentId: board.thumbnailAttachmentId ?? null,
+            tagId: board.tag?.id ?? null,
+            attachmentIds: board.attachments?.map((attachment) => attachment.id) ?? [],
+          }));
           setEditHydrationState('ready');
         } catch {
           if (!cancelled) {
@@ -469,35 +762,40 @@ function BoardWritePage() {
     setParentCategoryId(category.id);
     const children = allCategories.filter((item) => item.parentId === category.id);
     setSubCategoryId(children[0]?.id ?? category.id);
-  }, [allCategories, slug, isEditMode, editId, editor, navigate]);
+  }, [allCategories, slug, isEditMode, editId, editRetryKey, editor, navigate]);
 
   useEffect(() => {
     if (!targetCategoryId) {
       setCurrentTagList([]);
+      setTagLoadState('idle');
+      setLoadedTagCategoryId(null);
       return;
     }
 
     let cancelled = false;
-
     const loadTags = async () => {
+      setTagLoadState('loading');
+      setLoadedTagCategoryId(null);
       try {
         const tags = await getTagsByCategoryAPI(targetCategoryId);
         if (!cancelled) {
           setCurrentTagList(tags);
+          setTagLoadState('ready');
+          setLoadedTagCategoryId(targetCategoryId);
         }
       } catch {
         if (!cancelled) {
           setCurrentTagList([]);
+          setTagLoadState('failed');
         }
       }
     };
 
-    loadTags();
-
+    void loadTags();
     return () => {
       cancelled = true;
     };
-  }, [targetCategoryId]);
+  }, [tagRetryKey, targetCategoryId]);
 
   useEffect(() => {
     if (!editor || !showLinkPopover) return;
@@ -531,6 +829,8 @@ function BoardWritePage() {
   }, [showLinkPopover]);
 
   const handleImageUploadToEditor = async (files: FileList | File[]) => {
+    if (rejectUploadWhileBusy()) return;
+
     beginUpload();
     try {
       const targetCategoryId = subCategoryId || parentCategoryId;
@@ -548,6 +848,11 @@ function BoardWritePage() {
           break;
         }
 
+        if (discardUploadsRef.current || !mountedRef.current) {
+          void deleteAttachments([result.attachmentId], { keepalive: true });
+          continue;
+        }
+        sessionNewAttachmentIdsRef.current.add(result.attachmentId);
         setAttachedFiles((prev) => [
           ...prev,
           {
@@ -593,6 +898,10 @@ function BoardWritePage() {
   const handleFileSelect = async (event: React.ChangeEvent<HTMLInputElement>) => {
     const files = Array.from(event.target.files ?? []);
     if (files.length === 0) return;
+    if (rejectUploadWhileBusy()) {
+      event.target.value = '';
+      return;
+    }
 
     beginUpload();
     try {
@@ -610,6 +919,11 @@ function BoardWritePage() {
           break;
         }
 
+        if (discardUploadsRef.current || !mountedRef.current) {
+          void deleteAttachments([result.attachmentId], { keepalive: true });
+          continue;
+        }
+        sessionNewAttachmentIdsRef.current.add(result.attachmentId);
         setAttachedFiles((prev) => [
           ...prev,
           { id: result.attachmentId, name: file.name, size: file.size },
@@ -625,9 +939,41 @@ function BoardWritePage() {
     }
   };
 
-  const handleRemoveFile = (attachmentId: number) => {
+  const handleRemoveFile = async (attachmentId: number) => {
+    if (commitInFlightRef.current) {
+      setError('게시글을 저장하는 중입니다. 저장이 끝난 뒤 첨부 파일을 삭제해주세요.');
+      return;
+    }
+    if (removingAttachmentIdsRef.current.has(attachmentId)) return;
+
+    if (sessionNewAttachmentIdsRef.current.has(attachmentId)) {
+      removingAttachmentIdsRef.current.add(attachmentId);
+      beginAttachmentMutation();
+
+      try {
+        const result = await deleteAttachments([attachmentId]);
+        if (!result.ok) {
+          if (mountedRef.current) {
+            setError(`첨부 파일을 삭제하지 못했습니다. ${result.message}`);
+          }
+          return;
+        }
+        sessionNewAttachmentIdsRef.current.delete(attachmentId);
+      } catch {
+        if (mountedRef.current) {
+          setError('첨부 파일을 삭제하는 중 오류가 발생했습니다.');
+        }
+        return;
+      } finally {
+        removingAttachmentIdsRef.current.delete(attachmentId);
+        finishAttachmentMutation();
+      }
+    }
+
+    if (!mountedRef.current) return;
     setAttachedFiles((prev) => prev.filter((file) => file.id !== attachmentId));
     setThumbnailAttachmentId((current) => (current === attachmentId ? null : current));
+    removeInlineAttachment(attachmentId);
   };
 
   const handleDragOver = (event: React.DragEvent) => {
@@ -642,9 +988,8 @@ function BoardWritePage() {
     setIsDragOver(false);
 
     const files = Array.from(event.dataTransfer.files);
-    if (files.length === 0) return;
+    if (files.length === 0 || rejectUploadWhileBusy()) return;
 
-    beginUpload();
     setError(null);
     try {
       const images = files.filter((file) => file.type.startsWith('image/'));
@@ -655,38 +1000,50 @@ function BoardWritePage() {
       }
 
       if (docs.length > 0) {
-        const targetCategoryId = subCategoryId || parentCategoryId;
-        if (!targetCategoryId) {
-          setError('카테고리를 먼저 선택해주세요.');
-          return;
-        }
-
-        for (const file of docs) {
-          const result = await uploadBoardFileViaS3(file, targetCategoryId);
-          if (!result.ok) {
-            setError(result.message);
-            break;
+        beginUpload();
+        try {
+          const targetCategoryId = subCategoryId || parentCategoryId;
+          if (!targetCategoryId) {
+            setError('카테고리를 먼저 선택해주세요.');
+            return;
           }
 
-          setAttachedFiles((prev) => [
-            ...prev,
-            { id: result.attachmentId, name: file.name, size: file.size },
-          ]);
+          for (const file of docs) {
+            const result = await uploadBoardFileViaS3(file, targetCategoryId);
+            if (!result.ok) {
+              setError(result.message);
+              break;
+            }
+
+            if (discardUploadsRef.current || !mountedRef.current) {
+              void deleteAttachments([result.attachmentId], { keepalive: true });
+              continue;
+            }
+            sessionNewAttachmentIdsRef.current.add(result.attachmentId);
+            setAttachedFiles((prev) => [
+              ...prev,
+              { id: result.attachmentId, name: file.name, size: file.size },
+            ]);
+          }
+        } finally {
+          finishUpload();
         }
       }
     } catch {
       setError((current) => current || '파일 업로드 중 오류가 발생했습니다.');
-    } finally {
-      finishUpload();
     }
   };
 
   const handleSubmit = async (event: React.FormEvent) => {
     event.preventDefault();
 
-    if (isSubmitting) return;
+    if (isSubmitting || commitInFlightRef.current) return;
     if (pendingUploadsRef.current > 0) {
       setError('파일 업로드가 완료될 때까지 기다려주세요.');
+      return;
+    }
+    if (pendingAttachmentMutationsRef.current > 0) {
+      setError('첨부 파일 삭제가 완료될 때까지 기다려주세요.');
       return;
     }
     if (isEditHydrationBlocked) {
@@ -697,8 +1054,15 @@ function BoardWritePage() {
       );
       return;
     }
-
     const targetCategoryId = subCategoryId || parentCategoryId;
+    if (categoryLoadState !== 'ready') {
+      setError('카테고리 정보를 확인한 뒤 등록할 수 있습니다.');
+      return;
+    }
+    if (targetCategoryId && (tagLoadState !== 'ready' || loadedTagCategoryId !== targetCategoryId)) {
+      setError('태그 정보를 확인한 뒤 등록할 수 있습니다.');
+      return;
+    }
     const latestContent =
       editor?.view?.dom instanceof HTMLElement
         ? getSanitizedEditorHtml(editor.view.dom)
@@ -750,10 +1114,11 @@ function BoardWritePage() {
       setError(null);
       setContent(latestContent);
 
+      const submittedAttachmentIds = attachedFiles.map((file) => file.id);
       const attachmentIds = isEditMode
-        ? attachedFiles.map((file) => file.id)
-        : attachedFiles.length > 0
-          ? attachedFiles.map((file) => file.id)
+        ? submittedAttachmentIds
+        : submittedAttachmentIds.length > 0
+          ? submittedAttachmentIds
           : undefined;
 
       if (isEditMode) {
@@ -761,6 +1126,7 @@ function BoardWritePage() {
           setError('게시글을 불러오지 못해 수정할 수 없습니다.');
           return;
         }
+        commitInFlightRef.current = true;
         const response = await updateBoardAPI(editBoardId, {
           categoryId: targetCategoryId,
           title: title.trim(),
@@ -774,6 +1140,12 @@ function BoardWritePage() {
         });
 
         if (response.success && 'board' in response) {
+          submittedAttachmentIds.forEach((attachmentId) =>
+            sessionNewAttachmentIdsRef.current.delete(attachmentId)
+          );
+          isDraftDirtyRef.current = false;
+          navigationBypassRef.current = true;
+          discardUploadsRef.current = false;
           const boardSlug = response.board.category?.slug || slug;
           navigate(`/board/${boardSlug}/${editBoardId}`);
           return;
@@ -783,6 +1155,7 @@ function BoardWritePage() {
         return;
       }
 
+      commitInFlightRef.current = true;
       const response = await createBoardAPI({
         categoryId: targetCategoryId,
         title: title.trim(),
@@ -796,6 +1169,12 @@ function BoardWritePage() {
       });
 
       if (response.success && 'board' in response) {
+        submittedAttachmentIds.forEach((attachmentId) =>
+          sessionNewAttachmentIdsRef.current.delete(attachmentId)
+        );
+        isDraftDirtyRef.current = false;
+        navigationBypassRef.current = true;
+        discardUploadsRef.current = false;
         const writtenCategory = allCategories.find(
           (category) => category.id === targetCategoryId
         );
@@ -811,30 +1190,66 @@ function BoardWritePage() {
           : '게시글 작성 중 오류가 발생했습니다.'
       );
     } finally {
-      setIsSubmitting(false);
+      commitInFlightRef.current = false;
+      if (mountedRef.current) {
+        setIsSubmitting(false);
+      }
     }
   };
 
   const handleCancel = () => {
-    if (!window.confirm('작성 중인 내용이 사라집니다. 정말 나가시겠습니까?')) {
-      return;
-    }
-
     const category = allCategories.find(
       (item) => item.id === (subCategoryId || parentCategoryId)
     );
     navigate(`/board/${category?.slug || slug}`);
   };
 
+  const isTaxonomyBlocked =
+    categoryLoadState !== 'ready' ||
+    !targetCategoryId ||
+    tagLoadState !== 'ready' ||
+    loadedTagCategoryId !== targetCategoryId;
+
   return (
     <Layout hideSidebar>
       <div className="bw-page">
         <form onSubmit={handleSubmit} className="bw-container">
+          {categoryLoadState === 'failed' && (
+            <div role="alert">
+              <p>카테고리 정보를 불러오지 못했습니다.</p>
+              <button type="button" onClick={() => setCategoryRetryKey((key) => key + 1)}>
+                카테고리 다시 시도
+              </button>
+            </div>
+          )}
+          {tagLoadState === 'failed' && (
+            <div role="alert">
+              <p>태그 정보를 불러오지 못했습니다.</p>
+              <button type="button" onClick={() => setTagRetryKey((key) => key + 1)}>
+                태그 다시 시도
+              </button>
+            </div>
+          )}
+          {isEditMode && editHydrationState === 'failed' && (
+            <div role="alert">
+              <p>게시글을 불러오지 못했습니다.</p>
+              <button type="button" onClick={() => setEditRetryKey((key) => key + 1)}>
+                게시글 다시 시도
+              </button>
+            </div>
+          )}
+
           <fieldset
             disabled={isInteractionBlocked}
             aria-busy={editHydrationState === 'loading'}
             style={{ border: 0, padding: 0, margin: 0, minWidth: 0 }}
           >
+          {categoryLoadState === 'loading' && (
+            <p role="status" aria-live="polite">카테고리 정보를 불러오는 중입니다.</p>
+          )}
+          {tagLoadState === 'loading' && (
+            <p role="status" aria-live="polite">태그 정보를 불러오는 중입니다.</p>
+          )}
           <CategorySelector
             allCategories={allCategories}
             rootCategories={rootCategories}
@@ -855,6 +1270,7 @@ function BoardWritePage() {
           <div className="bw-divider" />
 
           <div className="bw-title-area">
+            <label htmlFor="bw-title" className="sr-only">제목</label>
             <input
               id="bw-title"
               type="text"
@@ -863,6 +1279,7 @@ function BoardWritePage() {
               placeholder="제목을 입력하세요."
               className="bw-title-input"
               maxLength={200}
+              aria-describedby={error ? 'board-write-error' : undefined}
               required
             />
           </div>
@@ -871,6 +1288,7 @@ function BoardWritePage() {
             <>
               <div className="bw-divider" />
               <div className="bw-title-area">
+                <label htmlFor="bw-item-price" className="sr-only">상품 가격</label>
                 <input
                   id="bw-item-price"
                   type="number"
@@ -880,6 +1298,7 @@ function BoardWritePage() {
                   onChange={(event) => setItemPrice(event.target.value)}
                   placeholder="상품 가격을 입력하세요. 예: 1200"
                   className="bw-title-input"
+                  aria-describedby={error ? 'board-write-error' : undefined}
                   required
                 />
               </div>
@@ -996,7 +1415,7 @@ function BoardWritePage() {
 
           </fieldset>
 
-          {error && <div className="bw-error">{error}</div>}
+          {error && <div id="board-write-error" className="bw-error" role="alert" aria-live="assertive">{error}</div>}
 
           <div className="bw-divider" />
 
@@ -1005,13 +1424,20 @@ function BoardWritePage() {
               type="button"
               className="bw-btn bw-btn--cancel"
               onClick={handleCancel}
+              disabled={isSubmitting || isUploading || isAttachmentMutationPending}
             >
               취소
             </button>
             <button
               type="submit"
               className="bw-btn bw-btn--submit"
-              disabled={isSubmitting || isUploading || isEditHydrationBlocked}
+              disabled={
+                isSubmitting ||
+                isUploading ||
+                isAttachmentMutationPending ||
+                isEditHydrationBlocked ||
+                isTaxonomyBlocked
+              }
             >
               {isSubmitting
                 ? isEditMode

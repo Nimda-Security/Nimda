@@ -110,6 +110,13 @@ public class SecurityConfig {
 
                         // [우선순위 4] 인증 필수 API (로그인하지 않으면 접근 불가)
                         // 게시판 조회(GET)를 포함한 모든 게시판 활동은 인증 필요
+                        // Public legal documents use immutable slugs; numeric board IDs stay protected.
+                        .requestMatchers(HttpMethod.GET,
+                                "/api/cite/board/legal/terms",
+                                "/api/cite/board/legal/privacy",
+                                "/api/cite/board/legal/youth-protection",
+                                "/api/cite/board/legal/site-rules"
+                        ).permitAll()
                         .requestMatchers("/api/cite/board/**").authenticated()
                         .requestMatchers("/api/cite/attendance/**").authenticated()
                         .requestMatchers("/api/cite/point/**").authenticated()

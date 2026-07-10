@@ -7,12 +7,14 @@ import com.nimda.cite.domain.board.enums.BoardStatus;
 import com.nimda.cite.domain.board.repository.BoardRepository;
 import com.nimda.cite.domain.comment.repository.CommentRepository;
 import com.nimda.cite.domain.like.repository.BoardLikeRepository;
+import com.nimda.cite.user.entity.Authority;
 import com.nimda.cite.user.entity.User;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.security.access.AccessDeniedException;
 
 import java.util.List;
 
@@ -96,11 +98,84 @@ class BoardServiceTest {
         actingAdmin.setId(2L);
         Board board = activeBoard(11L, 3);
         board.setAuthor(originalAuthor);
+        when(boardRepository.findById(11L)).thenReturn(java.util.Optional.of(board));
 
         boardService.write(board, actingAdmin, null);
 
         assertSame(originalAuthor, board.getAuthor());
         verify(boardRepository).save(board);
+    }
+
+    @Test
+    void nonAdministratorAuthorCannotModifyOrDeleteALegalDocument() {
+        User author = new User();
+        author.setId(7L);
+        Board legalBoard = activeBoard(12L, 0);
+        legalBoard.setAuthor(author);
+        legalBoard.setLegalSlug("terms");
+        when(boardRepository.findById(12L)).thenReturn(java.util.Optional.of(legalBoard));
+
+        assertThrows(
+                AccessDeniedException.class,
+                () -> boardService.write(legalBoard, author, null));
+        assertThrows(
+                AccessDeniedException.class,
+                () -> boardService.boardDelete(12L, author));
+        verify(boardRepository, never()).save(legalBoard);
+    }
+
+    @Test
+    void nonAdministratorAuthorCannotBulkDeleteALegalDocument() {
+        User author = new User();
+        author.setId(7L);
+        Board legalBoard = activeBoard(13L, 0);
+        legalBoard.setAuthor(author);
+        legalBoard.setLegalSlug("privacy");
+        when(boardRepository.findAllById(List.of(13L))).thenReturn(List.of(legalBoard));
+
+        assertThrows(
+                AccessDeniedException.class,
+                () -> boardService.deleteMyBoards(List.of(13L), author));
+
+        verify(boardRepository, never()).save(legalBoard);
+    }
+
+    @Test
+    void currentAdministratorCanModifyALegalDocumentWithoutChangingItsSlug() {
+        User administrator = new User();
+        administrator.setId(8L);
+        administrator.getAuthorities().add(new Authority(1L, "ROLE_ADMIN"));
+        Board legalBoard = activeBoard(14L, 0);
+        legalBoard.setAuthor(administrator);
+        legalBoard.setLegalSlug("site-rules");
+        when(boardRepository.findById(14L)).thenReturn(java.util.Optional.of(legalBoard));
+
+        boardService.write(legalBoard, administrator, null);
+
+        assertEquals("site-rules", legalBoard.getLegalSlug());
+        verify(boardRepository).save(legalBoard);
+    }
+
+    @Test
+    void legalDocumentIdentityIsCheckedAgainstThePersistedRow() {
+        User administrator = new User();
+        administrator.setId(8L);
+        administrator.getAuthorities().add(new Authority(1L, "ROLE_ADMIN"));
+
+        Board persistedLegalBoard = activeBoard(15L, 0);
+        persistedLegalBoard.setAuthor(administrator);
+        persistedLegalBoard.setLegalSlug("terms");
+
+        Board tamperedUpdate = activeBoard(15L, 0);
+        tamperedUpdate.setAuthor(administrator);
+        tamperedUpdate.setLegalSlug(null);
+        when(boardRepository.findById(15L))
+                .thenReturn(java.util.Optional.of(persistedLegalBoard));
+
+        assertThrows(
+                IllegalArgumentException.class,
+                () -> boardService.write(tamperedUpdate, administrator, null));
+        verify(boardRepository, never()).save(tamperedUpdate);
     }
 
     private Board activeBoard(Long id, Integer views) {

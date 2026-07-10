@@ -66,7 +66,7 @@ public class AdminUserService {
      */
     @Transactional
     public User approveUser(Long userId) {
-        User user = userRepository.findById(userId)
+        User user = userRepository.findByIdForAuthMutation(userId)
                 .orElseThrow(() -> new RuntimeException("사용자를 찾을 수 없습니다: " + userId));
 
         boolean changed = user.getStatus() != ApprovalStatus.APPROVED;
@@ -98,7 +98,7 @@ public class AdminUserService {
      */
     @Transactional
     public User rejectUser(Long userId) {
-        User user = userRepository.findById(userId)
+        User user = userRepository.findByIdForAuthMutation(userId)
                 .orElseThrow(() -> new RuntimeException("사용자를 찾을 수 없습니다: " + userId));
 
         if (user.getStatus() != ApprovalStatus.REJECTED) {
@@ -137,7 +137,7 @@ public class AdminUserService {
         final String normalizedRole = normalized;
 
         // 2. 사용자 및 권한 존재 여부 확인
-        User user = userRepository.findById(userId)
+        User user = userRepository.findByIdForAuthMutation(userId)
                 .orElseThrow(() -> new RuntimeException("사용자를 찾을 수 없습니다. ID: " + userId));
 
         // final 변수로 선언하여 람다식 내부에서 안전하게 사용
@@ -176,7 +176,7 @@ public class AdminUserService {
         }
         final String normalizedRole = normalized;
 
-        User user = userRepository.findById(userId)
+        User user = userRepository.findByIdForAuthMutation(userId)
                 .orElseThrow(() -> new RuntimeException("사용자를 찾을 수 없습니다. ID: " + userId));
 
         boolean removed = user.getAuthorities().removeIf(a -> normalizedRole.equals(a.getAuthorityName()));

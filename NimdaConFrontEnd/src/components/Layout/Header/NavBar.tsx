@@ -1,9 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import Logo from '@/components/icons/Logo';
-import { isAdmin } from '@/utils/jwt';
 import {
-  isLoggedIn,
   logoutAPI,
   getMyPageInfo,
   validateSession,
@@ -26,15 +24,10 @@ const Navbar: React.FC = () => {
     let cancelled = false;
 
     const loadAuthState = async () => {
-      if (!isLoggedIn()) {
-        setAuthStatus('anonymous');
-        return;
-      }
-
       setAuthStatus('loading');
       try {
-        const sessionIsValid = await validateSession();
-        if (!sessionIsValid) {
+        const session = await validateSession();
+        if (session.status !== 'authenticated') {
           if (!cancelled) {
             setAdminStatus(false);
             setProfileImage(null);
@@ -55,7 +48,7 @@ const Navbar: React.FC = () => {
 
         if (!cancelled) {
           setProfileImage(result.data.profileImage ?? null);
-          setAdminStatus(isAdmin());
+          setAdminStatus(session.roles.includes('ROLE_ADMIN'));
           setAuthStatus('authenticated');
         }
       } catch {

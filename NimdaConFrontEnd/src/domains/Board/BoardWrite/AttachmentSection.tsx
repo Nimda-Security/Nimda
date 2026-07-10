@@ -122,6 +122,12 @@ export default function AttachmentSection({
                       type="button"
                       className={`bw-thumbnail-option ${selected ? 'bw-thumbnail-option--selected' : ''} ${automatic ? 'bw-thumbnail-option--auto' : ''}`}
                       onClick={() => setThumbnailAttachmentId(selected ? null : file.id)}
+                      aria-label={
+                        selected
+                          ? `${file.name} 썸네일 선택 해제`
+                          : `${file.name}을 상품 썸네일로 선택`
+                      }
+                      aria-pressed={selected}
                     >
                       <img
                         src={`/api/cite/attachments/${file.id}/download?disposition=inline`}
@@ -166,6 +172,7 @@ export default function AttachmentSection({
                     type="button"
                     className="bw-file-remove"
                     onClick={() => handleRemoveFile(f.id)}
+                    aria-label={`${f.name} 첨부파일 삭제`}
                   >
                     ×
                   </button>
@@ -179,6 +186,16 @@ export default function AttachmentSection({
           onDragLeave={handleDragLeave}
           onDrop={handleDrop}
           onClick={() => fileInputRef.current?.click()}
+          role="button"
+          tabIndex={0}
+          aria-label="첨부파일 업로드"
+          aria-busy={isUploading}
+          onKeyDown={(e) => {
+            if (e.key === 'Enter' || e.key === ' ') {
+              e.preventDefault();
+              fileInputRef.current?.click();
+            }
+          }}
         >
           {isUploading ? (
             <p className="bw-dropzone-text">업로드 중...</p>

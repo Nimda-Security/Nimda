@@ -3,11 +3,13 @@ package com.nimda.cite.common.util.Redis;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.data.redis.core.ValueOperations;
+import org.springframework.data.redis.core.script.DefaultRedisScript;
 import org.springframework.stereotype.Service;
 
 import java.time.Duration;
 import java.time.LocalDateTime;
 import java.time.temporal.ChronoUnit;
+import java.util.List;
 
 @Service
 @RequiredArgsConstructor
@@ -27,6 +29,18 @@ public class RedisUtil {
 
     public void deleteData(String key) {
         redisTemplate.delete(key);
+    }
+
+    public boolean deleteIfValueMatches(String key, String expectedValue) {
+        if (key == null || expectedValue == null) {
+            return false;
+        }
+        DefaultRedisScript<Long> script = new DefaultRedisScript<>(
+                "if redis.call('get', KEYS[1]) == ARGV[1] then "
+                        + "return redis.call('del', KEYS[1]) else return 0 end",
+                Long.class);
+        Long deleted = redisTemplate.execute(script, List.of(key), expectedValue);
+        return deleted != null && deleted == 1L;
     }
 
     // 블랙 리스트 구현 메소드

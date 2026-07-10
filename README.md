@@ -30,11 +30,11 @@ NIMDA SECURITY is the club's production web platform. It combines programming co
 
 ## Features
 
-- **Contest:** problem catalog, submissions, judging status, and scoreboards
+- **Contest:** problem and scoreboard interface with explicit unavailable states; live judging APIs remain a staged rollout
 - **Community:** category-based boards, rich text, comments, likes, galleries, and attachments
 - **Member:** registration, approval, profiles, attendance, notifications, mileage, and decorations
 - **Admin:** user and role management, categories, tags, boards, contests, and mileage grants
-- **Operations:** CI gates, immutable images, Docker Compose, Nginx, and validated Blue/Green promotion
+- **Operations:** pull-request verification gates, immutable images, Docker Compose, Nginx, and validated Blue/Green promotion
 
 ## Architecture
 
@@ -156,11 +156,14 @@ Only the root `.env.example` and `NimdaConFrontEnd/.env.example` templates are t
 ## Security and Data-Integrity Invariants
 
 - The authentication cookie is `HttpOnly`, secure by default in production, and `SameSite=Lax`. Credentialed browser requests trust only exact owned origins; unsafe cross-site requests are rejected before authentication.
-- Application JWTs contain a per-user `authVersion`. Logout, password changes, approval changes, and role changes rotate it. Every authenticated request requires an approved account and the current version. V27 intentionally invalidates legacy tokens without this claim.
-- Specific administrator category and Actuator matchers precede public read rules. Only exact liveness/readiness health paths are public; attachment signed-URL endpoints require authentication.
+- Login validates the password, approval state, roles, and `authVersion` from one database snapshot. Logout uses an atomic version increment; password, approval, and role mutations lock the user row before rotating the version. Every authenticated request reloads the approved account and requires the current version.
+- Password-recovery initiation and mail-request responses are indistinguishable for known and unknown identities. HTTP handling enqueues the same asynchronous dispatch shape instead of waiting for SMTP, and code verification performs both the identity and challenge lookups to reduce timing differences. A mail code is atomically consumed by its random recovery challenge, only the latest verified challenge can be used once under a user-row lock, and a successful reset clears both the challenge and old sessions.
+- Private activity endpoints expose liked posts and NC history only to the owner or an administrator. Board responses omit author email and login ID; V29 changes existing and new email visibility to private by default. Student numbers are read-only recovery identifiers in ordinary profile flows.
+- Administrator category and Actuator matchers precede public rules. Legal documents are public only through the four immutable slug routes established by V30; numeric board resources remain protected. Mutation services reload the persisted legal identity, require a current administrator, and keep the legal-slug column out of ordinary updates.
 - Board, comment, and attachment reads enforce `ACTIVE` visibility and cartel membership. Administrator edits preserve the original board author, cross-board comment parents are rejected, and unlinked attachments remain owner-only.
 - Presigned PUTs bind the authenticated user, upload purpose, and exact size up to 10 MiB. Objects start under `pending/users/<userId>/<purpose>/`, are validated and images are pixel-bounded/re-encoded, then move under `users/<userId>/active/`.
-- V28 records physical deletion in an outbox. The bounded worker retries canonical active keys, while untrusted legacy keys remain `quarantined=true` and are never executed automatically.
+- Draft navigation, pagehide, upload, explicit removal, and submit share synchronized ownership rules so uploads cannot leak into another draft and files being committed cannot be deleted by cleanup. Failed image re-encoding never falls back to the original bytes, and local upload fallback requires the explicit `UPLOAD_STORAGE_UNAVAILABLE` capability code. V28/V30 permit one case-sensitive deletion-outbox key of at most 512 characters; an unrepresentable key also aborts metadata deletion. Quarantine is dominant, live references prevent deletion, failures are persisted under the task lock, and the keyset orphan scan proceeds to its natural end.
+- Pull requests run frontend, landing, dependency, and backend verification. Image publication and production deployment run only for a successful push to `main` in `Nimda-Security/Nimda`.
 
 ## Performance Budgets and Evidence
 
@@ -187,14 +190,15 @@ For a 10-board page, like/comment metadata queries dropped from 20 to 2 for anon
 
 ## Verification
 
-Verified on 2026-07-10:
+Verified on 2026-07-11:
 
 - Community frontend: lint and production build passed; production dependency audit found 0 vulnerabilities
 - Landing page: lint and static production build passed; production dependency audit found 0 vulnerabilities
-- Backend: `mvnw.cmd -B clean verify` passed with **61 tests**, 0 failures, 0 errors, and 0 skipped
-- Security regressions cover auth-version/status enforcement, exact-origin filtering, administrator matchers, attachment authentication, board/comment visibility, S3 ownership/purpose/size limits, image pixel limits, and deletion quarantine
-- Local 390 px preview: home, 404, and failed-edit screens had no horizontal overflow; failed edit hydration kept the form and submit action disabled
+- Backend: `mvnw.cmd -B clean verify` passed with **114 tests**, 0 failures, 0 errors, and 0 skipped
+- Security regressions cover auth-version/status enforcement, single-snapshot login, challenge-bound one-time recovery, exact-origin filtering, exact legal routes, private activity, public-author DTO privacy, administrator matchers, attachment authentication, S3 ownership/purpose/size limits, image pixel limits, preallocated canonical upload keys, rollback cleanup in an independent transaction, dominant deletion quarantine, referenced-key protection, and category hierarchy transitions
+- Local 390 px production preview: home, signup, board writing, and 404 had no horizontal overflow; protected writing redirected to login and returned to the original writing route after a mocked login; cancelling logo navigation preserved the draft
 - Production read-only smoke: desktop login and home navigation succeeded; unauthenticated administrator category returned 401 and an untrusted-origin preflight returned 403
+- GPT-5.6 Sol with Pro reasoning re-reviewed the attachment transaction and ambiguous-S3-success paths and returned `RELEASE: APPROVE`; review packs and responses remain ignored local audit artifacts
 
 The deployed production frontend was still older at verification time and retained a 390 px overflow. Recheck after deployment. A nonexistent unauthenticated attachment URL also returned 500 in the old deployment; the current local security contract blocks it before the controller.
 
@@ -203,7 +207,7 @@ The deployed production frontend was still older at verification time and retain
 Read [`DEPLOYMENT.md`](DEPLOYMENT.md) before promotion. It documents:
 
 - immutable image tags and Blue/Green promotion
-- V27/V28 migration effects
+- V27–V30 migration effects and preflight requirements
 - exact browser origins and private-S3 requirements
 - the exact `pending/` lifecycle rule
 - authorization and origin smoke checks
@@ -213,7 +217,7 @@ This Windows verification host did not have Docker or k6, so container startup, 
 
 ## Audit and Commit Hygiene
 
-Do not commit `.gjc/`, `audit-assets/`, `load-tests/results/`, `dist/`, `.next/`, `out/`, `target/`, logs, or real environment files. Bruno requests reference `{{jwtToken}}` instead of literal bearer tokens. Before committing, inspect status, run `git diff --check`, review the changed-file list, and scan for secrets.
+Do not commit `.gjc/`, `.insane-review/`, `audit-assets/`, `load-tests/results/`, `dist/`, `.next/`, `out/`, `target/`, logs, or real environment files. GPT-5.6 Pro web-review packs and responses are local audit material only. Bruno requests reference `{{jwtToken}}` instead of literal bearer tokens. Before committing, inspect status, run `git diff --check`, review the changed-file list, and scan for secrets.
 
 ## License and Copyright
 

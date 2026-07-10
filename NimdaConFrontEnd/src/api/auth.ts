@@ -111,11 +111,9 @@ export const loginAPI = async (
 
     if (response.ok) {
       // 쿠키 기반 인증: 토큰은 HttpOnly 쿠키로 관리, 사용자 정보만 localStorage에 저장
+      localStorage.removeItem("roles");
       if (userInfo) {
         setStoredUser(userInfo);
-        if (userInfo.roles) {
-          localStorage.setItem("roles", JSON.stringify(userInfo.roles));
-        }
       }
 
       setSessionPopupTimer();
@@ -261,13 +259,25 @@ export const getCurrentUser = (): NonNullable<LoginResponse["user"]> | null => {
     return null;
   }
 
-  const parsedUser: unknown = JSON.parse(userStr);
-  if (typeof parsedUser !== "object" || parsedUser === null || Array.isArray(parsedUser)) {
+  try {
+    const parsedUser: unknown = JSON.parse(userStr);
+    if (typeof parsedUser !== "object" || parsedUser === null || Array.isArray(parsedUser)) {
+      localStorage.removeItem("user");
+      return null;
+    }
+
+    return parsedUser as NonNullable<LoginResponse["user"]>;
+  } catch {
+    localStorage.removeItem("user");
     return null;
   }
-
-  return parsedUser as NonNullable<LoginResponse["user"]>;
 };
+
+/**
+ * Cached login hint for non-authoritative presentation only.
+ * Protected routes and privileges must use validateSession().
+ */
+export const isLoggedIn = (): boolean => getCurrentUser() !== null;
 
 /**
  * 내 정보 조회 (서버 API)
@@ -285,7 +295,20 @@ export const getMyPageInfo = async () => {
     const result = await response.json();
 
     if (response.ok) {
-      return { success: true, message: "조회 성공", data: result.data ?? result };
+      const isWrapped =
+        typeof result === "object" &&
+        result !== null &&
+        !Array.isArray(result) &&
+        "data" in result;
+      const hasExplicitSuccess = "success" in result;
+      if ((isWrapped || hasExplicitSuccess) && result.success !== true) {
+        return {
+          success: false,
+          message: result.message || "정보 조회에 실패했습니다.",
+          data: null,
+        };
+      }
+      return { success: true, message: "조회 성공", data: isWrapped ? result.data : result };
     } else {
       return {
         success: false,
@@ -303,17 +326,17 @@ export const getMyPageInfo = async () => {
   }
 };
 /**
- * 이메일 숨김 상태 토글 API (fetch 버전)
+ * 이메일 숨김 상태를 원하는 값으로 저장하는 멱등 API
  */
-export const toggleEmailHide = async () => {
+export const setEmailHide = async (emailHide: boolean) => {
   try {
     const response = await fetch(`${API_BASE_URL}/auth/email-hide`, {
-      method: "POST",
+      method: "PUT",
       headers: addVersionToHeaders({
         "Content-Type": "application/json",
       }),
       credentials: "include",
-      body: JSON.stringify({}),
+      body: JSON.stringify({ emailHide }),
     });
 
     let result;
@@ -361,33 +384,82 @@ export const getAuthToken = () => {
 };
 
 /**
- * 로그인 상태 확인
- * localStorage의 user 정보 존재 여부로 판단
- */
-export const isLoggedIn = (): boolean => {
-  return !!localStorage.getItem("user");
-};
-
-/**
  * 서버에 세션(쿠키) 유효성 검증
- * 쿠키가 실제 인증 수단이므로 localStorage와 무관하게 항상 서버에 확인
- * 쿠키가 만료되었거나 유효하지 않으면 localStorage를 정리하고 false 반환
+ * 쿠키가 실제 인증 수단이므로 localStorage와 무관하게 항상 서버에 확인합니다.
+ * 인증 상태와 서버가 반환한 권한을 함께 반환합니다.
  */
-export const validateSession = async (): Promise<boolean> => {
+export type SessionValidation =
+  | { status: 'authenticated'; roles: string[] }
+  | { status: 'unauthenticated'; roles: [] }
+  | { status: 'unavailable'; roles: [] };
+
+export const validateSession = async (): Promise<SessionValidation> => {
   try {
     const response = await fetch(`${API_BASE_URL}/auth/me`, {
       method: "GET",
       headers: addVersionToHeaders({ "Content-Type": "application/json" }),
       credentials: "include",
     });
-    if (response.ok) return true;
-    // 401/403 등 → 쿠키 만료 또는 무효
-    localStorage.removeItem("user");
-    localStorage.removeItem("roles");
-    return false;
+
+    if (response.status === 401 || response.status === 403) {
+      localStorage.removeItem("user");
+      localStorage.removeItem("roles");
+      return { status: 'unauthenticated', roles: [] };
+    }
+
+    if (!response.ok) {
+      return { status: 'unavailable', roles: [] };
+    }
+
+    let result: unknown;
+    try {
+      result = await response.json();
+    } catch {
+      return { status: 'unavailable', roles: [] };
+    }
+
+    const sessionPayload =
+      typeof result === 'object' &&
+      result !== null &&
+      !Array.isArray(result) &&
+      'data' in result
+        ? (result as { data: unknown }).data
+        : result;
+    const isWrappedSessionEnvelope =
+      typeof result === 'object' &&
+      result !== null &&
+      !Array.isArray(result) &&
+      'data' in result;
+    const hasExplicitSessionSuccess =
+      typeof result === 'object' &&
+      result !== null &&
+      !Array.isArray(result) &&
+      'success' in result;
+    if (
+      (isWrappedSessionEnvelope || hasExplicitSessionSuccess) &&
+      (result as { success?: unknown }).success !== true
+    ) {
+      return { status: 'unavailable', roles: [] };
+    }
+
+    if (
+      typeof sessionPayload !== 'object' ||
+      sessionPayload === null ||
+      Array.isArray(sessionPayload) ||
+      !Array.isArray((sessionPayload as { roles?: unknown }).roles) ||
+      !(sessionPayload as { roles: unknown[] }).roles.every(
+        (role) => typeof role === 'string'
+      )
+    ) {
+      return { status: 'unavailable', roles: [] };
+    }
+
+    return {
+      status: 'authenticated',
+      roles: (sessionPayload as { roles: string[] }).roles,
+    };
   } catch {
-    // 네트워크 오류 시에는 로그아웃 처리하지 않음 (일시적 오류일 수 있음)
-    return true;
+    return { status: 'unavailable', roles: [] };
   }
 };
 
@@ -400,7 +472,6 @@ export interface UpdateProfileRequest {
   bojId?: string;
   birth?: string;
   major?: string;
-  studentNum?: string;
 }
 
 export const updateProfileAPI = async (

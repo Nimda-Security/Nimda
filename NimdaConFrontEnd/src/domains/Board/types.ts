@@ -33,9 +33,7 @@ export interface Category {
  */
 export interface BoardAuthor {
   id: number;
-  userId?: string;
   nickname: string;
-  email?: string;
   profileImage?: string;
   profileDecoration?: string;
 }

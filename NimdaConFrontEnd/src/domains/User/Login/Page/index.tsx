@@ -1,16 +1,64 @@
 import "./Login.css";
 import Layout from "@/components/Layout";
-import { useNavigate } from "react-router-dom";
-import { useState } from "react";
-import { loginAPI } from "@/api/auth";
+import { useNavigate, useLocation } from "react-router-dom";
+import { useEffect, useState } from "react";
+import { loginAPI, validateSession } from "@/api/auth";
 
 const LOGIN_ERROR_MESSAGE = "아이디 또는 비밀번호를 잘못 입력했습니다.";
+const getSafeReturnPath = (value: unknown): string => {
+  if (typeof value !== "string" || !value.startsWith("/") || value.startsWith("//")) {
+    return "/";
+  }
+
+  try {
+    const decodedValue = decodeURIComponent(value);
+    if (decodedValue.startsWith("//") || decodedValue.includes("\\")) {
+      return "/";
+    }
+
+    const target = new URL(value, window.location.origin);
+    if (target.origin !== window.location.origin || target.pathname === "/login") {
+      return "/";
+    }
+
+    return `${target.pathname}${target.search}${target.hash}`;
+  } catch {
+    return "/";
+  }
+};
+
 
 function LogInPage() {
   const navigate = useNavigate();
   const [showPassword, setShowPassword] = useState(false);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const location = useLocation();
+  const [sessionStatus, setSessionStatus] = useState<"checking" | "unauthenticated" | "unavailable">("checking");
+  const [sessionRetryCount, setSessionRetryCount] = useState(0);
+  const returnPath = getSafeReturnPath(
+    (location.state as { from?: unknown } | null)?.from
+  );
+
+  useEffect(() => {
+    let mounted = true;
+
+    void validateSession().then((session) => {
+      if (!mounted) return;
+
+      if (session.status === "authenticated") {
+        navigate(returnPath, { replace: true });
+        return;
+      }
+
+      setSessionStatus(session.status);
+    });
+
+    return () => {
+      mounted = false;
+    };
+  }, [navigate, returnPath, sessionRetryCount]);
+
 
   const handleLogin = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
@@ -32,7 +80,7 @@ function LogInPage() {
       const result = await loginAPI({ userId, password });
 
       if (result.success) {
-        navigate("/");
+        navigate(returnPath, { replace: true });
       } else {
         setErrorMessage(LOGIN_ERROR_MESSAGE);
       }
@@ -43,6 +91,29 @@ function LogInPage() {
     }
   };
 
+  if (sessionStatus === "checking") {
+    return (
+      <Layout hideSidebar>
+        <main role="status" aria-live="polite">세션을 확인하는 중입니다...</main>
+      </Layout>
+    );
+  }
+
+  if (sessionStatus === "unavailable") {
+    return (
+      <Layout hideSidebar>
+        <main role="alert">
+          <p>세션을 확인할 수 없습니다. 네트워크 연결을 확인한 후 다시 시도해주세요.</p>
+          <button type="button" onClick={() => {
+            setSessionStatus("checking");
+            setSessionRetryCount((count) => count + 1);
+          }}>
+            다시 시도
+          </button>
+        </main>
+      </Layout>
+    );
+  }
   return (
     <Layout hideSidebar>
       <div className="login-page">

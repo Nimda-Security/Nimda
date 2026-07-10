@@ -73,6 +73,9 @@ public class User extends BaseTimeEntity {
 
     @Column(name = "auth_version", nullable = false)
     private int authVersion = 0;
+    @JsonIgnore
+    @Column(name = "password_reset_token_id", length = 36)
+    private String passwordResetTokenId;
 
     @Column(name = "birth", length = 20)
     private String birth;
@@ -92,7 +95,7 @@ public class User extends BaseTimeEntity {
 
     // 마이페이지 이메일 숨기기
     @Column(name = "email_hide", nullable = false)
-    private boolean emailHide = false; // 기본값 설정
+    private boolean emailHide = true; // 기본값 설정
 
     // 기본 생성자
     public User() {

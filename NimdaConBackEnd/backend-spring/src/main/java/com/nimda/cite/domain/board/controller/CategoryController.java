@@ -21,6 +21,7 @@ import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
+import java.util.Map;
 
 @RestController
 @RequestMapping("/api/cite/category")
@@ -37,8 +38,9 @@ public class CategoryController {
     public ResponseEntity<?> getAllCategories() {
         try {
             List<Category> categories = categoryService.getAllActiveCategories();
+            Map<Long, Integer> activeBoardCounts = categoryService.getActiveBoardCountsByCategoryIds(categories);
             List<CategoryResponseDTO> categoryDTOList = categories.stream()
-                    .map(CategoryResponseDTO::from)
+                    .map(category -> CategoryResponseDTO.from(category, activeBoardCounts.get(category.getId())))
                     .toList();
             return ApiResponse.ok(categoryDTOList).toResponse();
         } catch (Exception e) {
@@ -64,8 +66,9 @@ public class CategoryController {
             }
 
             List<Category> categories = categoryService.getAllCategories(user);
+            Map<Long, Integer> activeBoardCounts = categoryService.getActiveBoardCountsByCategoryIds(categories);
             List<CategoryResponseDTO> categoryDTOList = categories.stream()
-                    .map(CategoryResponseDTO::from)
+                    .map(category -> CategoryResponseDTO.from(category, activeBoardCounts.get(category.getId())))
                     .toList();
             return ApiResponse.ok(categoryDTOList).toResponse();
 
@@ -89,7 +92,8 @@ public class CategoryController {
     public ResponseEntity<?> getCategoryBySlug(@PathVariable String slug) {
         try {
             Category category = categoryService.getCategoryBySlug(slug);
-            CategoryResponseDTO categoryDTO = CategoryResponseDTO.from(category);
+            Map<Long, Integer> activeBoardCounts = categoryService.getActiveBoardCountsByCategoryIds(List.of(category));
+            CategoryResponseDTO categoryDTO = CategoryResponseDTO.from(category, activeBoardCounts.get(category.getId()));
             return ApiResponse.ok(categoryDTO).toResponse();
         } catch (RuntimeException e) {
             return ApiResponse.fail("오류가 발생했습니다.")

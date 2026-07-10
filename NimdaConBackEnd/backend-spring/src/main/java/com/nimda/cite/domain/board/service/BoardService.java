@@ -14,10 +14,12 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
+import org.springframework.security.access.AccessDeniedException;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
 import java.util.Optional;
+import java.util.Objects;
 
 @Slf4j
 @Service
@@ -44,6 +46,15 @@ public class BoardService {
     public void write(Board board, User actingUser, List<Long> attachmentIds) {
 
         boolean isNew = board.getId() == null;
+        if (!isNew) {
+            Board persistedBoard = boardRepository.findById(board.getId())
+                    .orElseThrow(() -> new RuntimeException(
+                            "게시글을 찾을 수 없습니다: " + board.getId()));
+            requireLegalDocumentAdministrator(persistedBoard, actingUser);
+            if (!Objects.equals(persistedBoard.getLegalSlug(), board.getLegalSlug())) {
+                throw new IllegalArgumentException("법적 안내 문서 식별자는 변경할 수 없습니다.");
+            }
+        }
 
         if (isNew) {
             board.setAuthor(actingUser);
@@ -149,6 +160,12 @@ public class BoardService {
                 .orElseThrow(() -> new RuntimeException("게시글을 찾을 수 없습니다: " + id));
     }
 
+    @Transactional(readOnly = true)
+    public Board getLegalDocument(String legalSlug) {
+        return boardRepository.findByLegalSlugAndStatus(legalSlug, BoardStatus.ACTIVE)
+                .orElseThrow(() -> new RuntimeException("법적 안내 문서를 찾을 수 없습니다."));
+    }
+
     // Note. incrementViewCount - 활성 게시글의 조회수를 원자적으로 증가시킨다.
     @Transactional
     public void incrementViewCount(Board board) {
@@ -164,9 +181,10 @@ public class BoardService {
     // Note. boardDelete - 포스트 ID로 게시글 삭제 (soft delete)
     // ... 삭제는 관리자만 가능하며 권한 체크는 BorderController에서 진행한다.
     @Transactional
-    public void boardDelete(Long id) {
+    public void boardDelete(Long id, User actingUser) {
         Board board = boardRepository.findById(id)
                 .orElseThrow(() -> new RuntimeException("게시글을 찾을 수 없습니다: " + id));
+        requireLegalDocumentAdministrator(board, actingUser);
 
         board.setStatus(BoardStatus.DELETED);
         boardRepository.save(board);
@@ -205,17 +223,28 @@ public class BoardService {
 
     @Transactional
     public void deleteMyBoards(List<Long> boardIds, User author) {
-        List<Board> boards = boardRepository.findAllById(boardIds);
-        // 본인 게시글만 soft delete
-        boards.stream()
-                .filter(b -> b.getAuthor().getId().equals(author.getId()))
-                .forEach(b -> {
-                    b.setStatus(BoardStatus.DELETED);
-                    boardRepository.save(b);
+        List<Board> ownedBoards = boardRepository.findAllById(boardIds).stream()
+                .filter(board -> board.getAuthor().getId().equals(author.getId()))
+                .toList();
+        ownedBoards.forEach(board -> requireLegalDocumentAdministrator(board, author));
+        ownedBoards.forEach(board -> {
+            board.setStatus(BoardStatus.DELETED);
+            boardRepository.save(board);
+            commentRepository.deleteAllByBoardId(board.getId());
+            boardLikeRepository.deleteAllByBoardId(board.getId());
+        });
+    }
 
-                    commentRepository.deleteAllByBoardId(b.getId());
-                    boardLikeRepository.deleteAllByBoardId(b.getId());
-                });
+    private void requireLegalDocumentAdministrator(Board board, User actingUser) {
+        if (board.getLegalSlug() == null) {
+            return;
+        }
+        boolean isAdministrator = actingUser != null
+                && actingUser.getAuthorities().stream()
+                .anyMatch(authority -> "ROLE_ADMIN".equals(authority.getAuthorityName()));
+        if (!isAdministrator) {
+            throw new AccessDeniedException("법적 안내 문서는 관리자만 변경할 수 있습니다.");
+        }
     }
 
     @Transactional

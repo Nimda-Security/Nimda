@@ -134,6 +134,8 @@ public class Board extends BaseTimeEntity {
 
     @Column(name = "thumbnail_attachment_id")
     private Long thumbnailAttachmentId;
+    @Column(name = "legal_slug", unique = true, length = 40, updatable = false)
+    private String legalSlug;
 
     // ========== [Soft Delete 지원] ==========
     // [신규] 게시글 상태 필드 추가

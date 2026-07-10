@@ -8,6 +8,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.mail.MailException;
 import org.springframework.mail.javamail.JavaMailSender;
 import org.springframework.mail.javamail.MimeMessageHelper;
+import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
 import org.thymeleaf.context.Context;
 import org.thymeleaf.spring6.SpringTemplateEngine;
@@ -29,17 +30,27 @@ public class MailService {
     private static final int MAX_DAILY_LIMIT = 3;
 
     public void sendEmail(MimeMessage message) {
+        javaMailSender.send(message);
+        log.info("메일 전송이 완료되었습니다.");
+    }
+
+    @Async
+    public void dispatchRecoveryCode(String email, String challengeId, boolean shouldSend) {
+        if (!shouldSend) {
+            return;
+        }
         try {
-            javaMailSender.send(message);
-            log.info("메일 전송이 완료되었습니다.");
-        }catch(MailException e) {
-            log.info("메일 전송 시 오류가 발생했습니다." + e);
+            sendAuthCode(email, challengeId);
+        } catch (RuntimeException exception) {
+            log.warn("Password recovery email dispatch did not complete: {}",
+                    exception.getClass().getSimpleName());
         }
     }
 
-    public void sendAuthCode(String email) {
+    public void sendAuthCode(String email, String challengeId) {
         MimeMessage message = javaMailSender.createMimeMessage();
         checkAndIncreaseMailLimit(email);
+        String authCodeKey = authCodeKey(challengeId);
         String code = RandomModule.GenerateRandomStr(10,true);
         // 발신자 주소는 반드시 SES에서 인증(Verified)받은 이메일이어야 합니다.
         try {
@@ -59,9 +70,14 @@ public class MailService {
             helper.setText(htmlContent, true);
 
             // 인증 코드 Redis에 저장
-            redisUtil.setDataWithExpiration("AUTH_CODE:" + email, code, 300L);
+            redisUtil.setDataWithExpiration(authCodeKey, code, 300L);
 
-            sendEmail(message);
+            try {
+                sendEmail(message);
+            } catch (MailException exception) {
+                redisUtil.deleteIfValueMatches(authCodeKey, code);
+                throw exception;
+            }
         } catch (MessagingException e) {
             throw new RuntimeException("HTML 메일 생성 및 발송 실패", e);
         }
@@ -69,22 +85,18 @@ public class MailService {
 
 
     // 인증번호 유효성 판단
-    public boolean verifyCode(String email, String code) {
-        String key = AUTH_PREFIX + email;
-        String savedCode = redisUtil.getData(key);
-
-        if (savedCode == null) {
-            // 인증 시간이 만료되었거나 코드가 없는 경우
+    public boolean verifyCode(String challengeId, String code) {
+        if (challengeId == null || challengeId.isBlank() || code == null || code.isBlank()) {
             return false;
         }
+        return redisUtil.deleteIfValueMatches(authCodeKey(challengeId), code);
+    }
 
-        if (savedCode.equals(code)) {
-            // 인증 성공 시 Redis에서 삭제
-            redisUtil.deleteData(key);
-            return true;
+    private String authCodeKey(String challengeId) {
+        if (challengeId == null || challengeId.isBlank()) {
+            throw new IllegalArgumentException("인증 요청 식별자가 필요합니다.");
         }
-
-        return false;
+        return AUTH_PREFIX + challengeId;
     }
 
     private void checkAndIncreaseMailLimit(String email) {

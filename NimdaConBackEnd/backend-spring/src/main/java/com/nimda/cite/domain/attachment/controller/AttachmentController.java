@@ -241,7 +241,10 @@ public class AttachmentController {
                     .toResponse(HttpStatus.FORBIDDEN);
         }
         if (!(fileStore instanceof S3FileStore s3FileStore)) {
-            return ApiResponse.fail("파일 업로드 서비스를 사용할 수 없습니다.").toResponse(HttpStatus.SERVICE_UNAVAILABLE);
+            return ResponseEntity.status(HttpStatus.SERVICE_UNAVAILABLE).body(Map.of(
+                    "success", false,
+                    "code", "UPLOAD_STORAGE_UNAVAILABLE",
+                    "message", "직접 업로드 저장소가 비활성화되어 로컬 업로드로 전환합니다."));
         }
 
         try {

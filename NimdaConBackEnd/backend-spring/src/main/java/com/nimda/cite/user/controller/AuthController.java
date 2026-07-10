@@ -58,12 +58,12 @@ public class AuthController {
     @PostMapping("/login")
     public ResponseEntity<?> login(@Valid @RequestBody LoginDTO loginRequest, HttpServletResponse response) { // HttpServletResponse 추가
         try {
-            Optional<User> userOpt = authService.validateUser(
+            Optional<LoginResponseDTO> loginResult = authService.authenticate(
                     loginRequest.getUserId(),
                     loginRequest.getPassword());
 
-            if (userOpt.isPresent()) {
-                LoginResponseDTO loginData = authService.login(userOpt.get());
+            if (loginResult.isPresent()) {
+                LoginResponseDTO loginData = loginResult.get();
                 String token = loginData.getAccessToken(); // DTO에서 토큰 추출
 
                 ResponseCookie cookie = createAuthCookie(token, 60 * 60 * 24);
@@ -75,11 +75,11 @@ public class AuthController {
                         .body(Map.of("success", true, "message", "로그인 성공", "user", loginData.getUser()));
             } else {
                 return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
-                        .body(Map.of("message", "Invalid user ID or password"));
+                        .body(Map.of("message", "아이디 또는 비밀번호가 올바르지 않습니다."));
             }
         } catch (UserNotApprovedException e) {
-            return ResponseEntity.status(HttpStatus.FORBIDDEN)
-                    .body(Map.of("message", e.getMessage()));
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
+                    .body(Map.of("message", "아이디 또는 비밀번호가 올바르지 않습니다."));
         } catch (Exception e) {
             log.error("로그인 처리 중 오류 발생", e);
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
@@ -95,17 +95,18 @@ public class AuthController {
     public ResponseEntity<?> logout(
             @AuthenticationPrincipal CustomUserDetails customUserDetails) {
         ResponseCookie cookie = createAuthCookie("", 0);
+        ResponseCookie recoveryCookie = createExpiredRecoveryCookie();
         try {
             if (customUserDetails != null) {
                 authService.rotateAuthVersion(customUserDetails.getUser().getId());
             }
             return ResponseEntity.ok()
-                    .header(HttpHeaders.SET_COOKIE, cookie.toString())
+                    .header(HttpHeaders.SET_COOKIE, cookie.toString(), recoveryCookie.toString())
                     .body(Map.of("success", true, "message", "로그아웃 성공"));
         } catch (RuntimeException exception) {
             log.error("로그아웃 세션 폐기 중 오류 발생", exception);
             return ResponseEntity.status(HttpStatus.SERVICE_UNAVAILABLE)
-                    .header(HttpHeaders.SET_COOKIE, cookie.toString())
+                    .header(HttpHeaders.SET_COOKIE, cookie.toString(), recoveryCookie.toString())
                     .body(Map.of(
                             "success", false,
                             "message", "현재 브라우저의 로그인 정보는 삭제했지만 서버 세션 폐기를 확인하지 못했습니다."));
@@ -119,6 +120,16 @@ public class AuthController {
                 .path("/")
                 .maxAge(maxAgeSeconds)
                 .sameSite("Lax")
+                .build();
+    }
+
+    private ResponseCookie createExpiredRecoveryCookie() {
+        return ResponseCookie.from("password_change_token", "")
+                .httpOnly(true)
+                .secure(true)
+                .path("/api/cite/passwordChange")
+                .maxAge(0)
+                .sameSite("Strict")
                 .build();
     }
 
@@ -191,6 +202,9 @@ public class AuthController {
                     .profileImage(profileImageUrl)
                     .profileDecoration(user.getProfileDecoration())
                     .emailHide(user.isEmailHide())
+                    .roles(user.getAuthorities().stream()
+                            .map(authority -> authority.getAuthorityName())
+                            .toList())
                     .build();
 
             return ResponseEntity.ok(response);
@@ -219,8 +233,7 @@ public class AuthController {
                     request.getNickname(),
                     request.getBojId(),
                     request.getBirth(),
-                    request.getMajor(),
-                    request.getStudentNum()
+                    request.getMajor()
             );
 
             MyPageResponseDTO response = MyPageResponseDTO.builder()
@@ -235,6 +248,9 @@ public class AuthController {
                     .profileImage(updated.getProfileImage())
                     .profileDecoration(updated.getProfileDecoration())
                     .emailHide(updated.isEmailHide())
+                    .roles(updated.getAuthorities().stream()
+                            .map(authority -> authority.getAuthorityName())
+                            .toList())
                     .build();
 
             return ResponseEntity.ok(Map.of(
@@ -332,8 +348,10 @@ public class AuthController {
         }
     }
 
-    @PostMapping("/email-hide")
-    public ResponseEntity<?> emailHide(@AuthenticationPrincipal CustomUserDetails customUserDetails) {
+    @PutMapping("/email-hide")
+    public ResponseEntity<?> emailHide(
+            @AuthenticationPrincipal CustomUserDetails customUserDetails,
+            @RequestBody Map<String, Boolean> request) {
         try {
 
             // 인증되지 않은 경우
@@ -341,10 +359,14 @@ public class AuthController {
                 return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
                         .body(Map.of("message", "인증이 필요합니다."));
             }
+            if (request.get("emailHide") == null) {
+                return ResponseEntity.status(HttpStatus.BAD_REQUEST)
+                        .body(Map.of("message", "이메일 숨김 여부를 선택해주세요."));
+            }
 
             // CustomUserDetails에서 User 엔터티 추출
             User user = customUserDetails.getUser();
-            boolean dto = authService.toggleEmailHide(user.getId());
+            boolean dto = authService.setEmailHide(user.getId(), request.get("emailHide"));
 
             return ResponseEntity.ok(Map.of(
                     "success", true,

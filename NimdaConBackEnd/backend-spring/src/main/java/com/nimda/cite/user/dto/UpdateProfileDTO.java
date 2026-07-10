@@ -25,7 +25,4 @@ public class UpdateProfileDTO {
 
     @Size(max = 20, message = "학과는 20자 이하여야 합니다.")
     private String major;
-
-    @Size(max = 20, message = "학번은 20자 이하여야 합니다.")
-    private String studentNum;
 }

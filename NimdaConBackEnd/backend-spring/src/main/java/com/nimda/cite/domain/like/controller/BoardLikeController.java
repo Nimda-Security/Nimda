@@ -7,6 +7,7 @@ import com.nimda.cite.domain.comment.repository.CommentRepository;
 import com.nimda.cite.common.response.ApiResponse;
 import com.nimda.cite.domain.like.dto.BoardLikeResponse;
 import com.nimda.cite.domain.like.service.BoardLikeService;
+import com.nimda.cite.user.entity.User;
 import com.nimda.cite.user.repository.UserRepository;
 import com.nimda.cite.user.security.CustomUserDetails;
 import lombok.RequiredArgsConstructor;
@@ -15,6 +16,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.server.ResponseStatusException;
+
 
 import java.util.List;
 import java.util.Map;
@@ -31,29 +33,45 @@ public class BoardLikeController {
     private final UserRepository userRepository;
 
     /**
-     * 타인의 좋아요한 게시글 목록 조회 (공개 프로필용, 인증 불필요)
+     * 특정 유저가 좋아요한 게시글 목록 조회
      * GET /api/like/board/user/{nickname}/liked
      */
     @GetMapping("/user/{nickname}/liked")
-    public ResponseEntity<?> getLikedBoardsByNickname(@PathVariable String nickname) {
-        try {
-            return userRepository.findByNickname(nickname)
-                    .map(user -> {
-                        List<Board> boards = boardLikeService.getTotalLikeBoards(user.getId());
-                        List<BoardResponseDTO> dtos = boards.stream()
-                                .map(b -> BoardResponseDTO.from(b,
-                                        boardLikeService.getLikeCount(b.getId()),
-                                        false,
-                                        commentRepository.countByBoardIdAndStatusNot(b.getId(), STATUS.DELETED)))
-                                .toList();
-                        return ApiResponse.ok(Map.of("boards", dtos)).toResponse();
-                    })
-                    .orElseThrow(() ->
-                            new ResponseStatusException(HttpStatus.NOT_FOUND));
-        } catch (Exception e) {
-            return ApiResponse.fail("조회 중 오류가 발생했습니다.")
-                    .toResponse(HttpStatus.INTERNAL_SERVER_ERROR);
+    public ResponseEntity<?> getLikedBoardsByNickname(
+            @AuthenticationPrincipal CustomUserDetails userDetails,
+            @PathVariable String nickname) {
+        Long targetUserId = resolvePrivateActivityUserId(userDetails, nickname);
+        if (targetUserId == null) {
+            return ApiResponse.fail("접근 권한이 없습니다.").toResponse(HttpStatus.FORBIDDEN);
         }
+
+        List<Board> boards = boardLikeService.getTotalLikeBoards(targetUserId);
+        List<BoardResponseDTO> dtos = boards.stream()
+                .map(board -> BoardResponseDTO.from(
+                        board,
+                        boardLikeService.getLikeCount(board.getId()),
+                        true,
+                        commentRepository.countByBoardIdAndStatusNot(
+                                board.getId(), STATUS.DELETED)))
+                .toList();
+        return ApiResponse.ok(Map.of("boards", dtos)).toResponse();
+    }
+
+    private Long resolvePrivateActivityUserId(
+            CustomUserDetails userDetails, String nickname) {
+        if (userDetails == null || userDetails.getUser() == null) {
+            return null;
+        }
+        boolean isAdministrator = userDetails.getAuthorities().stream()
+                .anyMatch(authority -> "ROLE_ADMIN".equals(authority.getAuthority()));
+        if (!isAdministrator) {
+            return userDetails.getUser().getNickname().equals(nickname)
+                    ? userDetails.getUser().getId()
+                    : null;
+        }
+        return userRepository.findByNickname(nickname)
+                .map(User::getId)
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND));
     }
 
     // 게시글 내에서 표기할 좋아요 개수와 좋아요 여부

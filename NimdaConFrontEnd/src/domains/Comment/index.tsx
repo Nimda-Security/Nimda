@@ -267,6 +267,8 @@ function CommentInput({
           className={`comment-input__textarea comment-input__editor${isEmpty ? ' comment-input__editor--empty' : ''}`}
           role="textbox"
           aria-multiline="true"
+          aria-label={placeholder ?? '댓글 입력'}
+          aria-busy={isSubmitting}
         />
         <div className="comment-input__footer">
           <EmoticonPicker onSelect={handleEmoticonSelect} />
@@ -275,6 +277,8 @@ function CommentInput({
             onClick={onSubmit}
             disabled={isSubmitting || !value.trim()}
             className="comment-input__submit"
+            aria-label={isSubmitting ? `${buttonLabel} 처리 중` : buttonLabel}
+            aria-busy={isSubmitting}
           >
             {isSubmitting ? '처리 중...' : buttonLabel}
           </button>
@@ -401,6 +405,7 @@ interface CommentItemProps {
   onDelete: (commentId: number) => void;
   onHide: (commentId: number, status: CommentStatus) => void;
   onToggleLike: (commentId: number) => void;
+  isLiking: boolean;
   replyTargetId: number | null;
   replyTargetName: string;
   replyContext: string;
@@ -421,6 +426,7 @@ function CommentItem({
   onDelete,
   onHide,
   onToggleLike,
+  isLiking,
   replyTargetId,
   replyTargetName,
   replyContext,
@@ -486,12 +492,22 @@ function CommentItem({
                 type="button"
                 onClick={() => onReply(comment.id, comment.authorName)}
                 className="comment-item__reply-btn"
+                aria-label={`${comment.authorName}님의 댓글에 답글 작성, 답글 ${comment.children?.length ?? 0}개`}
+                aria-expanded={replyTargetId === comment.id}
               >
                 <MessageBox />
                 <span>{comment.children?.length ?? 0}</span>
               </button>
             )}
-            <button type="button" className={`comment-item__like-btn${comment.isLiked ? ' comment-item__like-btn--active' : ''}`} onClick={() => onToggleLike(comment.id)}>
+            <button
+              type="button"
+              className={`comment-item__like-btn${comment.isLiked ? ' comment-item__like-btn--active' : ''}`}
+              onClick={() => onToggleLike(comment.id)}
+              disabled={isLiking}
+              aria-label={comment.isLiked ? `${comment.authorName}님의 댓글 좋아요 취소, ${comment.likeCount}개` : `${comment.authorName}님의 댓글 좋아요, ${comment.likeCount}개`}
+              aria-pressed={comment.isLiked}
+              aria-busy={isLiking}
+            >
               <Heart filled={comment.isLiked} />
               <span>{comment.likeCount}</span>
             </button>
@@ -535,6 +551,7 @@ function CommentSection({ boardId }: CommentSectionProps) {
   const [editingId, setEditingId] = useState<number | null>(null);
   const [editContext, setEditContext] = useState('');
   const [isEditSubmitting, setIsEditSubmitting] = useState(false);
+  const [likingCommentId, setLikingCommentId] = useState<number | null>(null);
   const replyInputRef = useRef<HTMLDivElement | null>(null);
 
   // [추가] 내 프로필 이미지 상태
@@ -648,7 +665,9 @@ function CommentSection({ boardId }: CommentSectionProps) {
     });
 
   const handleToggleLike = async (commentId: number) => {
+    if (likingCommentId !== null) return;
     try {
+      setLikingCommentId(commentId);
       const res = await toggleCommentLike(commentId);
       if (res.success && res.data) {
         const data = res.data as typeof res.data & { liked?: boolean };
@@ -656,6 +675,7 @@ function CommentSection({ boardId }: CommentSectionProps) {
         setComments(prev => updateCommentLike(prev, commentId, data.likeCount, liked));
       }
     } catch { /* 비로그인 등 */ }
+    finally { setLikingCommentId(null); }
   };
 
   const countAll = (list: CommentResponse[]): number =>
@@ -754,6 +774,7 @@ function CommentSection({ boardId }: CommentSectionProps) {
                   onDelete={handleDelete}
                   onHide={handleHide}
                   onToggleLike={handleToggleLike}
+                  isLiking={likingCommentId === comment.id}
                   replyTargetId={replyTargetId}
                   replyTargetName={replyTargetName}
                   replyContext={replyContext}

@@ -26,6 +26,7 @@ public interface CategoryRepository extends JpaRepository<Category, Long> {
      * parentId가 null이면 최상위 카테고리 조회
      */
     List<Category> findByParentIdAndIsActiveTrueOrderBySortOrderAsc(Long parentId);
+    boolean existsByParentId(Long parentId);
 
     /**
      * 최상위 카테고리 조회 (parentId가 null)

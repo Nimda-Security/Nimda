@@ -123,11 +123,20 @@ export const getBoardListAPI = async (
  * @param id 게시글 ID
  * @returns 게시글 상세 응답
  */
+const LEGAL_DOCUMENT_SLUG_BY_BOARD_ID: Readonly<Record<number, string>> = {
+  5: 'terms',
+  6: 'privacy',
+  7: 'youth-protection',
+  8: 'site-rules',
+};
+
 export const getBoardDetailAPI = async (
   id: number
 ): Promise<BoardDetailResponse | BoardErrorResponse> => {
   try {
-    const response = await fetch(`${API_BASE_URL}/${id}`, {
+    const legalSlug = LEGAL_DOCUMENT_SLUG_BY_BOARD_ID[id];
+    const detailPath = legalSlug ? `/legal/${legalSlug}` : `/${id}`;
+    const response = await fetch(`${API_BASE_URL}${detailPath}`, {
       method: 'GET',
       headers: addVersionToHeaders({
         'Content-Type': 'application/json',

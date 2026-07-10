@@ -1,15 +1,7 @@
-import React from "react";
 import { Link } from "react-router-dom";
 import Logo from "@/components/icons/Logo";
 
-const Footer: React.FC = () => {
-  const [showToast, setShowToast] = React.useState(false);
-
-  const handleCopyEmail = () => {
-    navigator.clipboard.writeText("nimda0410@gmail.com");
-    setShowToast(true);
-    setTimeout(() => setShowToast(false), 2000);
-  };
+const Footer = () => {
 
   return (
     <footer className="layout__footer">
@@ -46,12 +38,12 @@ const Footer: React.FC = () => {
             <Link to="/board/notice/6" style={{ color: "inherit", textDecoration: "none", cursor: "pointer" }}>개인정보보호정책</Link>
             <Link to="/board/notice/7" style={{ color: "inherit", textDecoration: "none", cursor: "pointer" }}>청소년보호정책</Link>
             <Link to="/board/notice/8" style={{ color: "inherit", textDecoration: "none", cursor: "pointer" }}>사이트 이용규칙</Link>
-            <span 
-              onClick={handleCopyEmail} 
-              style={{ cursor: "pointer" }}
+            <a
+              href="mailto:nimda0410@gmail.com"
+              style={{ color: "inherit", textDecoration: "none" }}
             >
-              비즈니스 문의
-            </span>
+              비즈니스 문의: nimda0410@gmail.com
+            </a>
           </div>
 
           {/* 저작권 */}
@@ -61,12 +53,6 @@ const Footer: React.FC = () => {
         </div>
       </div>
 
-      {/* 플로팅 토스트 팝업 */}
-      {showToast && (
-        <div className="copy-toast">
-          이메일 주소가 복사되었습니다.
-        </div>
-      )}
     </footer>
   );
 };

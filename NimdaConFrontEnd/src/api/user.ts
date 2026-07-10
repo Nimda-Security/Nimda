@@ -51,8 +51,34 @@ export async function getUserBoardsAPI(nickname: string) {
   return [];
 }
 
+export class PrivateActivityRequestError extends Error {
+  constructor(
+    message: string,
+    public readonly status: number,
+  ) {
+    super(message);
+    this.name = 'PrivateActivityRequestError';
+  }
+}
+
+async function getPrivateActivityResponse(url: string): Promise<Response> {
+  const res = await fetch(url, {
+    headers: addVersionToHeaders(),
+    credentials: 'include',
+  });
+
+  if (!res.ok) {
+    throw new PrivateActivityRequestError(
+      res.status === 403 ? 'Private activity is forbidden.' : 'Private activity request failed.',
+      res.status,
+    );
+  }
+
+  return res;
+}
+
 /**
- * 특정 유저가 좋아요한 게시글 목록 조회 (공개)
+ * 특정 유저가 좋아요한 게시글 목록 조회
  */
 export interface LikedBoard {
   id: number;
@@ -67,48 +93,47 @@ export interface LikedBoard {
 }
 
 export async function getUserLikedBoardsByNickname(nickname: string): Promise<LikedBoard[]> {
-  const res = await fetch(`/api/like/board/user/${encodeURIComponent(nickname)}/liked`, {
-    headers: addVersionToHeaders(),
-    credentials: 'include',
-  });
-  if (!res.ok) return [];
+  const res = await getPrivateActivityResponse(
+    `/api/like/board/user/${encodeURIComponent(nickname)}/liked`,
+  );
   const data = await res.json();
-  if (data?.success) {
-    const boards = data.data?.boards || [];
-    return boards.map((b: Record<string, unknown>) => {
-      const author = b.author as Record<string, unknown> | undefined;
-      return {
-        id: b.id as number,
-        title: b.title as string,
-        likeCount: (b.likeCount as number) ?? 0,
-        commentCount: (b.commentCount as number) ?? 0,
-        createdAt: b.createdAt as string,
-        filepath: b.filepath as string | undefined,
-        authorNickname: author?.nickname as string | undefined,
-        authorProfileImage: author?.profileImage as string | undefined,
-        authorProfileDecoration: author?.profileDecoration as string | undefined,
-      };
-    });
+  if (!data?.success || !Array.isArray(data.data?.boards)) {
+    throw new PrivateActivityRequestError('Private activity response was invalid.', res.status);
   }
-  return [];
+
+  return data.data.boards.map((b: Record<string, unknown>) => {
+    const author = b.author as Record<string, unknown> | undefined;
+    return {
+      id: b.id as number,
+      title: b.title as string,
+      likeCount: (b.likeCount as number) ?? 0,
+      commentCount: (b.commentCount as number) ?? 0,
+      createdAt: b.createdAt as string,
+      filepath: b.filepath as string | undefined,
+      authorNickname: author?.nickname as string | undefined,
+      authorProfileImage: author?.profileImage as string | undefined,
+      authorProfileDecoration: author?.profileDecoration as string | undefined,
+    };
+  });
 }
 
 /**
- * 특정 유저 마일리지 잔액 조회 (공개)
+ * 특정 유저 마일리지 잔액 조회
  */
 export async function getUserPointBalanceByNickname(nickname: string): Promise<number> {
-  const res = await fetch(`/api/cite/point/user/${encodeURIComponent(nickname)}`, {
-    headers: addVersionToHeaders(),
-    credentials: 'include',
-  });
-  if (!res.ok) return 0;
+  const res = await getPrivateActivityResponse(
+    `/api/cite/point/user/${encodeURIComponent(nickname)}`,
+  );
   const data = await res.json();
-  if (data?.success) return data.data?.totalAmount ?? 0;
-  return 0;
+  if (!data?.success || typeof data.data?.totalAmount !== 'number') {
+    throw new PrivateActivityRequestError('Private activity response was invalid.', res.status);
+  }
+
+  return data.data.totalAmount;
 }
 
 /**
- * 특정 유저 마일리지 내역 조회 (공개)
+ * 특정 유저 마일리지 내역 조회
  */
 export interface PointHistoryItem {
   id?: number;
@@ -119,22 +144,21 @@ export interface PointHistoryItem {
 }
 
 export async function getUserPointDetailsByNickname(nickname: string): Promise<PointHistoryItem[]> {
-  const res = await fetch(`/api/cite/point/user/${encodeURIComponent(nickname)}/details`, {
-    headers: addVersionToHeaders(),
-    credentials: 'include',
-  });
-  if (!res.ok) return [];
+  const res = await getPrivateActivityResponse(
+    `/api/cite/point/user/${encodeURIComponent(nickname)}/details`,
+  );
   const data = await res.json();
-  if (data?.success && Array.isArray(data.data)) {
-    return data.data.map((item: Record<string, unknown>) => ({
-      id: item.id as number | undefined,
-      description: item.description as string,
-      amount: item.amount as number,
-      date: item.createdAt ? String(item.createdAt).substring(5, 10).replace('-', '.') : '00.00',
-      type: (item.amount as number) > 0 ? 'earn' : ((item.amount as number) < 0 ? 'use' : 'expire'),
-    }));
+  if (!data?.success || !Array.isArray(data.data)) {
+    throw new PrivateActivityRequestError('Private activity response was invalid.', res.status);
   }
-  return [];
+
+  return data.data.map((item: Record<string, unknown>) => ({
+    id: item.id as number | undefined,
+    description: item.description as string,
+    amount: item.amount as number,
+    date: item.createdAt ? String(item.createdAt).substring(5, 10).replace('-', '.') : '00.00',
+    type: (item.amount as number) > 0 ? 'earn' : ((item.amount as number) < 0 ? 'use' : 'expire'),
+  }));
 }
 
 /**

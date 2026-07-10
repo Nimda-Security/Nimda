@@ -43,6 +43,8 @@ public interface BoardRepository extends JpaRepository<Board, Long> { // [수정
 
     // ========== [전체 게시글 조회 (상태 필터)] ==========
     Page<Board> findByStatus(BoardStatus status, Pageable pageable);
+    @EntityGraph(attributePaths = { "author", "category" })
+    Optional<Board> findByLegalSlugAndStatus(String legalSlug, BoardStatus status);
 
     // ========== [ERD 구조 반영] ==========
     // [변경] BoardType → Category로 변경
@@ -118,6 +120,13 @@ public interface BoardRepository extends JpaRepository<Board, Long> { // [수정
     Page<Board> findByCategoryInAndTitleContainingAndStatus(List<Category> categories, String searchKeyword, BoardStatus status, Pageable pageable);
 
     long countByAuthorAndStatus(User author, BoardStatus status);
+    @Query("SELECT b.category.id, COUNT(b.id) FROM Board b " +
+            "WHERE b.category.id IN :categoryIds AND b.status = :status " +
+            "GROUP BY b.category.id")
+    List<Object[]> countByCategoryIdsAndStatus(@Param("categoryIds") List<Long> categoryIds,
+                                               @Param("status") BoardStatus status);
+
+    boolean existsByCategoryIdAndStatusIn(Long categoryId, List<BoardStatus> statuses);
 
     // 내가 작성한 게시글 목록 (최신순, 활성 상태만)
     @EntityGraph(attributePaths = { "author", "category" })

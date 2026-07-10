@@ -74,9 +74,7 @@ public class BoardResponseDTO {
     @AllArgsConstructor
     public static class AuthorInfo {
         private Long id;
-        private String userId;
         private String nickname;
-        private String email;
         private String profileImage;
         private String profileDecoration;
     }
@@ -121,9 +119,7 @@ public class BoardResponseDTO {
         if (author != null) {
             authorInfo = AuthorInfo.builder()
                     .id(author.getId())
-                    .userId(author.getUserId())
                     .nickname(author.getNickname())
-                    .email(author.getEmail())
                     .profileImage(author.getProfileImage())
                     .profileDecoration(author.getProfileDecoration())
                     .build();

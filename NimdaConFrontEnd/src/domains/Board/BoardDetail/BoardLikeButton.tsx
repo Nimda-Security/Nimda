@@ -43,6 +43,9 @@ function BoardLikeButton({ boardId, initialLikeCount, initialIsLiked, onLikeChan
         onClick={handleToggle}
         disabled={isToggling}
         className={`board-like-btn ${isLiked ? 'is-liked' : ''}`}
+        aria-label={isLiked ? `게시글 좋아요 취소, ${likeCount}개` : `게시글 좋아요, ${likeCount}개`}
+        aria-pressed={isLiked}
+        aria-busy={isToggling}
       >
         <div className="board-like-circle">
           <Heart filled={isLiked} />

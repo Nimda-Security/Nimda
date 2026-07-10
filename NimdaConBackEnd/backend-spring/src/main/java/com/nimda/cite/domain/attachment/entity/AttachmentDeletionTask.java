@@ -7,6 +7,7 @@ import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
 import jakarta.persistence.Table;
+import jakarta.persistence.UniqueConstraint;
 import lombok.AccessLevel;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
@@ -14,7 +15,10 @@ import lombok.NoArgsConstructor;
 import java.time.LocalDateTime;
 
 @Entity
-@Table(name = "attachment_deletion_tasks")
+@Table(
+        name = "attachment_deletion_tasks",
+        uniqueConstraints = @UniqueConstraint(name = "uk_attachment_deletion_tasks_storage_key", columnNames = "storage_key")
+)
 @Getter
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
 public class AttachmentDeletionTask extends BaseTimeEntity {
@@ -25,6 +29,10 @@ public class AttachmentDeletionTask extends BaseTimeEntity {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
+    /**
+     * Active deletion keys are immutable, generation-qualified UUID paths. A single key maps to
+     * one outbox row so quarantine state cannot be bypassed by a later active enqueue.
+     */
     @Column(name = "storage_key", nullable = false, length = 512)
     private String storageKey;
 
@@ -39,7 +47,6 @@ public class AttachmentDeletionTask extends BaseTimeEntity {
 
     @Column(name = "next_attempt_at", nullable = false)
     private LocalDateTime nextAttemptAt;
-
     private AttachmentDeletionTask(String storageKey) {
         this.storageKey = storageKey;
         this.attemptCount = 0;
@@ -62,6 +69,7 @@ public class AttachmentDeletionTask extends BaseTimeEntity {
         task.markQuarantined(reason);
         return task;
     }
+
 
     public void markQuarantined(String reason) {
         this.quarantined = true;
