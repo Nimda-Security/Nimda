@@ -1,315 +1,157 @@
-# 🚀 Nimda Zero-Downtime Deployment Guide (v2.0)
+# NIMDA Deployment Guide
 
-## 개요
+이 문서는 현재 저장소의 Docker Compose, Nginx, GitHub Actions, Blue/Green 전환 스크립트와 일치하는 운영 절차입니다. 검증되지 않은 “완전 무중단” 또는 고정 복구 시간은 보장하지 않습니다.
 
-**고유 태그 기반 Blue-Green 무중단 배포** 시스템
+## Scope and Audience
 
-- 각 배포마다 **고유한 이미지 태그** (commit hash 기반)
-- **Blue-Green 패턴**으로 기존 서버 유지
-- **sed 기반 Nginx 자동 교체**
-- **Graceful reload** 사용
+대상은 NIMDA API 운영자와 배포 리뷰어입니다. 구성 요소는 다음과 같습니다.
 
----
+- `docker-compose.yml`: MySQL, Redis, blue/green Spring Boot, Nginx
+- `deploy.sh`: 대기 색상 기동, 준비 상태 확인, 검증 후 트래픽 전환
+- `nginx/nginx.conf`: TLS 종단, 압축, 연결 재사용, API 제한, SSE
+- `.github/workflows/ci.yml`: lint/build/test, SHA 이미지 발행, 운영 호스트 배포
+- `nginx/conf.d/active-backend.inc`: 현재 upstream 한 줄; 런타임에 생성되며 Git에 저장하지 않음
 
-## 🔧 주요 개선사항
+스크립트는 `deploy`, `status`, `rollback` 같은 하위 명령을 받지 않습니다. 배포는 환경변수와 함께 `./deploy.sh` 한 번으로 실행합니다.
 
-### 1️⃣ 고유 태그 (Unique Tagging)
-- CI에서 `${{ github.sha }}`를 사용한 고유 태그 생성
-- 각 배포마다 새로운 이미지 ID 보장
-- 이미지 캐시 문제 완전 해결
+## Prerequisites and Supported Versions
 
-### 2️⃣ 완전한 Blue-Green 스위칭
-- nginx.conf의 마커로 현재 활성 서비스 추적
-- sed를 사용해 Nginx 설정 자동 업데이트
-- Graceful reload로 무중단 적용
+운영 호스트에 다음이 필요합니다.
 
-### 3️⃣ Docker 이미지 최적화
-- `docker-compose pull`로 특정 서비스 & 태그 지정
-- `docker image prune -af`로 이전 이미지 자동 정리
-- 환경변수 `BACKEND_IMAGE_TAG` 동적 관리
+- Linux와 Bash
+- Docker Engine, Docker Compose v2
+- `curl`, `flock`, `mktemp`, `mv`, `chmod`
+- Nginx 컨테이너 이름 `nimda-nginx`
+- `/home/ubuntu/app` 또는 동일 구조의 배포 디렉터리
+- 유효한 `api.nimda.kr` 인증서가 `certbot/conf/`에 마운트된 상태
+- Docker Hub에 발행된 불변 short-SHA 이미지 태그
 
----
+백엔드 런타임 이미지는 Java 17, 내부 포트 8080, Compose healthcheck용 `curl`을 포함합니다.
 
-## 📋 파일 구조
+## Commands and Working Directories
 
-```
-Nimda/
-├── .github/workflows/
-│   └── ci.yml                    # 고유 태그 사용 (github.sha)
-├── docker-compose.yml            # ${BACKEND_IMAGE_TAG} 환경변수
-├── deploy.sh                     # 완전한 Blue-Green 배포
-├── nginx/
-│   ├── nginx.conf               # [ACTIVE_BACKEND_MARKER: blue]
-│   └── nginx.conf.template      # (더 이상 사용 안 함)
-└── DEPLOYMENT.md                # 이 파일
-```
+모든 명령은 저장소 또는 운영 배포 디렉터리 루트에서 실행합니다.
 
----
-
-### 2️⃣ 상태 확인
+### 최초 설정
 
 ```bash
-./deploy.sh status
+cp .env.example .env
+mkdir -p nginx/conf.d
+chmod +x deploy.sh
+BACKEND_IMAGE_TAG=<검증된-커밋-SHA> docker compose config
 ```
 
-**출력 예시:**
-```
-📊 Nimda 배포 상태
-==================================================
-  활성 서비스  : green
-  대기 서비스  : blue
+`cp`와 `mkdir`은 로컬 파일을 만들며, `docker compose config`는 컨테이너를 변경하지 않습니다. 단, 치환된 비밀값이 표준 출력에 나타날 수 있으므로 결과를 공개 로그에 남기지 않습니다.
 
-📦 실행 중인 컨테이너:
-NAME                STATUS              IMAGE
-nimda-backend-blue  Up 3 hours          xtkww971/nimda-backend:latest
-nimda-backend-green Up 5 minutes         xtkww971/nimda-backend:latest
-```
-
----
-
-### 3️⃣ 롤백 (배포 실패 시)
+### 배포
 
 ```bash
-./deploy.sh rollback
+BACKEND_IMAGE_TAG=<검증된-커밋-SHA> ./deploy.sh
 ```
 
-**동작 과정:**
-1. 이전 버전(대기 중인 서비스) 재시작
-2. 헬스체크
-3. 트래픽 전환
+스크립트는 다음 순서로 동작합니다.
 
-**결과:** ⏮️ 즉시 이전 버전으로 되돌림
+1. 필수 명령과 이미지 태그를 확인하고 `/tmp/nimda-deploy.lock`의 비차단 잠금을 획득합니다.
+2. `active-backend.inc`를 엄격히 읽어 활성/대기 색상을 결정합니다.
+3. 대기 색상의 불변 이미지를 pull하고 기동합니다.
+4. 로컬 공개 포트 8081 또는 8082의 `/api/cite/category`가 2xx를 반환할 때까지 최대 24회, 5초 간격으로 확인합니다.
+5. upstream 파일을 임시 파일과 원자적 `mv`로 교체합니다.
+6. `docker exec nimda-nginx nginx -t`가 성공해야 reload합니다.
+7. 검증 또는 reload 실패 시 이전 upstream 파일을 복구하고 성공한 서버를 중단하지 않습니다.
+8. 전환 성공 후에만 이전 색상 컨테이너를 중단합니다.
 
----
+성공 신호는 `Promoted backend-<color>.`와 이전 색상 중단 메시지입니다. health timeout, Nginx 문법 오류 또는 reload 오류가 나오면 배포 실패입니다.
 
-## 🔍 동작 원리
-
-### 초기 상태
-```
-사용자 요청 → Nginx (포트 80/443)
-              ↓
-         upstream backend_server
-              ↓
-         backend-blue:8080 (활성)
-         backend-green:8080 (대기)
-```
-
-### 배포 중
-```
-Step 1: 새 이미지 Pull
-         docker pull xtkww971/nimda-backend:latest
-
-Step 2: 대기 서비스에 배포
-         docker-compose up -d backend-green
-         (새 이미지로 green 컨테이너 시작)
-
-Step 3: 헬스체크
-         curl http://backend-green:8080/api/health
-         (정상 응답 확인)
-
-Step 4: 트래픽 전환
-         nginx.conf 업데이트: upstream backend_server → backend-green
-         docker-compose restart nginx
-
-결과: 모든 신규 요청 → backend-green (새 버전)
-     기존 연결은 유지되거나 graceful shutdown
-```
-
----
-
-## 📊 배포 시나리오
-
-### 시나리오 1: 정상 배포
+### 상태와 로그 확인
 
 ```bash
-$ ./deploy.sh deploy
-
-[2026-05-04 14:30:12] 🚀 Nimda 무중단 배포 시작
-[2026-05-04 14:30:12]    현재 활성: blue | 배포 대상: green
-
-[2026-05-04 14:30:12] [Step 1/4] 최신 이미지 다운로드...
-[2026-05-04 14:31:05] ✓ 이미지 다운로드 완료
-
-[2026-05-04 14:31:05] [Step 2/4] green 서비스에 새 이미지 배포...
-[2026-05-04 14:31:10] ✓ 컨테이너 업데이트 완료
-
-[2026-05-04 14:31:10] [Step 3/4] 새 서비스 헬스체크...
-[2026-05-04 14:31:15] ✓ nimda-backend-green 정상 작동 확인
-
-[2026-05-04 14:31:15] [Step 4/4] 트래픽 전환 (blue → green)...
-[2026-05-04 14:31:18] ✓ Nginx 재시작 완료
-
-[2026-05-04 14:31:20] ✓ 무중단 배포 완료!
-```
-
----
-
-### 시나리오 2: 배포 실패 시 롤백
-
-```bash
-# 배포 중 문제 발생
-$ ./deploy.sh deploy
-[2026-05-04 14:35:12] ❌ ERROR: green 서비스 헬스체크 실패
-
-# 즉시 롤백
-$ ./deploy.sh rollback
-
-[2026-05-04 14:35:20] ⏮️ 롤백 시작: green → blue
-[2026-05-04 14:35:25] ✓ 롤백 완료!
-
-# 트래픽 다시 blue로 흐름
-```
-
----
-
-## 🎯 주요 특징
-
-### ✅ 무중단 배포
-- 기존 사용자 요청 계속 처리
-- 배포 중 서비스 중단 없음
-
-### ✅ 빠른 롤백
-- 배포 실패 시 1분 이내 이전 버전 복구
-- 상태 파일(`.deployment_state`)로 추적
-
-### ✅ 헬스체크
-- 자동 헬스체크 (최대 30초)
-- 이상 상황 자동 감지
-
-### ✅ 로그 기록
-- `deployment.log`에 모든 배포 기록 저장
-- 문제 발생 시 원인 분석 가능
-
-### ✅ 두 버전 동시 유지
-- 언제든 빠르게 전환 가능
-- 성능 테스트나 카나리 배포 확장 가능
-
----
-
-## ⚙️ 설정 확인
-
-### 1. 헬스체크 엔드포인트 확인
-
-현재 Spring Boot 백엔드에서 지원하는 엔드포인트 확인:
-
-```bash
-# 로컬 테스트
-curl http://localhost:8080/api/health
-
-# 또는 actuator 엔드포인트
-curl http://localhost:8080/actuator/health
-```
-
-**만약 헬스체크 엔드포인트가 없다면:**
-
-[NimdaConBackEnd/backend-spring/src/main/java](../NimdaConBackEnd/backend-spring/src/main/java)에서 
-
-`@RestController` 또는 `@Controller`가 있는 클래스에 추가:
-
-```java
-@GetMapping("/api/health")
-public ResponseEntity<Map<String, String>> health() {
-    return ResponseEntity.ok(Map.of("status", "UP"));
-}
-```
-
-### 2. docker-compose 서비스 확인
-
-```bash
-# 현재 실행 중인 서비스 확인
-docker-compose ps
-
-# 특정 서비스 로그 확인
-docker-compose logs backend-blue
-docker-compose logs backend-green
-```
-
-### 3. Nginx 설정 검증
-
-```bash
-# Nginx 문법 검사
+docker compose ps
+docker compose logs --tail=200 backend-blue backend-green
 docker exec nimda-nginx nginx -t
-
-# 현재 설정 확인
-docker exec nimda-nginx cat /etc/nginx/nginx.conf
+curl --fail --max-time 3 http://127.0.0.1:8081/api/cite/category
+curl --fail --max-time 3 http://127.0.0.1:8082/api/cite/category
 ```
 
----
+로그 명령은 읽기 전용입니다. `curl`은 공개 포트에 GET 요청을 보내지만 데이터를 변경하지 않습니다.
 
-## 🚨 문제 해결
+## Configuration and Secret Handling
 
-### Q: "헬스체크 실패" 에러 발생
+- `.env.example`의 `CHANGE_ME`를 승인된 비밀 저장소 값으로 바꿔 운영 호스트의 `.env`에만 저장합니다.
+- `BACKEND_IMAGE_TAG`는 CI가 발행한 short commit SHA여야 합니다. Compose는 값이 없으면 실패하며 `latest`로 자동 대체하지 않습니다.
+- MySQL 버퍼 풀은 `MYSQL_INNODB_BUFFER_POOL_SIZE`로 조절하며 기본값은 256M입니다. 실제 메모리 예산을 측정한 뒤 변경합니다.
+- 백엔드는 Redis 호스트 `redis`, 포트 6379, `REDIS_PASSWORD`를 명시적으로 주입받습니다.
+- AWS, JWT, DB, Redis, SMTP 값은 GitHub Actions secret 또는 운영 비밀 저장소에서만 전달합니다.
+- `.env`, 인증서 개인키, Compose 치환 출력, 컨테이너 환경 덤프를 이슈나 채팅에 붙이지 않습니다.
 
-**원인:** 백엔드 서비스가 준비되지 않음
+GitHub Actions는 프론트엔드·랜딩 lint/build와 Maven `clean verify`를 먼저 실행하고, 성공한 commit SHA 태그만 발행·배포합니다. 동시 배포는 `nimda-production` concurrency 그룹으로 직렬화됩니다.
 
-**해결:**
-1. 서비스 로그 확인: `docker-compose logs backend-green`
-2. 수동 테스트: `docker exec nimda-backend-green curl http://localhost:8080/api/health`
-3. 필요시 헬스체크 엔드포인트 추가
+## Performance Budgets and Measurement Protocol
 
-### Q: Nginx 설정 적용 안 됨
+Nginx는 자동 worker 수, upstream keepalive 32개, 일반 요청의 조건부 Upgrade 헤더, gzip, `sendfile`, TCP 최적화를 사용합니다. 요청 본문은 백엔드와 같은 10MiB로 제한하고 `/api/alarm/subscribe`만 SSE 버퍼링을 끄며 24시간 read timeout을 사용합니다. 일반 요청에 `Connection: upgrade`를 강제하지 않습니다.
 
-**원인:** nginx.conf.template에서 치환 실패
+배포 승인 게이트:
 
-**해결:**
-```bash
-# 직접 설정 재생성
-ACTIVE_SERVICE=green envsubst < nginx/nginx.conf.template > nginx/nginx.conf
-docker-compose restart nginx
-```
+| 지표 | 기준 |
+| --- | ---: |
+| 직접 upstream 대비 프록시 p95 추가 지연 | 20ms 이하 |
+| 직접 upstream 대비 프록시 p99 추가 지연 | 50ms 이하 |
+| 프록시 처리량 | 직접 upstream의 95% 이상 |
+| 프록시 추가 오류율 | 0.1%p 이하 |
+| 일반 읽기 API p95 | 300ms 이하 |
+| HTTP 오류율 | 0.5% 미만 |
 
-### Q: 이전 버전으로 돌리고 싶음
+동일 데이터·자원·동시성으로 직접 포트와 HTTPS 프록시를 번갈아 측정합니다. 워밍업 2회 후 최소 5회 측정하며 median, p95, p99, 처리량, 499/502/503/504, CPU, 메모리, DB pool을 보존합니다. 운영 환경에서 승인 없이 부하 테스트하지 않습니다.
 
-```bash
-./deploy.sh rollback
-```
+## Verification and Expected Results
 
----
-
-## 📋 체크리스트
-
-배포 전 확인:
-
-- [ ] 새 이미지가 Docker Hub에 업로드됨
-- [ ] 로컬에서 테스트 완료
-- [ ] `.deployment_state` 파일이 최신 상태 반영
-- [ ] `docker-compose ps`로 두 서비스 실행 중 확인
-- [ ] 배포 스크립트 실행 권한 있음: `chmod +x deploy.sh`
-
----
-
-## 📞 긴급 상황
-
-### 서비스 즉시 중단 필요
+배포 전 CI 또는 격리 호스트에서 다음을 실행합니다.
 
 ```bash
-# 모든 backend 서비스 중단
-docker-compose stop backend-blue backend-green
+# 저장소 루트: Compose 문법과 필수 환경 변수
+BACKEND_IMAGE_TAG=<커밋-SHA> docker compose config --quiet
 
-# Nginx만 유지해서 503 에러 반환
-# 또는 정적 에러 페이지 띄우기
+# 실행 중인 Nginx 설정
+ docker exec nimda-nginx nginx -t
+
+# HTTPS 강제와 Nginx 자체 상태
+curl -I http://api.nimda.kr/
+curl --fail https://api.nimda.kr/nginx-health
+
+# 앱 준비 상태
+curl --fail http://127.0.0.1:8081/api/cite/category
+curl --fail http://127.0.0.1:8082/api/cite/category
 ```
 
-### 완전 재배포
+예상 결과:
+
+- HTTP 일반 요청은 같은 host의 HTTPS로 301 이동합니다.
+- `/nginx-health`는 `ok`와 200을 반환합니다.
+- 활성 백엔드와 준비된 대기 백엔드는 카테고리 JSON과 2xx를 반환합니다.
+- `nginx -t`는 `syntax is ok`와 `test is successful`을 출력합니다.
+- 실패한 대기 서버는 upstream으로 승격되지 않습니다.
+
+연결 유지 또는 무중단을 주장하려면 전환 중 지속 트래픽 시험에서 실패 요청 0건, 장기 SSE·업로드·다운로드 완료, 이전 연결 드레이닝, 되돌리기 성공을 별도로 증명해야 합니다.
+
+## Audit Artifacts and Commit Hygiene
+
+- `.gjc/`, `audit-assets/`, `load-tests/results/`, 로그, 인증서, `.env`, 이미지 tar, Nginx 덤프를 Git에 넣지 않습니다.
+- CI 산출물과 부하 결과는 접근 제어된 외부 저장소에 보존하고 커밋에는 체크섬·요약만 기록합니다.
+- 배포 전 실제 이미지 digest와 SHA 태그 대응, 변경된 `docker-compose.yml`, `nginx/nginx.conf`, `deploy.sh`가 운영 호스트에 함께 전달됐는지 확인합니다.
+- `docker image prune -af`를 자동 배포에 사용하지 않습니다. 검증된 롤백 이미지를 보존 정책에 따라 유지합니다.
+
+## Limitations, Rollback, and Last Verified Date
+
+현재 스크립트는 전환 직후 이전 컨테이너를 중단하므로 장기 진행 중 요청의 명시적 드레이닝을 보장하지 않습니다. 따라서 이 문서는 Blue/Green 검증 전환으로 표현하며 “완전 무중단”이라고 부르지 않습니다.
+
+전환 전 실패는 자동으로 승격을 중단합니다. 전환 후 되돌리기는 다음처럼 이전에 검증된 불변 태그를 사용합니다.
 
 ```bash
-# 모든 서비스 정지
-docker-compose down
-
-# 재시작
-docker-compose up -d
+# 현재 활성 색상 반대편에 이전 이미지를 기동·검증하고 다시 전환
+BACKEND_IMAGE_TAG=<이전-검증-SHA> ./deploy.sh
 ```
 
----
+이 방식은 `rollback` 하위 명령이 아니라 새 검증 배포입니다. 데이터베이스 마이그레이션이 하위 호환되지 않으면 애플리케이션 이미지만 되돌리지 말고 별도 승인된 DB 복구 계획을 따릅니다.
 
-## 📝 로그 위치
+이 Windows 검증 환경에는 Docker와 k6가 없어 Compose 실행, Nginx 문법 검사, 실제 전환·드레이닝·프록시 성능 시험은 수행하지 않았습니다. 정적 설정 검토와 공개 readiness 경로의 운영 200 응답만 확인했습니다.
 
-```
-deployment.log          # 배포 실행 로그
-.deployment_state       # 현재 활성 서비스 상태
-docker-compose.log      # Docker 컴포즈 로그 (필요시)
-```
-
----
-
-**마지막 업데이트:** 2026-05-04
+마지막 검증: 2026-07-10, Windows 11 x64, 기준 커밋 `102801b`에서 시작한 현재 변경 집합. 운영 배포 전에 Linux CI/호스트의 Docker·Nginx·k6 게이트가 추가로 필요합니다.

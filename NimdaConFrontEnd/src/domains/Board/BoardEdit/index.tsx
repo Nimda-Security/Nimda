@@ -1,4 +1,4 @@
-import { useEffect, useState, useRef } from 'react';
+import { useCallback, useEffect, useState, useRef } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import Layout from '@/components/Layout';
 import InlineColorPicker from '@/components/InlineColorPicker';
@@ -7,6 +7,17 @@ import { uploadBoardFileViaS3 } from '@/api/attachments';
 import { getTagsByCategoryAPI } from '@/api/tag';
 import type { TagResponse } from '@/api/tag';
 import { highlightCodeBlocks } from '@/utils/codeHighlight';
+import {
+  ensureCodeLanguageSelector,
+  getCodeElementInPre,
+  refreshCodeBlockHighlight,
+  syncCodeBlockEmptyState,
+  updateCodeBlockLanguage,
+} from '../BoardWrite/codeBlockUtils';
+import {
+  getSelectionOffsetsInElement,
+  setSelectionInElementByOffset,
+} from '../BoardWrite/editorUtils';
 import type { Board } from '../types';
 
 const CODE_LANGUAGE_OPTIONS = [
@@ -233,7 +244,7 @@ function BoardEditPage() {
   } | null>(null);
   const [resizeTooltip, setResizeTooltip] = useState<string>('');
 
-  const clearSelectedImage = () => {
+  const clearSelectedImage = useCallback(() => {
     if (selectedImageRef.current) {
       selectedImageRef.current.classList.remove('bw-resizable-image--selected');
     }
@@ -241,9 +252,9 @@ function BoardEditPage() {
     setSelectedImageRect(null);
     setResizeTooltip('');
     resizeSessionRef.current = null;
-  };
+  }, []);
 
-  const updateSelectedImageRect = () => {
+  const updateSelectedImageRect = useCallback(() => {
     const img = selectedImageRef.current;
     const surface = editorSurfaceRef.current;
     if (!img || !surface || !surface.contains(img)) {
@@ -268,16 +279,16 @@ function BoardEditPage() {
     setResizeTooltip(
       `${Math.round(imgRect.width)}×${Math.round(imgRect.height)}px (${percent}%)`
     );
-  };
+  }, [clearSelectedImage]);
 
-  const selectImage = (img: HTMLImageElement) => {
+  const selectImage = useCallback((img: HTMLImageElement) => {
     if (selectedImageRef.current && selectedImageRef.current !== img) {
       selectedImageRef.current.classList.remove('bw-resizable-image--selected');
     }
     selectedImageRef.current = img;
     img.classList.add('bw-resizable-image--selected');
     updateSelectedImageRect();
-  };
+  }, [updateSelectedImageRect]);
 
   const startImageResize = (
     handle: ImageResizeHandle,
@@ -305,13 +316,13 @@ function BoardEditPage() {
     };
   };
 
-  const getEditorContent = () => {
+  const getEditorContent = useCallback(() => {
     const editor = contentRef.current;
     if (!editor) return '';
     return getSanitizedEditorHtml(editor);
-  };
+  }, []);
 
-  const isEditorVisuallyEmpty = (editor: HTMLElement) => {
+  const isEditorVisuallyEmpty = useCallback((editor: HTMLElement) => {
     const hasMeaningfulNode = (node: Node): boolean => {
       if (node.nodeType === Node.TEXT_NODE) {
         const text = node.textContent?.replace(/\u00A0/g, '').trim() ?? '';
@@ -347,9 +358,9 @@ function BoardEditPage() {
     };
 
     return !Array.from(editor.childNodes).some(hasMeaningfulNode);
-  };
+  }, []);
 
-  const syncEditorEmptyState = () => {
+  const syncEditorEmptyState = useCallback(() => {
     const editor = contentRef.current;
     if (!editor) return;
     editor.setAttribute(
@@ -359,7 +370,21 @@ function BoardEditPage() {
     editor
       .querySelectorAll('pre.bw-code-block')
       .forEach((pre) => syncCodeBlockEmptyState(pre as HTMLElement));
-  };
+  }, [isEditorVisuallyEmpty]);
+
+  const getCurrentPreElement = useCallback(() => {
+    const selection = window.getSelection();
+    let node: Node | null = selection?.anchorNode ?? null;
+
+    while (node && node !== contentRef.current) {
+      if (node instanceof HTMLElement && node.tagName === 'PRE') {
+        return node;
+      }
+      node = node.parentNode;
+    }
+
+    return null;
+  }, []);
 
   useEffect(() => {
     syncEditorEmptyState();
@@ -369,7 +394,7 @@ function BoardEditPage() {
     if (contentRef.current && !getCurrentPreElement()) {
       highlightCodeBlocks(contentRef.current);
     }
-  }, [content]);
+  }, [content, getCurrentPreElement, syncEditorEmptyState]);
 
   useEffect(() => {
     const handleGlobalPointerMove = (e: MouseEvent) => {
@@ -455,7 +480,7 @@ function BoardEditPage() {
       document.removeEventListener('mousemove', handleGlobalPointerMove);
       document.removeEventListener('mouseup', handleGlobalPointerUp);
     };
-  }, []);
+  }, [getEditorContent, updateSelectedImageRect]);
 
   useEffect(() => {
     const handleOutsideMouseDown = (e: MouseEvent) => {
@@ -479,7 +504,7 @@ function BoardEditPage() {
       document.removeEventListener('mousedown', handleOutsideMouseDown);
       window.removeEventListener('resize', handleWindowResize);
     };
-  }, []);
+  }, [clearSelectedImage, updateSelectedImageRect]);
 
   // Native beforeinput handler to fix RTL text input in code blocks
   useEffect(() => {
@@ -684,7 +709,13 @@ function BoardEditPage() {
       editor.removeEventListener('change', handleLanguageChange);
       editor.removeEventListener('click', handleCodeDeleteClick);
     };
-  }, []);
+  }, [
+    clearSelectedImage,
+    getCurrentPreElement,
+    getEditorContent,
+    selectImage,
+    syncEditorEmptyState,
+  ]);
 
   const applyFormat = (
     format: 'bold' | 'italic' | 'underline' | 'strikeThrough'
@@ -787,209 +818,7 @@ function BoardEditPage() {
     applyAlignment(next);
   };
 
-  const getCurrentPreElement = () => {
-    const selection = window.getSelection();
-    let node: Node | null = selection?.anchorNode ?? null;
 
-    while (node && node !== contentRef.current) {
-      if (node instanceof HTMLElement && node.tagName === 'PRE') {
-        return node;
-      }
-      node = node.parentNode;
-    }
-
-    return null;
-  };
-
-  const getCodeElementInPre = (pre: HTMLElement) => {
-    let code = pre.querySelector('code');
-    if (!code) {
-      code = document.createElement('code');
-      code.textContent = pre.textContent || '';
-      pre.innerHTML = '';
-      pre.appendChild(code);
-    }
-    pre.setAttribute('dir', 'ltr');
-    code.setAttribute('dir', 'ltr');
-    pre.style.direction = 'ltr';
-    code.style.direction = 'ltr';
-    pre.style.textAlign = 'left';
-    code.style.textAlign = 'left';
-    return code;
-  };
-
-  const syncCodeBlockEmptyState = (pre: HTMLElement) => {
-    const code = pre.querySelector('code') as HTMLElement | null;
-    const normalizedText = (code?.textContent ?? '')
-      .replace(/\u00A0/g, '')
-      .trim();
-    pre.setAttribute(
-      'data-code-empty',
-      normalizedText.length === 0 ? 'true' : 'false'
-    );
-  };
-
-  const ensureCodeLanguageSelector = (pre: HTMLElement, language: string) => {
-    let wrapper = pre.querySelector(
-      '.bw-code-lang-wrapper'
-    ) as HTMLElement | null;
-
-    if (!wrapper) {
-      wrapper = document.createElement('div');
-      wrapper.contentEditable = 'false';
-      wrapper.className = 'bw-code-lang-wrapper';
-      pre.insertBefore(wrapper, pre.firstChild);
-    }
-
-    let select = wrapper.querySelector('select') as HTMLSelectElement | null;
-    if (!select) {
-      select = document.createElement('select');
-      select.className = 'bw-code-lang-select';
-      CODE_LANGUAGE_OPTIONS.forEach((option) => {
-        const optionElement = document.createElement('option');
-        optionElement.value = option.value;
-        optionElement.textContent = option.label;
-        select?.appendChild(optionElement);
-      });
-      wrapper.appendChild(select);
-    }
-
-    let deleteButton = wrapper.querySelector(
-      '.bw-code-delete-btn'
-    ) as HTMLButtonElement | null;
-    if (!deleteButton) {
-      deleteButton = document.createElement('button');
-      deleteButton.type = 'button';
-      deleteButton.className = 'bw-code-delete-btn';
-      deleteButton.textContent = '×';
-      deleteButton.title = '코드블럭 삭제';
-      deleteButton.setAttribute('aria-label', '코드블럭 삭제');
-      wrapper.appendChild(deleteButton);
-    }
-
-    if (select) {
-      select.value = language;
-    }
-  };
-
-  const refreshCodeBlockHighlight = (
-    pre: HTMLElement,
-    cursorStart: number,
-    cursorEnd = cursorStart
-  ) => {
-    highlightCodeBlocks(pre);
-    syncCodeBlockEmptyState(pre);
-    const code = pre.querySelector('code') as HTMLElement | null;
-    if (code) {
-      setSelectionInElementByOffset(code, cursorStart, cursorEnd);
-    }
-  };
-
-  const updateCodeBlockLanguage = (pre: HTMLElement, language: string) => {
-    const normalizedLanguage =
-      language === 'plaintext' ? 'plaintext' : language;
-
-    const prevLanguageClass = Array.from(pre.classList).find((c) =>
-      c.startsWith('language-')
-    );
-    if (prevLanguageClass) {
-      pre.classList.remove(prevLanguageClass);
-    }
-
-    pre.classList.add('bw-code-block', `language-${normalizedLanguage}`);
-    pre.setAttribute('data-language', normalizedLanguage);
-    pre.setAttribute(
-      'data-language-label',
-      getCodeLanguageLabel(normalizedLanguage)
-    );
-    ensureCodeLanguageSelector(pre, normalizedLanguage);
-
-    const code = getCodeElementInPre(pre);
-    Array.from(code.classList)
-      .filter((cls) => cls.startsWith('language-'))
-      .forEach((cls) => code.classList.remove(cls));
-    code.classList.add(`language-${normalizedLanguage}`);
-    code.removeAttribute('data-highlighted');
-    syncCodeBlockEmptyState(pre);
-  };
-
-  const getSelectionOffsetsInElement = (element: HTMLElement) => {
-    const selection = window.getSelection();
-    if (!selection || selection.rangeCount === 0) return null;
-
-    const range = selection.getRangeAt(0);
-    if (
-      !element.contains(range.startContainer) ||
-      !element.contains(range.endContainer)
-    ) {
-      return null;
-    }
-
-    const startRange = document.createRange();
-    startRange.selectNodeContents(element);
-    startRange.setEnd(range.startContainer, range.startOffset);
-    const start = startRange.toString().length;
-
-    const endRange = document.createRange();
-    endRange.selectNodeContents(element);
-    endRange.setEnd(range.endContainer, range.endOffset);
-    const end = endRange.toString().length;
-
-    return { start, end };
-  };
-
-  const setSelectionInElementByOffset = (
-    element: HTMLElement,
-    startOffset: number,
-    endOffset = startOffset
-  ) => {
-    const selection = window.getSelection();
-    if (!selection) return;
-
-    const walker = document.createTreeWalker(element, NodeFilter.SHOW_TEXT);
-    const textNodes: Text[] = [];
-    let totalLength = 0;
-
-    while (walker.nextNode()) {
-      const node = walker.currentNode as Text;
-      textNodes.push(node);
-      totalLength += node.data.length;
-    }
-
-    if (textNodes.length === 0) {
-      const emptyNode = document.createTextNode(element.textContent || '');
-      element.innerHTML = '';
-      element.appendChild(emptyNode);
-      textNodes.push(emptyNode);
-      totalLength = emptyNode.data.length;
-    }
-
-    const clamp = (value: number) => Math.max(0, Math.min(value, totalLength));
-    const targetStart = clamp(startOffset);
-    const targetEnd = clamp(endOffset);
-
-    const resolve = (target: number) => {
-      let consumed = 0;
-      for (const node of textNodes) {
-        const nodeLength = node.data.length;
-        if (target <= consumed + nodeLength) {
-          return { node, offset: target - consumed };
-        }
-        consumed += nodeLength;
-      }
-      const last = textNodes[textNodes.length - 1];
-      return { node: last, offset: last.data.length };
-    };
-
-    const startPos = resolve(targetStart);
-    const endPos = resolve(targetEnd);
-
-    const range = document.createRange();
-    range.setStart(startPos.node, startPos.offset);
-    range.setEnd(endPos.node, endPos.offset);
-    selection.removeAllRanges();
-    selection.addRange(range);
-  };
 
   const applyCodeLanguage = (language: string) => {
     contentRef.current?.focus();
@@ -1460,38 +1289,38 @@ function BoardEditPage() {
   };
 
   useEffect(() => {
-    if (id) {
-      fetchBoard(parseInt(id));
-    }
-  }, [id]);
+    if (!id) return;
 
-  const fetchBoard = async (boardId: number) => {
-    try {
-      setLoading(true);
-      setError(null);
+    const fetchBoard = async () => {
+      try {
+        setLoading(true);
+        setError(null);
 
-      const response = await getBoardDetailAPI(boardId);
+        const response = await getBoardDetailAPI(parseInt(id));
 
-      if (response.success && 'board' in response) {
-        const fetchedBoard = response.board;
-        setBoard(fetchedBoard);
-        setTitle(fetchedBoard.title);
-        setContent(fetchedBoard.content);
-        setTagId(fetchedBoard.tag?.id ?? null);
-        if (fetchedBoard.attachments !== undefined) {
-          setAttachmentIdList(fetchedBoard.attachments.map((a) => a.id));
+        if (response.success && 'board' in response) {
+          const fetchedBoard = response.board;
+          setBoard(fetchedBoard);
+          setTitle(fetchedBoard.title);
+          setContent(fetchedBoard.content);
+          setTagId(fetchedBoard.tag?.id ?? null);
+          if (fetchedBoard.attachments !== undefined) {
+            setAttachmentIdList(fetchedBoard.attachments.map((a) => a.id));
+          } else {
+            setAttachmentIdList(null);
+          }
         } else {
-          setAttachmentIdList(null);
+          setError(response.message);
         }
-      } else {
-        setError(response.message);
+      } catch {
+        setError('게시글을 불러오는 중 오류가 발생했습니다.');
+      } finally {
+        setLoading(false);
       }
-    } catch {
-      setError('게시글을 불러오는 중 오류가 발생했습니다.');
-    } finally {
-      setLoading(false);
-    }
-  };
+    };
+
+    fetchBoard();
+  }, [id]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();

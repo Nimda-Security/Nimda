@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import { Link, useLocation, useSearchParams } from 'react-router-dom';
 import { getCurrentNickname, hasRole, isAdmin } from '@/utils/jwt';
 import { isLoggedIn, getMyPageInfo, PROFILE_UPDATED_EVENT } from '@/api/auth';
@@ -16,13 +16,53 @@ import type { Category } from '@/domains/Board/types';
 import ChevronDown from '@/components/icons/ChevronDown';
 import Avatar from '@/components/Avatar/Avatar';
 
+type CategoryWithChildren = Category & { children: CategoryWithChildren[] };
+
+const buildCategoryTree = (
+  categories: Category[]
+): CategoryWithChildren[] => {
+  const categoryMap = new Map<number, CategoryWithChildren>();
+  const rootCategories: CategoryWithChildren[] = [];
+
+  categories.forEach((cat) => {
+    categoryMap.set(cat.id, { ...cat, children: [] });
+  });
+
+  categories.forEach((cat) => {
+    const category = categoryMap.get(cat.id);
+    if (cat.parentId && categoryMap.has(cat.parentId)) {
+      const parent = categoryMap.get(cat.parentId);
+      if (parent && category) {
+        parent.children.push(category);
+      }
+    } else {
+      if (category) {
+        rootCategories.push(category);
+      }
+    }
+  });
+
+  const sortCategories = (
+    cats: CategoryWithChildren[]
+  ): CategoryWithChildren[] => {
+    return cats
+      .sort((a, b) => a.sortOrder - b.sortOrder)
+      .map((cat) => ({
+        ...cat,
+        children: sortCategories(cat.children),
+      }));
+  };
+
+  return sortCategories(rootCategories);
+};
+
 const Sidebar: React.FC = () => {
-  const [nickname, setNickname] = useState<string | null>(null);
-  const [isLoggedInState, setIsLoggedInState] = useState(false);
+  const [nickname] = useState<string | null>(() => getCurrentNickname());
+  const [isLoggedInState] = useState(() => isLoggedIn());
   const [profileImage, setProfileImage] = useState<string | null>(null);
   const [profileDecoration, setProfileDecoration] = useState<string | null>(null);
   const [categories, setCategories] = useState<Category[]>([]);
-  const [categoriesLoading, setCategoriesLoading] = useState(false);
+  const [categoriesLoading, setCategoriesLoading] = useState(true);
 
   // 실시간 오늘 방문자 상태 (백엔드 DTO: { id, userName } 매핑)
   const [todayVisitors, setTodayVisitors] = useState<AttendanceLog[]>([]);
@@ -36,54 +76,6 @@ const Sidebar: React.FC = () => {
   const [activeVisitorTab, setActiveVisitorTab] = useState<'today' | 'weekly'>(
     'today'
   );
-
-  // 카테고리를 트리 구조로 변환
-  type CategoryWithChildren = Category & { children: CategoryWithChildren[] };
-
-  const buildCategoryTree = (
-    categories: Category[]
-  ): CategoryWithChildren[] => {
-    const categoryMap = new Map<number, CategoryWithChildren>();
-    const rootCategories: CategoryWithChildren[] = [];
-
-    categories.forEach((cat) => {
-      categoryMap.set(cat.id, { ...cat, children: [] });
-    });
-
-    categories.forEach((cat) => {
-      const category = categoryMap.get(cat.id);
-      if (cat.parentId && categoryMap.has(cat.parentId)) {
-        const parent = categoryMap.get(cat.parentId);
-        if (parent && category) {
-          parent.children.push(category);
-        }
-      } else {
-        if (category) {
-          rootCategories.push(category);
-        }
-      }
-    });
-
-    const sortCategories = (
-      cats: CategoryWithChildren[]
-    ): CategoryWithChildren[] => {
-      return cats
-        .sort((a, b) => a.sortOrder - b.sortOrder)
-        .map((cat) => ({
-          ...cat,
-          children: sortCategories(cat.children),
-        }));
-    };
-
-    return sortCategories(rootCategories);
-  };
-
-  useEffect(() => {
-    const currentNickname = getCurrentNickname();
-    const loggedIn = isLoggedIn();
-    setNickname(currentNickname);
-    setIsLoggedInState(loggedIn);
-  }, []);
 
   // 오늘 방문자 데이터 로드 (실시간 API 연동)
   useEffect(() => {
@@ -137,8 +129,16 @@ const Sidebar: React.FC = () => {
   useEffect(() => {
     const handleProfileUpdated = (event: Event) => {
       const detail = (event as CustomEvent<Record<string, unknown> | null>).detail;
-      setProfileImage((detail?.profileImage as string | null) ?? null);
-      setProfileDecoration((detail?.profileDecoration as string | null) ?? null);
+      const updatedProfileImage = detail?.profileImage;
+      const updatedProfileDecoration = detail?.profileDecoration;
+      setProfileImage(
+        typeof updatedProfileImage === 'string' ? updatedProfileImage : null
+      );
+      setProfileDecoration(
+        typeof updatedProfileDecoration === 'string'
+          ? updatedProfileDecoration
+          : null
+      );
     };
 
     window.addEventListener(PROFILE_UPDATED_EVENT, handleProfileUpdated);
@@ -149,7 +149,6 @@ const Sidebar: React.FC = () => {
 
   useEffect(() => {
     const loadCategories = async () => {
-      setCategoriesLoading(true);
       try {
         const allCategories = await getAllCategoriesAPI();
         setCategories(allCategories);
@@ -163,13 +162,18 @@ const Sidebar: React.FC = () => {
     loadCategories();
   }, []);
 
-  const categoryTree = buildCategoryTree(categories);
-
-  // "카르텔" 카테고리: ROLE_CARTEL 또는 ROLE_ADMIN이 아니면 사이드바에서 숨김
   const canAccessCartel = hasRole('ROLE_CARTEL') || isAdmin();
-  const filteredCategoryTree = canAccessCartel
-    ? categoryTree
-    : categoryTree.filter((cat) => cat.name !== '카르텔');
+  const categoryTree = useMemo(
+    () => buildCategoryTree(categories),
+    [categories]
+  );
+  const filteredCategoryTree = useMemo(
+    () =>
+      canAccessCartel
+        ? categoryTree
+        : categoryTree.filter((cat) => cat.name !== '카르텔'),
+    [categoryTree, canAccessCartel]
+  );
 
   return (
     <aside className="layout__sidebar">
@@ -425,7 +429,7 @@ const Sidebar: React.FC = () => {
 
 /* 카테고리 섹션 컴포넌트 */
 interface CategorySectionProps {
-  category: any;
+  category: CategoryWithChildren;
 }
 
 const CategorySection: React.FC<CategorySectionProps> = ({ category }) => {
@@ -436,7 +440,7 @@ const CategorySection: React.FC<CategorySectionProps> = ({ category }) => {
   const [searchParams] = useSearchParams();
   const currentTab = searchParams.get('tab');
 
-  const renderCategoryItems = (items: any[]) => {
+  const renderCategoryItems = (items: CategoryWithChildren[]) => {
     return items.map((item) => {
       const itemHasChildren = item.children && item.children.length > 0;
       const isParentActive =
@@ -466,7 +470,7 @@ const CategorySection: React.FC<CategorySectionProps> = ({ category }) => {
             )}
           </li>
           {itemHasChildren &&
-            item.children.map((child: any) => {
+            item.children.map((child) => {
               const isChildActive =
                 location.pathname === `/board/${item.slug}` &&
                 currentTab === child.slug;

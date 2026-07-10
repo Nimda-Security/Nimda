@@ -1,83 +1,51 @@
-# Nimda Contest Platform - Spring Boot Backend
+# NIMDA Spring Boot Backend
 
-## 개요
-Nimda Contest Platform의 Spring Boot 기반 백엔드 애플리케이션입니다.
+Java 17, Spring Boot 3.2, Spring Security, JPA, MySQL 8, Redis, Flyway로 구성된 NIMDA API 서버입니다.
 
-## 기술 스택
-- **Spring Boot 3.2.0**
-- **Spring Security**
-- **Spring Data JPA**
-- **MySQL 8.0**
-- **JWT (JSON Web Token)**
-- **Maven**
+## Requirements
 
-## 주요 기능
-- 사용자 인증 (로그인/회원가입)
-- JWT 기반 토큰 인증
-- MySQL 데이터베이스 연동
-- RESTful API
-
-## API 엔드포인트
-
-### 인증 (Authentication)
-- `POST /api/auth/login` - 로그인
-- `POST /api/auth/register` - 회원가입
-
-### 사용자 (Users)
-- `GET /api/users` - 모든 사용자 조회
-- `GET /api/users/{id}` - 사용자 정보 조회
-- `GET /api/users/username/{username}` - 사용자명으로 사용자 조회
-
-### 기본
-- `GET /` - 홈페이지
-- `GET /api` - API 정보
-
-## 설치 및 실행
-
-### 1. MySQL 데이터베이스 설정
-```sql
--- MySQL에 접속하여 데이터베이스 생성
-CREATE DATABASE nimda_con CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
-```
-
-### 2. 애플리케이션 설정
-`src/main/resources/application.yml` 파일에서 데이터베이스 연결 정보를 수정하세요:
-```yaml
-spring:
-  datasource:
-    url: jdbc:mysql://localhost:3306/nimda_con?useSSL=false&serverTimezone=UTC&allowPublicKeyRetrieval=true
-    username: your_username
-    password: your_password
-```
-
-### 3. 애플리케이션 실행
-```bash
-# Maven을 사용한 실행
-mvn spring-boot:run
-
-# 또는 JAR 파일 빌드 후 실행
-mvn clean package
-java -jar target/nimda-cup-0.0.1-SNAPSHOT.jar
-```
-
-## 기본 계정
-- **사용자명**: admin
-- **비밀번호**: 1234
-- **이메일**: admin@example.com
-
-## 프로젝트 구조
-```
-src/main/java/com/nimda/cup/
-├── config/          # 설정 클래스
-├── controller/      # REST 컨트롤러
-├── dto/            # 데이터 전송 객체
-├── entity/         # JPA 엔티티
-├── repository/     # JPA 리포지토리
-├── service/        # 비즈니스 로직
-└── util/           # 유틸리티 클래스
-```
-
-## 개발 환경
 - Java 17
-- Maven 3.6+
-- MySQL 8.0+
+- Maven Wrapper(저장소 포함)
+- 로컬 실행 시 MySQL 8과 Redis 7 또는 승인된 테스트 컨테이너
+
+## Commands
+
+이 디렉터리에서 실행합니다.
+
+```bash
+# Linux/macOS
+./mvnw -B clean verify
+./mvnw spring-boot:run
+
+# Windows
+mvnw.cmd -B clean verify
+mvnw.cmd spring-boot:run
+```
+
+테스트는 `application-test.yml`과 H2를 사용하며 실제 MySQL·Redis 자격 증명이 필요하지 않습니다. 성공 신호는 Maven `BUILD SUCCESS`입니다.
+
+## Configuration
+
+설정은 환경변수로 주입합니다. 주요 변수는 다음과 같습니다.
+
+- `SPRING_DATASOURCE_URL`, `SPRING_DATASOURCE_USERNAME`, `SPRING_DATASOURCE_PASSWORD`
+- `SPRING_REDIS_HOST`, `SPRING_REDIS_PORT`, `SPRING_REDIS_PASSWORD`
+- `JWT_SECRET`
+- `AWS_S3_BUCKET`, `AWS_S3_REGION`, `AWS_S3_ACCESS_KEY`, `AWS_S3_SECRET_KEY`
+- `MAIL_HOST`, `MAIL_PORT`, `MAIL_USERNAME`, `MAIL_PASSWORD`
+
+기본 계정이나 운영 비밀번호는 소스·문서에 두지 않습니다. 루트 `.env.example`은 이름과 안전한 placeholder만 제공합니다.
+
+## Performance Invariants
+
+- 게시글 목록의 좋아요·댓글·사용자 좋아요 상태는 페이지당 2~3개의 batch query로 조회합니다.
+- 상세 조회수는 ACTIVE 게시글에만 원자 UPDATE 한 번으로 증가합니다. 수정·삭제·권한 거부 요청은 조회수를 증가시키지 않습니다.
+- Redis repository 탐색은 끄고 RedisTemplate만 사용합니다.
+- SQL/binder DEBUG·TRACE 로그는 운영 기본값에서 비활성화합니다.
+- 일반 읽기 API p95 목표는 300ms, 쓰기 p95 목표는 500ms, 오류율 목표는 0.5% 미만입니다.
+
+## Container
+
+`Dockerfile`은 digest로 고정된 Java 17 JRE base, 비-root 사용자, Compose healthcheck용 curl, 내부 포트 8080을 사용합니다. 이미지는 CI가 만든 불변 commit SHA 태그로 배포합니다. 자세한 절차는 루트 `DEPLOYMENT.md`를 참조하십시오.
+
+마지막 로컬 검증: 2026-07-10, Temurin Java 17.0.19, `mvnw.cmd -B clean verify` 통과(8 tests).

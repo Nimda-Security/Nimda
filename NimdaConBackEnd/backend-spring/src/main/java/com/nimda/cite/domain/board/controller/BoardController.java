@@ -34,6 +34,7 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -142,6 +143,36 @@ public class BoardController {
         return user != null && boardLikeService.isUserLiked(user.getId(), board.getId());
     }
 
+    private List<BoardResponseDTO> toListResponseDTOs(List<Board> boards, User user) {
+        if (boards == null || boards.isEmpty()) {
+            return List.of();
+        }
+
+        List<Long> boardIds = boards.stream()
+                .map(Board::getId)
+                .collect(Collectors.toList());
+        Map<Long, Long> likeCounts = boardLikeService.getLikeCounts(boardIds);
+        Set<Long> likedBoardIds = user == null
+                ? Set.of()
+                : boardLikeService.getLikedBoardIds(user.getId(), boardIds);
+
+        Map<Long, Long> commentCounts = new HashMap<>();
+        for (Object[] row : commentRepository.countNonDeletedByBoardIds(boardIds)) {
+            if (row != null && row.length >= 2 && row[0] instanceof Number boardId
+                    && row[1] instanceof Number count) {
+                commentCounts.put(boardId.longValue(), count.longValue());
+            }
+        }
+
+        return boards.stream()
+                .map(board -> BoardResponseDTO.from(
+                        board,
+                        likeCounts.getOrDefault(board.getId(), 0L),
+                        likedBoardIds.contains(board.getId()),
+                        commentCounts.getOrDefault(board.getId(), 0L)))
+                .collect(Collectors.toList());
+    }
+
     private ShopItemType parseShopItemType(String itemType) {
         if (itemType == null || itemType.isBlank()) {
             return ShopItemType.GENERAL;
@@ -236,13 +267,7 @@ public class BoardController {
             }
 
             // 게시글 목록에 좋아요 개수 추가하여 DTO로 변환
-            List<BoardResponseDTO> postsDTO = boards.getContent().stream()
-                    .map(board -> {
-                        long likeCount = boardLikeService.getLikeCount(board.getId());
-                        long commentCount = commentRepository.countByBoardIdAndStatusNot(board.getId(), STATUS.DELETED);
-                        return BoardResponseDTO.from(board, likeCount, isLiked(board, user) , commentCount);
-                    })
-                    .collect(java.util.stream.Collectors.toList());
+            List<BoardResponseDTO> postsDTO = toListResponseDTOs(boards.getContent(), user);
             resolveProfileImages(postsDTO);
 
             BoardListResponseDTO responseDTO = BoardListResponseDTO.builder()
@@ -290,13 +315,7 @@ public class BoardController {
             Page<Board> boards = boardService.boardListByCategoryWithPinned(category, safePageable);
 
             // 고정글 목록에 좋아요 개수 추가하여 DTO로 변환
-            List<BoardResponseDTO> postsDTO = boards.getContent().stream()
-                    .map(board -> {
-                        long likeCount = boardLikeService.getLikeCount(board.getId());
-                        long commentCount = commentRepository.countByBoardIdAndStatusNot(board.getId(), STATUS.DELETED);
-                        return BoardResponseDTO.from(board, likeCount, isLiked(board, user), commentCount);
-                    })
-                    .collect(java.util.stream.Collectors.toList());
+            List<BoardResponseDTO> postsDTO = toListResponseDTOs(boards.getContent(), user);
             resolveProfileImages(postsDTO);
 
             BoardListResponseDTO responseDTO = BoardListResponseDTO.builder()
@@ -349,13 +368,7 @@ public class BoardController {
             }
 
             // 인기글 목록에 좋아요 개수 추가하여 DTO로 변환
-            List<BoardResponseDTO> postsDTO = boards.getContent().stream()
-                    .map(board -> {
-                        long likeCount = boardLikeService.getLikeCount(board.getId());
-                        long commentCount = commentRepository.countByBoardIdAndStatusNot(board.getId(), STATUS.DELETED);
-                        return BoardResponseDTO.from(board, likeCount, isLiked(board, user), commentCount);
-                    })
-                    .collect(java.util.stream.Collectors.toList());
+            List<BoardResponseDTO> postsDTO = toListResponseDTOs(boards.getContent(), user);
             resolveProfileImages(postsDTO);
 
             BoardListResponseDTO responseDTO = BoardListResponseDTO.builder()
@@ -508,11 +521,14 @@ public class BoardController {
             @AuthenticationPrincipal CustomUserDetails userDetails,
             @PathVariable("id") Long id) {
         try {
-            Board board = boardService.boardView(id);
+            Board board = boardService.getBoard(id);
 
             // 삭제된 게시글인 경우
             if (board.getStatus() == BoardStatus.DELETED) {
                 return ApiResponse.ok("삭제된 게시글입니다.", Map.of("deleted", true)).toResponse();
+            }
+            if (board.getStatus() != BoardStatus.ACTIVE) {
+                return ApiResponse.fail("접근 권한이 없습니다.").toResponse(HttpStatus.FORBIDDEN);
             }
 
             User user = userDetails != null ? userDetails.getUser() : null;
@@ -523,6 +539,7 @@ public class BoardController {
                     return ApiResponse.fail("접근 권한이 없습니다.").toResponse(HttpStatus.FORBIDDEN);
                 }
             }
+            boardService.incrementViewCount(board);
 
             long likeCount = boardLikeService.getLikeCount(board.getId());
             long commentCount = commentRepository.countByBoardIdAndStatusNot(board.getId(), STATUS.DELETED);
@@ -556,11 +573,11 @@ public class BoardController {
             @RequestParam(value = "profileDecorationId", required = false) Long profileDecorationId,
             @RequestParam(value = "thumbnailAttachmentId", required = false) Long thumbnailAttachmentId) {
         try {
-            Board boardTemp = boardService.boardView(id);
-
             if (userDetails == null) {
                 return ApiResponse.fail("로그인이 필요합니다.").toResponse(HttpStatus.UNAUTHORIZED);
             }
+
+            Board boardTemp = boardService.getBoard(id);
             User currentUser = userDetails.getUser();
 
             boolean isAdmin = hasRole(currentUser, "ROLE_ADMIN");
@@ -678,7 +695,7 @@ public class BoardController {
             }
             User currentUser = userDetails.getUser();
 
-            Board board = boardService.boardView(id);
+            Board board = boardService.getBoard(id);
             boolean isAdmin = hasRole(currentUser, "ROLE_ADMIN");
 
             if (!isAdmin && !board.getAuthor().getId().equals(currentUser.getId())) {
@@ -876,25 +893,16 @@ public class BoardController {
 
     @GetMapping("/recent-boards")
     public ResponseEntity<?> getRecentBoards(@AuthenticationPrincipal CustomUserDetails userDetails) {
-
-        User user = userDetails.getUser();
-
-        if(user == null) {
+        if (userDetails == null || userDetails.getUser() == null) {
             return ApiResponse.fail("유저 정보를 찾을 수 없습니다. 다시 로그인해주세요.")
                     .toResponse(HttpStatus.BAD_REQUEST);
         }
-        List<BoardResponseDTO> recentBoards = boardService.getRecentBoards()
-                .stream()
-                .map(board -> {
-                    // 모든 파라미터를 순서대로 전달
-                    long likeCount = boardLikeService.getLikeCount(board.getId());
-                    boolean isLiked = boardLikeService.isUserLiked(user.getId(), board.getId());
-                    long commentCount = commentRepository.countByBoardIdAndStatusNot(board.getId(), STATUS.DELETED);
 
-                    return BoardResponseDTO.from(board, likeCount, isLiked, commentCount);
-                })
-                .collect(Collectors.toList());
-
+        User user = userDetails.getUser();
+        List<BoardResponseDTO> recentBoards = toListResponseDTOs(
+                boardService.getRecentBoards(),
+                user);
+        resolveProfileImages(recentBoards);
         return ResponseEntity.ok(recentBoards);
     }
 

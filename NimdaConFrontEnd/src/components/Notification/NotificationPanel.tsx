@@ -64,11 +64,11 @@ const NotificationPanel: React.FC<NotificationPanelProps> = ({ onClose, refreshK
 
   const fetchNotifications = useCallback(async () => {
     try {
-      const data = activeTab === "unread"
+      const data =
+        activeTab === "unread"
           ? await notificationApi.getUnReadNotifications()
           : await notificationApi.getNotifications();
-      const pureData = Array.isArray(data) ? data : (data as any)?.notifications || [];
-      setNotifications(pureData);
+      setNotifications(data);
     } catch (error) {
       console.error("알림 fetch 에러:", error);
       setNotifications([]);
@@ -95,9 +95,10 @@ const NotificationPanel: React.FC<NotificationPanelProps> = ({ onClose, refreshK
     } catch { /* ignore */ }
   };
 
-  const filteredNotifications = Array.isArray(notifications)
-    ? (activeTab === "read" ? notifications.filter((n) => n?.isRead) : notifications)
-    : [];
+  const filteredNotifications =
+    activeTab === "read"
+      ? notifications.filter((notification) => notification.isRead)
+      : notifications;
 
   const tabs: { key: Tab; label: string }[] = [
     { key: "unread", label: "새 알림" },

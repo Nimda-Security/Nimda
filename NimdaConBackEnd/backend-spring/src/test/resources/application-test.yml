@@ -9,9 +9,6 @@ spring:
     hibernate:
       ddl-auto: create-drop
     show-sql: false
-    properties:
-      hibernate:
-        dialect: org.hibernate.dialect.H2Dialect
     defer-datasource-initialization: false
 
   flyway:
@@ -20,11 +17,6 @@ spring:
   sql:
     init:
       mode: never
-
-  security:
-    user:
-      name: admin
-      password: 1234
 
   mail:
     host: localhost

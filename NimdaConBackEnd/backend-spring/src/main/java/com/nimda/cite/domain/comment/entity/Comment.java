@@ -56,6 +56,7 @@ public class Comment extends BaseTime {
     // 상태(기본 - 공개)
     @Enumerated(EnumType.STRING)
     @Column(length = 20)
+    @Builder.Default
     private STATUS status = STATUS.PUBLIC;
 
     // 댓글 수정 메서드

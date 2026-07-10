@@ -1,6 +1,5 @@
-import React from "react";
+import type { ComponentProps } from "react";
 import ProfileHeader from "./ProfileHeader";
-import ProfileSummary from "./ProfileSummary";
 
 const ProfileSection = ({
   userInfo,
@@ -8,7 +7,7 @@ const ProfileSection = ({
   setActiveTab,
   onProfileImageChange,
   onProfileDecorationChange,
-}: any) => {
+}: ComponentProps<typeof ProfileHeader>) => {
   return (
     <ProfileHeader
       userInfo={userInfo}

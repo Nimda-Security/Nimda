@@ -13,11 +13,24 @@ const ProtectedRoute = ({ children, requireAdmin = false }: ProtectedRouteProps)
     const [valid, setValid] = useState(false);
 
     useEffect(() => {
+        let mounted = true;
+
         // 쿠키가 실제 인증 수단이므로 항상 서버에 검증
-        validateSession().then((ok) => {
-            setValid(ok);
-            setChecking(false);
-        });
+        validateSession()
+            .then((ok) => {
+                if (!mounted) return;
+                setValid(ok);
+                setChecking(false);
+            })
+            .catch(() => {
+                if (!mounted) return;
+                setValid(false);
+                setChecking(false);
+            });
+
+        return () => {
+            mounted = false;
+        };
     }, []);
 
     if (checking) return null; // 검증 중에는 아무것도 렌더링하지 않음

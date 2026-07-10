@@ -109,8 +109,13 @@ public interface BoardRepository extends JpaRepository<Board, Long> { // [수정
     @EntityGraph(attributePaths = { "author", "category" })
     List<Board> findByAuthorAndStatusOrderByCreatedAtDesc(User author, BoardStatus status);
 
-    // 최신글 조회
-    List<Board> findTop10ByOrderByCreatedAtDesc();
+    // 최신 활성글 조회
+    List<Board> findTop10ByStatusOrderByCreatedAtDesc(BoardStatus status);
+
+    @Modifying(clearAutomatically = true)
+    @Query("UPDATE Board b SET b.postView = COALESCE(b.postView, 0) + 1 " +
+            "WHERE b.id = :id AND b.status = :status")
+    int incrementPostView(@Param("id") Long id, @Param("status") BoardStatus status);
 
     @Modifying(clearAutomatically = true)
     @Query("UPDATE Board b SET b.status = :status " +

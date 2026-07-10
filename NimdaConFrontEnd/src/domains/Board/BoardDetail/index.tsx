@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useNavigate, useParams, Link } from 'react-router-dom';
 import DOMPurify, { type Config as DOMPurifyConfig } from 'dompurify';
 import { MessageBox } from '@/components/icons/MessageBox';
@@ -168,49 +168,26 @@ function BoardDetailPage() {
   const [showAttachments, setShowAttachments] = useState(false);
   const [shopImageUrl, setShopImageUrl] = useState<string | null>(null);
   const [isPurchasing, setIsPurchasing] = useState(false);
-  const normalizedViewerContent = sanitizeViewerContent(board?.content ?? '');
+  const normalizedViewerContent = useMemo(
+    () => sanitizeViewerContent(board?.content ?? ''),
+    [board?.content]
+  );
   const bodyRef = useRef<HTMLDivElement>(null);
 
-  useEffect(() => {
-    if (id) fetchBoard(parseInt(id));
-  }, [id]);
-
-  useEffect(() => {
-    const body = bodyRef.current;
-    if (body) {
-      highlightCodeBlocks(body);
+  const fetchLikeStatus = useCallback(async (boardId: number) => {
+    try {
+      const res = await getBoardLikeStatusAPI(boardId);
+      if (res.success && 'data' in res) {
+        const legacyData: { liked?: boolean } = res.data;
+        setLikeCount(res.data.likeCount);
+        setIsLiked(res.data.isLiked ?? legacyData.liked ?? false);
+      }
+    } catch {
+      /* 비로그인 상태 */
     }
-  }, [normalizedViewerContent]);
+  }, []);
 
-  useEffect(() => {
-    let cancelled = false;
-    const loadShopImage = async () => {
-      if (!board?.category?.shopEnabled) {
-        setShopImageUrl(null);
-        return;
-      }
-
-      const attachmentId = getFirstImageAttachmentId(board);
-      if (!attachmentId) {
-        setShopImageUrl(null);
-        return;
-      }
-
-      try {
-        const url = await getAttachmentPresignedUrl(attachmentId);
-        if (!cancelled) setShopImageUrl(url);
-      } catch {
-        if (!cancelled) setShopImageUrl(null);
-      }
-    };
-
-    loadShopImage();
-    return () => {
-      cancelled = true;
-    };
-  }, [board]);
-
-  const fetchBoard = async (boardId: number) => {
+  const fetchBoard = useCallback(async (boardId: number) => {
     try {
       setLoading(true);
       setError(null);
@@ -251,19 +228,46 @@ function BoardDetailPage() {
     } finally {
       setLoading(false);
     }
-  };
+  }, [fetchLikeStatus, navigate]);
 
-  const fetchLikeStatus = async (boardId: number) => {
-    try {
-      const res = await getBoardLikeStatusAPI(boardId);
-      if (res.success && 'data' in res) {
-        setLikeCount(res.data.likeCount);
-        setIsLiked(res.data.isLiked ?? (res.data as any).liked ?? false);
-      }
-    } catch {
-      /* 비로그인 상태 */
+  useEffect(() => {
+    if (id) fetchBoard(parseInt(id));
+  }, [fetchBoard, id]);
+
+  useEffect(() => {
+    const body = bodyRef.current;
+    if (body) {
+      highlightCodeBlocks(body);
     }
-  };
+  }, [normalizedViewerContent]);
+
+  useEffect(() => {
+    let cancelled = false;
+    const loadShopImage = async () => {
+      if (!board?.category?.shopEnabled) {
+        setShopImageUrl(null);
+        return;
+      }
+
+      const attachmentId = getFirstImageAttachmentId(board);
+      if (!attachmentId) {
+        setShopImageUrl(null);
+        return;
+      }
+
+      try {
+        const url = await getAttachmentPresignedUrl(attachmentId);
+        if (!cancelled) setShopImageUrl(url);
+      } catch {
+        if (!cancelled) setShopImageUrl(null);
+      }
+    };
+
+    loadShopImage();
+    return () => {
+      cancelled = true;
+    };
+  }, [board]);
 
   const handleGoBack = () => {
     if (board?.category?.slug) navigate(`/board/${board.category.slug}`);

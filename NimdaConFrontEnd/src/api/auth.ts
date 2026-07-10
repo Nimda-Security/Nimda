@@ -97,7 +97,7 @@ export const loginAPI = async (
     let result;
     try {
       result = await response.json();
-    } catch (e) {
+    } catch {
       // JSON 파싱 실패 시
       return {
         success: false,
@@ -192,7 +192,7 @@ export const registerAPI = async (
     let result;
     try {
       result = await response.json();
-    } catch (e) {
+    } catch {
       // 서버에서 JSON이 아닌 에러 페이지(HTML) 등을 보냈을 경우
       return {
         success: false,
@@ -251,9 +251,18 @@ export const logoutAPI = async () => {
 /**
  * 현재 로그인된 사용자 정보 가져오기 (localStorage)
  */
-export const getCurrentUser = (): Record<string, any> | null => {
+export const getCurrentUser = (): NonNullable<LoginResponse["user"]> | null => {
   const userStr = localStorage.getItem("user");
-  return userStr ? JSON.parse(userStr) : null;
+  if (!userStr) {
+    return null;
+  }
+
+  const parsedUser: unknown = JSON.parse(userStr);
+  if (typeof parsedUser !== "object" || parsedUser === null || Array.isArray(parsedUser)) {
+    return null;
+  }
+
+  return parsedUser as NonNullable<LoginResponse["user"]>;
 };
 
 /**
@@ -306,7 +315,7 @@ export const toggleEmailHide = async () => {
     let result;
     try {
       result = await response.json();
-    } catch (e) {
+    } catch {
       return {
         success: false,
         message: `서버 오류 (${response.status}): 응답을 파싱할 수 없습니다.`,

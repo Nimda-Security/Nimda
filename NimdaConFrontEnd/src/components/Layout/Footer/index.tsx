@@ -34,6 +34,7 @@ const Footer: React.FC = () => {
 
           {/* 링크 */}
           <div
+            className="layout__footer-links"
             style={{
               display: "flex",
               gap: "16px",

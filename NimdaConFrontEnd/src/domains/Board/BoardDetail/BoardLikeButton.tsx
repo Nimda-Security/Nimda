@@ -21,7 +21,8 @@ function BoardLikeButton({ boardId, initialLikeCount, initialIsLiked, onLikeChan
       setIsToggling(true);
       const res = await toggleBoardLikeAPI(boardId);
       if (res.success && 'data' in res) {
-        const liked = res.data.isLiked ?? (res.data as any).liked ?? false;
+        const legacyData: { liked?: boolean } = res.data;
+        const liked = res.data.isLiked ?? legacyData.liked ?? false;
         setLikeCount(res.data.likeCount);
         setIsLiked(liked);
         onLikeChange?.(res.data.likeCount, liked);

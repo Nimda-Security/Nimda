@@ -14,7 +14,7 @@ import java.time.LocalDateTime;
 @Builder
 @Table(name = "board_like",
         uniqueConstraints = {
-                @UniqueConstraint(columnNames = {"user_id", "board_id"}) // 한 사용자가 한 게시글에 중복 좋아요 방지
+                @UniqueConstraint(columnNames = {"liker_id", "board_id"}) // 한 사용자가 한 게시글에 중복 좋아요 방지
         }
 )
 public class BoardLike {

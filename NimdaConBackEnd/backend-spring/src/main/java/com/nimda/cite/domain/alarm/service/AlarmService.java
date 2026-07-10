@@ -126,8 +126,6 @@ public class AlarmService {
                 .message(message)
                 .build();
 
-        notificationRepositroy.save(notification);
-
         this.send(notification);
     }
 

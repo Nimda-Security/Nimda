@@ -1,8 +1,7 @@
-version: '3.8'
-
 services:
   mysql:
-    image: mysql:8.0
+    image: mysql:8.0@sha256:7dcddc01f13bab2f15cde676d44d01f61fc9f99fe7785e86196dfc07d358ae2b
+    command: --innodb-buffer-pool-size=${MYSQL_INNODB_BUFFER_POOL_SIZE:-256M}
     container_name: nimda-mysql
     networks:
       - nimda-network
@@ -12,8 +11,6 @@ services:
       MYSQL_DATABASE: ${MYSQL_DATABASE}
       MYSQL_USER: ${MYSQL_USER}
       MYSQL_PASSWORD: ${MYSQL_PASSWORD}
-      # 메모리 설정 최적화 (1GB RAM 환경)
-      MYSQL_INNODB_BUFFER_POOL_SIZE: 256M
     expose:
       - "3306" # DB 외부 접근 차단
     volumes:
@@ -25,7 +22,7 @@ services:
       retries: 5
 
   redis:
-    image: redis:7.0-alpine
+    image: redis:7.0-alpine@sha256:c9d92d840fd011c908f040592857c724ae6d877f2aba5c40ad963276507386b2
     container_name: nimda-redis
     restart: always
     command: redis-server --requirepass ${REDIS_PASSWORD}
@@ -43,7 +40,7 @@ services:
 
   # 기존 서버
   backend-blue:
-    image: xtkww971/nimda-backend:latest
+    image: xtkww971/nimda-backend:${BACKEND_IMAGE_TAG:?BACKEND_IMAGE_TAG must be an immutable image tag}
     container_name: backend-blue
     # DB 실행 조건 설정
     depends_on:
@@ -57,7 +54,7 @@ services:
     networks:
       - nimda-network
     healthcheck:
-      test: [ "CMD", "curl", "http://localhost:8080/error" ]
+      test: [ "CMD-SHELL", "status=$$(curl --fail --silent --show-error --output /dev/null --write-out '%{http_code}' --connect-timeout 2 --max-time 3 http://localhost:8080/api/cite/category) && [ \"$$status\" -ge 200 ] && [ \"$$status\" -lt 300 ]" ]
       interval: 10s
       timeout: 5s
       retries: 3
@@ -72,6 +69,10 @@ services:
       - SPRING_DATASOURCE_PASSWORD=${MYSQL_PASSWORD}
       # Spring Boot 포트 설정
       - SERVER_PORT=8080
+      # Redis
+      - SPRING_REDIS_HOST=redis
+      - SPRING_REDIS_PORT=6379
+      - SPRING_REDIS_PASSWORD=${REDIS_PASSWORD}
       # AWS S3 설정
       - AWS_S3_BUCKET=${AWS_S3_BUCKET}
       - AWS_S3_REGION=${AWS_S3_REGION}
@@ -87,7 +88,7 @@ services:
     restart: always
 
   backend-green:
-    image: xtkww971/nimda-backend:latest
+    image: xtkww971/nimda-backend:${BACKEND_IMAGE_TAG:?BACKEND_IMAGE_TAG must be an immutable image tag}
     container_name: backend-green
     networks:
       - nimda-network
@@ -99,7 +100,7 @@ services:
       redis:
         condition: service_healthy
     healthcheck:
-      test: [ "CMD", "curl", "http://localhost:8080/error" ]
+      test: [ "CMD-SHELL", "status=$$(curl --fail --silent --show-error --output /dev/null --write-out '%{http_code}' --connect-timeout 2 --max-time 3 http://localhost:8080/api/cite/category) && [ \"$$status\" -ge 200 ] && [ \"$$status\" -lt 300 ]" ]
       interval: 10s
       timeout: 5s
       retries: 3
@@ -112,6 +113,10 @@ services:
       - SPRING_DATASOURCE_PASSWORD=${MYSQL_PASSWORD}
       # Spring Boot 포트 설정
       - SERVER_PORT=8080
+      # Redis
+      - SPRING_REDIS_HOST=redis
+      - SPRING_REDIS_PORT=6379
+      - SPRING_REDIS_PASSWORD=${REDIS_PASSWORD}
       # AWS S3 설정
       - AWS_S3_BUCKET=${AWS_S3_BUCKET}
       - AWS_S3_REGION=${AWS_S3_REGION}
@@ -127,7 +132,7 @@ services:
     restart: always
 
   nginx:
-    image: nginx:alpine
+    image: nginx:alpine@sha256:54f2a904c251d5a34adf545a72d32515a15e08418dae0266e23be2e18c66fefa
     container_name: nimda-nginx
     depends_on:
       - backend-blue

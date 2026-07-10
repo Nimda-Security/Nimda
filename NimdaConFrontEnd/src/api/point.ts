@@ -20,6 +20,22 @@ export interface PointResponse<T> {
   message: string;
   data: T;
 }
+interface BalanceData {
+  totalAmount: number;
+  updatedAt: string;
+}
+
+interface PointDetailResponseItem {
+  id?: number;
+  description: string;
+  amount: number;
+  createdAt?: string;
+}
+
+interface PointUpdateResponse {
+  message?: string;
+  data?: unknown;
+}
 
 /**
  * 1. 사용자 마일리지 잔액 조회 (GET /api/cite/point)
@@ -35,7 +51,7 @@ export const getUserBalance = async () => {
       credentials: "include",
     });
 
-    const result = await response.json();
+    const result: PointResponse<BalanceData> = await response.json();
 
     if (response.ok && result.success) {
       return {
@@ -68,11 +84,11 @@ export const getPointDetailsAPI = async (): Promise<PointHistoryItem[]> => {
       return [];
     }
 
-    const result = await response.json();
+    const result: PointResponse<PointDetailResponseItem[]> = await response.json();
 
     if (result.success && result.data && Array.isArray(result.data)) {
       if (result.data.length > 0) {
-        return result.data.map((item: any) => ({
+        return result.data.map((item) => ({
           id: item.id,
           description: item.description,
           amount: item.amount,
@@ -102,10 +118,10 @@ export const getAllBalance = async () => {
       credentials: "include",
     });
 
-    const result = await response.json();
+    const result: PointResponse<BalanceData[]> = await response.json();
 
     if (response.ok && result.success) {
-      return { success: true, data: result.data as { totalAmount: number; updatedAt: string }[] };
+      return { success: true, data: result.data };
     }
     return { success: false, message: result.message || "전체 잔액 조회 실패" };
   } catch (error) {
@@ -135,7 +151,7 @@ export const updatePointManual = async (studentNum: string, description: string,
 
     // 💡 [수정] 응답 본문이 비어있는지 확인 (204 No Content 또는 Content-Length가 0인 경우)
     const contentType = response.headers.get("content-type");
-    let result: any = {};
+    let result: PointUpdateResponse = {};
 
     if (contentType && contentType.includes("application/json")) {
       result = await response.json();
@@ -181,7 +197,7 @@ export const updatePointManualBulk = async (
     });
 
     const contentType = response.headers.get("content-type");
-    let result: any = {};
+    let result: PointUpdateResponse = {};
 
     if (contentType && contentType.includes("application/json")) {
       result = await response.json();

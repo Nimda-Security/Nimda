@@ -1,4 +1,5 @@
 'use client';
+import Image from 'next/image';
 import { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import ScrollReveal from './ScrollReveal';
@@ -62,7 +63,7 @@ export function Footer() {
 
       <div className="flex flex-col items-center gap-4">
         <div className="flex items-center justify-center mb-2">
-          <img src="/NimdaLogo_W.png" alt="Logo" className="w-8 h-8 object-contain opacity-80" />
+          <Image src="/NimdaLogo_W.png" alt="Logo" width={32} height={32} className="w-8 h-8 object-contain opacity-80" />
         </div>
         <p className="text-gray-500 text-sm">
           © {new Date().getFullYear()} NIMDA Security Club. All rights reserved.

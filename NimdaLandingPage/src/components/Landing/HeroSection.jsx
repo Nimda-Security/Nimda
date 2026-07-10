@@ -1,7 +1,7 @@
 'use client';
 import { motion } from 'framer-motion';
+import { createStars } from './starfield';
 
-import { useEffect, useState } from 'react';
 
 const Star = ({ style, delay }) => (
   <motion.div
@@ -13,32 +13,16 @@ const Star = ({ style, delay }) => (
   />
 );
 
-export default function HeroSection() {
-  const [stars, setStars] = useState([]);
-  const [mounted, setMounted] = useState(false);
+const HERO_STARS = createStars(50, 0x4e494d44);
 
-  useEffect(() => {
-    setMounted(true);
-    // Generate random stars on the client side only to avoid hydration mismatch
-    const generatedStars = Array.from({ length: 50 }).map((_, i) => ({
-      id: i,
-      style: {
-        top: `${Math.random() * 100}%`,
-        left: `${Math.random() * 100}%`,
-        width: `${Math.random() * 2 + 1}px`, // 1px ~ 3px
-        height: `${Math.random() * 2 + 1}px`,
-      },
-      delay: Math.random() * 5,
-    }));
-    setStars(generatedStars);
-  }, []);
+export default function HeroSection() {
 
   return (
-    <div className="relative h-screen flex flex-col items-center justify-center overflow-hidden bg-[#050505]" suppressHydrationWarning>
+    <div className="relative h-screen flex flex-col items-center justify-center overflow-hidden bg-[#050505]">
       
       {/* Starry Background */}
       <div className="absolute inset-0 z-0 pointer-events-none">
-        {mounted && stars.map((star) => (
+        {HERO_STARS.map((star) => (
           <Star key={star.id} style={star.style} delay={star.delay} />
         ))}
       </div>

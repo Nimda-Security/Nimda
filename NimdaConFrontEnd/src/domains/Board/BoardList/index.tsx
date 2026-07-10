@@ -1,4 +1,4 @@
-import { useEffect, useState, useMemo } from 'react';
+import { useEffect, useState, useMemo, useRef } from 'react';
 import { useNavigate, useParams, useSearchParams, Link } from 'react-router-dom';
 import Layout from '@/components/Layout';
 import { getBoardListAPI, getPinnedPostsAPI } from '@/api/board';
@@ -40,12 +40,8 @@ function BoardListPage({ slug: propSlug }: BoardListPageProps) {
   const [searchTrigger, setSearchTrigger] = useState(0);
   const [selectedTag, setSelectedTag] = useState<string | null>(null);
   const [availableTags, setAvailableTags] = useState<string[]>([]);
+  const searchKeywordRef = useRef('');
 
-  // ★ 해결 포인트 1: 의존성 배열의 참조값 고정
-  // boards나 pinnedPosts가 실제로 변하지 않으면 새로운 배열을 만들지 않음
-  const allPostsForLikes = useMemo(() => {
-    return [...noticePosts, ...pinnedPosts, ...boards];
-  }, [noticePosts, pinnedPosts, boards]);
 
   // 공지사항 중 '필독' 태그 글만 로딩 (최초 1회)
   useEffect(() => {
@@ -83,14 +79,14 @@ function BoardListPage({ slug: propSlug }: BoardListPageProps) {
   // 카테고리 정보 로딩
   useEffect(() => {
     let cancelled = false;
-    setCategory(null);
-    setChildCategories([]);
-    setActiveTab(tabFromUrl || 'all');
-    setCurrentPage(0);
-    setSearchKeyword('');
-    setSelectedTag(null);
-
     const loadCategoryInfo = async () => {
+      setCategory(null);
+      setChildCategories([]);
+      setActiveTab(tabFromUrl || 'all');
+      setCurrentPage(0);
+      setSearchKeyword('');
+      searchKeywordRef.current = '';
+      setSelectedTag(null);
       try {
         const [catInfoResponse, allCats] = await Promise.all([
           getBoardListAPI({ slug, page: 0, size: 1, sort: 'createdAt,desc' }),
@@ -150,7 +146,7 @@ function BoardListPage({ slug: propSlug }: BoardListPageProps) {
 
         const response = await getBoardListAPI({
           slug: targetSlug,
-          searchKeyword: searchKeyword || undefined,
+          searchKeyword: searchKeywordRef.current || undefined,
           page: currentPage,
           size: 20,
           sort: 'createdAt,desc',
@@ -172,7 +168,7 @@ function BoardListPage({ slug: propSlug }: BoardListPageProps) {
           setBoards(regular);
           setTotalPages(response.totalPages);
 
-          // ★ 해결 포인트 2: ID 비교를 통한 무한 루프 방지
+          // Avoid replacing category state with an equivalent API object.
           if (activeTab === 'all' && response.category?.id) {
             setCategory(prev => (prev?.id === response.category.id ? prev : response.category));
           }
@@ -432,7 +428,16 @@ function BoardListPage({ slug: propSlug }: BoardListPageProps) {
 
             {/* 검색 */}
             <form className="board-list__search" onSubmit={handleSearch}>
-              <input type="text" className="board-list__search-input" placeholder="검색어를 입력하세요" value={searchKeyword} onChange={(e) => setSearchKeyword(e.target.value)} />
+              <input
+                type="text"
+                className="board-list__search-input"
+                placeholder="검색어를 입력하세요"
+                value={searchKeyword}
+                onChange={(e) => {
+                  setSearchKeyword(e.target.value);
+                  searchKeywordRef.current = e.target.value;
+                }}
+              />
               <button type="submit" className="board-list__search-btn">검색</button>
             </form>
           </>

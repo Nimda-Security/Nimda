@@ -7,6 +7,10 @@ spring:
       host: ${SPRING_REDIS_HOST:localhost}
       port: ${SPRING_REDIS_PORT:6379}
       password: ${SPRING_REDIS_PASSWORD:}
+      repositories:
+        enabled: false
+  autoconfigure:
+    exclude: org.springframework.boot.autoconfigure.security.servlet.UserDetailsServiceAutoConfiguration
   application:
     name: nimda-cup
   # 이메일 설정 (Spring Mail)
@@ -42,13 +46,13 @@ spring:
       leak-detection-threshold: 60000
   
   jpa:
+    # Controllers still map some lazy associations; keep the current behavior explicit.
+    open-in-view: true
     hibernate:
       ddl-auto: none
-      open-in-view: false
     show-sql: false
     properties:
       hibernate:
-        dialect: org.hibernate.dialect.MySQL8Dialect
         format_sql: true # sql Formatting
         show_sql: false
     defer-datasource-initialization: false
@@ -67,12 +71,6 @@ spring:
     validate-on-migrate: false
     clean-disabled: true
     out-of-order: true  # DB에서 version 10이 빠진 경우 등, 순서 밖 마이그레이션 허용
-  
-  security:
-    user:
-      name: ${SPRING_SECURITY_USER_NAME}
-      password: ${SPRING_SECURITY_USER_PASSWORD}
-  
   # 파일 업로드 설정 (Multipart)
   servlet:
     multipart:
@@ -121,9 +119,9 @@ aws:
 
 logging:
   level:
-    com.nimda.cite.common.s3: DEBUG
-    org.springframework.boot.autoconfigure.condition: DEBUG # 컨디션 체크 확인용
-    com.nimda.cup: DEBUG
+    com.nimda.cite.common.s3: INFO
+    org.springframework.boot.autoconfigure.condition: INFO
+    com.nimda.cite: INFO
     org.springframework.security: WARN
-    org.hibernate.SQL: DEBUG
-    org.hibernate.type.descriptor.sql.BasicBinder: TRACE
+    org.hibernate.SQL: WARN
+    org.hibernate.type.descriptor.sql.BasicBinder: OFF

@@ -9,6 +9,7 @@ import com.nimda.cite.domain.board.repository.BoardRepository;
 import com.nimda.cite.domain.comment.repository.CommentRepository;
 import com.nimda.cite.domain.like.repository.BoardLikeRepository;
 import com.nimda.cite.user.entity.User;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -18,6 +19,7 @@ import org.springframework.transaction.annotation.Transactional;
 import java.util.List;
 import java.util.Optional;
 
+@Slf4j
 @Service
 public class BoardService {
 
@@ -124,17 +126,23 @@ public class BoardService {
         return boardRepository.findByCategoryAndStatusOrderByViewsDescCreatedAtDesc(category, BoardStatus.ACTIVE, pageable);
     }
 
-    // Note. boardView - 포스트 ID로 게시글 조회 및 조회수 증가 메서드
-    @Transactional
-    public Board boardView(Long id) {
-
-        Board board = boardRepository.findById(id)
+    // Note. getBoard - 포스트 ID로 게시글을 조회한다.
+    @Transactional(readOnly = true)
+    public Board getBoard(Long id) {
+        return boardRepository.findById(id)
                 .orElseThrow(() -> new RuntimeException("게시글을 찾을 수 없습니다: " + id));
+    }
 
-        board.setPostView(board.getPostView() + 1);
-        boardRepository.save(board);
+    // Note. incrementViewCount - 활성 게시글의 조회수를 원자적으로 증가시킨다.
+    @Transactional
+    public void incrementViewCount(Board board) {
+        int updatedCount = boardRepository.incrementPostView(board.getId(), BoardStatus.ACTIVE);
+        if (updatedCount != 1) {
+            throw new RuntimeException("게시글을 찾을 수 없습니다: " + board.getId());
+        }
 
-        return board;
+        int currentViewCount = board.getPostView() == null ? 0 : board.getPostView();
+        board.setPostView(currentViewCount + 1);
     }
 
     // Note. boardDelete - 포스트 ID로 게시글 삭제 (soft delete)
@@ -197,7 +205,7 @@ public class BoardService {
     @Transactional
     public void deleteBoardsByTag(Long categoryId, Long tagId) {
         int deletedCount = boardRepository.updateStatusByTagId(categoryId, tagId, BoardStatus.DELETED);
-        System.out.println("tagId=" + tagId + " 태그를 가진 게시글 " + deletedCount + "건을 비활성화했습니다.");
+        log.info("Deactivated {} boards for category {} and tag {}", deletedCount, categoryId, tagId);
     }
 
     @Transactional
@@ -212,7 +220,7 @@ public class BoardService {
 
     @Transactional(readOnly = true)
     public List<Board> getRecentBoards() {
-        return boardRepository.findTop10ByOrderByCreatedAtDesc();
+        return boardRepository.findTop10ByStatusOrderByCreatedAtDesc(BoardStatus.ACTIVE);
     }
 
     @Transactional(readOnly = true)

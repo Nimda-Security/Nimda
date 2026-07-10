@@ -113,10 +113,6 @@ public class AuthService {
                 .map(authority -> authority.getAuthorityName())
                 .collect(java.util.stream.Collectors.toList());
 
-        // 디버깅용 로그
-        System.out.println("[AuthService] User: " + fullUser.getNickname() + " (ID: " + fullUser.getId() + ")");
-        System.out.println("[AuthService] Authority count: " + authorities.size());
-        System.out.println("[AuthService] Authorities: " + authorities);
 
         String token = jwtUtil.generateToken(fullUser.getNickname(), fullUser.getId(), authorities); // JWT 토큰 생성
 

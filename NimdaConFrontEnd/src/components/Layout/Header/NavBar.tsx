@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import Logo from '@/components/icons/Logo';
-import { getCurrentNickname, isAdmin } from '@/utils/jwt';
+import { isAdmin } from '@/utils/jwt';
 import {
   isLoggedIn,
   logoutAPI,
@@ -15,24 +15,17 @@ import Avatar from '@/components/Avatar/Avatar';
 
 const Navbar: React.FC = () => {
   const navigate = useNavigate();
-  const [nickname, setNickname] = useState<string | null>(null);
-  const [adminStatus, setAdminStatus] = useState(false);
-  const [isLoggedInState, setIsLoggedInState] = useState(false);
+  const [adminStatus, setAdminStatus] = useState(() => isAdmin());
+  const [isLoggedInState, setIsLoggedInState] = useState(() => isLoggedIn());
   const [profileImage, setProfileImage] = useState<string | null>(null);
 
   useEffect(() => {
-    const currentNickname = getCurrentNickname();
-    const adminCheck = isAdmin();
     const loggedIn = isLoggedIn();
-    setNickname(currentNickname);
-    setAdminStatus(adminCheck);
-    setIsLoggedInState(loggedIn);
 
     if (loggedIn) {
       // 서버에 세션 유효성 검증 — 만료 시 로컬 상태만 초기화 (강제 리다이렉트 없음)
       validateSession().then((ok) => {
         if (!ok) {
-          setNickname(null);
           setAdminStatus(false);
           setIsLoggedInState(false);
           return;
@@ -47,7 +40,10 @@ const Navbar: React.FC = () => {
 
     const handleProfileUpdated = (event: Event) => {
       const detail = (event as CustomEvent<Record<string, unknown> | null>).detail;
-      setProfileImage((detail?.profileImage as string | null) ?? null);
+      const updatedProfileImage = detail?.profileImage;
+      setProfileImage(
+        typeof updatedProfileImage === 'string' ? updatedProfileImage : null
+      );
     };
 
     window.addEventListener(PROFILE_UPDATED_EVENT, handleProfileUpdated);
@@ -58,7 +54,6 @@ const Navbar: React.FC = () => {
 
   const handleLogout = () => {
     logoutAPI();
-    setNickname(null);
     setAdminStatus(false);
     setIsLoggedInState(false);
     window.location.href = '/login';
@@ -68,10 +63,6 @@ const Navbar: React.FC = () => {
     navigate('/mypage');
   };
 
-  const displayNickname =
-    nickname && nickname.length > 8
-      ? `${nickname.substring(0, 7)}...`
-      : nickname;
 
   return (
     <nav className="layout__header">

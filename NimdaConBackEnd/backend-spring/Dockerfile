@@ -1,25 +1,30 @@
-# Stage 1: Build (기존과 동일)
-FROM maven:3.8-openjdk-17 AS build
+FROM maven:3.9.9-eclipse-temurin-17@sha256:f58d59b6273e785ac0a4477f6e9b5ba1d7731c75b906c0f7b34076f1851318cc AS build
 WORKDIR /app
-COPY pom.xml .
-COPY src ./src
-RUN mvn package -DskipTests
 
-# Stage 2: Create the final runtime image
-FROM eclipse-temurin:17-jre
+# Cache Maven dependencies independently from application sources.
+COPY pom.xml .
+RUN mvn -B -q -DskipTests dependency:go-offline
+COPY src ./src
+RUN mvn -B -DskipTests package
+
+FROM eclipse-temurin:17-jre-jammy@sha256:475d8e96b4b2bfe08999e5e854755c773af1581acdf959a4545d88f0696a2339
 
 USER root
-
-# [핵심 수정] 무거운 컴파일러 설치 제거 및 시간대 설정만 유지
-# tzdata 설치 없이 바로 심볼릭 링크 설정 시도 (기본 이미지에 포함된 경우 대비)
-ENV TZ=Asia/Seoul
-RUN ln -snf /usr/share/zoneinfo/Asia/Seoul /etc/localtime && \
-    echo Asia/Seoul > /etc/timezone
+ENV TZ=Asia/Seoul \
+    FILE_UPLOAD_DIR=/app/uploads
+RUN apt-get update && \
+    apt-get install -y --no-install-recommends curl && \
+    rm -rf /var/lib/apt/lists/* && \
+    ln -snf /usr/share/zoneinfo/Asia/Seoul /etc/localtime && \
+    echo Asia/Seoul > /etc/timezone && \
+    groupadd --system nimda && \
+    useradd --system --gid nimda --home-dir /app nimda && \
+    mkdir -p /app/uploads && \
+    chown -R nimda:nimda /app
 
 WORKDIR /app
+COPY --from=build --chown=nimda:nimda /app/target/*.jar app.jar
 
-# 빌드 스테이지에서 생성된 jar 복사
-COPY --from=build /app/target/*.jar app.jar
-
-EXPOSE 80
+USER nimda
+EXPOSE 8080
 ENTRYPOINT ["java", "-jar", "app.jar"]

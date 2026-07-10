@@ -251,23 +251,11 @@ public Boolean validateToken(String token, String userId, String studentNum,
         String tokenStudentNum = claims.get("studentNum", String.class);
         String tokenEmail = claims.get("email", String.class);
 
-        // --- 디버깅 로그 추가 ---
-        System.out.println("========= JWT 검증 디버깅 =========");
-        System.out.println("1. UserId     | 입력: [" + userId + "] vs 토큰: [" + tokenUserId + "]");
-        System.out.println("2. StudentNum | 입력: [" + studentNum + "] vs 토큰: [" + tokenStudentNum + "]");
-        System.out.println("3. Email      | 입력: [" + email + "] vs 토큰: [" + tokenEmail + "]");
-
-        boolean isMatch = userId.equals(tokenUserId)
+        return userId.equals(tokenUserId)
                 && studentNum.equals(tokenStudentNum)
                 && email.equals(tokenEmail);
 
-        System.out.println("결과: " + (isMatch ? "✅ 일치함" : "❌ 불일치함"));
-        System.out.println("=================================");
-
-        return isMatch;
-
     } catch (Exception e) {
-        System.out.println("❌ 검증 중 에러 발생: " + e.getMessage());
         return false;
     }
 }

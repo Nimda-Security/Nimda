@@ -203,7 +203,7 @@ export default function AttachmentSection({
                 파일을 드래그하거나 클릭하여 업로드
               </p>
               <p className="bw-dropzone-hint">
-                최대 50MB &nbsp;·&nbsp; 여러 파일 동시 업로드 가능
+                최대 10MB &nbsp;·&nbsp; 여러 파일 동시 업로드 가능
               </p>
             </>
           )}

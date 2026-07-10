@@ -17,7 +17,7 @@ import {
   getAdminProfileDecorationsAPI,
   type ProfileDecorationOption,
 } from '@/api/profileDecorations';
-import { getEmoticonSrc } from '@/domains/Comment/EmoticonPicker';
+import { getEmoticonSrc } from '@/domains/Comment/emoticonUtils';
 import { hasRole, isAdmin } from '@/utils/jwt';
 import CategorySelector from './CategorySelector';
 import Toolbar from './Toolbar';

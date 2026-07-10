@@ -4,9 +4,17 @@ on:
   push:
     branches: [ "main" ]
 
+permissions:
+  contents: read
+
+concurrency:
+  group: nimda-production
+  cancel-in-progress: false
+
 jobs:
   build-and-push:
     runs-on: ubuntu-latest
+    timeout-minutes: 30
     steps:
       - name: 체크아웃 소스코드
         uses: actions/checkout@v4
@@ -19,12 +27,37 @@ jobs:
           cache: 'maven'
           dependency-path: 'NimdaConBackEnd/backend-spring/pom.xml'
 
+      - name: Node.js 설정
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: 'npm'
+          cache-dependency-path: |
+            NimdaConFrontEnd/package-lock.json
+            NimdaLandingPage/package-lock.json
+
+      - name: 커뮤니티 프론트엔드 검증
+        working-directory: NimdaConFrontEnd
+        run: |
+          npm ci
+          npm audit --omit=dev
+          npm run lint
+          npm run build
+
+      - name: 랜딩 페이지 검증
+        working-directory: NimdaLandingPage
+        run: |
+          npm ci
+          npm audit --omit=dev
+          npm run lint
+          npm run build
+
       - name: 깃 해시 추출
         id: vars
         run: echo "sha_short=$(git rev-parse --short HEAD)" >> $GITHUB_OUTPUT
 
-      - name: 메이븐 빌드 (테스트 제외)
-        run: mvn clean package -DskipTests
+      - name: 백엔드 테스트 및 패키징
+        run: ./mvnw -B clean verify
         working-directory: NimdaConBackEnd/backend-spring
 
       - name: 도커허브 로그인
@@ -39,9 +72,9 @@ jobs:
           context: ./NimdaConBackEnd/backend-spring
           file: ./NimdaConBackEnd/backend-spring/Dockerfile
           push: true
-          tags: |
-            xtkww971/nimda-backend:latest
-            xtkww971/nimda-backend:${{ steps.vars.outputs.sha_short }}
+          tags: xtkww971/nimda-backend:${{ steps.vars.outputs.sha_short }}
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
 
       - name: 배포 스크립트 전송
         uses: appleboy/scp-action@v0.1.7
@@ -49,7 +82,7 @@ jobs:
           host: ${{ secrets.SERVER_HOST }}
           username: ${{ secrets.SERVER_USER }}
           key: ${{ secrets.SERVER_SSH_KEY }}
-          source: "deploy.sh"
+          source: "deploy.sh,docker-compose.yml,nginx/nginx.conf"
           target: "/home/ubuntu/app"
 
 
@@ -62,4 +95,4 @@ jobs:
           script: |
             cd /home/ubuntu/app
             chmod +x deploy.sh
-            ./deploy.sh
+            BACKEND_IMAGE_TAG=${{ steps.vars.outputs.sha_short }} ./deploy.sh
