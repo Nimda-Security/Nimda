@@ -1,0 +1,117 @@
+<svg width="1200" height="650" viewBox="0 0 1200 650" fill="none" xmlns="http://www.w3.org/2000/svg" role="img" aria-labelledby="title desc">
+  <title id="title">NIMDA SECURITY production architecture</title>
+  <desc id="desc">Browsers load the NIMDA frontend and call the API through Nginx. Nginx routes to the validated active Spring Boot Blue or Green backend. The backend uses MySQL, Redis, private S3, and SMTP. GitHub Actions verifies and publishes immutable images before promotion.</desc>
+  <defs>
+    <linearGradient id="background" x1="40" y1="20" x2="1160" y2="630" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#071426" />
+      <stop offset="1" stop-color="#111133" />
+    </linearGradient>
+    <linearGradient id="frontend" x1="0" y1="0" x2="1" y2="1">
+      <stop stop-color="#06B6D4" />
+      <stop offset="1" stop-color="#2563EB" />
+    </linearGradient>
+    <linearGradient id="backend" x1="0" y1="0" x2="1" y2="1">
+      <stop stop-color="#34D399" />
+      <stop offset="1" stop-color="#059669" />
+    </linearGradient>
+    <linearGradient id="delivery" x1="0" y1="0" x2="1" y2="1">
+      <stop stop-color="#A78BFA" />
+      <stop offset="1" stop-color="#7C3AED" />
+    </linearGradient>
+    <filter id="shadow" x="-25%" y="-25%" width="150%" height="160%">
+      <feDropShadow dx="0" dy="12" stdDeviation="13" flood-color="#000000" flood-opacity="0.30" />
+    </filter>
+    <marker id="arrow" markerWidth="10" markerHeight="10" refX="8" refY="5" orient="auto" markerUnits="strokeWidth">
+      <path d="M0 0L10 5L0 10Z" fill="#94A3B8" />
+    </marker>
+    <marker id="arrowPurple" markerWidth="10" markerHeight="10" refX="8" refY="5" orient="auto" markerUnits="strokeWidth">
+      <path d="M0 0L10 5L0 10Z" fill="#C4B5FD" />
+    </marker>
+  </defs>
+
+  <rect width="1200" height="650" rx="30" fill="url(#background)" />
+  <rect x="22" y="22" width="1156" height="606" rx="24" stroke="#26334B" stroke-width="2" />
+
+  <text x="600" y="61" text-anchor="middle" fill="#F8FAFC" font-family="Inter, Segoe UI, Arial, sans-serif" font-size="30" font-weight="800">NIMDA SECURITY Production Architecture</text>
+  <text x="600" y="91" text-anchor="middle" fill="#94A3B8" font-family="Inter, Segoe UI, Arial, sans-serif" font-size="15">Independent web builds · TLS proxy · validated Blue/Green promotion · private storage</text>
+
+  <g filter="url(#shadow)">
+    <rect x="55" y="210" width="150" height="96" rx="18" fill="#111827" stroke="#475569" />
+    <text x="130" y="247" text-anchor="middle" fill="#F8FAFC" font-family="Inter, Segoe UI, Arial, sans-serif" font-size="18" font-weight="700">Users</text>
+    <text x="130" y="274" text-anchor="middle" fill="#CBD5E1" font-family="Inter, Segoe UI, Arial, sans-serif" font-size="13">Desktop · Mobile</text>
+  </g>
+
+  <g filter="url(#shadow)">
+    <rect x="270" y="130" width="205" height="106" rx="20" fill="url(#frontend)" />
+    <text x="372" y="170" text-anchor="middle" fill="#FFFFFF" font-family="Inter, Segoe UI, Arial, sans-serif" font-size="19" font-weight="800">Web Applications</text>
+    <text x="372" y="198" text-anchor="middle" fill="#E0F2FE" font-family="Inter, Segoe UI, Arial, sans-serif" font-size="13">React + Vite · Next.js</text>
+    <text x="372" y="217" text-anchor="middle" fill="#BAE6FD" font-family="Inter, Segoe UI, Arial, sans-serif" font-size="12">nimda.kr</text>
+  </g>
+
+  <g filter="url(#shadow)">
+    <rect x="270" y="300" width="205" height="116" rx="20" fill="#111827" stroke="#475569" />
+    <text x="372" y="341" text-anchor="middle" fill="#F8FAFC" font-family="Inter, Segoe UI, Arial, sans-serif" font-size="19" font-weight="800">Nginx API Proxy</text>
+    <text x="372" y="369" text-anchor="middle" fill="#CBD5E1" font-family="Inter, Segoe UI, Arial, sans-serif" font-size="13">TLS · limits · compression</text>
+    <text x="372" y="391" text-anchor="middle" fill="#94A3B8" font-family="Inter, Segoe UI, Arial, sans-serif" font-size="12">api.nimda.kr</text>
+  </g>
+
+  <g filter="url(#shadow)">
+    <rect x="550" y="270" width="225" height="148" rx="22" fill="url(#backend)" />
+    <text x="662" y="315" text-anchor="middle" fill="#022C22" font-family="Inter, Segoe UI, Arial, sans-serif" font-size="20" font-weight="900">Spring Boot API</text>
+    <text x="662" y="345" text-anchor="middle" fill="#064E3B" font-family="Inter, Segoe UI, Arial, sans-serif" font-size="13">Security · Contest · Community</text>
+    <text x="662" y="369" text-anchor="middle" fill="#064E3B" font-family="Inter, Segoe UI, Arial, sans-serif" font-size="13">Blue + Green containers</text>
+    <rect x="590" y="385" width="145" height="21" rx="10" fill="#D1FAE5" fill-opacity="0.88" />
+    <text x="662" y="400" text-anchor="middle" fill="#065F46" font-family="Inter, Segoe UI, Arial, sans-serif" font-size="11" font-weight="700">one validated active target</text>
+  </g>
+
+  <g filter="url(#shadow)">
+    <rect x="850" y="136" width="132" height="86" rx="16" fill="#111827" stroke="#475569" />
+    <text x="916" y="171" text-anchor="middle" fill="#F8FAFC" font-family="Inter, Segoe UI, Arial, sans-serif" font-size="17" font-weight="700">MySQL 8</text>
+    <text x="916" y="195" text-anchor="middle" fill="#CBD5E1" font-family="Inter, Segoe UI, Arial, sans-serif" font-size="12">core data</text>
+  </g>
+
+  <g filter="url(#shadow)">
+    <rect x="1012" y="136" width="132" height="86" rx="16" fill="#111827" stroke="#475569" />
+    <text x="1078" y="171" text-anchor="middle" fill="#F8FAFC" font-family="Inter, Segoe UI, Arial, sans-serif" font-size="17" font-weight="700">Redis 7</text>
+    <text x="1078" y="195" text-anchor="middle" fill="#CBD5E1" font-family="Inter, Segoe UI, Arial, sans-serif" font-size="12">runtime state</text>
+  </g>
+
+  <g filter="url(#shadow)">
+    <rect x="850" y="286" width="132" height="86" rx="16" fill="#111827" stroke="#475569" />
+    <text x="916" y="321" text-anchor="middle" fill="#F8FAFC" font-family="Inter, Segoe UI, Arial, sans-serif" font-size="17" font-weight="700">Private S3</text>
+    <text x="916" y="345" text-anchor="middle" fill="#CBD5E1" font-family="Inter, Segoe UI, Arial, sans-serif" font-size="12">validated files</text>
+  </g>
+
+  <g filter="url(#shadow)">
+    <rect x="1012" y="286" width="132" height="86" rx="16" fill="#111827" stroke="#475569" />
+    <text x="1078" y="321" text-anchor="middle" fill="#F8FAFC" font-family="Inter, Segoe UI, Arial, sans-serif" font-size="17" font-weight="700">SMTP</text>
+    <text x="1078" y="345" text-anchor="middle" fill="#CBD5E1" font-family="Inter, Segoe UI, Arial, sans-serif" font-size="12">mail delivery</text>
+  </g>
+
+  <g filter="url(#shadow)">
+    <rect x="270" y="500" width="205" height="90" rx="18" fill="url(#delivery)" />
+    <text x="372" y="536" text-anchor="middle" fill="#FFFFFF" font-family="Inter, Segoe UI, Arial, sans-serif" font-size="18" font-weight="800">GitHub Actions</text>
+    <text x="372" y="563" text-anchor="middle" fill="#EDE9FE" font-family="Inter, Segoe UI, Arial, sans-serif" font-size="12">lint · build · 61 tests · audit</text>
+  </g>
+
+  <g filter="url(#shadow)">
+    <rect x="550" y="500" width="225" height="90" rx="18" fill="#17142B" stroke="#8B5CF6" />
+    <text x="662" y="536" text-anchor="middle" fill="#F5F3FF" font-family="Inter, Segoe UI, Arial, sans-serif" font-size="18" font-weight="800">Immutable Release</text>
+    <text x="662" y="563" text-anchor="middle" fill="#C4B5FD" font-family="Inter, Segoe UI, Arial, sans-serif" font-size="12">commit-SHA image · health gate</text>
+  </g>
+
+  <line x1="205" y1="240" x2="270" y2="184" stroke="#94A3B8" stroke-width="2.5" marker-end="url(#arrow)" />
+  <line x1="205" y1="278" x2="270" y2="352" stroke="#94A3B8" stroke-width="2.5" marker-end="url(#arrow)" />
+  <line x1="475" y1="358" x2="550" y2="345" stroke="#94A3B8" stroke-width="2.5" marker-end="url(#arrow)" />
+
+  <path d="M775 318C815 285 820 190 850 180" stroke="#94A3B8" stroke-width="2.5" marker-end="url(#arrow)" />
+  <path d="M775 330C850 280 960 190 1012 180" stroke="#94A3B8" stroke-width="2.5" marker-end="url(#arrow)" />
+  <path d="M775 347C810 342 823 331 850 329" stroke="#94A3B8" stroke-width="2.5" marker-end="url(#arrow)" />
+  <path d="M775 364C850 390 960 344 1012 329" stroke="#94A3B8" stroke-width="2.5" marker-end="url(#arrow)" />
+
+  <line x1="475" y1="545" x2="550" y2="545" stroke="#C4B5FD" stroke-width="2.5" stroke-dasharray="8 7" marker-end="url(#arrowPurple)" />
+  <path d="M662 500C662 468 662 452 662 418" stroke="#C4B5FD" stroke-width="2.5" stroke-dasharray="8 7" marker-end="url(#arrowPurple)" />
+
+  <text x="960" y="567" text-anchor="middle" fill="#64748B" font-family="Inter, Segoe UI, Arial, sans-serif" font-size="12">Promotion switches Nginx only after readiness checks.</text>
+  <text x="960" y="586" text-anchor="middle" fill="#64748B" font-family="Inter, Segoe UI, Arial, sans-serif" font-size="12">Connection draining remains a separate deployment gate.</text>
+</svg>
