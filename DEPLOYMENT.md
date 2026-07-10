@@ -222,4 +222,4 @@ BACKEND_IMAGE_TAG=<이전-검증-SHA> ./deploy.sh
 
 이 Windows 검증 환경에는 Docker와 k6가 없어 Compose 실행, Nginx 문법 검사, 실제 전환·드레이닝·프록시 성능 시험은 수행하지 않았습니다. 정적 설정 검토와 공개 readiness 경로의 운영 200 응답만 확인했습니다.
 
-마지막 검증: 2026-07-11, Windows 11 x64, PR #133 후속 변경 집합. 커뮤니티·랜딩 품질 게이트와 백엔드 114개 테스트를 통과했고, GPT-5.6 Sol Pro 재검토에서 첨부 트랜잭션·S3 응답 유실 보상 경로가 `RELEASE: APPROVE` 판정을 받았습니다. 운영 배포 전 Linux CI/호스트에서 MySQL 8.0.19+ strict mode, V30 복제본 migration, Docker·Nginx·TLS·k6 게이트를 추가로 통과해야 합니다.
+마지막 검증: 2026-07-11, Windows 11 x64, PR #133 후속 변경 집합. 커뮤니티·랜딩 품질 게이트와 백엔드 116개 테스트를 통과했고, 법적 문서는 관리자만 내용을 바꿀 수 있으며 생성 후 식별자·ACTIVE 상태를 유지하고 단건·일괄 삭제 대상에서 제외됩니다. GPT-5.6 Sol Pro의 첨부 트랜잭션·S3 응답 유실 보상 리뷰와 법적 문서 변경·삭제 보호 리뷰가 모두 `RELEASE: APPROVE` 판정을 받았습니다. 운영 배포 전 Linux CI/호스트에서 MySQL 8.0.19+ strict mode, V30 복제본 migration, Docker·Nginx·TLS·k6 게이트를 추가로 통과해야 합니다.

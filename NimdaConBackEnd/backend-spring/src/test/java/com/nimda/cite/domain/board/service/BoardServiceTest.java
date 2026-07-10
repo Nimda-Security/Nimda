@@ -178,6 +178,50 @@ class BoardServiceTest {
         verify(boardRepository, never()).save(tamperedUpdate);
     }
 
+    @Test
+    void administratorCannotDeleteOrHideALegalDocument() {
+        User administrator = new User();
+        administrator.setId(8L);
+        administrator.getAuthorities().add(new Authority(1L, "ROLE_ADMIN"));
+
+        Board persistedLegalBoard = activeBoard(16L, 0);
+        persistedLegalBoard.setAuthor(administrator);
+        persistedLegalBoard.setLegalSlug("privacy");
+
+        Board hiddenUpdate = activeBoard(16L, 0);
+        hiddenUpdate.setAuthor(administrator);
+        hiddenUpdate.setLegalSlug("privacy");
+        hiddenUpdate.setStatus(BoardStatus.HIDDEN);
+
+        when(boardRepository.findById(16L))
+                .thenReturn(java.util.Optional.of(persistedLegalBoard));
+
+        assertThrows(
+                AccessDeniedException.class,
+                () -> boardService.boardDelete(16L, administrator));
+        assertThrows(
+                AccessDeniedException.class,
+                () -> boardService.write(hiddenUpdate, administrator, null));
+
+        verify(boardRepository, never()).save(hiddenUpdate);
+        verify(boardRepository, never()).save(persistedLegalBoard);
+    }
+
+    @Test
+    void nonAdministratorCannotCreateALegalDocument() {
+        User author = new User();
+        author.setId(7L);
+        Board legalBoard = activeBoard(null, 0);
+        legalBoard.setAuthor(author);
+        legalBoard.setLegalSlug("terms");
+
+        assertThrows(
+                AccessDeniedException.class,
+                () -> boardService.write(legalBoard, author, null));
+
+        verify(boardRepository, never()).save(legalBoard);
+    }
+
     private Board activeBoard(Long id, Integer views) {
         Board board = new Board();
         board.setId(id);

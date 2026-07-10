@@ -143,14 +143,16 @@ public interface BoardRepository extends JpaRepository<Board, Long> { // [수정
 
     @Modifying(clearAutomatically = true)
     @Query("UPDATE Board b SET b.status = :status " +
-            "WHERE b.category.id = :categoryId AND b.tag.id = :tagId AND b.status != :status")
+            "WHERE b.category.id = :categoryId AND b.tag.id = :tagId " +
+            "AND b.legalSlug IS NULL AND b.status != :status")
     int updateStatusByTagId(@Param("categoryId") Long categoryId,
                             @Param("tagId") Long tagId,
                             @Param("status") BoardStatus status);
 
     @Modifying(clearAutomatically = true)
     @Query("UPDATE Board b SET b.status = :newStatus " +
-            "WHERE b.category.id = :categoryId AND b.tag.id = :tagId AND b.status = :oldStatus")
+            "WHERE b.category.id = :categoryId AND b.tag.id = :tagId " +
+            "AND b.legalSlug IS NULL AND b.status = :oldStatus")
     int updateStatusByTagIdAndCurrentStatus(@Param("categoryId") Long categoryId,
                                             @Param("tagId") Long tagId,
                                             @Param("oldStatus") BoardStatus oldStatus,

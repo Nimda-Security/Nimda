@@ -54,6 +54,10 @@ public class BoardService {
             if (!Objects.equals(persistedBoard.getLegalSlug(), board.getLegalSlug())) {
                 throw new IllegalArgumentException("법적 안내 문서 식별자는 변경할 수 없습니다.");
             }
+            requireActiveLegalDocument(persistedBoard, board.getStatus());
+        } else {
+            requireLegalDocumentAdministrator(board, actingUser);
+            requireActiveLegalDocument(board, board.getStatus());
         }
 
         if (isNew) {
@@ -184,7 +188,7 @@ public class BoardService {
     public void boardDelete(Long id, User actingUser) {
         Board board = boardRepository.findById(id)
                 .orElseThrow(() -> new RuntimeException("게시글을 찾을 수 없습니다: " + id));
-        requireLegalDocumentAdministrator(board, actingUser);
+        prohibitLegalDocumentDeletion(board);
 
         board.setStatus(BoardStatus.DELETED);
         boardRepository.save(board);
@@ -226,7 +230,7 @@ public class BoardService {
         List<Board> ownedBoards = boardRepository.findAllById(boardIds).stream()
                 .filter(board -> board.getAuthor().getId().equals(author.getId()))
                 .toList();
-        ownedBoards.forEach(board -> requireLegalDocumentAdministrator(board, author));
+        ownedBoards.forEach(this::prohibitLegalDocumentDeletion);
         ownedBoards.forEach(board -> {
             board.setStatus(BoardStatus.DELETED);
             boardRepository.save(board);
@@ -244,6 +248,18 @@ public class BoardService {
                 .anyMatch(authority -> "ROLE_ADMIN".equals(authority.getAuthorityName()));
         if (!isAdministrator) {
             throw new AccessDeniedException("법적 안내 문서는 관리자만 변경할 수 있습니다.");
+        }
+    }
+
+    private void requireActiveLegalDocument(Board persistedBoard, BoardStatus proposedStatus) {
+        if (persistedBoard.getLegalSlug() != null && proposedStatus != BoardStatus.ACTIVE) {
+            throw new AccessDeniedException("법적 안내 문서는 항상 공개 상태로 유지해야 합니다.");
+        }
+    }
+
+    private void prohibitLegalDocumentDeletion(Board board) {
+        if (board.getLegalSlug() != null) {
+            throw new AccessDeniedException("법적 안내 문서는 삭제할 수 없습니다.");
         }
     }
 

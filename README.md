@@ -194,11 +194,11 @@ Verified on 2026-07-11:
 
 - Community frontend: lint and production build passed; production dependency audit found 0 vulnerabilities
 - Landing page: lint and static production build passed; production dependency audit found 0 vulnerabilities
-- Backend: `mvnw.cmd -B clean verify` passed with **114 tests**, 0 failures, 0 errors, and 0 skipped
-- Security regressions cover auth-version/status enforcement, single-snapshot login, challenge-bound one-time recovery, exact-origin filtering, exact legal routes, private activity, public-author DTO privacy, administrator matchers, attachment authentication, S3 ownership/purpose/size limits, image pixel limits, preallocated canonical upload keys, rollback cleanup in an independent transaction, dominant deletion quarantine, referenced-key protection, and category hierarchy transitions
+- Backend: `mvnw.cmd -B clean verify` passed with **116 tests**, 0 failures, 0 errors, and 0 skipped
+- Security regressions cover auth-version/status enforcement, single-snapshot login, challenge-bound one-time recovery, exact-origin filtering, exact public legal routes and immutable legal-document status, private activity, public-author DTO privacy, administrator matchers, attachment authentication, S3 ownership/purpose/size limits, image pixel limits, preallocated canonical upload keys, rollback cleanup in an independent transaction, dominant deletion quarantine, referenced-key protection, and category hierarchy transitions
 - Local 390 px production preview: home, signup, board writing, and 404 had no horizontal overflow; protected writing redirected to login and returned to the original writing route after a mocked login; cancelling logo navigation preserved the draft
 - Production read-only smoke: desktop login and home navigation succeeded; unauthenticated administrator category returned 401 and an untrusted-origin preflight returned 403
-- GPT-5.6 Sol with Pro reasoning re-reviewed the attachment transaction and ambiguous-S3-success paths and returned `RELEASE: APPROVE`; review packs and responses remain ignored local audit artifacts
+- GPT-5.6 Sol with Pro reasoning independently re-reviewed both the attachment transaction/ambiguous-S3-success paths and the legal-document mutation/deletion guards; both reviews returned `RELEASE: APPROVE`, while packs and responses remain ignored local audit artifacts
 
 The deployed production frontend was still older at verification time and retained a 390 px overflow. Recheck after deployment. A nonexistent unauthenticated attachment URL also returned 500 in the old deployment; the current local security contract blocks it before the controller.
 
