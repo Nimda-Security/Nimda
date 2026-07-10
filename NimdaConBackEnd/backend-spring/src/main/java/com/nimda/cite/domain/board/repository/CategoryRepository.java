@@ -38,6 +38,11 @@ public interface CategoryRepository extends JpaRepository<Category, Long> {
     Optional<Category> findBySlugAndIsActiveTrue(String slug);
 
     /**
+     * ID로 활성화된 카테고리만 조회
+     */
+    Optional<Category> findByIdAndIsActiveTrue(Long id);
+
+    /**
      * Slug 존재 여부 확인
      */
     boolean existsBySlug(String slug);

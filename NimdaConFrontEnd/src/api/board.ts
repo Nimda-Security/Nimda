@@ -283,6 +283,7 @@ export const updateBoardAPI = async (
     }
     // 수정 시 생략하면 첨부 동기화 안 함. 전달 시 최종 목록으로 동기화(빈 배열 = 전부 삭제).
     if (data.attachmentIds !== undefined) {
+      formData.append('syncAttachments', 'true');
       for (const aid of data.attachmentIds) {
         formData.append('attachmentIds', String(aid));
       }

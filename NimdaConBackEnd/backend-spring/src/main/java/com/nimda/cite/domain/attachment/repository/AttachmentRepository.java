@@ -12,6 +12,7 @@ public interface AttachmentRepository extends JpaRepository<Attachment, Long> {
     List<Attachment> findByBoardIdOrderByIdAsc(Long boardId);
 
     List<Attachment> findByUserId(Long userId);
+    boolean existsByFilepath(String filepath);
 
     List<Attachment> findByBoardIdAndCategoryId(Long boardId, Long categoryId);
 }

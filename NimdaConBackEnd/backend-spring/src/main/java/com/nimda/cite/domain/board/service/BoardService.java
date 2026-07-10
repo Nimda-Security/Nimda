@@ -41,11 +41,13 @@ public class BoardService {
      * @param attachmentIds 신규: presiggned 등록 후 ID 목록. 수정: 최종 첨부 ID 목록(동기화). null이면 첨부 변경 없음(수정 시).
      */
     @Transactional
-    public void write(Board board, User author, List<Long> attachmentIds) {
+    public void write(Board board, User actingUser, List<Long> attachmentIds) {
 
         boolean isNew = board.getId() == null;
 
-        board.setAuthor(author);
+        if (isNew) {
+            board.setAuthor(actingUser);
+        }
 
         if (board.getPostView() == null) {
             board.setPostView(0);
@@ -56,18 +58,24 @@ public class BoardService {
 
         boardRepository.save(board);
 
-        Long categoryId = board.getCategory() != null ? board.getCategory().getId() : null;
         if (attachmentIds != null) {
             if (isNew) {
-                attachmentService.linkAttachmentsToBoard(attachmentIds, board.getId(), categoryId, author.getId());
+                attachmentService.linkAttachmentsToBoard(
+                        attachmentIds, board.getId(), actingUser.getId());
             } else {
-                attachmentService.syncAttachmentsForBoard(board.getId(), attachmentIds, categoryId, author.getId());
+                boolean canManageAnyBoard = actingUser.getAuthorities().stream()
+                        .anyMatch(authority -> "ROLE_ADMIN".equals(authority.getAuthorityName()));
+                attachmentService.syncAttachmentsForBoard(
+                        board.getId(),
+                        attachmentIds,
+                        actingUser.getId(),
+                        canManageAnyBoard);
             }
         }
 
         // 2. 공지 알림 전송 (기존 main 기능)
         if (board.getCategory() != null && board.getCategory().getName().contains("공지")) {
-            alarmService.sendNoticeToAll(board.getId(), board.getTitle(), author.getId());
+            alarmService.sendNoticeToAll(board.getId(), board.getTitle(), actingUser.getId());
         
         }
     }
@@ -118,6 +126,14 @@ public class BoardService {
     @Transactional(readOnly = true)
     public Page<Board> boardListPopular(Pageable pageable) {
         return boardRepository.findAllByStatusOrderByViewsDescCreatedAtDesc(BoardStatus.ACTIVE, pageable);
+    }
+    @Transactional(readOnly = true)
+    public Page<Board> boardListPopularExcludingCategories(List<Long> excludedCategoryIds, Pageable pageable) {
+        if (excludedCategoryIds == null || excludedCategoryIds.isEmpty()) {
+            return boardListPopular(pageable);
+        }
+        return boardRepository.findAllVisibleByStatusOrderByViewsDescCreatedAtDesc(
+                BoardStatus.ACTIVE, excludedCategoryIds, pageable);
     }
 
     // Note. boardListPopularByCategory - 특정 카테고리 내부 인기글을 조회한다. (조회수 기반)

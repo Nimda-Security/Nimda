@@ -84,6 +84,13 @@ curl --fail --max-time 3 http://127.0.0.1:8082/api/cite/category
 - `.env`, 인증서 개인키, Compose 치환 출력, 컨테이너 환경 덤프를 이슈나 채팅에 붙이지 않습니다.
 
 GitHub Actions는 프론트엔드·랜딩 lint/build와 Maven `clean verify`를 먼저 실행하고, 성공한 commit SHA 태그만 발행·배포합니다. 동시 배포는 `nimda-production` concurrency 그룹으로 직렬화됩니다.
+## Security and Migration Rollout
+
+- V27은 `users.auth_version INT NOT NULL DEFAULT 0`을 추가합니다. 새 애플리케이션은 이 claim이 없는 기존 JWT를 거부하므로 배포 직후 모든 브라우저 세션이 한 번 로그아웃됩니다. 승격 전에 일회성 재로그인이 필요하다고 공지합니다.
+- V28은 `attachment_deletion_tasks`를 추가합니다. 첨부 메타데이터 삭제 트랜잭션이 outbox 행을 함께 커밋하고, 예약 worker가 실행당 최대 50개를 삭제하며 지수 backoff로 10회까지 재시도합니다. 물리 삭제는 사용자·namespace가 일치하는 canonical active key만 자동 등록합니다. 10회 실패한 행과 `Skipping untrusted legacy S3 deletion` 경고는 자동 삭제하지 말고 운영자가 원인을 조사합니다.
+- S3 bucket은 비공개와 Block Public Access를 유지합니다. 브라우저 PUT CORS는 `https://nimda.kr`, `https://www.nimda.kr` 및 승인된 로컬 3000 origin만 허용하고, API의 exact-origin 목록과 함께 변경합니다.
+- S3 lifecycle은 정확히 `pending/` prefix만 짧은 보존 기간(권장 24시간) 뒤 만료시킵니다. 검증 완료 객체는 `users/<userId>/active/`로 이동하므로 `users/` 또는 bucket 전체에 이 규칙을 적용하면 안 됩니다.
+- API의 안전하지 않은 요청은 exact origin과 `Sec-Fetch-Site`를 검사합니다. 프록시가 브라우저의 `Origin` 또는 `Sec-Fetch-Site`를 임의로 덮어쓰거나 제거하지 않도록 합니다.
 
 ## Performance Budgets and Measurement Protocol
 
@@ -111,7 +118,7 @@ Nginx는 자동 worker 수, upstream keepalive 32개, 일반 요청의 조건부
 BACKEND_IMAGE_TAG=<커밋-SHA> docker compose config --quiet
 
 # 실행 중인 Nginx 설정
- docker exec nimda-nginx nginx -t
+docker exec nimda-nginx nginx -t
 
 # HTTPS 강제와 Nginx 자체 상태
 curl -I http://api.nimda.kr/
@@ -120,6 +127,17 @@ curl --fail https://api.nimda.kr/nginx-health
 # 앱 준비 상태
 curl --fail http://127.0.0.1:8081/api/cite/category
 curl --fail http://127.0.0.1:8082/api/cite/category
+
+# 미인증 보호 경로: 401 또는 403이어야 함
+curl -i https://api.nimda.kr/api/cite/category/all
+curl -i https://api.nimda.kr/api/cite/attachments/999999999/download-url
+curl -i https://api.nimda.kr/api/actuator
+
+# 신뢰하지 않는 브라우저 origin의 상태 변경: 인증 처리 전에 403이어야 함
+curl -i -X POST https://api.nimda.kr/api/auth/login \
+  -H 'Origin: https://untrusted.invalid' \
+  -H 'Content-Type: application/json' \
+  --data '{}'
 ```
 
 예상 결과:
@@ -129,6 +147,11 @@ curl --fail http://127.0.0.1:8082/api/cite/category
 - 활성 백엔드와 준비된 대기 백엔드는 카테고리 JSON과 2xx를 반환합니다.
 - `nginx -t`는 `syntax is ok`와 `test is successful`을 출력합니다.
 - 실패한 대기 서버는 upstream으로 승격되지 않습니다.
+- 미인증 관리자 카테고리, 첨부 signed URL, 일반 Actuator 요청은 401/403이고 내부 오류나 객체 존재 여부를 노출하지 않습니다.
+- 신뢰하지 않는 origin의 POST는 403이고 `Access-Control-Allow-Origin` 또는 credential 허용 헤더를 반환하지 않습니다.
+- 인증된 첨부 다운로드는 ACTIVE 게시글과 카르텔 권한을 통과한 경우에만 짧은 signed URL을 반환합니다.
+- 배포 후 `attachment_deletion_tasks`의 대기·실패 수, worker 재시도와 `Skipping untrusted legacy S3 deletion` 경고를 관찰합니다. 증상이 지속되면 S3 권한·key·저장소 연결을 조사하고, legacy 객체는 소유권을 별도로 확인하기 전 행이나 객체를 수동 삭제하지 않습니다.
+- `pending/` lifecycle은 pending key만 만료시키며 `users/<userId>/active/` 객체는 유지합니다.
 
 연결 유지 또는 무중단을 주장하려면 전환 중 지속 트래픽 시험에서 실패 요청 0건, 장기 SSE·업로드·다운로드 완료, 이전 연결 드레이닝, 되돌리기 성공을 별도로 증명해야 합니다.
 
@@ -150,8 +173,8 @@ curl --fail http://127.0.0.1:8082/api/cite/category
 BACKEND_IMAGE_TAG=<이전-검증-SHA> ./deploy.sh
 ```
 
-이 방식은 `rollback` 하위 명령이 아니라 새 검증 배포입니다. 데이터베이스 마이그레이션이 하위 호환되지 않으면 애플리케이션 이미지만 되돌리지 말고 별도 승인된 DB 복구 계획을 따릅니다.
+이 방식은 `rollback` 하위 명령이 아니라 새 검증 배포입니다. V27·V28은 기존 테이블에 열과 새 테이블을 더하는 additive migration이므로 애플리케이션 이미지를 되돌려도 자동 제거하지 않습니다. 이전 앱이 추가 스키마를 허용하는지 먼저 검증하고, 데이터베이스 변경을 되돌려야 한다면 별도 승인된 DB 복구 계획을 따릅니다.
 
 이 Windows 검증 환경에는 Docker와 k6가 없어 Compose 실행, Nginx 문법 검사, 실제 전환·드레이닝·프록시 성능 시험은 수행하지 않았습니다. 정적 설정 검토와 공개 readiness 경로의 운영 200 응답만 확인했습니다.
 
-마지막 검증: 2026-07-10, Windows 11 x64, 기준 커밋 `102801b`에서 시작한 현재 변경 집합. 운영 배포 전에 Linux CI/호스트의 Docker·Nginx·k6 게이트가 추가로 필요합니다.
+마지막 검증: 2026-07-10, Windows 11 x64, 기준 커밋 `319fa29` 이후 현재 변경 집합. 운영 배포 전에 Linux CI/호스트의 Docker·Nginx·k6 게이트가 추가로 필요합니다.

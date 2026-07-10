@@ -89,6 +89,15 @@ BACKEND_IMAGE_TAG=<배포할-커밋-SHA> docker compose up -d
 - `BACKEND_IMAGE_TAG`는 CI가 만든 불변 커밋 SHA 태그여야 합니다. `latest`를 배포 태그로 사용하지 않습니다.
 - 프론트엔드의 기본 API 경로는 `/api`, 스코어보드 경로는 `/scoreboard`입니다.
 
+## Security and Data-Integrity Invariants
+
+- 인증 쿠키는 `HttpOnly`, 운영 기본 `Secure`, `SameSite=Lax`이며 CORS와 상태 변경 요청은 `nimda.kr`, `www.nimda.kr`, 로컬 3000 포트의 정확한 origin만 신뢰합니다. 브라우저의 신뢰되지 않은 `Origin` 또는 `Sec-Fetch-Site: cross-site` 상태 변경 요청은 인증 전 403으로 차단합니다.
+- 애플리케이션 JWT에는 사용자별 `authVersion`이 포함됩니다. 로그아웃, 비밀번호 변경, 승인 상태 또는 권한 변경은 버전을 증가시키며, `APPROVED` 상태와 현재 버전이 모두 일치해야 요청이 인증됩니다. V27 배포 후 기존 버전 없는 JWT는 의도적으로 무효화되므로 사용자는 한 번 다시 로그인해야 합니다.
+- 관리자 카테고리, Actuator, 첨부 다운로드 URL은 구체적인 matcher가 공개 규칙보다 먼저 적용됩니다. 일반 Actuator 경로는 관리자 전용이고 공개 경로는 정확한 liveness/readiness 주소뿐입니다.
+- 게시글·댓글·첨부 조회는 `ACTIVE` 상태와 카르텔 역할을 함께 검사합니다. 수정 시 원 작성자를 유지하고, 다른 게시글의 부모 댓글이나 다른 사용자의 미연결 첨부를 연결할 수 없습니다.
+- Presigned PUT은 사용자·용도·정확한 파일 크기(최대 10 MiB)에 묶입니다. 객체는 `pending/users/<userId>/<purpose>/`에서 시작해 서버가 실제 크기와 소유권을 확인하고 이미지를 픽셀 제한 내에서 재인코딩한 뒤 `users/<userId>/active/`로 이동합니다. `pending/` 객체에는 운영 S3 수명 주기 삭제 정책을 적용해야 합니다.
+- 첨부 메타데이터 삭제와 저장소 삭제는 V28 outbox로 분리됩니다. DB 커밋과 함께 삭제 작업을 남기고 bounded worker가 성공할 때까지 재시도합니다. 물리 삭제에는 사용자·namespace가 일치하는 canonical active key만 넣으며, 신뢰할 수 없는 legacy S3 key는 자동 삭제하지 않아 DB 롤백이나 과거 임의 key 데이터가 다른 객체를 지우지 못합니다.
+
 ## Performance Budgets and Measurement Protocol
 
 | 계층 | 기본 게이트 |
@@ -119,9 +128,10 @@ BACKEND_IMAGE_TAG=<배포할-커밋-SHA> docker compose up -d
 - 커뮤니티 프론트엔드: `npm run lint`, `npm run build` 통과
 - 랜딩 페이지: Next.js 16에서 `npm run lint`, `npm run build` 통과
 - 프론트엔드와 랜딩 페이지: `npm audit --omit=dev` 취약점 0건
-- 백엔드: `mvnw.cmd -B clean verify` 통과(8 tests), H2에서 모든 JPA 저장소 쿼리 생성 확인
+- 백엔드: `mvnw.cmd -B clean verify` 통과(58 tests), H2에서 모든 JPA 저장소 쿼리 생성 확인
+- 보안 회귀: JWT 버전·승인 상태, exact-origin 상태 변경 필터, 관리자 category/Actuator matcher, 첨부 인증, 게시글/댓글 접근, S3 사용자·용도·크기 경계, 이미지 픽셀 제한, 삭제 outbox를 자동 테스트로 확인
 - 모바일 390px 로컬 preview: 홈과 글쓰기의 문서 폭 390px, 가로 초과 요소 0개; 글쓰기 폼 358px
-- 운영 서비스 읽기 전용 스모크: 데스크톱 로그인과 홈 이동, 390px 렌더링, 공개 카테고리 API 200 응답 확인
+- 운영 읽기 전용 스모크: 데스크톱 로그인·홈 이동 성공, 미인증 `/api/cite/category/all` 401, 신뢰하지 않는 origin의 preflight 403 확인. 배포본의 미인증 존재하지 않는 첨부 URL은 500을 반환했으며, 현재 로컬 보안 계약 테스트는 요청을 컨트롤러 전에 403으로 차단합니다.
 
 CI는 프론트엔드 lint/build, 랜딩 lint/build, Maven `clean verify`가 모두 통과해야 이미지를 만들고 배포 단계로 진행합니다.
 
@@ -130,13 +140,14 @@ CI는 프론트엔드 lint/build, 랜딩 lint/build, Maven `clean verify`가 모
 - `.gjc/`, `audit-assets/`, `load-tests/results/`, `dist/`, `.next/`, `out/`, `target/`, 로그와 실제 `.env`는 커밋하지 않습니다.
 - 원본 스크린샷·브라우저 추적·부하 테스트 JSON은 승인된 외부 저장소에 보관하고, Git에는 요약과 체크섬 또는 불변 링크만 남깁니다.
 - 커밋 전 `git status --short`, `git diff --check`, 변경 파일 목록과 비밀 패턴을 확인합니다.
+- Bruno 요청 파일은 literal bearer token 대신 `{{jwtToken}}`만 사용하며, 저장소 전체 secret-pattern scan 결과가 0건이어야 합니다.
 - 생성물이나 다른 사용자의 작업을 `git clean`, `reset`, `stash`로 제거하지 않습니다.
 
 ## Limitations, Rollback, and Last Verified Date
 
 - 이 Windows 워크스테이션에는 Docker와 k6가 없어 컨테이너 구동, Nginx `-t`, 실제 프록시 부하·전환 시험은 수행하지 못했습니다. 해당 게이트는 Docker/k6가 있는 격리 환경과 CI에서 실행해야 합니다.
-- 운영 `nimda.kr`은 아직 이전 프론트엔드를 제공하므로 390px 재검사에서 문서 폭 730px와 가로 초과 요소 239개가 확인됐습니다. 이 커밋의 로컬 production build는 390px/초과 0개를 통과했으며 실제 개선은 배포 후 다시 확인해야 합니다.
+- 운영 `nimda.kr`은 아직 이전 프론트엔드를 제공하므로 390px 재검사에서 문서 폭 730px(340px 초과)가 확인됐습니다. 현재 로컬 production build는 홈·404·실패한 글 수정 화면 모두 390px/초과 0px이며 실제 개선은 배포 후 다시 확인해야 합니다.
 - Nginx 전환은 설정 검증·실패 복구를 수행하지만 연결 드레이닝 시험 전에는 “무중단”을 보장하지 않습니다.
 - Spring JPA Open Session in View는 기존 컨트롤러의 지연 연관관계 매핑 때문에 명시적으로 유지됩니다. 이를 끄려면 모든 응답을 서비스 트랜잭션 안에서 DTO로 변환하는 후속 구조 개선과 통합 테스트가 필요합니다.
 - 배포 전 문제 발생 시 트래픽을 전환하지 않고 대상 컨테이너를 조사합니다. 전환 후에는 이전 불변 이미지 태그로 대상 색상을 다시 기동·검증한 뒤 재전환합니다.
-- 마지막 검증: 2026-07-10, Windows 11 x64, 기준 커밋 `102801b`에서 시작한 현재 변경 집합.
+- 마지막 검증: 2026-07-10, Windows 11 x64, 커밋 `319fa29` 이후 현재 변경 집합.

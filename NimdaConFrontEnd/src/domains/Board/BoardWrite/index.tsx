@@ -31,6 +31,7 @@ const EMPTY_DOC = '<p></p>';
 const IMAGE_EXTENSIONS = ['jpg', 'jpeg', 'png', 'gif', 'webp', 'bmp', 'svg'];
 
 type AttachedFile = { id: number; name: string; size: number; isInline?: boolean };
+type EditHydrationState = 'loading' | 'ready' | 'failed';
 
 const isImageAttachment = (file: AttachedFile) => {
   const ext = file.name.split('.').pop()?.toLowerCase() || '';
@@ -83,7 +84,10 @@ function BoardWritePage() {
   const [editBoardId, setEditBoardId] = useState<number | null>(null);
   const [isDragOver, setIsDragOver] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const [isUploading, setIsUploading] = useState(false);
+  const [pendingUploadCount, setPendingUploadCount] = useState(0);
+  const [editHydrationState, setEditHydrationState] = useState<EditHydrationState>(
+    isEditMode ? 'loading' : 'ready'
+  );
   const [error, setError] = useState<string | null>(null);
   const [currentTagList, setCurrentTagList] = useState<TagResponse[]>([]);
 
@@ -102,6 +106,7 @@ function BoardWritePage() {
   const imageInputRef = useRef<HTMLInputElement>(null);
   const linkPopoverWrapRef = useRef<HTMLDivElement>(null);
   const detailCategoryWarningRef = useRef<HTMLParagraphElement>(null);
+  const pendingUploadsRef = useRef(0);
 
   const editor = useEditor({
     immediatelyRender: false,
@@ -190,6 +195,24 @@ function BoardWritePage() {
       setContent(currentEditor.getHTML());
     },
   });
+
+  const isUploading = pendingUploadCount > 0;
+  const isEditHydrationBlocked = isEditMode && editHydrationState !== 'ready';
+  const isInteractionBlocked = isEditHydrationBlocked || isSubmitting;
+
+  const beginUpload = () => {
+    pendingUploadsRef.current += 1;
+    setPendingUploadCount((count) => count + 1);
+  };
+
+  const finishUpload = () => {
+    pendingUploadsRef.current = Math.max(0, pendingUploadsRef.current - 1);
+    setPendingUploadCount((count) => Math.max(0, count - 1));
+  };
+
+  useEffect(() => {
+    editor?.setEditable(!isInteractionBlocked);
+  }, [editor, isInteractionBlocked]);
 
   const rootCategories = useMemo(
     () =>
@@ -362,48 +385,77 @@ function BoardWritePage() {
     }
 
     if (isEditMode && editId) {
+      let cancelled = false;
+      setEditHydrationState('loading');
+      setEditBoardId(null);
+      setError(null);
+
       const loadBoard = async () => {
-        try {
-          const response = await getBoardDetailAPI(Number.parseInt(editId, 10));
-          if (response.success && 'board' in response) {
-            const board = response.board;
-            setEditBoardId(board.id);
-            setTitle(board.title);
-            setItemPrice(board.itemPrice != null ? String(board.itemPrice) : '');
-            setItemType(board.itemType === 'BADGE' ? 'BADGE' : 'GENERAL');
-            setProfileDecorationId(board.profileDecoration?.id ?? null);
-            setThumbnailAttachmentId(board.thumbnailAttachmentId ?? null);
-            setTagId(board.tag?.id ?? null);
-            setAttachedFiles(
-              board.attachments?.map((attachment) => ({
-                id: attachment.id,
-                name: attachment.originFilename || 'file',
-                size: attachment.fileSize || 0,
-              })) ?? []
-            );
-
-            if (board.category) {
-              if (board.category.parentId) {
-                setParentCategoryId(board.category.parentId);
-                setSubCategoryId(board.category.id);
-              } else {
-                setParentCategoryId(board.category.id);
-                setSubCategoryId(board.category.id);
-              }
-            }
-
-            const nextContent = board.content || EMPTY_DOC;
-            setContent(nextContent);
-            editor?.commands.setContent(nextContent, false);
+        const parsedEditId = Number.parseInt(editId, 10);
+        if (!Number.isFinite(parsedEditId)) {
+          if (!cancelled) {
+            setEditHydrationState('failed');
+            setError('게시글을 불러오는 중 오류가 발생했습니다.');
           }
+          return;
+        }
+
+        try {
+          const response = await getBoardDetailAPI(parsedEditId);
+          if (!response.success || !('board' in response)) {
+            if (!cancelled) {
+              setEditHydrationState('failed');
+              setError(response.message || '게시글을 불러오는 중 오류가 발생했습니다.');
+            }
+            return;
+          }
+
+          if (cancelled) return;
+          const board = response.board;
+          setEditBoardId(board.id);
+          setTitle(board.title);
+          setItemPrice(board.itemPrice != null ? String(board.itemPrice) : '');
+          setItemType(board.itemType === 'BADGE' ? 'BADGE' : 'GENERAL');
+          setProfileDecorationId(board.profileDecoration?.id ?? null);
+          setThumbnailAttachmentId(board.thumbnailAttachmentId ?? null);
+          setTagId(board.tag?.id ?? null);
+          setAttachedFiles(
+            board.attachments?.map((attachment) => ({
+              id: attachment.id,
+              name: attachment.originFilename || 'file',
+              size: attachment.fileSize || 0,
+            })) ?? []
+          );
+
+          if (board.category) {
+            if (board.category.parentId) {
+              setParentCategoryId(board.category.parentId);
+              setSubCategoryId(board.category.id);
+            } else {
+              setParentCategoryId(board.category.id);
+              setSubCategoryId(board.category.id);
+            }
+          }
+
+          const nextContent = board.content || EMPTY_DOC;
+          setContent(nextContent);
+          editor?.commands.setContent(nextContent, false);
+          setEditHydrationState('ready');
         } catch {
-          setError('게시글을 불러오는 중 오류가 발생했습니다.');
+          if (!cancelled) {
+            setEditHydrationState('failed');
+            setError('게시글을 불러오는 중 오류가 발생했습니다.');
+          }
         }
       };
 
-      loadBoard();
-      return;
+      void loadBoard();
+      return () => {
+        cancelled = true;
+      };
     }
+
+    setEditHydrationState('ready');
 
     const category = allCategories.find((item) => item.slug === slug);
     if (!category) return;
@@ -479,84 +531,97 @@ function BoardWritePage() {
   }, [showLinkPopover]);
 
   const handleImageUploadToEditor = async (files: FileList | File[]) => {
-    const targetCategoryId = subCategoryId || parentCategoryId;
-    if (!targetCategoryId) {
-      setError('카테고리를 먼저 선택해주세요.');
-      return;
-    }
-    if (!editor) return;
-
-    setIsUploading(true);
-    setError(null);
-
-    for (const file of Array.from(files)) {
-      const result = await uploadBoardFileViaS3(file, targetCategoryId);
-      if (!result.ok) {
-        setError(result.message);
-        break;
+    beginUpload();
+    try {
+      const targetCategoryId = subCategoryId || parentCategoryId;
+      if (!targetCategoryId) {
+        setError('카테고리를 먼저 선택해주세요.');
+        return;
       }
+      if (!editor) return;
 
-      setAttachedFiles((prev) => [
-        ...prev,
-        {
-          id: result.attachmentId,
-          name: file.name,
-          size: file.size,
-          isInline: true,
-        },
-      ]);
+      setError(null);
+      for (const file of Array.from(files)) {
+        const result = await uploadBoardFileViaS3(file, targetCategoryId);
+        if (!result.ok) {
+          setError(result.message);
+          break;
+        }
 
-      editor
-        .chain()
-        .focus()
-        .setImage({
-          src: `/api/cite/attachments/${result.attachmentId}/download?disposition=inline`,
-          alt: file.name,
-          class: 'bw-editor-image',
-        })
-        .insertContent('<p></p>')
-        .run();
-    }
+        setAttachedFiles((prev) => [
+          ...prev,
+          {
+            id: result.attachmentId,
+            name: file.name,
+            size: file.size,
+            isInline: true,
+          },
+        ]);
 
-    setIsUploading(false);
-    if (imageInputRef.current) {
-      imageInputRef.current.value = '';
+        editor
+          .chain()
+          .focus()
+          .setImage({
+            src: `/api/cite/attachments/${result.attachmentId}/download?disposition=inline`,
+            alt: file.name,
+            class: 'bw-editor-image',
+          })
+          .insertContent('<p></p>')
+          .run();
+      }
+    } catch {
+      setError((current) => current || '파일 업로드 중 오류가 발생했습니다.');
+    } finally {
+      finishUpload();
+      if (imageInputRef.current) {
+        imageInputRef.current.value = '';
+      }
     }
   };
 
   const handleImageSelect = async (event: React.ChangeEvent<HTMLInputElement>) => {
-    if (!event.target.files?.length) return;
-    await handleImageUploadToEditor(event.target.files);
+    try {
+      if (!event.target.files?.length) return;
+      await handleImageUploadToEditor(event.target.files);
+    } catch {
+      setError((current) => current || '파일 업로드 중 오류가 발생했습니다.');
+    } finally {
+      event.target.value = '';
+    }
   };
 
   const handleFileSelect = async (event: React.ChangeEvent<HTMLInputElement>) => {
-    if (!event.target.files?.length) return;
+    const files = Array.from(event.target.files ?? []);
+    if (files.length === 0) return;
 
-    const targetCategoryId = subCategoryId || parentCategoryId;
-    if (!targetCategoryId) {
-      setError('카테고리를 먼저 선택해주세요.');
-      return;
-    }
-
-    setIsUploading(true);
-    setError(null);
-
-    for (const file of Array.from(event.target.files)) {
-      const result = await uploadBoardFileViaS3(file, targetCategoryId);
-      if (!result.ok) {
-        setError(result.message);
-        break;
+    beginUpload();
+    try {
+      const targetCategoryId = subCategoryId || parentCategoryId;
+      if (!targetCategoryId) {
+        setError('카테고리를 먼저 선택해주세요.');
+        return;
       }
 
-      setAttachedFiles((prev) => [
-        ...prev,
-        { id: result.attachmentId, name: file.name, size: file.size },
-      ]);
-    }
+      setError(null);
+      for (const file of files) {
+        const result = await uploadBoardFileViaS3(file, targetCategoryId);
+        if (!result.ok) {
+          setError(result.message);
+          break;
+        }
 
-    setIsUploading(false);
-    if (fileInputRef.current) {
-      fileInputRef.current.value = '';
+        setAttachedFiles((prev) => [
+          ...prev,
+          { id: result.attachmentId, name: file.name, size: file.size },
+        ]);
+      }
+    } catch {
+      setError((current) => current || '파일 업로드 중 오류가 발생했습니다.');
+    } finally {
+      finishUpload();
+      if (fileInputRef.current) {
+        fileInputRef.current.value = '';
+      }
     }
   };
 
@@ -576,45 +641,62 @@ function BoardWritePage() {
     event.preventDefault();
     setIsDragOver(false);
 
-    const files = event.dataTransfer.files;
-    if (!files.length) return;
+    const files = Array.from(event.dataTransfer.files);
+    if (files.length === 0) return;
 
-    const images = Array.from(files).filter((file) => file.type.startsWith('image/'));
-    const docs = Array.from(files).filter((file) => !file.type.startsWith('image/'));
+    beginUpload();
+    setError(null);
+    try {
+      const images = files.filter((file) => file.type.startsWith('image/'));
+      const docs = files.filter((file) => !file.type.startsWith('image/'));
 
-    if (images.length > 0) {
-      await handleImageUploadToEditor(images);
-    }
-
-    if (docs.length > 0) {
-      const targetCategoryId = subCategoryId || parentCategoryId;
-      if (!targetCategoryId) {
-        setError('카테고리를 먼저 선택해주세요.');
-        return;
+      if (images.length > 0) {
+        await handleImageUploadToEditor(images);
       }
 
-      setIsUploading(true);
-      setError(null);
-
-      for (const file of docs) {
-        const result = await uploadBoardFileViaS3(file, targetCategoryId);
-        if (!result.ok) {
-          setError(result.message);
-          break;
+      if (docs.length > 0) {
+        const targetCategoryId = subCategoryId || parentCategoryId;
+        if (!targetCategoryId) {
+          setError('카테고리를 먼저 선택해주세요.');
+          return;
         }
 
-        setAttachedFiles((prev) => [
-          ...prev,
-          { id: result.attachmentId, name: file.name, size: file.size },
-        ]);
-      }
+        for (const file of docs) {
+          const result = await uploadBoardFileViaS3(file, targetCategoryId);
+          if (!result.ok) {
+            setError(result.message);
+            break;
+          }
 
-      setIsUploading(false);
+          setAttachedFiles((prev) => [
+            ...prev,
+            { id: result.attachmentId, name: file.name, size: file.size },
+          ]);
+        }
+      }
+    } catch {
+      setError((current) => current || '파일 업로드 중 오류가 발생했습니다.');
+    } finally {
+      finishUpload();
     }
   };
 
   const handleSubmit = async (event: React.FormEvent) => {
     event.preventDefault();
+
+    if (isSubmitting) return;
+    if (pendingUploadsRef.current > 0) {
+      setError('파일 업로드가 완료될 때까지 기다려주세요.');
+      return;
+    }
+    if (isEditHydrationBlocked) {
+      setError(
+        editHydrationState === 'failed'
+          ? '게시글을 불러오지 못해 수정할 수 없습니다.'
+          : '게시글을 불러오는 중입니다.'
+      );
+      return;
+    }
 
     const targetCategoryId = subCategoryId || parentCategoryId;
     const latestContent =
@@ -668,10 +750,17 @@ function BoardWritePage() {
       setError(null);
       setContent(latestContent);
 
-      const attachmentIds =
-        attachedFiles.length > 0 ? attachedFiles.map((file) => file.id) : undefined;
+      const attachmentIds = isEditMode
+        ? attachedFiles.map((file) => file.id)
+        : attachedFiles.length > 0
+          ? attachedFiles.map((file) => file.id)
+          : undefined;
 
-      if (isEditMode && editBoardId) {
+      if (isEditMode) {
+        if (!editBoardId) {
+          setError('게시글을 불러오지 못해 수정할 수 없습니다.');
+          return;
+        }
         const response = await updateBoardAPI(editBoardId, {
           categoryId: targetCategoryId,
           title: title.trim(),
@@ -741,6 +830,11 @@ function BoardWritePage() {
     <Layout hideSidebar>
       <div className="bw-page">
         <form onSubmit={handleSubmit} className="bw-container">
+          <fieldset
+            disabled={isInteractionBlocked}
+            aria-busy={editHydrationState === 'loading'}
+            style={{ border: 0, padding: 0, margin: 0, minWidth: 0 }}
+          >
           <CategorySelector
             allCategories={allCategories}
             rootCategories={rootCategories}
@@ -900,6 +994,8 @@ function BoardWritePage() {
             handleImageSelect={handleImageSelect}
           />
 
+          </fieldset>
+
           {error && <div className="bw-error">{error}</div>}
 
           <div className="bw-divider" />
@@ -915,7 +1011,7 @@ function BoardWritePage() {
             <button
               type="submit"
               className="bw-btn bw-btn--submit"
-              disabled={isSubmitting}
+              disabled={isSubmitting || isUploading || isEditHydrationBlocked}
             >
               {isSubmitting
                 ? isEditMode

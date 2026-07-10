@@ -13,6 +13,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.security.access.AccessDeniedException;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.server.ResponseStatusException;
@@ -55,6 +56,28 @@ public class CommentController {
         resolveCommentProfileImages(c.getChildren());
     }
 
+    private ResponseEntity<?> handleCommentException(String operation, Exception exception) {
+        if (exception instanceof AccessDeniedException) {
+            return ApiResponse.fail(exception.getMessage()).toResponse(HttpStatus.FORBIDDEN);
+        }
+        if (exception instanceof IllegalArgumentException) {
+            return ApiResponse.fail(exception.getMessage()).toResponse(HttpStatus.NOT_FOUND);
+        }
+        if (exception instanceof IllegalStateException) {
+            return ApiResponse.fail(exception.getMessage()).toResponse(HttpStatus.BAD_REQUEST);
+        }
+        if (exception instanceof ResponseStatusException statusException) {
+            return ApiResponse.fail(statusException.getReason() == null
+                            ? "리소스를 찾을 수 없습니다."
+                            : statusException.getReason())
+                    .toResponse(HttpStatus.valueOf(statusException.getStatusCode().value()));
+        }
+
+        log.error(operation + " 중 오류 발생", exception);
+        return ApiResponse.fail(operation + " 중 오류가 발생했습니다.")
+                .toResponse(HttpStatus.INTERNAL_SERVER_ERROR);
+    }
+
     /**
      * 특정 게시글 댓글 생성
      * POST /api/board/{boardId}/comments
@@ -73,9 +96,7 @@ public class CommentController {
                     Map.of("comment", response)).toResponse(HttpStatus.CREATED);
 
         } catch(Exception e) {
-            log.error("댓글 작성 중 오류 발생", e);
-            return ApiResponse.fail("댓글 작성 중 오류가 발생했습니다.")
-                    .toResponse(HttpStatus.INTERNAL_SERVER_ERROR);
+            return handleCommentException("댓글 작성", e);
         }
 
     }
@@ -101,9 +122,7 @@ public class CommentController {
                     Map.of("comments", comments)).toResponse();
 
         } catch (Exception e) {
-            log.error("댓글 조회 중 오류 발생", e);
-            return ApiResponse.fail("댓글 조회 중 오류가 발생했습니다.")
-                    .toResponse(HttpStatus.INTERNAL_SERVER_ERROR);
+            return handleCommentException("댓글 조회", e);
         }
     }
 
@@ -121,9 +140,7 @@ public class CommentController {
                     Map.of("comments", commentService.getMyComments(userId))).toResponse();
 
         } catch (Exception e) {
-            log.error("마이페이지 댓글 조회 중 오류 발생", e);
-            return ApiResponse.fail("댓글 조회 중 오류가 발생했습니다.")
-                    .toResponse(HttpStatus.INTERNAL_SERVER_ERROR);
+            return handleCommentException("마이페이지 댓글 조회", e);
         }
     }
 
@@ -146,9 +163,7 @@ public class CommentController {
                     Map.of("comment", response)).toResponse();
 
         } catch (Exception e) {
-            log.error("댓글 수정 중 오류 발생", e);
-            return ApiResponse.fail("댓글 수정 중 오류가 발생했습니다.")
-                    .toResponse(HttpStatus.INTERNAL_SERVER_ERROR);
+            return handleCommentException("댓글 수정", e);
         }
     }
 
@@ -164,15 +179,14 @@ public class CommentController {
             @AuthenticationPrincipal CustomUserDetails userDetails
     ) {
         try {
-            CommentResponse response = commentService.updateCommentStatus(commentId, request);
+            CommentResponse response = commentService.updateCommentStatus(
+                    commentId, request, userDetails.getUser().getId());
             resolveCommentProfileImage(response);
             return ApiResponse.ok("댓글을 성공적으로 숨겼습니다.",
                     Map.of("comment", response)).toResponse();
 
         } catch (Exception e) {
-            log.error("댓글 숨김 중 오류 발생", e);
-            return ApiResponse.fail("댓글 숨김 중 오류가 발생했습니다.")
-                    .toResponse(HttpStatus.INTERNAL_SERVER_ERROR);
+            return handleCommentException("댓글 숨김", e);
         }
     }
 
@@ -193,9 +207,7 @@ public class CommentController {
             return ApiResponse.ok("댓글이 성공적으로 삭제되었습니다.").toResponse();
 
         } catch (Exception e) {
-            log.error("댓글 삭제 중 오류 발생", e);
-            return ApiResponse.fail("댓글 삭제 중 오류가 발생했습니다.")
-                    .toResponse(HttpStatus.INTERNAL_SERVER_ERROR);
+            return handleCommentException("댓글 삭제", e);
         }
 
     }
@@ -219,9 +231,7 @@ public class CommentController {
                     Map.of("commentCount", commentCount)).toResponse();
 
         } catch (Exception e) {
-            log.error("댓글 개수 조회 중 오류 발생", e);
-            return ApiResponse.fail("댓글 개수 조회 중 오류가 발생했습니다.")
-                    .toResponse(HttpStatus.INTERNAL_SERVER_ERROR);
+            return handleCommentException("댓글 개수 조회", e);
         }
     }
 
@@ -240,9 +250,7 @@ public class CommentController {
             return ApiResponse.ok("선택한 댓글이 성공적으로 삭제되었습니다.").toResponse();
 
         } catch (Exception e) {
-            log.error("댓글 선택 삭제 중 오류 발생", e);
-            return ApiResponse.fail("댓글 삭제 중 오류가 발생했습니다.")
-                    .toResponse(HttpStatus.INTERNAL_SERVER_ERROR);
+            return handleCommentException("댓글 선택 삭제", e);
         }
     }
 
@@ -251,11 +259,17 @@ public class CommentController {
      * GET /api/comments/user/{nickname}
      */
     @GetMapping("/comments/user/{nickname}")
-    public ResponseEntity<?> getCommentsByNickname(@PathVariable String nickname) {
+    public ResponseEntity<?> getCommentsByNickname(
+            @PathVariable String nickname,
+            @AuthenticationPrincipal CustomUserDetails userDetails) {
         try {
+            if (userDetails == null || userDetails.getUser() == null) {
+                return ApiResponse.fail("로그인이 필요합니다.").toResponse(HttpStatus.UNAUTHORIZED);
+            }
             return userRepository.findByNickname(nickname)
                     .map(user -> {
-                        List<MyCommentResponse> comments = commentService.getMyComments(user.getId());
+                        List<MyCommentResponse> comments = commentService.getVisibleCommentsByUser(
+                                user.getId(), userDetails.getUser().getId());
                         return ApiResponse.ok("댓글 목록을 조회했습니다.",
                                 Map.of("comments", comments)).toResponse();
                     })
@@ -263,9 +277,7 @@ public class CommentController {
                             () -> new ResponseStatusException(HttpStatus.NOT_FOUND)
                     );
         } catch (Exception e) {
-            log.error("댓글 목록 조회 중 오류 발생", e);
-            return ApiResponse.fail("댓글 조회 중 오류가 발생했습니다.")
-                    .toResponse(HttpStatus.INTERNAL_SERVER_ERROR);
+            return handleCommentException("댓글 목록 조회", e);
         }
     }
 

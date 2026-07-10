@@ -78,12 +78,18 @@ public class AttachmentController {
      * 첨부파일 메타정보 조회 (filepath, disposition 등)
      */
     @GetMapping("/{id}")
-    public ResponseEntity<?> getFile(@PathVariable Long id) {
+    public ResponseEntity<?> getFile(
+            @PathVariable Long id,
+            @AuthenticationPrincipal CustomUserDetails userDetails) {
         try {
-            AttachmentResponseDto dto = attachmentService.getFile(id);
+            Long userId = userDetails == null ? null : userDetails.getUser().getId();
+            if (userId == null) {
+                return ApiResponse.fail("로그인이 필요합니다.").toResponse(HttpStatus.UNAUTHORIZED);
+            }
+            AttachmentResponseDto dto = attachmentService.getFile(id, userId, canReadCartel(userDetails));
             return ApiResponse.ok(Map.of("attachment", dto)).toResponse();
         } catch (RuntimeException e) {
-            return ApiResponse.fail(e.getMessage()).toResponse(HttpStatus.NOT_FOUND);
+            return ApiResponse.fail(e.getMessage()).toResponse(HttpStatus.FORBIDDEN);
         }
     }
 
@@ -93,9 +99,14 @@ public class AttachmentController {
     @GetMapping("/{id}/download")
     public ResponseEntity<?> download(
             @PathVariable Long id,
-            @RequestParam(value = "disposition", required = false) String dispositionParam) {
+            @RequestParam(value = "disposition", required = false) String dispositionParam,
+            @AuthenticationPrincipal CustomUserDetails userDetails) {
         try {
-            Attachment attachment = attachmentService.getAttachment(id);
+            Long userId = userDetails == null ? null : userDetails.getUser().getId();
+            if (userId == null) {
+                return ApiResponse.fail("로그인이 필요합니다.").toResponse(HttpStatus.UNAUTHORIZED);
+            }
+            Attachment attachment = attachmentService.getAttachment(id, userId, canReadCartel(userDetails));
             String disposition = dispositionParam != null && "inline".equalsIgnoreCase(dispositionParam)
                     ? "inline" : (attachment.getCategoryId() != null && CategoryConstants.GALLERY_ID.equals(attachment.getCategoryId()) ? "inline" : "attachment");
 
@@ -109,8 +120,10 @@ public class AttachmentController {
                 // 로컬 리소스를 열 수 없고, S3Service가 존재하며 filepath(S3 key)가 있다면 Presigned GET URL로 리다이렉트
                 if (s3Service != null && attachment.getFilepath() != null) {
                     String s3Disposition = "pdf".equalsIgnoreCase(attachment.getExtension())
-                            ? "attachment" : null;
-                    String presignedUrl = s3Service.createPresignedGetUrl(attachment.getFilepath(), 10, s3Disposition);
+                            ? "attachment"
+                            : disposition;
+                    String presignedUrl = s3Service.createPresignedGetUrl(
+                            attachment.getFilepath(), 10, s3Disposition);
                     if (presignedUrl != null) {
                         HttpHeaders headers = new HttpHeaders();
                         headers.setLocation(URI.create(presignedUrl));
@@ -127,9 +140,12 @@ public class AttachmentController {
             headers.setContentLength(attachment.getFileSize() != null ? attachment.getFileSize() : 0);
             String encoded = URLEncoder.encode(filename != null ? filename : "download", StandardCharsets.UTF_8).replaceAll("\\+", "%20");
             headers.add(HttpHeaders.CONTENT_DISPOSITION, disposition + "; filename*=UTF-8''" + encoded);
+            headers.set("X-Content-Type-Options", "nosniff");
+            headers.set("Content-Security-Policy", "sandbox");
+            headers.setCacheControl("private, no-store");
             return ResponseEntity.ok().headers(headers).body(resource);
         } catch (RuntimeException e) {
-            return ApiResponse.fail(e.getMessage()).toResponse(HttpStatus.NOT_FOUND);
+            return ApiResponse.fail(e.getMessage()).toResponse(HttpStatus.FORBIDDEN);
         }
     }
 
@@ -139,23 +155,33 @@ public class AttachmentController {
      * - 로컬 사용 시: 기존 다운로드 엔드포인트 URL 반환
      */
     @GetMapping("/{id}/download-url")
-    public ResponseEntity<?> getDownloadUrl(@PathVariable Long id) {
-        Attachment attachment = attachmentService.getAttachment(id);
-
-        // S3 사용 가능 && filepath(S3 key)가 있는 경우: Presigned GET URL 생성
-        // PDF는 브라우저 내 스크립트 실행 방지를 위해 Content-Disposition: attachment 강제
-        if (s3Service != null && attachment.getFilepath() != null) {
-            String disposition = "pdf".equalsIgnoreCase(attachment.getExtension())
-                    ? "attachment" : null;
-            String url = s3Service.createPresignedGetUrl(attachment.getFilepath(), 10, disposition);
-            if (url != null) {
-                return ApiResponse.ok(Map.of("downloadUrl", url)).toResponse();
+    public ResponseEntity<?> getDownloadUrl(
+            @PathVariable Long id,
+            @AuthenticationPrincipal CustomUserDetails userDetails) {
+        try {
+            Long userId = userDetails == null ? null : userDetails.getUser().getId();
+            if (userId == null) {
+                return ApiResponse.fail("로그인이 필요합니다.").toResponse(HttpStatus.UNAUTHORIZED);
             }
-        }
+            Attachment attachment = attachmentService.getAttachment(id, userId, canReadCartel(userDetails));
 
-        // 그 외(로컬 등)는 기존 다운로드 엔드포인트를 URL로 내려준다.
-        String apiUrl = "/api/cite/attachments/" + id + "/download";
-        return ApiResponse.ok(Map.of("downloadUrl", apiUrl)).toResponse();
+            if (s3Service != null && attachment.getFilepath() != null) {
+                String disposition = CategoryConstants.GALLERY_ID.equals(attachment.getCategoryId())
+                        && !"pdf".equalsIgnoreCase(attachment.getExtension())
+                        ? "inline"
+                        : "attachment";
+                String url = s3Service.createPresignedGetUrl(
+                        attachment.getFilepath(), 10, disposition);
+                if (url != null) {
+                    return ApiResponse.ok(Map.of("downloadUrl", url)).toResponse();
+                }
+            }
+
+            String apiUrl = "/api/cite/attachments/" + id + "/download";
+            return ApiResponse.ok(Map.of("downloadUrl", apiUrl)).toResponse();
+        } catch (RuntimeException e) {
+            return ApiResponse.fail(e.getMessage()).toResponse(HttpStatus.FORBIDDEN);
+        }
     }
 
     /**
@@ -202,18 +228,32 @@ public class AttachmentController {
      * Content-Type은 서명에 포함하지 않음: 클라이언트가 PUT 시 직접 보내면 S3가 가주.     */
     @PostMapping("/presigned")
     public ResponseEntity<?> createPresignedUpload(
+            @AuthenticationPrincipal CustomUserDetails userDetails,
             @RequestParam("type") String type,
-            @RequestParam("fileName") String fileName) {
-
+            @RequestParam("fileName") String fileName,
+            @RequestParam("fileSize") long fileSize) {
+        Long userId = userDetails == null ? null : userDetails.getUser().getId();
+        if (userId == null) {
+            return ApiResponse.fail("로그인이 필요합니다.").toResponse(HttpStatus.UNAUTHORIZED);
+        }
+        if ("profile-decoration".equals(type) && !isAdmin(userDetails)) {
+            return ApiResponse.fail("프로필 장식 업로드는 관리자만 가능합니다.")
+                    .toResponse(HttpStatus.FORBIDDEN);
+        }
         if (!(fileStore instanceof S3FileStore s3FileStore)) {
             return ApiResponse.fail("파일 업로드 서비스를 사용할 수 없습니다.").toResponse(HttpStatus.SERVICE_UNAVAILABLE);
         }
 
-        S3Service.PresignedUpload presigned = s3FileStore.getPresignedUpload(type, fileName);
-        return ApiResponse.ok(Map.of(
-                "uploadUrl", presigned.getUrl(),
-                "key", presigned.getKey()
-        )).toResponse();
+        try {
+            S3Service.PresignedUpload presigned =
+                    s3FileStore.getPresignedUpload(type, fileName, userId, fileSize);
+            return ApiResponse.ok(Map.of(
+                    "uploadUrl", presigned.getUrl(),
+                    "key", presigned.getKey()
+            )).toResponse();
+        } catch (RuntimeException e) {
+            return ApiResponse.fail(e.getMessage()).toResponse(HttpStatus.BAD_REQUEST);
+        }
     }
 
     /**
@@ -232,19 +272,23 @@ public class AttachmentController {
             return ApiResponse.fail("S3 key가 필요합니다.").toResponse(HttpStatus.BAD_REQUEST);
         }
 
-        Long attachmentId = attachmentService.registerFromS3(
-                request.getKey(),
-                request.getOriginFilename(),
-                request.getFileSize(),
-                request.getBoardId(),
-                request.getCategoryId(),
-                userId
-        );
+        try {
+            Long attachmentId = attachmentService.registerFromS3(
+                    request.getKey(),
+                    request.getOriginFilename(),
+                    request.getFileSize(),
+                    request.getBoardId(),
+                    request.getCategoryId(),
+                    userId
+            );
 
-        return ApiResponse.ok(
-                "파일이 등록되었습니다.",
-                Map.of("attachmentId", attachmentId)
-        ).toResponse(HttpStatus.CREATED);
+            return ApiResponse.ok(
+                    "파일이 등록되었습니다.",
+                    Map.of("attachmentId", attachmentId)
+            ).toResponse(HttpStatus.CREATED);
+        } catch (RuntimeException e) {
+            return ApiResponse.fail(e.getMessage()).toResponse(HttpStatus.BAD_REQUEST);
+        }
     }
 
     private String getContentType(String ext) {
@@ -262,9 +306,13 @@ public class AttachmentController {
         };
     }
 
-    private static String extractExtFromFilename(String filename) {
-        if (filename == null || !filename.contains(".")) return null;
-        String ext = filename.substring(filename.lastIndexOf('.') + 1);
-        return ext.isBlank() ? null : ext.toLowerCase();
+    private boolean canReadCartel(CustomUserDetails userDetails) {
+        return userDetails != null && userDetails.getAuthorities().stream()
+                .anyMatch(authority -> "ROLE_CARTEL".equals(authority.getAuthority())
+                        || "ROLE_ADMIN".equals(authority.getAuthority()));
+    }
+    private boolean isAdmin(CustomUserDetails userDetails) {
+        return userDetails != null && userDetails.getAuthorities().stream()
+                .anyMatch(authority -> "ROLE_ADMIN".equals(authority.getAuthority()));
     }
 }

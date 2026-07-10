@@ -36,6 +36,7 @@ import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
 import java.util.List;
+import java.util.Optional;
 
 @Repository
 public interface BoardRepository extends JpaRepository<Board, Long> { // [수정] Integer → Long
@@ -80,6 +81,19 @@ public interface BoardRepository extends JpaRepository<Board, Long> { // [수정
            "GROUP BY b.id, b.author.id, b.category.id " +
            "ORDER BY COUNT(bl.id) DESC, b.postView DESC, (COUNT(bl.id) + b.postView) DESC, b.createdAt DESC")
     Page<Board> findAllByStatusOrderByViewsDescCreatedAtDesc(@Param("status") BoardStatus status, Pageable pageable);
+    @Query(value = "SELECT DISTINCT b FROM Board b " +
+            "LEFT JOIN FETCH b.author " +
+            "LEFT JOIN FETCH b.category " +
+            "LEFT JOIN BoardLike bl ON bl.board.id = b.id " +
+            "WHERE b.status = :status AND b.category.id NOT IN :excludedCategoryIds " +
+            "GROUP BY b.id, b.author.id, b.category.id " +
+            "ORDER BY COUNT(bl.id) DESC, b.postView DESC, (COUNT(bl.id) + b.postView) DESC, b.createdAt DESC",
+            countQuery = "SELECT COUNT(b) FROM Board b " +
+                    "WHERE b.status = :status AND b.category.id NOT IN :excludedCategoryIds")
+    Page<Board> findAllVisibleByStatusOrderByViewsDescCreatedAtDesc(
+            @Param("status") BoardStatus status,
+            @Param("excludedCategoryIds") List<Long> excludedCategoryIds,
+            Pageable pageable);
 
     // ========== [메인 페이지 API] ==========
     // [신규] 카테고리별 인기글 조회 (좋아요 수 > 조회수 > 좋아요+조회수 합계 순으로 정렬)
@@ -111,6 +125,7 @@ public interface BoardRepository extends JpaRepository<Board, Long> { // [수정
 
     // 최신 활성글 조회
     List<Board> findTop10ByStatusOrderByCreatedAtDesc(BoardStatus status);
+    Optional<Board> findFirstByFilepathIn(List<String> filepaths);
 
     @Modifying(clearAutomatically = true)
     @Query("UPDATE Board b SET b.postView = COALESCE(b.postView, 0) + 1 " +

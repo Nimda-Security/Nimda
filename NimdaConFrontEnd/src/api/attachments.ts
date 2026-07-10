@@ -95,15 +95,17 @@ export type PresignedBoardUploadResult = {
 
 /**
  * S3 업로드용 presigned URL 발급
- * - Content-Type은 서명에 포함하지 않음: 클라이언트가 PUT 시 file.type을 보내면 S3가 해당 타입으로 저장.
+ * - 서버가 실제 File 크기를 Content-Length에 묶어 10 MiB 제한을 저장소 경계에서도 적용한다.
  */
 export const requestPresignedUpload = async (
   type: 'board' | 'file' | 'profile' | 'profile-decoration',
-  fileName: string
+  fileName: string,
+  fileSize: number
 ): Promise<{ ok: true; data: PresignedBoardUploadResult } | { ok: false; message: string }> => {
   const params = new URLSearchParams();
   params.set('type', type);
   params.set('fileName', fileName);
+  params.set('fileSize', String(fileSize));
 
   const response = await fetch(`${ATTACHMENTS_BASE}/presigned`, {
     method: 'POST',
@@ -252,7 +254,7 @@ export const uploadBoardFileViaS3 = async (
     }
   }
 
-  const presigned = await requestPresignedUpload('board', safeFile.name);
+  const presigned = await requestPresignedUpload('board', safeFile.name, safeFile.size);
   if (!presigned.ok) {
     return uploadBoardFileLocally(safeFile, categoryId);
   }

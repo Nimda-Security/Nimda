@@ -1,18 +1,12 @@
 package com.nimda.cite.common.s3;
 
-import com.nimda.cite.domain.attachment.service.AttachmentService;
 import lombok.RequiredArgsConstructor;
-import org.springframework.boot.autoconfigure.condition.ConditionalOnBean;
 import org.springframework.stereotype.Service;
 import software.amazon.awssdk.services.s3.model.GetObjectRequest;
-import software.amazon.awssdk.services.s3.model.PutObjectRequest;
 import software.amazon.awssdk.services.s3.presigner.S3Presigner;
 import software.amazon.awssdk.services.s3.presigner.model.GetObjectPresignRequest;
-import software.amazon.awssdk.services.s3.presigner.model.PutObjectPresignRequest;
 
 import java.time.Duration;
-import java.util.Set;
-import java.util.UUID;
 @Service
 @RequiredArgsConstructor
 public class S3Service {
@@ -20,78 +14,6 @@ public class S3Service {
     private final S3Presigner s3Presigner;
     private final S3Properties s3Properties;
 
-    /**
-     * 업로드용 Presigned URL + S3 키 동시 생성.
-     * - Content-Type은 서명에 포함하지 않음: 브라우저 PUT 시 값 불일치 방지.
-     *   클라이언트가 어떤 Content-Type 헤더를 보내더라도 S3가 해당 타입으로 저장함.
-     *
-     * @param type "profile", "board", "file" 중 선택
-     * @param fileName 원본 파일명
-     */
-    public PresignedUpload createPresignedUpload(String type, String fileName) {
-        // 0. 확장자 화이트리스트 검증 (1차 방어선)
-        String ext = extractExt(fileName);
-        boolean allowed = "profile-decoration".equals(type)
-                ? Set.of("svg", "png", "jpg", "jpeg", "webp").contains(ext)
-                : AttachmentService.isAllowedExtension(ext);
-        if (!allowed) {
-            throw new IllegalArgumentException("허용되지 않는 파일 형식입니다: " + ext);
-        }
-
-        // 1. 경로 결정 (null이면 temp/)
-        String path = switch (type) {
-            case "profile" -> s3Properties.getProfileImagePath();
-            case "profile-decoration" -> "profile-decorations/";
-            case "board" -> s3Properties.getBoardImagePath();
-            case "file" -> s3Properties.getBoardFilePath();
-            default -> "temp/";
-        };
-        if (path == null || path.isBlank()) {
-            path = "temp/";
-        }
-        if (!path.endsWith("/")) {
-            path = path + "/";
-        }
-
-        // 2. S3 키(경로 + UUID 파일명) 생성
-        String fileKey = path + UUID.randomUUID() + "_" + fileName;
-
-        // 3. S3 업로드 요청 객체 생성 (Content-Type은 서명에 포함하지 않음)
-        PutObjectRequest objectRequest = PutObjectRequest.builder()
-                .bucket(s3Properties.getBucket())
-                .key(fileKey)
-                .build();
-
-        // 4. Presigned URL 요청 (유효시간 10분)
-        PutObjectPresignRequest presignRequest = PutObjectPresignRequest.builder()
-                .signatureDuration(Duration.ofMinutes(10))
-                .putObjectRequest(objectRequest)
-                .build();
-
-        // 5. 최종 URL + 키 반환
-        String url = s3Presigner.presignPutObject(presignRequest).url().toString();
-        return new PresignedUpload(fileKey, url);
-    }
-
-    /**
-     * 하위 호환: contentType 인자를 받지만 서명에는 포함하지 않음.
-     */
-    public PresignedUpload createPresignedUpload(String type, String fileName, String contentType) {
-        return createPresignedUpload(type, fileName);
-    }
-
-    /**
-     * 하위 호환용: 기존처럼 URL만 필요할 때 사용.
-     */
-    public String createPresignedUrl(String type, String fileName) {
-        return createPresignedUpload(type, fileName).getUrl();
-    }
-
-    private static String extractExt(String filename) {
-        if (filename == null || !filename.contains(".")) return "";
-        String ext = filename.substring(filename.lastIndexOf('.') + 1);
-        return ext.isBlank() ? "" : ext.toLowerCase();
-    }
 
     /**
      * 다운로드/보기용 Presigned GET URL 생성.

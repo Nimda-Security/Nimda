@@ -34,8 +34,10 @@ function LogInPage() {
       if (result.success) {
         navigate("/");
       } else {
-        setErrorMessage(result.message || LOGIN_ERROR_MESSAGE);
+        setErrorMessage(LOGIN_ERROR_MESSAGE);
       }
+    } catch {
+      setErrorMessage(LOGIN_ERROR_MESSAGE);
     } finally {
       setIsSubmitting(false);
     }
@@ -51,31 +53,43 @@ function LogInPage() {
 
           <form onSubmit={handleLogin} className="login-page__form">
             <div className="login-page__field">
+              <label htmlFor="login-userid" className="sr-only">
+                아이디
+              </label>
               <input
+                id="login-userid"
                 name="userid"
                 type="text"
                 className="login-page__input"
                 placeholder="아이디"
                 required
                 autoComplete="username"
+                aria-invalid={errorMessage ? true : undefined}
+                aria-describedby={errorMessage ? "login-error" : undefined}
               />
             </div>
 
             <div className="login-page__field login-page__password-wrap">
+              <label htmlFor="login-password" className="sr-only">
+                비밀번호
+              </label>
               <input
+                id="login-password"
                 name="password"
                 type={showPassword ? "text" : "password"}
                 className="login-page__input"
                 placeholder="비밀번호"
                 required
                 autoComplete="current-password"
+                aria-invalid={errorMessage ? true : undefined}
+                aria-describedby={errorMessage ? "login-error" : undefined}
               />
               <button
                 type="button"
                 className="login-page__password-toggle"
                 onClick={() => setShowPassword((v) => !v)}
                 aria-label={showPassword ? "비밀번호 숨기기" : "비밀번호 보기"}
-                tabIndex={-1}
+                aria-pressed={showPassword}
               >
                 {showPassword ? (
                   <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden>
@@ -92,7 +106,7 @@ function LogInPage() {
             </div>
 
             {errorMessage && (
-              <p className="login-page__error" role="alert">
+              <p id="login-error" className="login-page__error" role="alert" aria-live="assertive">
                 {errorMessage}
               </p>
             )}

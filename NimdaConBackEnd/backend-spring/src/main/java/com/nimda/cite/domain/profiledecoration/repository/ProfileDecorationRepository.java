@@ -10,6 +10,7 @@ public interface ProfileDecorationRepository extends JpaRepository<ProfileDecora
     Optional<ProfileDecoration> findByKey(String key);
 
     boolean existsByKey(String key);
+    boolean existsByFilePathAndIdNot(String filePath, Long id);
 
     List<ProfileDecoration> findByActiveTrueOrderByIdAsc();
 

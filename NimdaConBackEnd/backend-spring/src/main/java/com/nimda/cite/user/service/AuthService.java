@@ -1,6 +1,6 @@
 package com.nimda.cite.user.service;
 
-import com.nimda.cite.common.util.Redis.RedisUtil;
+import com.nimda.cite.domain.attachment.service.AttachmentService;
 import com.nimda.cite.domain.point.entity.UserBalance;
 import com.nimda.cite.domain.point.repositroy.UserBalanceRepository;
 import com.nimda.cite.user.dto.LoginResponseDTO;
@@ -29,6 +29,8 @@ import java.util.Optional;
 
 @Service
 public class AuthService {
+    private static final String DUMMY_PASSWORD_HASH =
+            "$2a$10$N9qo8uLOickgx2ZMRZoMyeIjZAgcfl7p92ldGxad68LJZdL17lhWy";
 
     @Autowired
     private UserService userService;
@@ -48,7 +50,7 @@ public class AuthService {
     @Autowired
     private ProfileDecorationOwnershipService profileDecorationOwnershipService;
     @Autowired
-    private RedisUtil redisUtil;
+    private AttachmentService attachmentService;
 
     /**
      * 사용자 인증
@@ -90,6 +92,7 @@ public class AuthService {
             userWithoutPassword.setEmail(user.getEmail());
             return Optional.of(userWithoutPassword);
         }
+        passwordEncoder.matches(password, DUMMY_PASSWORD_HASH);
 
         return Optional.empty(); // 사용자를 찾을 수 없음
     }
@@ -114,7 +117,11 @@ public class AuthService {
                 .collect(java.util.stream.Collectors.toList());
 
 
-        String token = jwtUtil.generateToken(fullUser.getNickname(), fullUser.getId(), authorities); // JWT 토큰 생성
+        String token = jwtUtil.generateToken(
+                fullUser.getNickname(),
+                fullUser.getId(),
+                fullUser.getAuthVersion(),
+                authorities); // JWT 토큰 생성
 
         LoginResponseDTO.UserInfo userInfo = LoginResponseDTO.UserInfo.builder()
                 .id(fullUser.getId())
@@ -182,7 +189,13 @@ public class AuthService {
     public User updateProfileImage(Long userId, String profileImageKey) {
         User user = userRepository.findById(userId)
                 .orElseThrow(() -> new IllegalArgumentException("존재하지 않는 사용자입니다."));
-        user.setProfileImage(profileImageKey);
+        String finalizedKey = attachmentService.finalizeProfileImage(profileImageKey, userId);
+        String previousKey = user.getProfileImage();
+        user.setProfileImage(finalizedKey);
+
+        if (previousKey != null && !previousKey.equals(finalizedKey)) {
+            attachmentService.enqueueOwnedProfileImageDeletion(previousKey, userId);
+        }
         return user;
     }
 
@@ -259,5 +272,13 @@ public class AuthService {
 
         String encodedPassword = passwordEncoder.encode(password);
         user.setPassword(encodedPassword);
+        user.rotateAuthVersion();
+    }
+
+    @Transactional
+    public void rotateAuthVersion(Long userId) {
+        User user = userRepository.findById(userId)
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND));
+        user.rotateAuthVersion();
     }
 }

@@ -81,8 +81,7 @@ public class LocalFileStore implements FileStore {
         }
         Path target = basePath.resolve(storedFilename).normalize();
         if (!target.startsWith(basePath)) {
-            log.warn("삭제 경로가 업로드 디렉토리 밖입니다: {}", storedFilename);
-            return;
+            throw new SecurityException("삭제 경로가 업로드 디렉토리 밖입니다.");
         }
         try {
             boolean deleted = Files.deleteIfExists(target);
@@ -90,7 +89,7 @@ public class LocalFileStore implements FileStore {
                 log.debug("파일 삭제됨: {}", target);
             }
         } catch (IOException e) {
-            log.warn("파일 삭제 실패: {}", target, e);
+            throw new UncheckedIOException("파일 삭제 실패: " + storedFilename, e);
         }
     }
 

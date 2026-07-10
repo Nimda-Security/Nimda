@@ -70,7 +70,9 @@ public class User extends BaseTimeEntity {
     @Enumerated(EnumType.STRING)
     @Column(name = "status", nullable = false, length = 20)
     private ApprovalStatus status = ApprovalStatus.PENDING;
-    // 사용자 승인 상태 (PENDING: 승인 대기, APPROVED: 승인 완료, REJECTED: 승인 거부)
+
+    @Column(name = "auth_version", nullable = false)
+    private int authVersion = 0;
 
     @Column(name = "birth", length = 20)
     private String birth;
@@ -106,6 +108,10 @@ public class User extends BaseTimeEntity {
         this.studentNum = studentNum;
         this.email = email;
         this.major = major;
+    }
+
+    public void rotateAuthVersion() {
+        this.authVersion = Math.incrementExact(this.authVersion);
     }
 
     // 사용자 권한 관리 테이블

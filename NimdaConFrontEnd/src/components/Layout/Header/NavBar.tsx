@@ -13,30 +13,61 @@ import Logout from '@/components/icons/Logout.svg';
 import NotificationBell from '@/components/Notification/NotificationBell';
 import Avatar from '@/components/Avatar/Avatar';
 
+type AuthStatus = 'unknown' | 'loading' | 'authenticated' | 'anonymous';
+
 const Navbar: React.FC = () => {
   const navigate = useNavigate();
-  const [adminStatus, setAdminStatus] = useState(() => isAdmin());
-  const [isLoggedInState, setIsLoggedInState] = useState(() => isLoggedIn());
+  const [authStatus, setAuthStatus] = useState<AuthStatus>('unknown');
+  const [adminStatus, setAdminStatus] = useState(false);
   const [profileImage, setProfileImage] = useState<string | null>(null);
+  const [isLoggingOut, setIsLoggingOut] = useState(false);
 
   useEffect(() => {
-    const loggedIn = isLoggedIn();
+    let cancelled = false;
 
-    if (loggedIn) {
-      // 서버에 세션 유효성 검증 — 만료 시 로컬 상태만 초기화 (강제 리다이렉트 없음)
-      validateSession().then((ok) => {
-        if (!ok) {
-          setAdminStatus(false);
-          setIsLoggedInState(false);
+    const loadAuthState = async () => {
+      if (!isLoggedIn()) {
+        setAuthStatus('anonymous');
+        return;
+      }
+
+      setAuthStatus('loading');
+      try {
+        const sessionIsValid = await validateSession();
+        if (!sessionIsValid) {
+          if (!cancelled) {
+            setAdminStatus(false);
+            setProfileImage(null);
+            setAuthStatus('anonymous');
+          }
           return;
         }
-        getMyPageInfo().then((result) => {
-          if (result.success && result.data) {
-            setProfileImage(result.data.profileImage ?? null);
+
+        const result = await getMyPageInfo();
+        if (!result.success || !result.data) {
+          if (!cancelled) {
+            setAdminStatus(false);
+            setProfileImage(null);
+            setAuthStatus('anonymous');
           }
-        });
-      });
-    }
+          return;
+        }
+
+        if (!cancelled) {
+          setProfileImage(result.data.profileImage ?? null);
+          setAdminStatus(isAdmin());
+          setAuthStatus('authenticated');
+        }
+      } catch {
+        if (!cancelled) {
+          setAdminStatus(false);
+          setProfileImage(null);
+          setAuthStatus('anonymous');
+        }
+      }
+    };
+
+    void loadAuthState();
 
     const handleProfileUpdated = (event: Event) => {
       const detail = (event as CustomEvent<Record<string, unknown> | null>).detail;
@@ -48,15 +79,27 @@ const Navbar: React.FC = () => {
 
     window.addEventListener(PROFILE_UPDATED_EVENT, handleProfileUpdated);
     return () => {
+      cancelled = true;
       window.removeEventListener(PROFILE_UPDATED_EVENT, handleProfileUpdated);
     };
   }, []);
 
-  const handleLogout = () => {
-    logoutAPI();
+  const handleLogout = async () => {
+    if (isLoggingOut) return;
+
+    setIsLoggingOut(true);
+    setAuthStatus('loading');
     setAdminStatus(false);
-    setIsLoggedInState(false);
-    window.location.href = '/login';
+    setProfileImage(null);
+
+    try {
+      const serverLogoutSucceeded = await logoutAPI();
+      if (!serverLogoutSucceeded) {
+        alert('서버 로그아웃을 확인하지 못했습니다. 다시 로그인하기 전에 네트워크를 확인해주세요.');
+      }
+    } finally {
+      window.location.assign('/login');
+    }
   };
 
   const handleProfileClick = () => {
@@ -76,7 +119,7 @@ const Navbar: React.FC = () => {
 
         {/* 오른쪽: 로그인/회원가입 또는 유저 정보 */}
         <div style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
-          {isLoggedInState ? (
+          {authStatus === 'authenticated' ? (
             <>
               {/* 알림 */}
               <NotificationBell />
@@ -122,6 +165,7 @@ const Navbar: React.FC = () => {
               {/* 로그아웃 버튼 */}
               <button
                 onClick={handleLogout}
+                disabled={isLoggingOut}
                 style={{
                   padding: '8px',
                   borderRadius: '6px',
@@ -137,7 +181,7 @@ const Navbar: React.FC = () => {
                 <img src={Logout} alt="로그아웃" style={{ width: '20px', height: '20px' }} />
               </button>
             </>
-          ) : (
+          ) : authStatus === 'anonymous' ? (
             <>
               <Link
                 to="/signup"
@@ -161,7 +205,7 @@ const Navbar: React.FC = () => {
                 로그인
               </Link>
             </>
-          )}
+          ) : null}
         </div>
       </div>
     </nav>

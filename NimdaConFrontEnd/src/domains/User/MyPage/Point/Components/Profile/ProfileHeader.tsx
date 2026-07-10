@@ -133,7 +133,7 @@ const ProfileHeader: React.FC<ProfileHeaderProps> = ({
 
     setUploading(true);
     try {
-      const presigned = await requestPresignedUpload("profile", file.name);
+      const presigned = await requestPresignedUpload("profile", file.name, file.size);
       if (!presigned.ok) {
         alert(presigned.message);
         return;

@@ -233,19 +233,23 @@ export const registerAPI = async (
 /**
  * 로그아웃
  */
-export const logoutAPI = async () => {
+export const logoutAPI = async (): Promise<boolean> => {
+  let serverLogoutSucceeded = false;
   try {
-    await fetch(`${API_BASE_URL}/auth/logout`, {
+    const response = await fetch(`${API_BASE_URL}/auth/logout`, {
       method: "POST",
       headers: addVersionToHeaders(),
       credentials: "include",
     });
+    serverLogoutSucceeded = response.ok;
   } catch {
-    // 서버 응답 실패 시도 로컬 정리 진행
+    serverLogoutSucceeded = false;
+  } finally {
+    localStorage.removeItem("user");
+    localStorage.removeItem("roles");
+    window.dispatchEvent(new CustomEvent(PROFILE_UPDATED_EVENT, { detail: null }));
   }
-  localStorage.removeItem("user");
-  localStorage.removeItem("roles");
-  window.dispatchEvent(new CustomEvent(PROFILE_UPDATED_EVENT, { detail: null }));
+  return serverLogoutSucceeded;
 };
 
 /**

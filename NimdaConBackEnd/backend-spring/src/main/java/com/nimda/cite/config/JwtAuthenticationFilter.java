@@ -1,6 +1,7 @@
 package com.nimda.cite.config;
 
 import com.nimda.cite.common.util.JwtUtil;
+import com.nimda.cite.user.enums.ApprovalStatus;
 import com.nimda.cite.user.entity.User;
 import com.nimda.cite.user.repository.UserRepository;
 import com.nimda.cite.user.security.CustomUserDetails;
@@ -8,6 +9,7 @@ import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
+import io.jsonwebtoken.JwtException;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.lang.NonNull;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
@@ -19,15 +21,6 @@ import org.springframework.web.filter.OncePerRequestFilter;
 import java.io.IOException;
 import java.util.Optional;
 
-/**
- * JWT 인증 필터
- * 매 요청마다 JWT 토큰을 검증하고 SecurityContext에 인증 정보를 설정한다.
- * 
- * Logic
- * 1. Authorization Header에서 Token을 추출한다.
- * 2. 토큰을 검증한다.
- * 3. SecurityContext를 설정한다.
- */
 @Component
 public class JwtAuthenticationFilter extends OncePerRequestFilter {
 
@@ -44,21 +37,22 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
 
         String token = null;
 
-        // 1. Authorization 헤더 대신 쿠키에서 토큰 추출
         jakarta.servlet.http.Cookie[] cookies = request.getCookies();
         if (cookies != null) {
             for (jakarta.servlet.http.Cookie cookie : cookies) {
-                if ("Authorization".equals(cookie.getName())) { // 쿠키 이름 설정
+                if ("Authorization".equals(cookie.getName())) {
                     token = cookie.getValue();
                     break;
                 }
             }
         }
 
-        // 2. 토큰이 존재할 경우 기존 로직 수행
         if (token != null) {
             try {
-                Long userId = jwtUtil.extractUserId(token);
+                JwtUtil.AuthenticationClaims claims =
+                        jwtUtil.extractAuthenticationClaims(token);
+                Long userId = claims.userId();
+                Integer tokenAuthVersion = claims.authVersion();
 
                 if (userId != null && SecurityContextHolder.getContext().getAuthentication() == null) {
                     Optional<User> userOpt = userRepository.findById(userId);
@@ -66,8 +60,9 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
                     if (userOpt.isPresent()) {
                         User user = userOpt.get();
 
-                        // 닉네임 기반 검증 (기존 로직 유지)
-                        if (jwtUtil.validateToken(token, user.getNickname())) {
+                        if (user.getStatus() == ApprovalStatus.APPROVED
+                                && tokenAuthVersion != null
+                                && tokenAuthVersion.equals(user.getAuthVersion())) {
                             CustomUserDetails customUserDetails = new CustomUserDetails(user);
                             UsernamePasswordAuthenticationToken authentication = new UsernamePasswordAuthenticationToken(
                                     customUserDetails,
@@ -79,8 +74,10 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
                         }
                     }
                 }
+            } catch (JwtException | IllegalArgumentException e) {
+                logger.debug("JWT authentication skipped because the token is invalid or expired");
             } catch (Exception e) {
-                logger.error("JWT 토큰 검증 실패", e);
+                logger.error("Unexpected JWT authentication failure", e);
             }
         }
 

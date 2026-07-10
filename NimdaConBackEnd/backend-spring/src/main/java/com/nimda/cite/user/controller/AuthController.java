@@ -92,12 +92,24 @@ public class AuthController {
      * 브라우저에 저장된 Authorization 쿠키를 만료시킨다.
      */
     @PostMapping("/logout")
-    public ResponseEntity<?> logout() {
+    public ResponseEntity<?> logout(
+            @AuthenticationPrincipal CustomUserDetails customUserDetails) {
         ResponseCookie cookie = createAuthCookie("", 0);
-
-        return ResponseEntity.ok()
-                .header(HttpHeaders.SET_COOKIE, cookie.toString())
-                .body(Map.of("success", true, "message", "로그아웃 성공"));
+        try {
+            if (customUserDetails != null) {
+                authService.rotateAuthVersion(customUserDetails.getUser().getId());
+            }
+            return ResponseEntity.ok()
+                    .header(HttpHeaders.SET_COOKIE, cookie.toString())
+                    .body(Map.of("success", true, "message", "로그아웃 성공"));
+        } catch (RuntimeException exception) {
+            log.error("로그아웃 세션 폐기 중 오류 발생", exception);
+            return ResponseEntity.status(HttpStatus.SERVICE_UNAVAILABLE)
+                    .header(HttpHeaders.SET_COOKIE, cookie.toString())
+                    .body(Map.of(
+                            "success", false,
+                            "message", "현재 브라우저의 로그인 정보는 삭제했지만 서버 세션 폐기를 확인하지 못했습니다."));
+        }
     }
 
     private ResponseCookie createAuthCookie(String value, long maxAgeSeconds) {
@@ -275,6 +287,9 @@ public class AuthController {
                     "profileImageUrl", imageUrl != null ? imageUrl : "",
                     "profileImageKey", updated.getProfileImage()));
 
+        } catch (IllegalArgumentException e) {
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST)
+                    .body(Map.of("success", false, "message", e.getMessage()));
         } catch (Exception e) {
             log.error("프로필 이미지 변경 중 오류 발생", e);
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)

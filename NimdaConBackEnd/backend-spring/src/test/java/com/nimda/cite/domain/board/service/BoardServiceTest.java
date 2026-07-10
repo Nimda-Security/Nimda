@@ -7,6 +7,7 @@ import com.nimda.cite.domain.board.enums.BoardStatus;
 import com.nimda.cite.domain.board.repository.BoardRepository;
 import com.nimda.cite.domain.comment.repository.CommentRepository;
 import com.nimda.cite.domain.like.repository.BoardLikeRepository;
+import com.nimda.cite.user.entity.User;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
@@ -86,6 +87,20 @@ class BoardServiceTest {
         assertEquals(1, result.size());
         assertSame(board, result.get(0));
         verify(boardRepository).findTop10ByStatusOrderByCreatedAtDesc(BoardStatus.ACTIVE);
+    }
+    @Test
+    void updatingABoardPreservesItsOriginalAuthor() {
+        User originalAuthor = new User();
+        originalAuthor.setId(1L);
+        User actingAdmin = new User();
+        actingAdmin.setId(2L);
+        Board board = activeBoard(11L, 3);
+        board.setAuthor(originalAuthor);
+
+        boardService.write(board, actingAdmin, null);
+
+        assertSame(originalAuthor, board.getAuthor());
+        verify(boardRepository).save(board);
     }
 
     private Board activeBoard(Long id, Integer views) {

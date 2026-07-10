@@ -52,6 +52,8 @@ public class BoardController {
     private static final Set<String> ALLOWED_SORT_FIELDS = Set.of(
             "createdAt", "updatedAt", "title", "postView", "pinned"
     );
+    private static final int MAX_TITLE_LENGTH = 200;
+    private static final int MAX_CONTENT_LENGTH = 5_000_000;
 
     /** 클라이언트 sort 파라미터를 화이트리스트 기준으로 정제하고 페이지 크기를 제한 */
     private Pageable sanitizedPageable(Pageable pageable, int maxSize) {
@@ -69,6 +71,21 @@ public class BoardController {
     private boolean isValidSlug(String slug) {
         return slug != null && !slug.isEmpty() && slug.length() <= 50
                 && slug.matches("^[a-zA-Z0-9_-]+$");
+    }
+    private String validateBoardInput(String title, String content) {
+        if (title == null || title.isBlank()) {
+            return "제목을 입력해주세요.";
+        }
+        if (title.length() > MAX_TITLE_LENGTH) {
+            return "제목은 200자 이하여야 합니다.";
+        }
+        if (content == null || content.isBlank()) {
+            return "내용을 입력해주세요.";
+        }
+        if (content.length() > MAX_CONTENT_LENGTH) {
+            return "게시글 내용이 너무 깁니다.";
+        }
+        return null;
     }
 
     @Autowired
@@ -113,13 +130,63 @@ public class BoardController {
 
     // 카테고리(자신 또는 부모)의 slug가 일치하는지 확인
     private boolean isCategoryMatch(Category category, String slug) {
-        if (category == null) return false;
-        if (slug.equalsIgnoreCase(category.getSlug())) return true;
-        if (category.getParentId() != null) {
-            Category parent = categoryRepository.findById(category.getParentId()).orElse(null);
-            if (parent != null && slug.equalsIgnoreCase(parent.getSlug())) return true;
+        Set<Long> visited = new java.util.HashSet<>();
+        Category current = category;
+        while (current != null && (current.getId() == null || visited.add(current.getId()))) {
+            if (slug.equalsIgnoreCase(current.getSlug())) {
+                return true;
+            }
+            current = current.getParentId() == null
+                    ? null
+                    : categoryRepository.findById(current.getParentId()).orElse(null);
         }
         return false;
+    }
+    private boolean canViewCategory(Category category, User user) {
+        return category != null
+                && (!isCategoryMatch(category, "cartel")
+                || hasRole(user, "ROLE_CARTEL")
+                || hasRole(user, "ROLE_ADMIN"));
+    }
+
+    private List<Long> restrictedCategoryIds(User user) {
+        if (hasRole(user, "ROLE_CARTEL") || hasRole(user, "ROLE_ADMIN")) {
+            return List.of();
+        }
+
+        List<Category> categories = categoryRepository.findByIsActiveTrueOrderBySortOrderAsc();
+        Map<Long, Category> categoriesById = categories.stream()
+                .filter(category -> category.getId() != null)
+                .collect(Collectors.toMap(Category::getId, category -> category));
+
+        return categories.stream()
+                .filter(category -> isCategoryMatchInMemory(category, "cartel", categoriesById))
+                .map(Category::getId)
+                .filter(java.util.Objects::nonNull)
+                .toList();
+    }
+
+    private boolean isCategoryMatchInMemory(
+            Category category,
+            String slug,
+            Map<Long, Category> categoriesById) {
+        Set<Long> visited = new java.util.HashSet<>();
+        Category current = category;
+        while (current != null && (current.getId() == null || visited.add(current.getId()))) {
+            if (slug.equalsIgnoreCase(current.getSlug())) {
+                return true;
+            }
+            current = current.getParentId() == null
+                    ? null
+                    : categoriesById.get(current.getParentId());
+        }
+        return false;
+    }
+
+    private boolean canViewBoard(Board board, User user) {
+        return board != null
+                && board.getStatus() == BoardStatus.ACTIVE
+                && canViewCategory(board.getCategory(), user);
     }
 
     private boolean isShopCategory(Category category) {
@@ -145,6 +212,13 @@ public class BoardController {
 
     private List<BoardResponseDTO> toListResponseDTOs(List<Board> boards, User user) {
         if (boards == null || boards.isEmpty()) {
+            return List.of();
+        }
+
+        boards = boards.stream()
+                .filter(board -> canViewBoard(board, user))
+                .collect(Collectors.toList());
+        if (boards.isEmpty()) {
             return List.of();
         }
 
@@ -215,7 +289,7 @@ public class BoardController {
             Pageable safePageable = sanitizedPageable(pageable, 100);
             Category category = null;
             if (categoryId != null) {
-                category = categoryRepository.findById(categoryId)
+                category = categoryRepository.findByIdAndIsActiveTrue(categoryId)
                         .orElseThrow(() -> new RuntimeException("카테고리를 찾을 수 없습니다."));
             } else if (slug != null) {
                 if (!isValidSlug(slug)) {
@@ -252,6 +326,7 @@ public class BoardController {
                             .findByParentIdAndIsActiveTrueOrderBySortOrderAsc(child.getId());
                     categories.addAll(grandChildren);
                 }
+                categories.removeIf(candidate -> !canViewCategory(candidate, user));
 
                 if (searchKeyword == null || searchKeyword.isEmpty()) {
                     boards = boardService.boardListByCategories(categories, safePageable);
@@ -299,7 +374,7 @@ public class BoardController {
             Pageable safePageable = sanitizedPageable(pageable, 20);
             Category category = null;
             if (categoryId != null) {
-                category = categoryRepository.findById(categoryId)
+                category = categoryRepository.findByIdAndIsActiveTrue(categoryId)
                         .orElseThrow(() -> new RuntimeException("카테고리를 찾을 수 없습니다."));
             } else if (slug != null) {
                 if (!isValidSlug(slug)) {
@@ -312,6 +387,11 @@ public class BoardController {
             }
 
             User user = userDetails != null ? userDetails.getUser() : null;
+            if (isCategoryMatch(category, "cartel")
+                    && !hasRole(user, "ROLE_CARTEL")
+                    && !hasRole(user, "ROLE_ADMIN")) {
+                return ApiResponse.fail("접근 권한이 없습니다.").toResponse(HttpStatus.FORBIDDEN);
+            }
             Page<Board> boards = boardService.boardListByCategoryWithPinned(category, safePageable);
 
             // 고정글 목록에 좋아요 개수 추가하여 DTO로 변환
@@ -353,7 +433,7 @@ public class BoardController {
 
             if (categoryId != null || slug != null) {
                 if (categoryId != null) {
-                    category = categoryRepository.findById(categoryId)
+                    category = categoryRepository.findByIdAndIsActiveTrue(categoryId)
                             .orElseThrow(() -> new RuntimeException("카테고리를 찾을 수 없습니다."));
                 } else {
                     if (!isValidSlug(slug)) {
@@ -362,9 +442,15 @@ public class BoardController {
                     category = categoryRepository.findBySlugAndIsActiveTrue(slug)
                             .orElseThrow(() -> new RuntimeException("카테고리를 찾을 수 없습니다."));
                 }
+                if (isCategoryMatch(category, "cartel")
+                        && !hasRole(user, "ROLE_CARTEL")
+                        && !hasRole(user, "ROLE_ADMIN")) {
+                    return ApiResponse.fail("접근 권한이 없습니다.").toResponse(HttpStatus.FORBIDDEN);
+                }
                 boards = boardService.boardListPopularByCategory(category, limitedPageable);
             } else {
-                boards = boardService.boardListPopular(limitedPageable);
+                boards = boardService.boardListPopularExcludingCategories(
+                        restrictedCategoryIds(user), limitedPageable);
             }
 
             // 인기글 목록에 좋아요 개수 추가하여 DTO로 변환
@@ -407,9 +493,13 @@ public class BoardController {
             if (userDetails == null) {
                 return ApiResponse.fail("로그인이 필요합니다.").toResponse(HttpStatus.UNAUTHORIZED);
             }
+            String inputError = validateBoardInput(title, content);
+            if (inputError != null) {
+                return ApiResponse.fail(inputError).toResponse(HttpStatus.BAD_REQUEST);
+            }
             User author = userDetails.getUser();
 
-            Category category = categoryRepository.findById(categoryId)
+            Category category = categoryRepository.findByIdAndIsActiveTrue(categoryId)
                     .orElseThrow(() -> new RuntimeException("카테고리를 찾을 수 없습니다: " + categoryId));
 
             // validation. tagId가 있으면 해당 카테고리 소속인지 검증
@@ -479,7 +569,7 @@ public class BoardController {
             }
 
             Board board = new Board();
-            board.setTitle(title);
+            board.setTitle(title.trim());
             board.setContent(content);
             board.setCategory(category);
             board.setTag(tagEntity);
@@ -522,22 +612,10 @@ public class BoardController {
             @PathVariable("id") Long id) {
         try {
             Board board = boardService.getBoard(id);
-
-            // 삭제된 게시글인 경우
-            if (board.getStatus() == BoardStatus.DELETED) {
-                return ApiResponse.ok("삭제된 게시글입니다.", Map.of("deleted", true)).toResponse();
-            }
-            if (board.getStatus() != BoardStatus.ACTIVE) {
-                return ApiResponse.fail("접근 권한이 없습니다.").toResponse(HttpStatus.FORBIDDEN);
-            }
-
             User user = userDetails != null ? userDetails.getUser() : null;
-
-            // "카르텔" 카테고리 접근 권한 확인
-            if (board.getCategory() != null && isCategoryMatch(board.getCategory(), "cartel")) {
-                if (!hasRole(user, "ROLE_CARTEL") && !hasRole(user, "ROLE_ADMIN")) {
-                    return ApiResponse.fail("접근 권한이 없습니다.").toResponse(HttpStatus.FORBIDDEN);
-                }
+            if (!canViewBoard(board, user)) {
+                return ApiResponse.fail("게시글을 찾을 수 없습니다.")
+                        .toResponse(HttpStatus.NOT_FOUND);
             }
             boardService.incrementViewCount(board);
 
@@ -549,8 +627,7 @@ public class BoardController {
             return ApiResponse.ok("게시글을 성공적으로 조회했습니다.", Map.of("board", boardDto)).toResponse();
 
         } catch (RuntimeException e) {
-            return ApiResponse.fail(e.getMessage()).toResponse(HttpStatus.NOT_FOUND);
-
+            return ApiResponse.fail("게시글을 찾을 수 없습니다.").toResponse(HttpStatus.NOT_FOUND);
         } catch (Exception e) {
             log.error("게시글 조회 오류", e);
             return ApiResponse.fail("게시글 조회 중 오류가 발생했습니다.")
@@ -567,6 +644,8 @@ public class BoardController {
             @RequestParam("content") String content,
             @RequestParam(value = "tagId", required = false) Long tagId,
             @RequestParam(value = "attachmentIds", required = false) List<Long> attachmentIds,
+            @RequestParam(value = "syncAttachments", required = false, defaultValue = "false")
+            boolean syncAttachments,
             @RequestParam(value = "pinned", required = false) Boolean pinned,
             @RequestParam(value = "itemPrice", required = false) Long itemPrice,
             @RequestParam(value = "itemType", required = false) String itemType,
@@ -575,6 +654,10 @@ public class BoardController {
         try {
             if (userDetails == null) {
                 return ApiResponse.fail("로그인이 필요합니다.").toResponse(HttpStatus.UNAUTHORIZED);
+            }
+            String inputError = validateBoardInput(title, content);
+            if (inputError != null) {
+                return ApiResponse.fail(inputError).toResponse(HttpStatus.BAD_REQUEST);
             }
 
             Board boardTemp = boardService.getBoard(id);
@@ -586,7 +669,7 @@ public class BoardController {
                 return ApiResponse.fail("게시글을 수정할 권한이 없습니다.").toResponse(HttpStatus.FORBIDDEN);
             }
 
-            Category category = categoryRepository.findById(categoryId)
+            Category category = categoryRepository.findByIdAndIsActiveTrue(categoryId)
                     .orElseThrow(() -> new RuntimeException("카테고리를 찾을 수 없습니다: " + categoryId));
 
             // Validation. tagId가 있으면 해당 카테고리 소속인지 검증
@@ -651,7 +734,7 @@ public class BoardController {
                         .toResponse(HttpStatus.BAD_REQUEST);
             }
 
-            boardTemp.setTitle(title);
+            boardTemp.setTitle(title.trim());
             boardTemp.setContent(content);
             boardTemp.setCategory(category);
             boardTemp.setTag(tagEntity);
@@ -665,7 +748,10 @@ public class BoardController {
                 boardTemp.setPinned(pinned);
             }
 
-            boardService.write(boardTemp, currentUser, attachmentIds);
+            List<Long> attachmentIdsToSync = syncAttachments && attachmentIds == null
+                    ? List.of()
+                    : attachmentIds;
+            boardService.write(boardTemp, currentUser, attachmentIdsToSync);
 
             long likeCount = boardLikeService.getLikeCount(boardTemp.getId());
             long commentCount = commentRepository.countByBoardIdAndStatusNot(boardTemp.getId(), STATUS.DELETED);
@@ -784,14 +870,9 @@ public class BoardController {
             }
 
             User user = userDetails != null ? userDetails.getUser() : null;
-            List<Board> boards = boardService.getMyBoards(targetUser);
-            List<BoardResponseDTO> dtos = boards.stream()
-                    .map(b -> BoardResponseDTO.from(b,
-                            boardLikeService.getLikeCount(b.getId()),
-                            isLiked(b, user),
-                            commentRepository.countByBoardIdAndStatusNot(b.getId(), STATUS.DELETED)))
-                    .toList();
-            resolveProfileImages(new java.util.ArrayList<>(dtos));
+            List<BoardResponseDTO> dtos = toListResponseDTOs(
+                    boardService.getMyBoards(targetUser), user);
+            resolveProfileImages(dtos);
 
             return ApiResponse.ok("게시글 목록을 조회했습니다.", dtos).toResponse();
         } catch (Exception e) {
@@ -813,14 +894,9 @@ public class BoardController {
                 return ApiResponse.fail("로그인이 필요합니다.").toResponse(HttpStatus.UNAUTHORIZED);
             }
 
-            List<Board> boards = boardService.getMyBoards(currentUser);
-            List<BoardResponseDTO> dtos = boards.stream()
-                    .map(b -> BoardResponseDTO.from(b,
-                            boardLikeService.getLikeCount(b.getId()),
-                            isLiked(b, currentUser),
-                            commentRepository.countByBoardIdAndStatusNot(b.getId(), STATUS.DELETED)))
-                    .toList();
-            resolveProfileImages(new java.util.ArrayList<>(dtos));
+            List<BoardResponseDTO> dtos = toListResponseDTOs(
+                    boardService.getMyBoards(currentUser), currentUser);
+            resolveProfileImages(dtos);
 
             return ApiResponse.ok("내 게시글 목록을 조회했습니다.", dtos).toResponse();
         } catch (Exception e) {
@@ -872,16 +948,11 @@ public class BoardController {
             List<Long> boardIds = commentRepository.findDistinctBoardIdsByAuthor(
                     currentUser, List.of(STATUS.DELETED));
 
-            List<BoardResponseDTO> dtos = new ArrayList<>();
+            List<Board> boards = new ArrayList<>();
             for (Long boardId : boardIds) {
-                boardService.findById(boardId).ifPresent(board -> {
-                    dtos.add(BoardResponseDTO.from(board,
-                            boardLikeService.getLikeCount(board.getId()),
-                            isLiked(board, currentUser),
-                            commentRepository.countByBoardIdAndStatusNot(board.getId(), STATUS.DELETED)));
-                });
+                boardService.findById(boardId).ifPresent(boards::add);
             }
-
+            List<BoardResponseDTO> dtos = toListResponseDTOs(boards, currentUser);
             resolveProfileImages(dtos);
             return ApiResponse.ok("댓글 단 게시글 목록을 조회했습니다.", dtos).toResponse();
         } catch (Exception e) {
