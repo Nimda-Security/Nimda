@@ -61,7 +61,7 @@ class AttachmentDeletionWorkerTest {
     void successfulDeletionRemovesTheOutboxTask() {
         AttachmentDeletionTask task = task(11L, "users/7/active/attachments/audit.txt");
         when(deletionTaskRepository
-                .findByAttemptCountLessThanAndNextAttemptAtLessThanEqualOrderByNextAttemptAtAscIdAsc(
+                .findByQuarantinedFalseAndAttemptCountLessThanAndNextAttemptAtLessThanEqualOrderByNextAttemptAtAscIdAsc(
                         anyInt(), any(LocalDateTime.class), any(Pageable.class)))
                 .thenReturn(List.of(task));
         when(deletionTaskRepository.findById(11L)).thenReturn(Optional.of(task));
@@ -78,7 +78,7 @@ class AttachmentDeletionWorkerTest {
         AttachmentDeletionTask task = task(12L, "users/7/active/attachments/audit.txt");
         LocalDateTime beforeRun = LocalDateTime.now();
         when(deletionTaskRepository
-                .findByAttemptCountLessThanAndNextAttemptAtLessThanEqualOrderByNextAttemptAtAscIdAsc(
+                .findByQuarantinedFalseAndAttemptCountLessThanAndNextAttemptAtLessThanEqualOrderByNextAttemptAtAscIdAsc(
                         anyInt(), any(LocalDateTime.class), any(Pageable.class)))
                 .thenReturn(List.of(task));
         when(deletionTaskRepository.findById(12L)).thenReturn(Optional.of(task));
@@ -93,6 +93,25 @@ class AttachmentDeletionWorkerTest {
         assertTrue(task.getLastError().contains("IllegalStateException: storage unavailable"));
         assertFalse(task.getLastError().contains("\r"));
         assertFalse(task.getLastError().contains("\n"));
+    }
+
+    @Test
+    void quarantinedTaskNeverCallsStorageEvenIfReturnedByTheRepository() {
+        AttachmentDeletionTask task = AttachmentDeletionTask.quarantine(
+                "boards/files/legacy.txt",
+                "manual ownership verification required");
+        ReflectionTestUtils.setField(task, "id", 13L);
+        when(deletionTaskRepository
+                .findByQuarantinedFalseAndAttemptCountLessThanAndNextAttemptAtLessThanEqualOrderByNextAttemptAtAscIdAsc(
+                        anyInt(), any(LocalDateTime.class), any(Pageable.class)))
+                .thenReturn(List.of(task));
+        when(deletionTaskRepository.findById(13L)).thenReturn(Optional.of(task));
+
+        worker.processPendingDeletions();
+
+        verify(fileStore, never()).deleteFile(any());
+        verify(deletionTaskRepository, never()).delete(task);
+        assertTrue(task.isQuarantined());
     }
 
     private AttachmentDeletionTask task(Long id, String key) {

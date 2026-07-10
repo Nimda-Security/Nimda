@@ -20,6 +20,7 @@ import java.util.List;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anySet;
 import static org.mockito.Mockito.never;
@@ -64,13 +65,19 @@ class AttachmentServiceTest {
     }
 
     @Test
-    void legacyS3KeyDeletionNeverQueuesAnUntrustedPhysicalDelete() {
-        Attachment attachment = attachment(10L, 7L, "boards/files/legacy.txt");
+    void legacyS3KeyDeletionIsQuarantinedWithoutCallingStorage() {
+        String legacyKey = "boards/files/legacy.txt";
+        Attachment attachment = attachment(10L, 7L, legacyKey);
         when(attachmentRepository.findAllById(anySet())).thenReturn(List.of(attachment));
 
         attachmentService.deleteUserFiles(7L, List.of(10L));
 
-        verify(deletionTaskRepository, never()).save(any());
+        ArgumentCaptor<AttachmentDeletionTask> taskCaptor =
+                ArgumentCaptor.forClass(AttachmentDeletionTask.class);
+        verify(deletionTaskRepository).save(taskCaptor.capture());
+        assertEquals(legacyKey, taskCaptor.getValue().getStorageKey());
+        assertTrue(taskCaptor.getValue().isQuarantined());
+        assertTrue(taskCaptor.getValue().getLastError().contains("manual ownership verification"));
         verify(attachmentRepository).delete(attachment);
         verify(fileStore, never()).deleteFile(any());
     }
@@ -91,14 +98,9 @@ class AttachmentServiceTest {
     }
 
     @Test
-    void profileCleanupOnlyQueuesTheOwnersCanonicalActiveKey() {
+    void profileCleanupQueuesTheOwnersCanonicalActiveKey() {
         String validKey = "users/7/active/profile/audit.jpg";
 
-        attachmentService.enqueueOwnedProfileImageDeletion("boards/foreign.jpg", 7L);
-        attachmentService.enqueueOwnedProfileImageDeletion(
-                "users/8/active/profile/foreign.jpg", 7L);
-        attachmentService.enqueueOwnedProfileImageDeletion(
-                "users/7/active/decorations/wrong-namespace.jpg", 7L);
         attachmentService.enqueueOwnedProfileImageDeletion(validKey, 7L);
 
         ArgumentCaptor<AttachmentDeletionTask> taskCaptor =
@@ -108,18 +110,41 @@ class AttachmentServiceTest {
     }
 
     @Test
-    void decorationCleanupRejectsLegacyAndWrongNamespaceKeys() {
+    void foreignProfileCleanupIsQuarantined() {
+        String foreignKey = "users/8/active/profile/foreign.jpg";
+
+        attachmentService.enqueueOwnedProfileImageDeletion(foreignKey, 7L);
+
+        assertSingleQuarantinedTask(foreignKey);
+    }
+
+    @Test
+    void decorationCleanupQueuesACanonicalDecorationKey() {
         String validKey = "users/9/active/decorations/audit.png";
 
-        attachmentService.enqueueProfileDecorationDeletion("decorations/legacy.png");
-        attachmentService.enqueueProfileDecorationDeletion(
-                "users/9/active/profile/wrong-namespace.png");
         attachmentService.enqueueProfileDecorationDeletion(validKey);
 
         ArgumentCaptor<AttachmentDeletionTask> taskCaptor =
                 ArgumentCaptor.forClass(AttachmentDeletionTask.class);
         verify(deletionTaskRepository).save(taskCaptor.capture());
         assertEquals(validKey, taskCaptor.getValue().getStorageKey());
+    }
+
+    @Test
+    void legacyDecorationCleanupIsQuarantined() {
+        String legacyKey = "decorations/legacy.png";
+
+        attachmentService.enqueueProfileDecorationDeletion(legacyKey);
+
+        assertSingleQuarantinedTask(legacyKey);
+    }
+
+    private void assertSingleQuarantinedTask(String expectedKey) {
+        ArgumentCaptor<AttachmentDeletionTask> taskCaptor =
+                ArgumentCaptor.forClass(AttachmentDeletionTask.class);
+        verify(deletionTaskRepository).save(taskCaptor.capture());
+        assertEquals(expectedKey, taskCaptor.getValue().getStorageKey());
+        assertTrue(taskCaptor.getValue().isQuarantined());
     }
 
     private Attachment attachment(Long id, Long userId, String key) {

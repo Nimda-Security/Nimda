@@ -87,7 +87,7 @@ GitHub Actions는 프론트엔드·랜딩 lint/build와 Maven `clean verify`를 
 ## Security and Migration Rollout
 
 - V27은 `users.auth_version INT NOT NULL DEFAULT 0`을 추가합니다. 새 애플리케이션은 이 claim이 없는 기존 JWT를 거부하므로 배포 직후 모든 브라우저 세션이 한 번 로그아웃됩니다. 승격 전에 일회성 재로그인이 필요하다고 공지합니다.
-- V28은 `attachment_deletion_tasks`를 추가합니다. 첨부 메타데이터 삭제 트랜잭션이 outbox 행을 함께 커밋하고, 예약 worker가 실행당 최대 50개를 삭제하며 지수 backoff로 10회까지 재시도합니다. 물리 삭제는 사용자·namespace가 일치하는 canonical active key만 자동 등록합니다. 10회 실패한 행과 `Skipping untrusted legacy S3 deletion` 경고는 자동 삭제하지 말고 운영자가 원인을 조사합니다.
+- V28은 `attachment_deletion_tasks`와 `quarantined` 상태를 추가합니다. 첨부 메타데이터 삭제 트랜잭션이 outbox 행을 함께 커밋하고, 예약 worker가 실행당 최대 50개를 삭제하며 지수 backoff로 10회까지 재시도합니다. 물리 삭제는 사용자·namespace가 일치하는 canonical active key만 자동 등록합니다. legacy key는 격리 행으로 남고 worker query와 실행 단계에서 모두 제외됩니다. 10회 실패 또는 격리된 행은 자동 삭제하지 말고 운영자가 소유권을 조사합니다.
 - S3 bucket은 비공개와 Block Public Access를 유지합니다. 브라우저 PUT CORS는 `https://nimda.kr`, `https://www.nimda.kr` 및 승인된 로컬 3000 origin만 허용하고, API의 exact-origin 목록과 함께 변경합니다.
 - S3 lifecycle은 정확히 `pending/` prefix만 짧은 보존 기간(권장 24시간) 뒤 만료시킵니다. 검증 완료 객체는 `users/<userId>/active/`로 이동하므로 `users/` 또는 bucket 전체에 이 규칙을 적용하면 안 됩니다.
 - API의 안전하지 않은 요청은 exact origin과 `Sec-Fetch-Site`를 검사합니다. 프록시가 브라우저의 `Origin` 또는 `Sec-Fetch-Site`를 임의로 덮어쓰거나 제거하지 않도록 합니다.
@@ -150,7 +150,7 @@ curl -i -X POST https://api.nimda.kr/api/auth/login \
 - 미인증 관리자 카테고리, 첨부 signed URL, 일반 Actuator 요청은 401/403이고 내부 오류나 객체 존재 여부를 노출하지 않습니다.
 - 신뢰하지 않는 origin의 POST는 403이고 `Access-Control-Allow-Origin` 또는 credential 허용 헤더를 반환하지 않습니다.
 - 인증된 첨부 다운로드는 ACTIVE 게시글과 카르텔 권한을 통과한 경우에만 짧은 signed URL을 반환합니다.
-- 배포 후 `attachment_deletion_tasks`의 대기·실패 수, worker 재시도와 `Skipping untrusted legacy S3 deletion` 경고를 관찰합니다. 증상이 지속되면 S3 권한·key·저장소 연결을 조사하고, legacy 객체는 소유권을 별도로 확인하기 전 행이나 객체를 수동 삭제하지 않습니다.
+- 배포 후 `attachment_deletion_tasks`의 대기·실패·`quarantined=true` 수, worker 재시도와 `Quarantining untrusted legacy S3 deletion` 경고를 관찰합니다. 증상이 지속되면 S3 권한·key·저장소 연결을 조사하고, 격리 객체는 소유권을 별도로 확인하기 전 행이나 객체를 수동 삭제하지 않습니다.
 - `pending/` lifecycle은 pending key만 만료시키며 `users/<userId>/active/` 객체는 유지합니다.
 
 연결 유지 또는 무중단을 주장하려면 전환 중 지속 트래픽 시험에서 실패 요청 0건, 장기 SSE·업로드·다운로드 완료, 이전 연결 드레이닝, 되돌리기 성공을 별도로 증명해야 합니다.

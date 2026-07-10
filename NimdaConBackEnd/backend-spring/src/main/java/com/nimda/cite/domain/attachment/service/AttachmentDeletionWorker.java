@@ -31,7 +31,7 @@ public class AttachmentDeletionWorker {
             initialDelayString = "${attachments.deletion-worker.initial-delay-ms:30000}")
     public void processPendingDeletions() {
         List<Long> taskIds = deletionTaskRepository
-                .findByAttemptCountLessThanAndNextAttemptAtLessThanEqualOrderByNextAttemptAtAscIdAsc(
+                .findByQuarantinedFalseAndAttemptCountLessThanAndNextAttemptAtLessThanEqualOrderByNextAttemptAtAscIdAsc(
                         MAX_ATTEMPTS,
                         LocalDateTime.now(),
                         PageRequest.of(0, BATCH_SIZE))
@@ -48,7 +48,8 @@ public class AttachmentDeletionWorker {
         try {
             transactionTemplate.executeWithoutResult(status -> deletionTaskRepository.findById(taskId)
                     .ifPresent(task -> {
-                        if (task.getAttemptCount() >= MAX_ATTEMPTS
+                        if (task.isQuarantined()
+                                || task.getAttemptCount() >= MAX_ATTEMPTS
                                 || task.getNextAttemptAt().isAfter(LocalDateTime.now())) {
                             return;
                         }
@@ -65,7 +66,7 @@ public class AttachmentDeletionWorker {
         try {
             transactionTemplate.executeWithoutResult(status -> deletionTaskRepository.findById(taskId)
                     .ifPresent(task -> {
-                        if (task.getAttemptCount() >= MAX_ATTEMPTS) {
+                        if (task.isQuarantined() || task.getAttemptCount() >= MAX_ATTEMPTS) {
                             return;
                         }
                         int nextAttemptNumber = task.getAttemptCount() + 1;

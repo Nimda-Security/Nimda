@@ -6,12 +6,15 @@ import org.springframework.data.jpa.repository.JpaRepository;
 
 import java.time.LocalDateTime;
 import java.util.List;
+import java.util.Optional;
 
 public interface AttachmentDeletionTaskRepository extends JpaRepository<AttachmentDeletionTask, Long> {
 
-    List<AttachmentDeletionTask> findByAttemptCountLessThanAndNextAttemptAtLessThanEqualOrderByNextAttemptAtAscIdAsc(
+    List<AttachmentDeletionTask> findByQuarantinedFalseAndAttemptCountLessThanAndNextAttemptAtLessThanEqualOrderByNextAttemptAtAscIdAsc(
             int maximumAttempts,
             LocalDateTime now,
             Pageable pageable
     );
+
+    Optional<AttachmentDeletionTask> findFirstByStorageKey(String storageKey);
 }

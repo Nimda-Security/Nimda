@@ -96,7 +96,7 @@ BACKEND_IMAGE_TAG=<배포할-커밋-SHA> docker compose up -d
 - 관리자 카테고리, Actuator, 첨부 다운로드 URL은 구체적인 matcher가 공개 규칙보다 먼저 적용됩니다. 일반 Actuator 경로는 관리자 전용이고 공개 경로는 정확한 liveness/readiness 주소뿐입니다.
 - 게시글·댓글·첨부 조회는 `ACTIVE` 상태와 카르텔 역할을 함께 검사합니다. 수정 시 원 작성자를 유지하고, 다른 게시글의 부모 댓글이나 다른 사용자의 미연결 첨부를 연결할 수 없습니다.
 - Presigned PUT은 사용자·용도·정확한 파일 크기(최대 10 MiB)에 묶입니다. 객체는 `pending/users/<userId>/<purpose>/`에서 시작해 서버가 실제 크기와 소유권을 확인하고 이미지를 픽셀 제한 내에서 재인코딩한 뒤 `users/<userId>/active/`로 이동합니다. `pending/` 객체에는 운영 S3 수명 주기 삭제 정책을 적용해야 합니다.
-- 첨부 메타데이터 삭제와 저장소 삭제는 V28 outbox로 분리됩니다. DB 커밋과 함께 삭제 작업을 남기고 bounded worker가 성공할 때까지 재시도합니다. 물리 삭제에는 사용자·namespace가 일치하는 canonical active key만 넣으며, 신뢰할 수 없는 legacy S3 key는 자동 삭제하지 않아 DB 롤백이나 과거 임의 key 데이터가 다른 객체를 지우지 못합니다.
+- 첨부 메타데이터 삭제와 저장소 삭제는 V28 outbox로 분리됩니다. DB 커밋과 함께 삭제 작업을 남기고 bounded worker가 성공할 때까지 재시도합니다. 물리 삭제에는 사용자·namespace가 일치하는 canonical active key만 넣습니다. 신뢰할 수 없는 legacy key는 `quarantined=true` 행으로 보존하고 worker가 절대 실행하지 않아 DB 롤백이나 과거 임의 key 데이터가 다른 객체를 지우지 못합니다.
 
 ## Performance Budgets and Measurement Protocol
 
@@ -128,7 +128,7 @@ BACKEND_IMAGE_TAG=<배포할-커밋-SHA> docker compose up -d
 - 커뮤니티 프론트엔드: `npm run lint`, `npm run build` 통과
 - 랜딩 페이지: Next.js 16에서 `npm run lint`, `npm run build` 통과
 - 프론트엔드와 랜딩 페이지: `npm audit --omit=dev` 취약점 0건
-- 백엔드: `mvnw.cmd -B clean verify` 통과(58 tests), H2에서 모든 JPA 저장소 쿼리 생성 확인
+- 백엔드: `mvnw.cmd -B clean verify` 통과(61 tests), H2에서 모든 JPA 저장소 쿼리 생성 확인
 - 보안 회귀: JWT 버전·승인 상태, exact-origin 상태 변경 필터, 관리자 category/Actuator matcher, 첨부 인증, 게시글/댓글 접근, S3 사용자·용도·크기 경계, 이미지 픽셀 제한, 삭제 outbox를 자동 테스트로 확인
 - 모바일 390px 로컬 preview: 홈과 글쓰기의 문서 폭 390px, 가로 초과 요소 0개; 글쓰기 폼 358px
 - 운영 읽기 전용 스모크: 데스크톱 로그인·홈 이동 성공, 미인증 `/api/cite/category/all` 401, 신뢰하지 않는 origin의 preflight 403 확인. 배포본의 미인증 존재하지 않는 첨부 URL은 500을 반환했으며, 현재 로컬 보안 계약 테스트는 요청을 컨트롤러 전에 403으로 차단합니다.

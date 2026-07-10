@@ -50,6 +50,8 @@ public class AttachmentService {
             "mp4", "avi", "mov", "mp3", "wav"
     );
     private static final long MAX_FILE_SIZE = 10L * 1024 * 1024;
+    private static final String UNTRUSTED_STORAGE_QUARANTINE_REASON =
+            "QUARANTINED: legacy storage key requires manual ownership verification";
 
     public static boolean isAllowedExtension(String ext) {
         if (ext == null || ext.isBlank()) return false;
@@ -386,8 +388,12 @@ public class AttachmentService {
             String storageKey,
             Long expectedOwnerId,
             String namespace) {
-        if (!isCanonicalActiveKey(storageKey, expectedOwnerId, namespace)
+        if (isNonStorageReference(storageKey)
                 || attachmentRepository.existsByFilepath(storageKey)) {
+            return;
+        }
+        if (!isCanonicalActiveKey(storageKey, expectedOwnerId, namespace)) {
+            quarantineStorageDeletion(storageKey);
             return;
         }
         deletionTaskRepository.save(AttachmentDeletionTask.create(storageKey));
@@ -428,6 +434,26 @@ public class AttachmentService {
                 && value.indexOf('\r') < 0
                 && value.indexOf('\n') < 0
                 && value.indexOf('\0') < 0;
+    }
+
+    private boolean isNonStorageReference(String storageKey) {
+        return storageKey == null
+                || storageKey.isBlank()
+                || storageKey.startsWith("/")
+                || storageKey.regionMatches(true, 0, "http://", 0, 7)
+                || storageKey.regionMatches(true, 0, "https://", 0, 8);
+    }
+
+    private void quarantineStorageDeletion(String storageKey) {
+        if (isNonStorageReference(storageKey) || storageKey.length() > 512) {
+            return;
+        }
+        deletionTaskRepository.findFirstByStorageKey(storageKey)
+                .ifPresentOrElse(
+                        task -> task.markQuarantined(UNTRUSTED_STORAGE_QUARANTINE_REASON),
+                        () -> deletionTaskRepository.save(AttachmentDeletionTask.quarantine(
+                                storageKey,
+                                UNTRUSTED_STORAGE_QUARANTINE_REASON)));
     }
 
     /**
@@ -651,13 +677,15 @@ public class AttachmentService {
         if (fileStore instanceof S3FileStore) {
             key = file.getFilepath();
             if (!isCanonicalActiveKey(key, file.getUserId(), "attachments")) {
-                log.warn("Skipping untrusted legacy S3 deletion for attachment {}", file.getId());
+                log.warn("Quarantining untrusted legacy S3 deletion for attachment {}", file.getId());
+                quarantineStorageDeletion(key);
                 return;
             }
         } else {
             key = file.getStoredFilename();
             if (!isSafeLeaf(key)) {
-                log.warn("Skipping unsafe local deletion for attachment {}", file.getId());
+                log.warn("Quarantining unsafe local deletion for attachment {}", file.getId());
+                quarantineStorageDeletion(key);
                 return;
             }
         }

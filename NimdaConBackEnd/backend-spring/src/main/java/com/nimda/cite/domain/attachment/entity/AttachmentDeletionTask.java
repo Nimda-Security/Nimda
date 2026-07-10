@@ -34,12 +34,16 @@ public class AttachmentDeletionTask extends BaseTimeEntity {
     @Column(name = "last_error", length = MAX_ERROR_LENGTH)
     private String lastError;
 
+    @Column(nullable = false)
+    private boolean quarantined;
+
     @Column(name = "next_attempt_at", nullable = false)
     private LocalDateTime nextAttemptAt;
 
     private AttachmentDeletionTask(String storageKey) {
         this.storageKey = storageKey;
         this.attemptCount = 0;
+        this.quarantined = false;
         this.nextAttemptAt = LocalDateTime.now();
     }
 
@@ -51,6 +55,17 @@ public class AttachmentDeletionTask extends BaseTimeEntity {
             throw new IllegalArgumentException("Storage key is too long for attachment deletion");
         }
         return new AttachmentDeletionTask(storageKey);
+    }
+
+    public static AttachmentDeletionTask quarantine(String storageKey, String reason) {
+        AttachmentDeletionTask task = create(storageKey);
+        task.markQuarantined(reason);
+        return task;
+    }
+
+    public void markQuarantined(String reason) {
+        this.quarantined = true;
+        this.lastError = truncate(reason);
     }
 
     public void recordFailure(String error, LocalDateTime nextAttemptAt) {
