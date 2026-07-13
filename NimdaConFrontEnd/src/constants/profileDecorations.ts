@@ -36,5 +36,6 @@ export const resolveProfileDecorationSrc = (
     return preset.src;
   }
 
-  return `/api/profile-decorations/${encodeURIComponent(normalizedKey)}/image`;
+  // 새로고침 직후에도 등록된 장식 목록을 기다리지 않고 이미지 엔드포인트로 바로 해석한다.
+  return `/api/cite/profile-decorations/${encodeURIComponent(normalizedKey)}/image`;
 };
