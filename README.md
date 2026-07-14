@@ -4,35 +4,52 @@
 
 동아리 커뮤니티 · 운영 · 자체 대회(님다콘)를 하나의 서비스로 연결합니다.
 
-| | |
-|---|---|
-| **Service** | [nimda.kr](https://nimda.kr) |
-| **Landing** | [nimda.space](https://nimda.space) |
-| **Period** | 2025.09 — |
-| **Stack** | React · Spring Boot · MySQL · Redis · Nginx · Docker |
+|             |                                                      |
+| ----------- | ---------------------------------------------------- |
+| **Service** | [nimda.kr](https://nimda.kr)                         |
+| **Landing** | [nimda.space](https://nimda.space)                   |
+| **Period**  | 2025.09 —                                            |
+| **Stack**   | React · Spring Boot · MySQL · Redis · Nginx · Docker |
 
 ---
 
 ## Overview
 
-| | |
-|---|---|
-| **Community** | 게시판 · 댓글 · 좋아요 · 알림 · 첨부파일 |
-| **Members** | 가입 승인 · JWT 인증 · 역할 기반 권한 · 마이페이지 |
-| **Ops** | 관리자 대시보드 · 카테고리 · 태그 · 유저 운영 |
-| **Activity** | 출석 · 마일리지 · 배지 · 프로필 장식 |
-| **Contest** | 님다콘 — 문제 · 제출 · 스코어보드 |
-| **Brand** | 동아리 랜딩 — 활동 · 수상 · 지원 |
+|               |                                                    |
+| ------------- | -------------------------------------------------- |
+| **Community** | 게시판 · 댓글 · 좋아요 · 알림 · 첨부파일           |
+| **Members**   | 가입 승인 · JWT 인증 · 역할 기반 권한 · 마이페이지 |
+| **Ops**       | 관리자 대시보드 · 카테고리 · 태그 · 유저 운영      |
+| **Activity**  | 출석 · 마일리지 · 배지 · 프로필 장식               |
+| **Contest**   | 님다콘 — 문제 · 제출 · 스코어보드                  |
+| **Brand**     | 동아리 랜딩 — 활동 · 수상 · 지원                   |
 
 ---
 
 ## Architecture
 
-```
-NimdaConFrontEnd     React · Vite · TypeScript
-NimdaConBackEnd      Spring Boot 3 · JPA · Flyway
-NimdaLandingPage     Next.js
-nginx + Docker       Blue-Green 무중단 배포
+```mermaid
+flowchart TB
+    subgraph Client
+        FE[React App]
+        LP[Landing - Next.js]
+    end
+
+    NG[Nginx - Blue Green]
+
+    API[Spring Boot]
+
+    subgraph Storage
+        DB[(MySQL)]
+        RD[(Redis)]
+        S3[(S3)]
+    end
+
+    FE --> NG --> API
+    API --> DB
+    API --> RD
+    API --> S3
+    FE -.-> S3
 ```
 
 ---
