@@ -10,6 +10,7 @@ interface AvatarProps {
   wrapperClassName?: string;
   decorationScale?: number;
   reserveDecorationSpace?: boolean;
+  decorationPadding?: number;
 }
 
 const DEFAULT_PROFILE = '/default_user_profile.svg';
@@ -23,13 +24,24 @@ const Avatar: React.FC<AvatarProps> = ({
   wrapperClassName = '',
   decorationScale = 1.24,
   reserveDecorationSpace = false,
+  decorationPadding,
 }) => {
+  const hasExplicitDecorationPadding =
+    typeof size === 'number' && typeof decorationPadding === 'number' && decorationPadding > 0;
   const shouldReserveDecorationSpace =
-    reserveDecorationSpace && typeof size === 'number' && decorationScale > 1;
-  const reservedSize =
-    shouldReserveDecorationSpace && typeof size === 'number'
+    (hasExplicitDecorationPadding || reserveDecorationSpace) &&
+    typeof size === 'number' &&
+    (hasExplicitDecorationPadding || decorationScale > 1);
+  const reservedSize = hasExplicitDecorationPadding && typeof size === 'number'
+    ? size + decorationPadding * 2
+    : shouldReserveDecorationSpace && typeof size === 'number'
       ? size * decorationScale
       : size;
+  const profileInset = hasExplicitDecorationPadding && typeof size === 'number'
+    ? decorationPadding
+    : typeof size === 'number'
+      ? ((decorationScale - 1) / 2) * size
+      : 0;
 
   const sizeStyle =
     typeof reservedSize === 'number'
@@ -48,8 +60,8 @@ const Avatar: React.FC<AvatarProps> = ({
     shouldReserveDecorationSpace && typeof size === 'number'
       ? {
           position: 'absolute',
-          left: `${((decorationScale - 1) / 2) * size}px`,
-          top: `${((decorationScale - 1) / 2) * size}px`,
+          left: `${profileInset}px`,
+          top: `${profileInset}px`,
           width: `${size}px`,
           height: `${size}px`,
         }
