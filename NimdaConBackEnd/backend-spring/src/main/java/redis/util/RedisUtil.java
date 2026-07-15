@@ -1,4 +1,4 @@
-package com.nimda.cite.common.util.Redis;
+package redis.util;
 
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.redis.core.StringRedisTemplate;

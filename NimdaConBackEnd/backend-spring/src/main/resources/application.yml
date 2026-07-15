@@ -95,6 +95,11 @@ auth:
   cookie:
     secure: ${AUTH_COOKIE_SECURE:true}
 
+judge:
+  queue:
+    stream-key: ${JUDGE_QUEUE_STREAM_KEY:judge:submissions}
+    consumer-group: ${JUDGE_QUEUE_CONSUMER_GROUP:judge-workers}
+
 # 첨부파일 로컬 저장 (cite attachment)
 nimda:
   file:

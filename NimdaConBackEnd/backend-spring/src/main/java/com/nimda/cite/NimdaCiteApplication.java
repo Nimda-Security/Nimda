@@ -13,7 +13,7 @@ import org.springframework.scheduling.annotation.EnableScheduling;
 @EnableJpaAuditing
 @EnableAsync // 알림 비동기 방식으로 처리
 @SpringBootApplication
-@ComponentScan(basePackages = {"com.nimda.cite", "judgeServer"})
+@ComponentScan(basePackages = {"com.nimda.cite", "judgeServer", "redis"})
 @EnableJpaRepositories(basePackages = {"com.nimda.cite", "judgeServer"})
 @EntityScan(basePackages = {"com.nimda.cite", "judgeServer"})
 public class NimdaCiteApplication {

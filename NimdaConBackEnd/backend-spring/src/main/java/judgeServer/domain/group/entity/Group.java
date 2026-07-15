@@ -11,7 +11,7 @@ import java.util.List;
 
 @Getter
 @Entity
-@Table(name = "groups")
+@Table(name = "`groups`")
 /*
 , uniqueConstraints = {
         @UniqueConstraint(name = "uk_group_activity_name", columnNames = {"activity_id", "name"})
