@@ -584,11 +584,10 @@ export default function UserProfilePage() {
               <Avatar
                 src={profile.profileImage}
                 decorationKey={profile.profileDecoration}
-                size={96}
+                size={160}
                 wrapperClassName="user-profile-avatar-wrap"
                 className="user-profile-avatar"
-                decorationScale={1.18}
-                reserveDecorationSpace
+                decorationPadding={24}
               />
               <ProfileSummary userInfo={userInfo} />
             </div>
