@@ -1,6 +1,7 @@
 package judgeServer.domain.problem.controller;
 
 import com.nimda.cite.common.response.ApiResponse;
+import jakarta.validation.Valid;
 import judgeServer.domain.problem.dto.AddProblemsRequest;
 import judgeServer.domain.problem.dto.ProblemListResponse;
 import judgeServer.domain.problem.dto.SearchProblemRequest;
@@ -53,7 +54,7 @@ public class ProblemController {
 
     @PreAuthorize("hasRole('ADMIN')")
     @PostMapping(consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
-    public ResponseEntity<?> createProblem(@ModelAttribute AddProblemsRequest request) {
+    public ResponseEntity<?> createProblem(@ModelAttribute @Valid AddProblemsRequest request) {
         // 1. ZIP 파일 존재 여부 확인
         if (request.getZipFile() == null || request.getZipFile().isEmpty()) {
             return ResponseEntity.badRequest().body("ZIP 파일이 첨부되지 않았습니다.");

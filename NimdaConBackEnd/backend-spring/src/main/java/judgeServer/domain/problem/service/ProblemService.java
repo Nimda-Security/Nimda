@@ -96,10 +96,10 @@ public class ProblemService {
                     .code(problemCode)
                     .title(request.getTitle().isEmpty() ? metadata.getName() : request.getTitle())
                     .description(request.getDescription().isEmpty() ? "설명이 없는 문제입니다." : request.getDescription())
-                    .timeLimit(request.getTimeLimit() > 0 ? request.getTimeLimit() : metadata.getTimeLimit())
-                    .memoryLimit(request.getMemoryLimit() > 0 ? request.getMemoryLimit() : metadata.getMemoryLimit())
+                    .timeLimit(request.getTimeLimit()  != null ? request.getTimeLimit() : metadata.getTimeLimit())
+                    .memoryLimit(request.getMemoryLimit() != null ? request.getMemoryLimit() : metadata.getMemoryLimit())
                     .points(request.getPoints())
-                    .isPublic(request.getIsPublic())
+                    .isPublic(request.getIsPublic() != null ? request.getIsPublic() : false)
                     .referenceUrl(metadata.getUrl())
                     .build();
 
