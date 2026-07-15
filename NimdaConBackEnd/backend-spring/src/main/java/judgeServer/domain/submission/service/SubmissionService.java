@@ -11,6 +11,8 @@ import judgeServer.domain.submission.dto.UserProblemStatusResponse;
 import judgeServer.domain.submission.dto.judge.JudgeResultResponse;
 import judgeServer.domain.submission.entity.Submission;
 import judgeServer.domain.submission.enums.SupportedLanguage;
+import judgeServer.domain.submission.mq.SubmissionMessage;
+import judgeServer.domain.submission.mq.SubmissionProducer;
 import judgeServer.domain.submission.repository.SubmissionRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
@@ -32,6 +34,8 @@ public class SubmissionService {
     private UserRepository userRepository;
     @Autowired
     private ProblemRepository problemRepository;
+    @Autowired
+    private SubmissionProducer submissionProducer;
 
     public Submission submit(SubmitRequest req, String cookie) {
         Long userId = jwtUtil.extractUserId(cookie);
@@ -52,9 +56,9 @@ public class SubmissionService {
                 .build();
 
         Submission savedSubmission = submissionRepository.save(submission);
-        
-        // 채점 요청 전송 로직 추가해야함
-        
+
+        submissionProducer.publish(SubmissionMessage.of(savedSubmission, problem));
+
         return submission;
     }
 
