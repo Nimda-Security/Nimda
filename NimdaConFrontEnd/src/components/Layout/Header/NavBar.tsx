@@ -19,6 +19,7 @@ const Navbar: React.FC = () => {
   const [adminStatus, setAdminStatus] = useState(false);
   const [isLoggedInState, setIsLoggedInState] = useState(false);
   const [profileImage, setProfileImage] = useState<string | null>(null);
+  const [profileDecoration, setProfileDecoration] = useState<string | null>(null);
 
   useEffect(() => {
     const currentNickname = getCurrentNickname();
@@ -40,6 +41,7 @@ const Navbar: React.FC = () => {
         getMyPageInfo().then((result) => {
           if (result.success && result.data) {
             setProfileImage(result.data.profileImage ?? null);
+            setProfileDecoration(result.data.profileDecoration ?? null);
           }
         });
       });
@@ -48,6 +50,7 @@ const Navbar: React.FC = () => {
     const handleProfileUpdated = (event: Event) => {
       const detail = (event as CustomEvent<Record<string, unknown> | null>).detail;
       setProfileImage((detail?.profileImage as string | null) ?? null);
+      setProfileDecoration((detail?.profileDecoration as string | null) ?? null);
     };
 
     window.addEventListener(PROFILE_UPDATED_EVENT, handleProfileUpdated);
@@ -115,16 +118,18 @@ const Navbar: React.FC = () => {
                   border: 'none',
                   cursor: 'pointer',
                   padding: 0,
-                  overflow: 'hidden',
+                  overflow: 'visible',
                   boxShadow: '0px 0px 2px rgba(0, 0, 0, 0.25)',
                 }}
                 title="마이페이지"
               >
                 <Avatar
                   src={profileImage}
+                  decorationKey={profileDecoration}
                   alt="프로필"
                   size="100%"
                   className="w-full h-full border-0"
+                  decorationScale={1.16}
                 />
               </button>
 

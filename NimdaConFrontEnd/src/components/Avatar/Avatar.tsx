@@ -26,6 +26,7 @@ const Avatar: React.FC<AvatarProps> = ({
   reserveDecorationSpace = false,
   decorationPadding,
 }) => {
+  const [failedDecorationSrc, setFailedDecorationSrc] = React.useState<string | null>(null);
   const hasExplicitDecorationPadding =
     typeof size === 'number' && typeof decorationPadding === 'number' && decorationPadding > 0;
   const shouldReserveDecorationSpace =
@@ -50,6 +51,9 @@ const Avatar: React.FC<AvatarProps> = ({
 
   const effectiveSrc = src?.trim() ? src : DEFAULT_PROFILE;
   const decorationSrc = resolveProfileDecorationSrc(decorationKey);
+  React.useEffect(() => {
+    setFailedDecorationSrc(null);
+  }, [decorationSrc]);
   const decorationOffset = shouldReserveDecorationSpace
     ? '0px'
     : `${((1 - decorationScale) / 2) * 100}%`;
@@ -60,8 +64,8 @@ const Avatar: React.FC<AvatarProps> = ({
     shouldReserveDecorationSpace && typeof size === 'number'
       ? {
           position: 'absolute',
-          left: `${profileInset}px`,
-          top: `${profileInset}px`,
+           left: `${profileInset}px`,
+           top: `${profileInset}px`,
           width: `${size}px`,
           height: `${size}px`,
         }
@@ -80,13 +84,14 @@ const Avatar: React.FC<AvatarProps> = ({
         className={`h-full w-full rounded-full border border-gray-100 object-cover ${className}`}
         style={profileImageStyle}
         onError={(e) => {
-          if (e.currentTarget.src !== DEFAULT_PROFILE) {
+          if (e.currentTarget.getAttribute('src') !== DEFAULT_PROFILE) {
             e.currentTarget.src = DEFAULT_PROFILE;
           }
         }}
       />
-      {decorationSrc && (
+      {decorationSrc && failedDecorationSrc !== decorationSrc && (
         <img
+          key={decorationSrc}
           src={decorationSrc}
           alt=""
           aria-hidden="true"
@@ -100,7 +105,7 @@ const Avatar: React.FC<AvatarProps> = ({
             maxWidth: 'none',
           }}
           onError={(e) => {
-            e.currentTarget.style.display = 'none';
+            setFailedDecorationSrc(decorationSrc);
           }}
         />
       )}

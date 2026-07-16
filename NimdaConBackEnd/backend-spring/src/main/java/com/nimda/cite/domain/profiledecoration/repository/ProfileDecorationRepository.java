@@ -9,6 +9,8 @@ import java.util.Optional;
 public interface ProfileDecorationRepository extends JpaRepository<ProfileDecoration, Long> {
     Optional<ProfileDecoration> findByKey(String key);
 
+    Optional<ProfileDecoration> findByKeyAndActiveTrue(String key);
+
     boolean existsByKey(String key);
 
     List<ProfileDecoration> findByActiveTrueOrderByIdAsc();

@@ -4,6 +4,8 @@ import com.nimda.cite.user.entity.User;
 import com.nimda.cite.user.enums.ApprovalStatus;
 import org.springframework.data.jpa.repository.EntityGraph;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Modifying;
+import org.springframework.data.jpa.repository.Query;
 import org.springframework.lang.NonNull;
 import org.springframework.stereotype.Repository;
 
@@ -69,4 +71,8 @@ public interface UserRepository extends JpaRepository<User, Long> {
     List<User> findByStatus(ApprovalStatus status);
     Boolean existsByUserIdAndEmail(String userId, String email);
     Boolean existsByUserIdAndStudentNum(String userId, String studentNum);
+
+    @Modifying
+    @Query("update User u set u.profileDecoration = null where u.profileDecoration = :decorationKey")
+    int clearProfileDecorationByKey(@org.springframework.data.repository.query.Param("decorationKey") String decorationKey);
 }

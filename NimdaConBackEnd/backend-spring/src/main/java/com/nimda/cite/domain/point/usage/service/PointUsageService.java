@@ -115,7 +115,7 @@ public class PointUsageService {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "차감할 마일리지가 올바르지 않습니다.");
         }
 
-        UserBalance balance = userBalanceRepository.findById(userId).orElseThrow(
+        UserBalance balance = userBalanceRepository.findByIdForUpdate(userId).orElseThrow(
                 () -> new ResponseStatusException(HttpStatus.NOT_FOUND, "포인트 계좌가 존재하지 않습니다.")
         );
 
