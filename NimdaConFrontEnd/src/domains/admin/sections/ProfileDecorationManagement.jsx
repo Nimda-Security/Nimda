@@ -112,9 +112,6 @@ const ProfileDecorationManagement = () => {
         return;
       }
       setDecorations((prev) => prev.filter((item) => item.id !== decoration.id));
-      if (selectedDecorationId === String(decoration.id)) {
-        setSelectedDecorationId('');
-      }
       alert(result.message);
     } finally {
       setDeletingId(null);

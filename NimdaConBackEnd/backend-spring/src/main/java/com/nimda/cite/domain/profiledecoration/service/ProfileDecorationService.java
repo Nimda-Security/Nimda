@@ -3,7 +3,6 @@ package com.nimda.cite.domain.profiledecoration.service;
 import com.nimda.cite.domain.profiledecoration.repository.ProfileDecorationRepository;
 import com.nimda.cite.domain.profiledecoration.dto.ProfileDecorationCreateRequest;
 import com.nimda.cite.domain.profiledecoration.entity.ProfileDecoration;
-import com.nimda.cite.user.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -16,7 +15,6 @@ import java.util.Locale;
 public class ProfileDecorationService {
 
     private final ProfileDecorationRepository repository;
-    private final UserRepository userRepository;
 
     @Transactional(readOnly = true)
     public List<ProfileDecoration> getActiveDecorations() {
@@ -35,12 +33,6 @@ public class ProfileDecorationService {
     }
 
     @Transactional(readOnly = true)
-    public ProfileDecoration getActiveByKey(String key) {
-        return repository.findByKeyAndActiveTrue(key)
-                .orElseThrow(() -> new IllegalArgumentException("사용할 수 없는 프로필 장식입니다."));
-    }
-
-    @Transactional(readOnly = true)
     public ProfileDecoration getById(Long id) {
         return repository.findById(id)
                 .orElseThrow(() -> new IllegalArgumentException("존재하지 않는 프로필 배지입니다."));
@@ -51,8 +43,8 @@ public class ProfileDecorationService {
         String key = normalizeKey(request.getKey());
         String label = request.getLabel() == null ? "" : request.getLabel().trim();
         String filePath = request.getFilePath() == null ? "" : request.getFilePath().trim();
-        String requiredRole = normalizeRole(request.getRequiredRole());
-        boolean purchaseRequired = Boolean.TRUE.equals(request.getPurchaseRequired());
+        String requiredRole = null;
+        boolean purchaseRequired = true;
 
         if (key.isBlank()) {
             throw new IllegalArgumentException("배지 키를 입력해주세요.");
@@ -68,7 +60,12 @@ public class ProfileDecorationService {
         }
         ProfileDecoration existing = repository.findByKey(key).orElse(null);
         if (existing != null) {
-            throw new IllegalArgumentException("이미 사용된 배지 키입니다.");
+            if (existing.isActive()) {
+                throw new IllegalArgumentException("이미 존재하는 배지 키입니다.");
+            }
+            existing.update(label, filePath, requiredRole, true);
+            existing.setPurchaseRequired(purchaseRequired);
+            return existing;
         }
 
         ProfileDecoration decoration = new ProfileDecoration(key, label, filePath);
@@ -82,7 +79,6 @@ public class ProfileDecorationService {
         ProfileDecoration decoration = repository.findById(id)
                 .orElseThrow(() -> new IllegalArgumentException("존재하지 않는 프로필 배지입니다."));
         decoration.deactivate();
-        userRepository.clearProfileDecorationByKey(decoration.getKey());
     }
 
     private String normalizeKey(String key) {

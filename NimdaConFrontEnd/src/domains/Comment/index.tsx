@@ -6,7 +6,7 @@ import { MessageBox } from '@/components/icons/MessageBox';
 import { VerticalDots } from '@/components/icons/VerticalDots';
 
 // [수정] 내 정보를 가져오기 위한 auth API 추가
-import { isLoggedIn, getMyPageInfo, PROFILE_UPDATED_EVENT } from "@/api/auth";
+import { isLoggedIn, getMyPageInfo } from "@/api/auth";
 import {
   getCommentsAPI,
   createCommentAPI,
@@ -559,13 +559,6 @@ function CommentSection({ boardId }: CommentSectionProps) {
       }
     };
     fetchMyInfo();
-    const handleProfileUpdated = (event: Event) => {
-      const detail = (event as CustomEvent<Record<string, unknown> | null>).detail;
-      setMyProfileImage((detail?.profileImage as string | null) ?? null);
-      setMyProfileDecoration((detail?.profileDecoration as string | null) ?? null);
-    };
-    window.addEventListener(PROFILE_UPDATED_EVENT, handleProfileUpdated);
-    return () => window.removeEventListener(PROFILE_UPDATED_EVENT, handleProfileUpdated);
   }, []);
 
   const fetchComments = async () => {

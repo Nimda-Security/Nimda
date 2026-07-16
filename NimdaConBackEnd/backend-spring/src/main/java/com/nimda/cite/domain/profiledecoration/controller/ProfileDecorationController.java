@@ -45,7 +45,7 @@ public class ProfileDecorationController {
 
     @GetMapping("/profile-decorations/{key}/image")
     public ResponseEntity<?> getDecorationImage(@PathVariable String key) {
-        ProfileDecoration decoration = service.getActiveByKey(key);
+        ProfileDecoration decoration = service.getByKey(key);
         String filePath = decoration.getFilePath();
 
         if (filePath.startsWith("/") || filePath.startsWith("http://") || filePath.startsWith("https://")) {
