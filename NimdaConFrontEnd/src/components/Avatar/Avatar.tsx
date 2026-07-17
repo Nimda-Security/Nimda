@@ -22,7 +22,7 @@ const Avatar: React.FC<AvatarProps> = ({
   size = 40,
   className = '',
   wrapperClassName = '',
-  decorationScale = 1.24,
+  decorationScale = 1.3,
   reserveDecorationSpace = false,
   decorationPadding,
 }) => {
@@ -42,6 +42,10 @@ const Avatar: React.FC<AvatarProps> = ({
     : typeof size === 'number'
       ? ((decorationScale - 1) / 2) * size
       : 0;
+  const explicitDecorationSize =
+    hasExplicitDecorationPadding && typeof size === 'number'
+      ? size * decorationScale
+      : null;
 
   const sizeStyle =
     typeof reservedSize === 'number'
@@ -50,10 +54,14 @@ const Avatar: React.FC<AvatarProps> = ({
 
   const effectiveSrc = src?.trim() ? src : DEFAULT_PROFILE;
   const decorationSrc = resolveProfileDecorationSrc(decorationKey);
-  const decorationOffset = shouldReserveDecorationSpace
+  const decorationOffset = explicitDecorationSize !== null && typeof reservedSize === 'number'
+    ? `${(reservedSize - explicitDecorationSize) / 2}px`
+    : shouldReserveDecorationSpace
     ? '0px'
     : `${((1 - decorationScale) / 2) * 100}%`;
-  const decorationSize = shouldReserveDecorationSpace
+  const decorationSize = explicitDecorationSize !== null
+    ? `${explicitDecorationSize}px`
+    : shouldReserveDecorationSpace
     ? '100%'
     : `${decorationScale * 100}%`;
   const profileImageStyle: React.CSSProperties | undefined =

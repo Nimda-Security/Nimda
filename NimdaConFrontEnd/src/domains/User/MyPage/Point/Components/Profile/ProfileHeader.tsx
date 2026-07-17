@@ -186,6 +186,7 @@ const ProfileHeader: React.FC<ProfileHeaderProps> = ({
               decorationKey={userInfo?.profileDecoration}
                 size={160}
                 decorationPadding={24}
+                decorationScale={1.3}
               className={`transition-opacity ${
                 uploading ? "opacity-50" : "group-hover:opacity-80"
               }`}
@@ -365,7 +366,7 @@ const ProfileHeader: React.FC<ProfileHeaderProps> = ({
                           size={34}
                           src={userInfo?.profileImage}
                           decorationKey={decoration.key}
-                          decorationScale={1.16}
+                          decorationScale={1.3}
                           className="border-0"
                         />
                       </span>

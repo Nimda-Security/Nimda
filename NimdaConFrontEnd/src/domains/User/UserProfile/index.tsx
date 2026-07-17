@@ -588,6 +588,7 @@ export default function UserProfilePage() {
                 wrapperClassName="user-profile-avatar-wrap"
                 className="user-profile-avatar"
                 decorationPadding={24}
+                decorationScale={1.3}
               />
               <ProfileSummary userInfo={userInfo} />
             </div>
