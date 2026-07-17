@@ -7,5 +7,5 @@ create table problems (
         memory_limit integer not null,
         points integer not null,
         time_limit float(53) not null,
-        title varchar(100) not null,
+        title varchar(100) not null
     );
