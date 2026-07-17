@@ -14,6 +14,18 @@ export interface ProfileDecorationOption {
   active?: boolean;
 }
 
+const normalizeDecorations = (data: unknown): ProfileDecorationOption[] =>
+  Array.isArray(data)
+    ? data.filter(
+        (item): item is ProfileDecorationOption =>
+          Boolean(item) &&
+          typeof item === 'object' &&
+          typeof item.key === 'string' &&
+          typeof item.label === 'string' &&
+          typeof item.src === 'string'
+      )
+    : [];
+
 const parseJsonSafe = async (response: Response) => {
   try {
     const text = await response.text();
@@ -38,7 +50,7 @@ export const getProfileDecorationsAPI = async (): Promise<{
     const result = await parseJsonSafe(response);
 
     if (response.ok && result?.success) {
-      return { success: true, decorations: result.data ?? [] };
+      return { success: true, decorations: normalizeDecorations(result.data) };
     }
 
     return {
@@ -64,7 +76,7 @@ export const getAdminProfileDecorationsAPI = async () => {
     });
     const result = await parseJsonSafe(response);
     if (response.ok && result?.success) {
-      return { success: true, decorations: result.data ?? [] };
+      return { success: true, decorations: normalizeDecorations(result.data) };
     }
     return {
       success: false,
@@ -88,11 +100,12 @@ export const getMyProfileDecorationsAPI = async (): Promise<{
   try {
     const response = await fetch('/api/cite/profile-decorations/me', {
       method: 'GET',
+      headers: addVersionToHeaders(),
       credentials: 'include',
     });
     const result = await parseJsonSafe(response);
     if (response.ok && result?.success) {
-      return { success: true, decorations: result.data ?? [] };
+      return { success: true, decorations: normalizeDecorations(result.data) };
     }
     return {
       success: false,
@@ -213,15 +226,19 @@ export const revokeProfileDecorationAPI = async ({
 };
 
 export const uploadProfileDecorationImageAPI = async (file: File) => {
-  const presigned = await requestPresignedUpload('profile-decoration', file.name);
-  if (!presigned.ok) return presigned;
+  try {
+    const presigned = await requestPresignedUpload('profile-decoration', file.name);
+    if (!presigned.ok) return presigned;
 
-  const upload = await putFileToPresignedUrl(
-    presigned.data.uploadUrl,
-    file,
-    file.type
-  );
-  if (!upload.ok) return upload;
+    const upload = await putFileToPresignedUrl(
+      presigned.data.uploadUrl,
+      file,
+      file.type
+    );
+    if (!upload.ok) return upload;
 
-  return { ok: true as const, data: { key: presigned.data.key } };
+    return { ok: true as const, data: { key: presigned.data.key } };
+  } catch {
+    return { ok: false as const, message: '프로필 배지 이미지 업로드에 실패했습니다.' };
+  }
 };

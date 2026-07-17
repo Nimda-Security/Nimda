@@ -26,6 +26,7 @@ const Avatar: React.FC<AvatarProps> = ({
   reserveDecorationSpace = false,
   decorationPadding,
 }) => {
+  const [failedDecorationSrc, setFailedDecorationSrc] = React.useState<string | null>(null);
   const hasExplicitDecorationPadding =
     typeof size === 'number' && typeof decorationPadding === 'number' && decorationPadding > 0;
   const shouldReserveDecorationSpace =
@@ -54,6 +55,9 @@ const Avatar: React.FC<AvatarProps> = ({
 
   const effectiveSrc = src?.trim() ? src : DEFAULT_PROFILE;
   const decorationSrc = resolveProfileDecorationSrc(decorationKey);
+  React.useEffect(() => {
+    setFailedDecorationSrc(null);
+  }, [decorationSrc]);
   const decorationOffset = explicitDecorationSize !== null && typeof reservedSize === 'number'
     ? `${(reservedSize - explicitDecorationSize) / 2}px`
     : shouldReserveDecorationSpace
@@ -88,13 +92,14 @@ const Avatar: React.FC<AvatarProps> = ({
         className={`h-full w-full rounded-full border border-gray-100 object-cover ${className}`}
         style={profileImageStyle}
         onError={(e) => {
-          if (e.currentTarget.src !== DEFAULT_PROFILE) {
+          if (e.currentTarget.getAttribute('src') !== DEFAULT_PROFILE) {
             e.currentTarget.src = DEFAULT_PROFILE;
           }
         }}
       />
-      {decorationSrc && (
+      {decorationSrc && failedDecorationSrc !== decorationSrc && (
         <img
+          key={decorationSrc}
           src={decorationSrc}
           alt=""
           aria-hidden="true"
@@ -107,9 +112,7 @@ const Avatar: React.FC<AvatarProps> = ({
             height: decorationSize,
             maxWidth: 'none',
           }}
-          onError={(e) => {
-            e.currentTarget.style.display = 'none';
-          }}
+          onError={() => setFailedDecorationSrc(decorationSrc)}
         />
       )}
     </span>

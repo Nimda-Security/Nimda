@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import Header from '@/components/Layout/Header/NavBar';
 import Footer from '@/components/Layout/Footer';
 
@@ -17,6 +17,7 @@ import { getMyBoardCountAPI } from '@/api/board';
 import { getMyCommentCountAPI } from '@/api/comment';
 
 function MyPagePoint() {
+  const profileRevisionRef = useRef(0);
   const [activeTab, setActiveTab] = useState('points');
   const [loading, setLoading] = useState(true);
 
@@ -40,6 +41,7 @@ function MyPagePoint() {
 
   useEffect(() => {
     const fetchAllData = async () => {
+      const initialProfileRevision = profileRevisionRef.current;
       try {
         setLoading(true);
 
@@ -73,17 +75,26 @@ function MyPagePoint() {
         ]);
 
         // 서버에서 받은 프로필 정보로 갱신 (S3 Presigned URL 포함)
-        if (myPageRes.success && myPageRes.data) {
+        if (
+          myPageRes.success &&
+          myPageRes.data &&
+          profileRevisionRef.current === initialProfileRevision
+        ) {
           const d = myPageRes.data as Record<string, unknown>;
+          const hasProfileDecoration = Object.prototype.hasOwnProperty.call(
+            d,
+            'profileDecoration'
+          );
           setUserProfile({
             nickname: (d.nickname as string) || currentUser?.nickname || 'User',
             userId: (d.userId as string) || currentUser?.userId || '',
             email: (d.email as string) || currentUser?.email || '',
             profileImage: (d.profileImage as string) || '',
-            profileDecoration:
-              (d.profileDecoration as string) ||
-              currentUser?.profileDecoration ||
-              '',
+            profileDecoration: hasProfileDecoration
+              ? typeof d.profileDecoration === 'string'
+                ? d.profileDecoration
+                : ''
+              : currentUser?.profileDecoration || '',
             roles:
               (d.roles as string[] | undefined) ||
               currentUser?.roles ||
@@ -134,10 +145,12 @@ function MyPagePoint() {
   };
 
   const handleProfileImageChange = (newUrl: string) => {
+    profileRevisionRef.current += 1;
     setUserProfile((prev) => ({ ...prev, profileImage: newUrl }));
   };
 
   const handleProfileDecorationChange = (newDecoration: string | null) => {
+    profileRevisionRef.current += 1;
     setUserProfile((prev) => ({
       ...prev,
       profileDecoration: newDecoration || '',

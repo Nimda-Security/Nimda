@@ -6,7 +6,7 @@ import { MessageBox } from '@/components/icons/MessageBox';
 import { VerticalDots } from '@/components/icons/VerticalDots';
 
 // [수정] 내 정보를 가져오기 위한 auth API 추가
-import { isLoggedIn, getMyPageInfo } from "@/api/auth";
+import { isLoggedIn, getMyPageInfo, PROFILE_UPDATED_EVENT } from "@/api/auth";
 import {
   getCommentsAPI,
   createCommentAPI,
@@ -536,6 +536,7 @@ function CommentSection({ boardId }: CommentSectionProps) {
   const [editContext, setEditContext] = useState('');
   const [isEditSubmitting, setIsEditSubmitting] = useState(false);
   const replyInputRef = useRef<HTMLDivElement | null>(null);
+  const commentsRequestIdRef = useRef(0);
 
   // [추가] 내 프로필 이미지 상태
   const [myProfileImage, setMyProfileImage] = useState<string | null>(null);
@@ -559,17 +560,32 @@ function CommentSection({ boardId }: CommentSectionProps) {
       }
     };
     fetchMyInfo();
+    const handleProfileUpdated = (event: Event) => {
+      const detail = (event as CustomEvent<Record<string, unknown> | null>).detail;
+      setMyProfileImage((detail?.profileImage as string | null) ?? null);
+      setMyProfileDecoration((detail?.profileDecoration as string | null) ?? null);
+    };
+    window.addEventListener(PROFILE_UPDATED_EVENT, handleProfileUpdated);
+    return () => window.removeEventListener(PROFILE_UPDATED_EVENT, handleProfileUpdated);
   }, []);
 
   const fetchComments = async () => {
+    const requestId = ++commentsRequestIdRef.current;
+    const requestedBoardId = boardId;
     try {
       setLoading(true);
       setError(null);
-      const res = await getCommentsAPI(boardId);
+      const res = await getCommentsAPI(requestedBoardId);
+      if (commentsRequestIdRef.current !== requestId || boardId !== requestedBoardId) return;
       if (res.success) setComments(res.comments as (CommentResponse)[]);
       else setError(res.message);
-    } catch { setError('댓글을 불러오는 중 오류가 발생했습니다.'); }
-    finally { setLoading(false); }
+    } catch {
+      if (commentsRequestIdRef.current === requestId) {
+        setError('댓글을 불러오는 중 오류가 발생했습니다.');
+      }
+    } finally {
+      if (commentsRequestIdRef.current === requestId) setLoading(false);
+    }
   };
 
   const handleSubmitComment = async () => {

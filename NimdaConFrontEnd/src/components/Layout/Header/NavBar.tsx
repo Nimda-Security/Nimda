@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import Logo from '@/components/icons/Logo';
 import { getCurrentNickname, isAdmin } from '@/utils/jwt';
@@ -14,11 +14,13 @@ import NotificationBell from '@/components/Notification/NotificationBell';
 import Avatar from '@/components/Avatar/Avatar';
 
 const Navbar: React.FC = () => {
+  const profileRevisionRef = useRef(0);
   const navigate = useNavigate();
   const [nickname, setNickname] = useState<string | null>(null);
   const [adminStatus, setAdminStatus] = useState(false);
   const [isLoggedInState, setIsLoggedInState] = useState(false);
   const [profileImage, setProfileImage] = useState<string | null>(null);
+  const [profileDecoration, setProfileDecoration] = useState<string | null>(null);
 
   useEffect(() => {
     const currentNickname = getCurrentNickname();
@@ -29,6 +31,7 @@ const Navbar: React.FC = () => {
     setIsLoggedInState(loggedIn);
 
     if (loggedIn) {
+      const requestRevision = profileRevisionRef.current;
       // 서버에 세션 유효성 검증 — 만료 시 로컬 상태만 초기화 (강제 리다이렉트 없음)
       validateSession().then((ok) => {
         if (!ok) {
@@ -39,15 +42,19 @@ const Navbar: React.FC = () => {
         }
         getMyPageInfo().then((result) => {
           if (result.success && result.data) {
+            if (profileRevisionRef.current !== requestRevision) return;
             setProfileImage(result.data.profileImage ?? null);
+            setProfileDecoration(result.data.profileDecoration ?? null);
           }
         });
       });
     }
 
     const handleProfileUpdated = (event: Event) => {
+      profileRevisionRef.current += 1;
       const detail = (event as CustomEvent<Record<string, unknown> | null>).detail;
       setProfileImage((detail?.profileImage as string | null) ?? null);
+      setProfileDecoration((detail?.profileDecoration as string | null) ?? null);
     };
 
     window.addEventListener(PROFILE_UPDATED_EVENT, handleProfileUpdated);
@@ -115,16 +122,18 @@ const Navbar: React.FC = () => {
                   border: 'none',
                   cursor: 'pointer',
                   padding: 0,
-                  overflow: 'hidden',
+                  overflow: 'visible',
                   boxShadow: '0px 0px 2px rgba(0, 0, 0, 0.25)',
                 }}
                 title="마이페이지"
               >
                 <Avatar
                   src={profileImage}
+                  decorationKey={profileDecoration}
                   alt="프로필"
                   size="100%"
                   className="w-full h-full border-0"
+                  decorationScale={1.3}
                 />
               </button>
 

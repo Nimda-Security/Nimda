@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { Link, useLocation, useSearchParams } from 'react-router-dom';
 import { getCurrentNickname, hasRole, isAdmin } from '@/utils/jwt';
 import { isLoggedIn, getMyPageInfo, PROFILE_UPDATED_EVENT } from '@/api/auth';
@@ -17,6 +17,7 @@ import ChevronDown from '@/components/icons/ChevronDown';
 import Avatar from '@/components/Avatar/Avatar';
 
 const Sidebar: React.FC = () => {
+  const profileRevisionRef = useRef(0);
   const [nickname, setNickname] = useState<string | null>(null);
   const [isLoggedInState, setIsLoggedInState] = useState(false);
   const [profileImage, setProfileImage] = useState<string | null>(null);
@@ -104,6 +105,7 @@ const Sidebar: React.FC = () => {
     if (!isLoggedInState) return;
 
     const loadProfileStats = async () => {
+      const requestRevision = profileRevisionRef.current;
       try {
         const [visits, boards, comments, likes, balance, myPageResult] =
           await Promise.all([
@@ -123,6 +125,7 @@ const Sidebar: React.FC = () => {
           setCoinBalance(balance.currentBalance || 0);
         }
         if (myPageResult.success && myPageResult.data) {
+          if (profileRevisionRef.current !== requestRevision) return;
           setProfileImage(myPageResult.data.profileImage ?? null);
           setProfileDecoration(myPageResult.data.profileDecoration ?? null);
         }
@@ -136,6 +139,7 @@ const Sidebar: React.FC = () => {
 
   useEffect(() => {
     const handleProfileUpdated = (event: Event) => {
+      profileRevisionRef.current += 1;
       const detail = (event as CustomEvent<Record<string, unknown> | null>).detail;
       setProfileImage((detail?.profileImage as string | null) ?? null);
       setProfileDecoration((detail?.profileDecoration as string | null) ?? null);

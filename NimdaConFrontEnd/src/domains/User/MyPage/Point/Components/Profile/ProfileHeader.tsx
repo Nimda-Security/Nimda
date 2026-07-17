@@ -33,10 +33,15 @@ const ProfileHeader: React.FC<ProfileHeaderProps> = ({
 }) => {
   const fileInputRef = useRef<HTMLInputElement>(null);
   const avatarMenuRef = useRef<HTMLDivElement>(null);
+  const decorationLoadIdRef = useRef(0);
+  const decorationSavingRef = useRef(false);
   const [uploading, setUploading] = useState(false);
   const [showAvatarMenu, setShowAvatarMenu] = useState(false);
   const [showDecorationModal, setShowDecorationModal] = useState(false);
   const [decorationSaving, setDecorationSaving] = useState(false);
+  const [decorationLoading, setDecorationLoading] = useState(false);
+  const [decorationError, setDecorationError] = useState<string | null>(null);
+  const [decorationReloadKey, setDecorationReloadKey] = useState(0);
   const [decorationOptions, setDecorationOptions] =
     useState<ProfileDecorationOption[]>(PROFILE_DECORATIONS);
 
@@ -60,16 +65,29 @@ const ProfileHeader: React.FC<ProfileHeaderProps> = ({
   useEffect(() => {
     if (!showDecorationModal) return;
 
+    const loadId = ++decorationLoadIdRef.current;
     const loadDecorations = async () => {
+      setDecorationLoading(true);
+      setDecorationError(null);
       const ownedResult = await getMyProfileDecorationsAPI();
+      if (decorationLoadIdRef.current !== loadId) return;
       if (ownedResult.success) {
         setDecorationOptions(ownedResult.decorations);
         setProfileDecorationOptions(ownedResult.decorations);
+      } else {
+        setDecorationOptions([]);
+        setDecorationError(ownedResult.message ?? "보유한 프로필 배지를 불러오지 못했습니다.");
       }
+      setDecorationLoading(false);
     };
 
     void loadDecorations();
-  }, [showDecorationModal]);
+    return () => {
+      if (decorationLoadIdRef.current === loadId) {
+        decorationLoadIdRef.current += 1;
+      }
+    };
+  }, [showDecorationModal, decorationReloadKey]);
 
   useEffect(() => {
     if (!showAvatarMenu) return;
@@ -153,7 +171,8 @@ const ProfileHeader: React.FC<ProfileHeaderProps> = ({
   };
 
   const handleDecorationSelect = async (decorationKey: string | null) => {
-    if (decorationSaving) return;
+    if (decorationSavingRef.current || decorationLoading) return;
+    decorationSavingRef.current = true;
     setDecorationSaving(true);
     try {
       const result = await updateProfileDecorationAPI(decorationKey);
@@ -166,6 +185,7 @@ const ProfileHeader: React.FC<ProfileHeaderProps> = ({
     } catch {
       alert("프로필 장식 변경 중 오류가 발생했습니다.");
     } finally {
+      decorationSavingRef.current = false;
       setDecorationSaving(false);
     }
   };
@@ -303,7 +323,7 @@ const ProfileHeader: React.FC<ProfileHeaderProps> = ({
               </button>
             </div>
 
-            {decorationSaving && (
+            {(decorationSaving || decorationLoading || decorationError) && (
               <div
                 className="rounded-[10px] bg-[#FFF5F8] text-[12px] font-medium text-[#D97399]"
                 style={{
@@ -312,7 +332,20 @@ const ProfileHeader: React.FC<ProfileHeaderProps> = ({
                   boxSizing: "border-box",
                 }}
               >
-                저장 중...
+                {decorationSaving
+                  ? "저장 중..."
+                  : decorationLoading
+                    ? "보유 배지를 불러오는 중..."
+                    : decorationError}
+                {decorationError && (
+                  <button
+                    type="button"
+                    className="ml-3 underline"
+                    onClick={() => setDecorationReloadKey((value) => value + 1)}
+                  >
+                    다시 시도
+                  </button>
+                )}
               </div>
             )}
 
@@ -327,7 +360,7 @@ const ProfileHeader: React.FC<ProfileHeaderProps> = ({
                 <button
                   type="button"
                   onClick={() => handleDecorationSelect(null)}
-                  disabled={decorationSaving}
+                  disabled={decorationSaving || decorationLoading || Boolean(decorationError)}
                   className={`flex min-h-[126px] flex-col items-center justify-center rounded-[14px] border bg-white text-center transition-all disabled:cursor-not-allowed disabled:opacity-60 ${
                     !userInfo?.profileDecoration
                       ? "border-[#D97399] bg-[#FFF5F8] shadow-[0_8px_22px_rgba(217,115,153,0.12)]"
@@ -351,9 +384,9 @@ const ProfileHeader: React.FC<ProfileHeaderProps> = ({
                   return (
                     <button
                       key={decoration.key}
-                    type="button"
-                    onClick={() => handleDecorationSelect(decoration.key)}
-                    disabled={decorationSaving}
+                      type="button"
+                      onClick={() => handleDecorationSelect(decoration.key)}
+                      disabled={decorationSaving || decorationLoading || Boolean(decorationError)}
                       className={`flex min-h-[126px] flex-col items-center justify-center rounded-[14px] border bg-white text-center transition-all disabled:cursor-not-allowed disabled:opacity-60 ${
                         selected
                           ? "border-[#D97399] bg-[#FFF5F8] shadow-[0_8px_22px_rgba(217,115,153,0.12)]"

@@ -652,9 +652,7 @@ export const purchaseBoardItemAPI = async (
   try {
     const response = await fetch(`${API_BASE_URL}/${boardId}/purchase`, {
       method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-      },
+      headers: addVersionToHeaders({ 'Content-Type': 'application/json' }),
       credentials: 'include',
     });
 
@@ -858,4 +856,3 @@ export const deleteMyBoardsAPI = async (boardIds: number[]): Promise<{ success: 
     return { success: false, message: '게시글 삭제 중 오류가 발생했습니다.' };
   }
 };
-

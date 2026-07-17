@@ -23,6 +23,7 @@ const ProfileDecorationManagement = () => {
   const [ownershipSubmitting, setOwnershipSubmitting] = useState(false);
   const [label, setLabel] = useState('');
   const [key, setKey] = useState('');
+  const [keyManuallyEdited, setKeyManuallyEdited] = useState(false);
   const [file, setFile] = useState(null);
   const [studentNum, setStudentNum] = useState('');
   const [selectedDecorationId, setSelectedDecorationId] = useState('');
@@ -45,13 +46,14 @@ const ProfileDecorationManagement = () => {
   const handleLabelChange = (event) => {
     const nextLabel = event.target.value;
     setLabel(nextLabel);
-    if (!key.trim()) {
+    if (!keyManuallyEdited) {
       setKey(slugify(nextLabel));
     }
   };
 
   const handleSubmit = async (event) => {
     event.preventDefault();
+    const form = event.currentTarget;
     if (!label.trim()) {
       alert('배지 이름을 입력해주세요.');
       return;
@@ -86,10 +88,13 @@ const ProfileDecorationManagement = () => {
 
       setLabel('');
       setKey('');
+      setKeyManuallyEdited(false);
       setFile(null);
-      event.currentTarget.reset();
+      form.reset();
       await loadDecorations();
       alert('프로필 배지가 등록되었습니다.');
+    } catch {
+      alert('프로필 배지 등록 중 오류가 발생했습니다.');
     } finally {
       setSaving(false);
     }
@@ -112,6 +117,9 @@ const ProfileDecorationManagement = () => {
         return;
       }
       setDecorations((prev) => prev.filter((item) => item.id !== decoration.id));
+      if (selectedDecorationId === String(decoration.id)) {
+        setSelectedDecorationId('');
+      }
       alert(result.message);
     } finally {
       setDeletingId(null);
@@ -127,6 +135,11 @@ const ProfileDecorationManagement = () => {
     }
     if (!decorationId) {
       alert('배지를 선택해주세요.');
+      return;
+    }
+    if (!decorations.some((decoration) => decoration.id === decorationId)) {
+      setSelectedDecorationId('');
+      alert('삭제되었거나 사용할 수 없는 배지입니다. 다시 선택해주세요.');
       return;
     }
 
@@ -177,7 +190,10 @@ const ProfileDecorationManagement = () => {
           <input
             type="text"
             value={key}
-            onChange={(event) => setKey(slugify(event.target.value))}
+            onChange={(event) => {
+              setKeyManuallyEdited(true);
+              setKey(slugify(event.target.value));
+            }}
             className="admin__form-input"
             placeholder="예: check-badge"
           />
@@ -321,7 +337,7 @@ const ProfileDecorationManagement = () => {
                 <button
                   type="button"
                   onClick={() => handleDelete(decoration)}
-                  disabled={deletingId === decoration.id}
+                  disabled={deletingId !== null}
                   className="admin__btn admin__btn--danger"
                   style={{
                     width: '100%',

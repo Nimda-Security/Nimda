@@ -165,8 +165,15 @@ export default function UserProfilePage() {
 
   useEffect(() => {
     if (!nickname) return;
+    let cancelled = false;
     setLoading(true);
     setNotFound(false);
+    setProfile(null);
+    setBoards([]);
+    setComments([]);
+    setLikedBoards([]);
+    setPointBalance(0);
+    setPointDetails([]);
     setBoardsPage(1);
     setCommentsPage(1);
     setLikedPage(1);
@@ -189,6 +196,7 @@ export default function UserProfilePage() {
           balanceData,
           detailsData,
         ]) => {
+          if (cancelled) return;
           if (!profileData) {
             setNotFound(true);
           } else {
@@ -201,7 +209,15 @@ export default function UserProfilePage() {
           }
         }
       )
-      .finally(() => setLoading(false));
+      .catch(() => {
+        if (!cancelled) setNotFound(true);
+      })
+      .finally(() => {
+        if (!cancelled) setLoading(false);
+      });
+    return () => {
+      cancelled = true;
+    };
   }, [nickname]);
 
   /* ── 로딩 ── */
