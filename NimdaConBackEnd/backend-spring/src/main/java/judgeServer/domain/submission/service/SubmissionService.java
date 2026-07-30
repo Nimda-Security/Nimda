@@ -91,11 +91,23 @@ public class SubmissionService {
         return new UserProblemStatusResponse(solved, incorrect);
     }
 
+    /**
+     * 제출 상세(소스코드 포함) 조회.
+     *
+     * 보안: 소스코드는 제출자 본인 또는 관리자만 볼 수 있다.
+     * 검증이 없으면 로그인한 아무 유저가 submissionId 를 증가시켜가며
+     * 타인의 제출 소스코드를 전부 수집할 수 있다(대회 부정행위/표절).
+     */
     @Transactional(readOnly = true)
-    public SubDetailResponse getSubmitDetail(Long submissionId) {
+    public SubDetailResponse getSubmitDetail(Long submissionId, Long requesterId, boolean isAdmin) {
 
         Submission submission = submissionRepository.findById(submissionId)
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "제출 내역을 찾을 수 없습니다."));
+
+        if (!isAdmin && !submission.getUserId().equals(requesterId)) {
+            // 존재 여부 노출을 막기 위해 404 로 응답한다.
+            throw new ResponseStatusException(HttpStatus.NOT_FOUND, "제출 내역을 찾을 수 없습니다.");
+        }
 
         return SubDetailResponse.from(submission);
     }

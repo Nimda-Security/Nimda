@@ -1,16 +1,15 @@
 {
+  "_comment": [
+    "Bruno 컬렉션용 로컬 개발 변수 템플릿.",
+    "보안: 운영(prod) 환경의 계정 정보는 이 파일에 넣지 않는다.",
+    "운영 API를 호출해야 한다면 Bruno 로컬 환경(environments/*.bru, git 미추적)에",
+    "본인 계정으로 직접 설정하고 절대 커밋하지 않는다."
+  ],
   "dev": {
     "baseUrl": "http://localhost:8080",
-    "adminUserId": "admin",
-    "adminPassword": "1234",
-    "testUserId": "test",
-    "testPassword": "1234"
-  },
-  "prod": {
-    "baseUrl": "https://nimda.kr",
-    "adminUserId": "admin",
-    "adminPassword": "1234",
-    "testUserId": "test",
-    "testPassword": "1234"
+    "adminUserId": "CHANGE_ME",
+    "adminPassword": "CHANGE_ME",
+    "testUserId": "CHANGE_ME",
+    "testPassword": "CHANGE_ME"
   }
 }

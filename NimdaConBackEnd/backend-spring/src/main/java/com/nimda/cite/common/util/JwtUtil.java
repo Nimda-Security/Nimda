@@ -6,10 +6,11 @@ import io.jsonwebtoken.SignatureAlgorithm;
 import io.jsonwebtoken.io.Decoders;
 import io.jsonwebtoken.security.Keys;
 import jakarta.annotation.PostConstruct;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 
-import javax.crypto.SecretKey;
 import java.security.Key;
 import java.util.Date;
 import java.util.HashMap;
@@ -19,11 +20,17 @@ import java.util.function.Function;
 @Component
 public class JwtUtil {
 
+    private static final Logger log = LoggerFactory.getLogger(JwtUtil.class);
+
     @Value("${jwt.secret}")
     private String secret;
 
-    @Value("${jwt.expiration:86400000}") // 24시간
-    private Long expiration;
+    /**
+     * 토큰 만료 시간(초). TokenProvider 와 동일한 프로퍼티를 사용해
+     * 두 컴포넌트의 토큰 수명이 어긋나지 않게 한다.
+     */
+    @Value("${jwt.token-validity-in-seconds:86400}")
+    private long tokenValidityInSeconds;
 
     private Key key;
 
@@ -82,7 +89,7 @@ public class JwtUtil {
                 // 따라서 userId는 "sub"가 아닌 "userId" 클레임에 저장해야 합니다.
                 .setSubject(subject)
                 .setIssuedAt(new Date(System.currentTimeMillis()))
-                .setExpiration(new Date(System.currentTimeMillis() + expiration))
+                .setExpiration(new Date(System.currentTimeMillis() + tokenValidityInSeconds * 1000L))
                 .signWith(this.key, SignatureAlgorithm.HS256)
                 .compact();
     }
@@ -224,7 +231,11 @@ public class JwtUtil {
         return (extractedNickname.equals(nickname) && !isTokenExpired(token));
     }
 
-/*    // 비밀번호 재설정 시 사용
+    /**
+     * 비밀번호 재설정 토큰 검증.
+     *
+     * 보안: 입력값/토큰 클레임(userId·학번·이메일)은 PII 이므로 로그로 남기지 않는다.
+     */
     public Boolean validateToken(String token, String userId, String studentNum,
                                  String email) {
         try {
@@ -238,39 +249,10 @@ public class JwtUtil {
                     && email.equals(tokenEmail);
 
         } catch (Exception e) {
+            log.warn("비밀번호 재설정 토큰 검증 실패: {}", e.getClass().getSimpleName());
             return false;
         }
     }
-    */
-// 비밀번호 재설정 시 사용
-public Boolean validateToken(String token, String userId, String studentNum,
-                             String email) {
-    try {
-        final Claims claims = extractAllClaims(token);
-        String tokenUserId = claims.get("userId", String.class);
-        String tokenStudentNum = claims.get("studentNum", String.class);
-        String tokenEmail = claims.get("email", String.class);
-
-        // --- 디버깅 로그 추가 ---
-        System.out.println("========= JWT 검증 디버깅 =========");
-        System.out.println("1. UserId     | 입력: [" + userId + "] vs 토큰: [" + tokenUserId + "]");
-        System.out.println("2. StudentNum | 입력: [" + studentNum + "] vs 토큰: [" + tokenStudentNum + "]");
-        System.out.println("3. Email      | 입력: [" + email + "] vs 토큰: [" + tokenEmail + "]");
-
-        boolean isMatch = userId.equals(tokenUserId)
-                && studentNum.equals(tokenStudentNum)
-                && email.equals(tokenEmail);
-
-        System.out.println("결과: " + (isMatch ? "✅ 일치함" : "❌ 불일치함"));
-        System.out.println("=================================");
-
-        return isMatch;
-
-    } catch (Exception e) {
-        System.out.println("❌ 검증 중 에러 발생: " + e.getMessage());
-        return false;
-    }
-}
 
     /**
      * 토큰 유효성 검증 (하위 호환성 유지)
@@ -285,15 +267,6 @@ public Boolean validateToken(String token, String userId, String studentNum,
         return validateToken(token, username);
     }
 
-    /**
-     * 서명 키 생성
-     * 
-     * @return 서명 키
-     */
-    private SecretKey getSigningKey() {
-        byte[] keyBytes = secret.getBytes();
-        return Keys.hmacShaKeyFor(keyBytes);
-    }
 
 
 }

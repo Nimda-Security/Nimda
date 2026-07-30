@@ -17,8 +17,10 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
 import java.util.Optional;
+import lombok.extern.slf4j.Slf4j;
 
 @Service
+@Slf4j
 public class BoardService {
 
     @Autowired
@@ -198,7 +200,7 @@ public class BoardService {
     @Transactional
     public void deleteBoardsByTag(Long categoryId, Long tagId) {
         int deletedCount = boardRepository.updateStatusByTagId(categoryId, tagId, BoardStatus.DELETED);
-        System.out.println("tagId=" + tagId + " 태그를 가진 게시글 " + deletedCount + "건을 비활성화했습니다.");
+        log.info("tagId={} 태그를 가진 게시글 {}건을 비활성화했습니다.", tagId, deletedCount);
     }
 
     @Transactional

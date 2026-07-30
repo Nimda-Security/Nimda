@@ -84,6 +84,17 @@ services:
       - MAIL_PORT=${MAIL_PORT}
       - MAIL_USERNAME=${MAIL_USERNAME}
       - MAIL_PASSWORD=${MAIL_PASSWORD}
+      # Redis (인증코드 저장 / 채점 큐) — 누락 시 백엔드가 localhost:6379 로 붙어
+      # 비밀번호 재설정 메일 인증과 채점 큐가 운영에서 조용히 실패한다.
+      - SPRING_REDIS_HOST=redis
+      - SPRING_REDIS_PORT=6379
+      - SPRING_REDIS_PASSWORD=${REDIS_PASSWORD}
+      # 채점 결과 콜백 공유 시크릿 (미설정 시 콜백 전면 거부)
+      - JUDGE_CALLBACK_SECRET=${JUDGE_CALLBACK_SECRET}
+      # CORS 허용 Origin (콤마 구분)
+      - CORS_ALLOWED_ORIGINS=${CORS_ALLOWED_ORIGINS:-https://nimda.kr,https://*.nimda.kr}
+      # 인증 쿠키 Secure 속성
+      - AUTH_COOKIE_SECURE=${AUTH_COOKIE_SECURE:-true}
     restart: always
 
   backend-green:
@@ -124,6 +135,16 @@ services:
       - MAIL_PORT=${MAIL_PORT}
       - MAIL_USERNAME=${MAIL_USERNAME}
       - MAIL_PASSWORD=${MAIL_PASSWORD}
+      # Redis (인증코드 저장 / 채점 큐)
+      - SPRING_REDIS_HOST=redis
+      - SPRING_REDIS_PORT=6379
+      - SPRING_REDIS_PASSWORD=${REDIS_PASSWORD}
+      # 채점 결과 콜백 공유 시크릿 (미설정 시 콜백 전면 거부)
+      - JUDGE_CALLBACK_SECRET=${JUDGE_CALLBACK_SECRET}
+      # CORS 허용 Origin (콤마 구분)
+      - CORS_ALLOWED_ORIGINS=${CORS_ALLOWED_ORIGINS:-https://nimda.kr,https://*.nimda.kr}
+      # 인증 쿠키 Secure 속성
+      - AUTH_COOKIE_SECURE=${AUTH_COOKIE_SECURE:-true}
     restart: always
 
   nginx:

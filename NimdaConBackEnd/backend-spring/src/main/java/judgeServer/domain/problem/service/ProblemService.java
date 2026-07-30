@@ -23,8 +23,10 @@ import java.nio.file.attribute.BasicFileAttributes;
 import java.util.stream.Stream;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipInputStream;
+import lombok.extern.slf4j.Slf4j;
 
 @Service
+@Slf4j
 public class ProblemService {
 
     @Autowired
@@ -151,10 +153,31 @@ public class ProblemService {
         return problem.getIsPublic();
     }
 
+    // ── ZIP 압축 해제 상한 (zip bomb / 디스크 고갈 방지) ──
+    private static final int MAX_ZIP_ENTRIES = 2_000;
+    private static final long MAX_ZIP_ENTRY_BYTES = 64L * 1024 * 1024;   // 엔트리당 64MB
+    private static final long MAX_ZIP_TOTAL_BYTES = 256L * 1024 * 1024;  // 전체 256MB
+
+    /**
+     * ZIP 압축 해제.
+     *
+     * 보안:
+     * - Zip Slip: 정규화 후 targetDir 하위인지 검사한다.
+     * - Zip Bomb: 엔트리 수 / 엔트리당 크기 / 전체 해제 크기 상한을 강제한다.
+     *   ZipEntry.getSize() 는 헤더값이라 위조 가능하므로 실제 스트리밍 바이트를 센다.
+     */
     private void unzip(InputStream is, Path targetDir) {
         try (ZipInputStream zis = new ZipInputStream(is)) {
             ZipEntry entry;
+            int entryCount = 0;
+            long totalBytes = 0;
+
             while ((entry = zis.getNextEntry()) != null) {
+                if (++entryCount > MAX_ZIP_ENTRIES) {
+                    throw new SecurityException(
+                            "ZIP 엔트리 수 상한(" + MAX_ZIP_ENTRIES + ")을 초과했습니다.");
+                }
+
                 Path newPath = targetDir.resolve(entry.getName()).normalize();
 
                 // 보안 체크: 경로가 targetDir 내부인지 확인 (Path Traversal 방지)
@@ -166,12 +189,44 @@ public class ProblemService {
                     Files.createDirectories(newPath);
                 } else {
                     Files.createDirectories(newPath.getParent());
-                    Files.copy(zis, newPath, StandardCopyOption.REPLACE_EXISTING);
+                    totalBytes += copyEntryWithLimit(zis, newPath, totalBytes);
                 }
             }
         } catch (IOException e) {
             throw new RuntimeException("압축 풀기 실패", e);
         }
+    }
+
+    /**
+     * 엔트리 하나를 상한을 지키며 기록하고, 기록한 바이트 수를 반환한다.
+     */
+    private long copyEntryWithLimit(ZipInputStream zis, Path target, long totalBytesSoFar)
+            throws IOException {
+        byte[] buffer = new byte[8192];
+        long entryBytes = 0;
+
+        try (java.io.OutputStream out = Files.newOutputStream(target,
+                StandardOpenOption.CREATE, StandardOpenOption.TRUNCATE_EXISTING,
+                StandardOpenOption.WRITE)) {
+            int read;
+            while ((read = zis.read(buffer)) != -1) {
+                entryBytes += read;
+
+                if (entryBytes > MAX_ZIP_ENTRY_BYTES) {
+                    throw new SecurityException(
+                            "ZIP 엔트리 크기 상한(" + (MAX_ZIP_ENTRY_BYTES / 1024 / 1024) + "MB)을 초과했습니다: "
+                                    + target.getFileName());
+                }
+                if (totalBytesSoFar + entryBytes > MAX_ZIP_TOTAL_BYTES) {
+                    throw new SecurityException(
+                            "ZIP 전체 해제 크기 상한(" + (MAX_ZIP_TOTAL_BYTES / 1024 / 1024) + "MB)을 초과했습니다.");
+                }
+
+                out.write(buffer, 0, read);
+            }
+        }
+
+        return entryBytes;
     }
 
     private void deleteDirectory(Path path) {
@@ -193,7 +248,7 @@ public class ProblemService {
                 });
             }
         } catch (IOException e) {
-            System.err.println("임시 디렉토리 삭제 실패: " + path);
+            log.warn("임시 디렉토리 삭제 실패: {}", path);
         }
     }
 

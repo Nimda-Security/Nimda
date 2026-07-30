@@ -20,8 +20,8 @@ public class RedisUtil {
         Duration expireDuration = Duration.ofSeconds(duration);
         valueOperations.set(key, value, expireDuration);
 
-        // 디버깅 로그
-        System.out.println(key+" "+value+" "+duration);
+        // 보안: key/value 를 로그로 남기지 않는다.
+        // (이 메서드는 비밀번호 재설정 인증코드를 저장하므로 value 노출 시 계정 탈취로 이어진다)
     }
 
     public String getData(String key) {
@@ -30,6 +30,22 @@ public class RedisUtil {
 
     public void deleteData(String key) {
         redisTemplate.delete(key);
+    }
+
+    /**
+     * 고정 윈도우 카운터. 키의 값을 1 증가시키고, 최초 생성 시에만 windowSeconds TTL 을 건다.
+     * 인증코드 확인/계정 조회 같은 열거·무차별 시도 제한에 사용한다.
+     *
+     * @return 이번 증가 후의 누적 시도 횟수
+     */
+    public long incrementWithWindow(String key, long windowSeconds) {
+        Long count = redisTemplate.opsForValue().increment(key);
+
+        if (count != null && count == 1) {
+            redisTemplate.expire(key, Duration.ofSeconds(windowSeconds));
+        }
+
+        return count != null ? count : 0L;
     }
 
     // 블랙 리스트 구현 메소드

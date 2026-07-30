@@ -26,8 +26,10 @@ import org.springframework.web.server.ResponseStatusException;
 
 import java.time.LocalDateTime;
 import java.util.Optional;
+import lombok.extern.slf4j.Slf4j;
 
 @Service
+@Slf4j
 public class AuthService {
 
     @Autowired
@@ -113,10 +115,7 @@ public class AuthService {
                 .map(authority -> authority.getAuthorityName())
                 .collect(java.util.stream.Collectors.toList());
 
-        // 디버깅용 로그
-        System.out.println("[AuthService] User: " + fullUser.getNickname() + " (ID: " + fullUser.getId() + ")");
-        System.out.println("[AuthService] Authority count: " + authorities.size());
-        System.out.println("[AuthService] Authorities: " + authorities);
+        // 보안: 닉네임/사용자 ID/권한 목록은 PII 이므로 로그로 남기지 않는다.
 
         String token = jwtUtil.generateToken(fullUser.getNickname(), fullUser.getId(), authorities); // JWT 토큰 생성
 
