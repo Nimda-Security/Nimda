@@ -59,14 +59,25 @@ spring:
       mode: never  # 초기 데이터는 수동으로 import 또는 data.sql 사용 
   
   # Flyway 설정 (spring.flyway 하위에 위치해야 Spring Boot가 인식)
+  #
+  # 무결성 관련 주의사항:
+  # - repair-on-migrate 는 Spring Boot 에 존재하지 않는 프로퍼티였다. 설정해도
+  #   조용히 무시되므로 "체크섬 드리프트가 자동 복구된다"는 기대는 성립하지 않았다.
+  #   실제 복구가 필요하면 FlywayMigrationStrategy 로 flyway.repair() 를 호출해야
+  #   한다(DB 를 변경하므로 이 PR 에서는 하지 않는다). 죽은 설정이라 제거했다.
+  # - validate-on-migrate 는 Flyway 기본값이 true 이지만 여기서는 false 로
+  #   내려놨다. 즉 적용된 마이그레이션 파일이 나중에 수정돼도(체크섬 불일치)
+  #   아무도 알아채지 못한다. 운영 DB 이력을 확인하지 않고 true 로 뒤집으면
+  #   부팅이 실패할 수 있어 기본값은 현행 유지하고, 환경변수로 켤 수 있게 했다.
+  #   대신 FlywayConfig 가 매 부팅 시 검증을 실행해 드리프트를 WARN 으로 남긴다.
   flyway:
     enabled: true
     locations: classpath:db/migration
     baseline-on-migrate: true  # 기존 DB가 있을 경우 baseline 설정
-    repair-on-migrate: true
-    validate-on-migrate: false
+    validate-on-migrate: ${FLYWAY_VALIDATE_ON_MIGRATE:false}
     clean-disabled: true
-    out-of-order: true  # DB에서 version 10이 빠진 경우 등, 순서 밖 마이그레이션 허용
+    # V1·V8 이 결번이라 순서 밖 마이그레이션 허용이 실제로 필요하다.
+    out-of-order: ${FLYWAY_OUT_OF_ORDER:true}
   
   security:
     user:
