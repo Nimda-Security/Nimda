@@ -1,0 +1,27 @@
+# 셸 스크립트는 반드시 LF 로 체크아웃되어야 한다.
+#
+# 이유: core.autocrlf=true 환경(주로 Windows)에서 체크아웃하면 셸 스크립트가
+# CRLF 로 변환되고, shebang 이 "#!/bin/sh\r" 이 되어 Unix 셸에서
+#   bad interpreter: /bin/sh^M
+# 로 실행 불가가 된다. 실제로 mvnw 가 이 문제로 실행되지 않는 사례가 있었다.
+*.sh        text eol=lf
+mvnw        text eol=lf
+
+# Windows 배치 파일은 반대로 CRLF 를 유지해야 한다.
+*.cmd       text eol=crlf
+*.bat       text eol=crlf
+
+# 바이너리는 줄바꿈 변환 대상이 아니다.
+*.jar       binary
+*.zip       binary
+*.png       binary
+*.jpg       binary
+*.jpeg      binary
+*.gif       binary
+*.webp      binary
+*.ico       binary
+*.pdf       binary
+*.woff      binary
+*.woff2     binary
+*.ttf       binary
+*.br        binary
