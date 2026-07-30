@@ -26,6 +26,7 @@ class NimdaCiteApplicationTests {
 }
 
 @SpringBootTest
+@ActiveProfiles("test") // 테스트 프로파일 없이 실행하면 운영 프로파일(MySQL/실서버 설정)로 부팅된다
 class RedisTest {
 
     @Autowired
