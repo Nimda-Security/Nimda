@@ -86,7 +86,11 @@ public class SecurityConfig {
                                 "/api/auth/profile-image",
                                 "/api/auth/profile-decoration"
                         ).authenticated()
-                        .requestMatchers("/api/actuator/**").permitAll()
+                        // 헬스체크: 별도 관리 포트(management.server.port=9090)에만 바인딩되므로
+                        // nginx 가 프록시하는 8080 으로는 도달할 수 없다. 컨테이너 헬스체크와
+                        // deploy.sh 가 쿠키 없이 호출하므로 인증에서 제외한다.
+                        // show-details/show-components 는 never 이므로 상태 문자열만 응답한다.
+                        .requestMatchers("/actuator/health", "/actuator/health/**").permitAll()
                         // [우선순위 3] 비로그인 허용 (Public API - 정보성 데이터)
                         // 메인 페이지 구성에 필요한 기초 정보들은 로그인 없이 GET 허용
                         .requestMatchers(HttpMethod.GET, "/api/cite/profile-decorations/**").permitAll()
