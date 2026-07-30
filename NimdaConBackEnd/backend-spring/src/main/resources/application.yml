@@ -68,10 +68,10 @@ spring:
     clean-disabled: true
     out-of-order: true  # DB에서 version 10이 빠진 경우 등, 순서 밖 마이그레이션 허용
   
-  security:
-    user:
-      name: ${SPRING_SECURITY_USER_NAME}
-      password: ${SPRING_SECURITY_USER_PASSWORD}
+  # spring.security.user(인메모리 기본 유저) 설정은 제거했다.
+  # 커스텀 SecurityFilterChain + JWT 필터가 인증을 담당하므로 사용되지 않는 값이었고,
+  # 기본값 없는 ${SPRING_SECURITY_USER_NAME}/${...PASSWORD} 플레이스홀더가
+  # docker-compose 에서 주입되지 않아 부팅 실패 위험만 남기고 있었다.
   
   # 파일 업로드 설정 (Multipart)
   servlet:
@@ -87,9 +87,10 @@ server:
 
 # JWT 설정
 jwt:
-  header: Authorization # JWT Token을 Request Header에서 탐색할 때 사용할 헤더 이름 
+  header: Authorization # JWT Token을 Request Header에서 탐색할 때 사용할 헤더 이름
   secret: ${JWT_SECRET:} # JWT 토큰 서명 검증키 (Base64 인코딩됨)
-  token-validity-in-seconds: 86400 # JWT 토큰 만료 시간 24시간 (초)
+  # 토큰 만료 시간(초). TokenProvider/JwtUtil 이 모두 이 값을 사용한다.
+  token-validity-in-seconds: ${JWT_TOKEN_VALIDITY_SECONDS:86400}
 
 auth:
   cookie:
@@ -99,6 +100,14 @@ judge:
   queue:
     stream-key: ${JUDGE_QUEUE_STREAM_KEY:judge:submissions}
     consumer-group: ${JUDGE_QUEUE_CONSUMER_GROUP:judge-workers}
+  callback:
+    # 채점 서버 -> 백엔드 결과 콜백(POST /api/judge/submission/result) 공유 시크릿.
+    # 미설정 시 콜백은 전부 거부된다(fail-closed). 반드시 환경변수로 주입할 것.
+    secret: ${JUDGE_CALLBACK_SECRET:}
+
+# CORS 허용 Origin (콤마 구분). allowCredentials=true 이므로 서드파티 와일드카드 금지.
+cors:
+  allowed-origins: ${CORS_ALLOWED_ORIGINS:https://nimda.kr,https://*.nimda.kr,http://localhost:*,http://127.0.0.1:*}
 
 # 첨부파일 로컬 저장 (cite attachment)
 nimda:
@@ -127,9 +136,12 @@ aws:
 
 logging:
   level:
-    com.nimda.cite.common.s3: DEBUG
-    org.springframework.boot.autoconfigure.condition: DEBUG # 컨디션 체크 확인용
-    com.nimda.cup: DEBUG
+    com.nimda.cite.common.s3: ${LOG_LEVEL_S3:INFO}
+    org.springframework.boot.autoconfigure.condition: ${LOG_LEVEL_AUTOCONFIG:INFO}
+    com.nimda.cup: ${LOG_LEVEL_APP:INFO}
     org.springframework.security: WARN
-    org.hibernate.SQL: DEBUG
-    org.hibernate.type.descriptor.sql.BasicBinder: TRACE
+    # 운영에서 DEBUG/TRACE 로 켜면 SQL 문과 바인딩 파라미터(비밀번호 해시·이메일·학번)가
+    # 그대로 로그에 남는다. 기본은 OFF 로 두고 로컬 디버깅 시에만 환경변수로 올린다.
+    org.hibernate.SQL: ${LOG_LEVEL_SQL:OFF}
+    org.hibernate.orm.jdbc.bind: ${LOG_LEVEL_SQL_BIND:OFF}
+    org.hibernate.type.descriptor.sql.BasicBinder: ${LOG_LEVEL_SQL_BIND:OFF}

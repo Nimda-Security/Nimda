@@ -3,6 +3,7 @@ package judgeServer.domain.submission.controller;
 import com.nimda.cite.common.response.ApiResponse;
 import com.nimda.cite.common.util.JwtUtil;
 import com.nimda.cite.user.repository.UserRepository;
+import com.nimda.cite.user.security.CustomUserDetails;
 import jakarta.validation.Valid;
 import judgeServer.domain.problem.repository.ProblemRepository;
 import judgeServer.domain.submission.dto.*;
@@ -17,13 +18,14 @@ import org.springframework.data.domain.Sort;
 import org.springframework.data.web.PageableDefault;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.server.ResponseStatusException;
 
 import java.util.List;
 
 @RestController
-@RequestMapping("api/judge/submission")
+@RequestMapping("/api/judge/submission")
 public class SubmissionController {
     @Autowired
     private SubmissionService submissionService;
@@ -76,16 +78,19 @@ public class SubmissionController {
         return ApiResponse.ok(dto).toResponse();
     }
 
-    // 제출 상세 보기
+    // 제출 상세 보기 (본인 또는 관리자만)
     @GetMapping("/detail/{submissionId}")
     public ResponseEntity<?> viewMySourceCode(
-            @CookieValue(name = "Authorization", required = false) String accessToken,
+            @AuthenticationPrincipal CustomUserDetails userDetails,
             @PathVariable Long submissionId) {
-        Long userId = jwtUtil.extractUserId(accessToken);
-        if(!userRepository.existsById(userId))
-            throw new ResponseStatusException(HttpStatus.UNAUTHORIZED,"로그인이 필요합니다.");
+        if (userDetails == null)
+            throw new ResponseStatusException(HttpStatus.UNAUTHORIZED, "로그인이 필요합니다.");
 
-        SubDetailResponse dto = submissionService.getSubmitDetail(submissionId);
+        Long userId = userDetails.getUser().getId();
+        boolean isAdmin = userDetails.getAuthorities().stream()
+                .anyMatch(authority -> "ROLE_ADMIN".equals(authority.getAuthority()));
+
+        SubDetailResponse dto = submissionService.getSubmitDetail(submissionId, userId, isAdmin);
         return ApiResponse.ok(dto).toResponse();
     }
 
