@@ -1,5 +1,6 @@
 package com.nimda.cite.user.controller;
 
+import com.nimda.cite.common.util.MailLimitExceededException;
 import com.nimda.cite.common.util.MailService;
 import com.nimda.cite.common.response.ApiResponse;
 import com.nimda.cite.common.util.JwtUtil;
@@ -59,6 +60,7 @@ public class UserRecoveryController {
 
     // 메일 전송 버튼과 연결됨
     // body와 쿠키를 받기 위해 Post로 해야함
+    // 응답 본문은 항상 HTTP 200 + "OK" | "UNAUTHORIZED" | "LIMIT_EXCEEDED" 문자열 중 하나
     @PostMapping("/send-authMail")
     public ResponseEntity<?> sendMail(@RequestBody CheckUserValidateRequest req,
                                       @CookieValue(name = "password_change_token") String token) {
@@ -67,12 +69,18 @@ public class UserRecoveryController {
                 token, req.getUserId(),req.getStudentNum(),req.getEmail()
         );
 
-        if(isVerified) {
+        if(!isVerified) {
+            return ResponseEntity.ok(HttpStatus.UNAUTHORIZED);
+        }
+
+        try {
             mailService.sendAuthCode(req.getEmail());
             // 인증 화면으로 이동
             return ResponseEntity.ok(HttpStatus.OK);
+        } catch (MailLimitExceededException e) {
+            // 하루 발송 횟수 제한 초과 (세션 만료와 구분되는 원인)
+            return ResponseEntity.ok("LIMIT_EXCEEDED");
         }
-        return ResponseEntity.ok(HttpStatus.UNAUTHORIZED);
     }
 
     // 인증 버튼과 연결
