@@ -4,6 +4,7 @@ import ScrollToTop from "@/components/ScrollToTop";
 // 기존 임포트 항목들
 import LoginPage from "@/domains/User/Login/Page";
 import SignUp from "@/domains/User/Register";
+import PasswordRecoveryPage from "@/domains/User/PasswordRecovery";
 import MyPageMileage from "@/domains/User/MyPage/Point/index"; // /mypage 연결 컴포넌트
 import ProblemSubmitPage from "@/domains/Contest/Problem/ProblemSubmit";
 import JudgingStatusPage from "@/domains/Contest/Problem/JudgingStatus";
@@ -36,6 +37,7 @@ const Router = () => {
         {/* 인증 불필요 경로 */}
         <Route path="/login" element={<LoginPage />} />
         <Route path="/signup" element={<SignUp />} />
+        <Route path="/password-recovery" element={<PasswordRecoveryPage />} />
         <Route path="/403" element={<ForbiddenPage />} />
 
         {/* 게스트 접근 가능 경로 */}

@@ -111,6 +111,14 @@ function LogInPage() {
             >
               회원가입
             </button>
+            <span className="login-page__signup-divider" aria-hidden>|</span>
+            <button
+              type="button"
+              className="login-page__signup-link"
+              onClick={() => navigate("/password-recovery")}
+            >
+              비밀번호를 잊으셨나요?
+            </button>
           </div>
         </div>
       </div>

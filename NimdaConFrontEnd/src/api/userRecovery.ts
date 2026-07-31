@@ -86,11 +86,17 @@ export const sendAuthMailAPI = async (
       body: JSON.stringify(req),
     });
 
-    // 이 엔드포인트는 항상 HTTP 200으로 응답하고, 본문에 "OK" | "UNAUTHORIZED" 문자열만 담아 보냄
+    // 이 엔드포인트는 항상 HTTP 200으로 응답하고, 본문에 "OK" | "UNAUTHORIZED" | "LIMIT_EXCEEDED" 문자열만 담아 보냄
     const text = (await response.text()).replace(/^"|"$/g, '');
 
     if (response.ok && text === 'OK') {
       return { success: true, message: '인증 메일이 발송되었습니다.' };
+    }
+    if (text === 'LIMIT_EXCEEDED') {
+      return {
+        success: false,
+        message: '하루 인증 메일 발송 횟수(5회)를 초과했습니다. 자정 이후 다시 시도해주세요.',
+      };
     }
     return {
       success: false,

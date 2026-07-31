@@ -157,3 +157,9 @@
 .login-page__signup-link:hover {
   color: var(--color-black);
 }
+
+.login-page__signup-divider {
+  color: var(--color-gray-300);
+  font-size: 12px;
+  margin: 0 8px;
+}
