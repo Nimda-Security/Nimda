@@ -26,7 +26,7 @@ public class MailService {
     // 인증 코드 KEY 값
     private final String AUTH_PREFIX = "AUTH_CODE:";
     // 메일 인증 횟수 제한
-    private static final int MAX_DAILY_LIMIT = 3;
+    private static final int MAX_DAILY_LIMIT = 5;
 
     public void sendEmail(MimeMessage message) {
         try {
@@ -96,7 +96,9 @@ public class MailService {
         // 3회 제한 초과 시 비즈니스 로직을 바로 중단시킴 (블랙리스트 작동)
         if (currentCount > MAX_DAILY_LIMIT) {
             log.warn("메일 발송 제한 초과 차단(블랙리스트) -> 대상: {} (당일 요청 횟수: {}회)", email, currentCount);
-            throw new IllegalArgumentException("하루에 요청할 수 있는 메일 발송 횟수(3회)를 초과했습니다.");
+            throw new MailLimitExceededException(
+                    "하루에 요청할 수 있는 메일 발송 횟수(" + MAX_DAILY_LIMIT + "회)를 초과했습니다."
+            );
         }
     }
 }
