@@ -6,14 +6,13 @@ import LoginPage from "@/domains/User/Login/Page";
 import SignUp from "@/domains/User/Register";
 import MyPageMileage from "@/domains/User/MyPage/Point/index"; // /mypage 연결 컴포넌트
 import ProblemSubmitPage from "@/domains/Contest/Problem/ProblemSubmit";
-import JudgingStatusPage from "@/domains/Contest/Problem/JudgingStatus";
 import ProblemsPage from "@/domains/Contest/Problem/Problems";
 import ProblemCreatePage from "@/domains/Contest/Problem/ProblemCreate";
 import ProblemEditPage from "@/domains/Contest/Problem/ProblemEdit";
 import AdminDashboard from "@/domains/admin/AdminDashboard.jsx";
 import ProblemDetail from "@/domains/Contest/Problem/ProblemDetail";
 import Home from "@/domains/Home";
-import Scoreboard from "@/domains/Contest/Scoreboard";
+import ContestStatusPage from "@/domains/Contest/Status";
 import ProtectedRoute from "@/components/ProtectedRoute";
 import ForbiddenPage from "@/domains/Error/403";
 
@@ -46,8 +45,6 @@ const Router = () => {
 
         {/* 게스트 접근 가능 경로 */}
         <Route path="/" element={<Home />} />
-        <Route path="/judging-status" element={<JudgingStatusPage />} />
-        <Route path="/scoreboard" element={<Scoreboard />} />
 
         {/* 대회 (NIMDACON) */}
         <Route path="/contest" element={<ContestLanding />} />
@@ -76,10 +73,21 @@ const Router = () => {
           }
         />
 
+        <Route
+          path="/contest/status"
+          element={
+            <ProtectedRoute>
+              <ContestStatusPage />
+            </ProtectedRoute>
+          }
+        />
+
         {/* 구 대회 URL 리다이렉트 */}
         <Route path="/problems" element={<Navigate to="/contest/problems" replace />} />
         <Route path="/problems/:id" element={<ProblemDetailRedirect />} />
         <Route path="/problem-submit" element={<Navigate to="/contest/problems" replace />} />
+        <Route path="/scoreboard" element={<Navigate to="/contest/status" replace />} />
+        <Route path="/judging-status" element={<Navigate to="/contest/status?tab=my" replace />} />
         <Route path="/user/:nickname" element={<UserProfilePage />} />
         <Route path="/board/picture-board" element={<PhotoGalleryBoard boardSlug="picture-board" boardTitle="사진첩" />} />
         <Route path="/board/banner" element={<PhotoGalleryBoard boardSlug="banner" boardTitle="배너" adminOnlyWrite={true} />} />
