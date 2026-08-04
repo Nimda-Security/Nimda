@@ -1,3 +1,6 @@
+// TODO(관리자 레거시): createProblemAPI가 호출하는 /api/problems는 존재하지 않는 엔드포인트.
+// 실제 문제 등록은 POST /api/judge/problem (multipart: HTML+테스트케이스 zip, ADMIN 권한).
+// 이 폼을 multipart 업로드로 재작성하기 전까지는 동작하지 않음 — Bruno/백엔드에서 직접 등록 권장.
 import React, { useState } from 'react';
 import { createProblemAPI } from '@/api/problem';
 

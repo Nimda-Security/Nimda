@@ -1,3 +1,5 @@
+// TODO(관리자 레거시): updateProblemAPI/getProblemByIdForAdminAPI가 호출하는 /api/problems*는
+// 존재하지 않는 엔드포인트이며 백엔드에 문제 수정 API 자체가 없음. 재작성 전까지 동작하지 않음.
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { updateProblemAPI, getProblemByIdForAdminAPI } from '@/api/problem';

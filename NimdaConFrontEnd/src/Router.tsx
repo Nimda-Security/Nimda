@@ -20,7 +20,6 @@ import ContestLanding from "@/domains/Contest/Landing";
 import BoardRoutePage from "@/domains/Board/BoardRoute";
 import BoardDetailPage from "@/domains/Board/BoardDetail";
 import BoardWritePage from "@/domains/Board/BoardWrite";
-import BoardEditPage from "@/domains/Board/BoardEdit";
 import PhotoGalleryBoard from "@/domains/Board/PhotoGalleryBoard";
 import UserProfilePage from "@/domains/User/UserProfile";
 
