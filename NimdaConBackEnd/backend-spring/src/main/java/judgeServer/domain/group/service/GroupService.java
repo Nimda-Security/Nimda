@@ -9,11 +9,9 @@ import judgeServer.domain.group.dto.GroupListResponse;
 import judgeServer.domain.group.dto.GroupUpdateRequest;
 import judgeServer.domain.group.entity.Group;
 import judgeServer.domain.group.repository.GroupRepository;
-import judgeServer.domain.groupMember.entity.GroupMember;
 import judgeServer.domain.groupMember.enums.MemberRole;
-import judgeServer.domain.groupMember.repository.GroupMemberRepository;
+import judgeServer.domain.groupMember.service.GroupMemberService;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.security.access.AccessDeniedException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -31,7 +29,7 @@ public class GroupService {
     // private ActivityRepository activityRepository;
 
     @Autowired
-    private GroupMemberRepository memberRepository;
+    private GroupMemberService groupMemberService;
 
     @Autowired
     private UserRepository userRepository;
@@ -40,6 +38,7 @@ public class GroupService {
     @Transactional
     public GroupDetailResponse createGroup(Long userId, GroupCreateRequest request) {
         User user = getUser(userId);
+        validateUniqueName(request.getName(), null);
 
         Group group = Group.builder()
                 .name(request.getName())
@@ -49,12 +48,7 @@ public class GroupService {
         groupRepository.save(group);
 
         // 그룹 생성자는 자동으로 LEADER 권한의 멤버가 됨
-        GroupMember leader = GroupMember.builder()
-                .group(group)
-                .user(user)
-                .role(MemberRole.LEADER)
-                .build();
-        memberRepository.save(leader);
+        groupMemberService.addMember(group, user, MemberRole.LEADER);
 
         return GroupDetailResponse.from(group);
     }
@@ -64,6 +58,7 @@ public class GroupService {
         Group group = groupRepository.findById(groupId)
                 .orElseThrow(() -> new EntityNotFoundException("존재하지 않는 그룹입니다."));
         validateLeader(groupId, userId);
+        validateUniqueName(request.getName(), groupId);
 
         group.update(request.getName(), request.getCapacity(), request.getDescription());
     }
@@ -101,10 +96,16 @@ public class GroupService {
     }
 
     private void validateLeader(Long groupId, Long userId) {
-        GroupMember member = memberRepository.findByGroupIdAndUserId(groupId, userId)
-                .orElseThrow(() -> new AccessDeniedException("그룹 멤버가 아닙니다."));
-        if (member.getRole() != MemberRole.LEADER) {
-            throw new AccessDeniedException("그룹장만 수행할 수 있습니다.");
+        groupMemberService.validateLeader(groupId, userId);
+    }
+
+    // excludeGroupId가 null이면 생성 시 체크, 값이 있으면 본인 그룹은 제외하고 수정 시 체크
+    private void validateUniqueName(String name, Long excludeGroupId) {
+        boolean duplicated = (excludeGroupId == null)
+                ? groupRepository.existsByName(name)
+                : groupRepository.existsByNameAndIdNot(name, excludeGroupId);
+        if (duplicated) {
+            throw new IllegalStateException("이미 사용 중인 그룹 이름입니다.");
         }
     }
 
