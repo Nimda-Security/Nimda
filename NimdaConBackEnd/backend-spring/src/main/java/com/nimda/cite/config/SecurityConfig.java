@@ -122,7 +122,7 @@ public class SecurityConfig {
                         .requestMatchers("/api/cite/admin/profile-decorations/**").hasRole("ADMIN")
                         .requestMatchers(HttpMethod.DELETE, "/api/users/**").hasRole("ADMIN")
                         .requestMatchers(HttpMethod.PUT, "/api/users/*/role").hasRole("ADMIN")
-                        .requestMatchers(HttpMethod.GET, "/api/groups", "/api/cite/category/all").hasRole("ADMIN")
+                        .requestMatchers(HttpMethod.GET, "/api/cite/category/all").hasRole("ADMIN")
                         .requestMatchers(HttpMethod.POST, "/api/groups", "/api/problems", "/api/contest").hasRole("ADMIN")
                         .requestMatchers(HttpMethod.PUT, "/api/problems/**", "/api/contest/**").hasRole("ADMIN")
                         .requestMatchers(HttpMethod.DELETE, "/api/problems/**", "/api/contest/**").hasRole("ADMIN")
