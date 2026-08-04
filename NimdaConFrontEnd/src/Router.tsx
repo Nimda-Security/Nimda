@@ -67,10 +67,19 @@ const Router = () => {
             </ProtectedRoute>
           }
         />
+        <Route
+          path="/contest/submit/:id"
+          element={
+            <ProtectedRoute>
+              <ProblemSubmitPage />
+            </ProtectedRoute>
+          }
+        />
 
         {/* 구 대회 URL 리다이렉트 */}
         <Route path="/problems" element={<Navigate to="/contest/problems" replace />} />
         <Route path="/problems/:id" element={<ProblemDetailRedirect />} />
+        <Route path="/problem-submit" element={<Navigate to="/contest/problems" replace />} />
         <Route path="/user/:nickname" element={<UserProfilePage />} />
         <Route path="/board/picture-board" element={<PhotoGalleryBoard boardSlug="picture-board" boardTitle="사진첩" />} />
         <Route path="/board/banner" element={<PhotoGalleryBoard boardSlug="banner" boardTitle="배너" adminOnlyWrite={true} />} />
@@ -79,7 +88,6 @@ const Router = () => {
 
         {/* 로그인 필수 경로 */}
         <Route path="/mypage" element={<ProtectedRoute><MyPageMileage /></ProtectedRoute>} />
-        <Route path="/problem-submit" element={<ProtectedRoute><ProblemSubmitPage /></ProtectedRoute>} />
         <Route path="/problem-create" element={<ProtectedRoute><ProblemCreatePage /></ProtectedRoute>} />
         <Route path="/problem-edit/:id" element={<ProtectedRoute><ProblemEditPage /></ProtectedRoute>} />
         <Route path="/board/:boardType/write" element={<ProtectedRoute><BoardWritePage /></ProtectedRoute>} />

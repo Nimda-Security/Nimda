@@ -1,242 +1,188 @@
-import Layout from '@/components/Layout';
-import { useState, useEffect } from 'react';
-import { useNavigate, useLocation } from 'react-router-dom';
+// 03 코드 제출 (피그마 프레임 03)
+// 구 버전은 location.state로 문제 정보를 받았지만, 새 버전은 /contest/submit/:id
+// 라우트 파라미터로 받아 새로고침/직접 진입에도 안전하다.
+
+import { useEffect, useState } from 'react';
+import { Link, useNavigate, useParams } from 'react-router-dom';
 import Editor from '@monaco-editor/react';
+import Layout from '@/components/Layout';
+import PageHead from '../../components/PageHead';
+import { getProblemDetailAPI } from '@/api/problem';
+import { submitSolutionAPI } from '@/api/submission';
+import { simulateJudgement } from '@/api/judgeSimulator';
+import { LANGUAGES } from '../../contest.config';
+import type { ContestLanguage } from '../../contest.config';
+import '../../Contest.css';
 
-function ProblemSubmitPage() {
+const findLanguage = (value: string) =>
+  LANGUAGES.find((lang) => lang.value === value) ?? LANGUAGES[1]; // 기본 C++17
+
+const ProblemSubmitPage = () => {
+  const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
-  const location = useLocation();
 
-  // URL 파라미터에서 문제 정보 가져오기
-  const problemId = location.state?.problemId || 1; // 기본값 1 (A + B)
-  const problemTitle = location.state?.problemTitle || 'A + B';
-  const [formData, setFormData] = useState({
-    title: '',
-    difficulty: '',
-    category: 'C++17', // C++을 기본값으로 설정
-    points: '',
-    description: '',
-    flag: '',
-    hints: '',
-  });
+  const [problemTitle, setProblemTitle] = useState('');
+  const [language, setLanguage] = useState<ContestLanguage>('C++17');
+  const [sourceCode, setSourceCode] = useState<string>(findLanguage('C++17').template);
+  const [submitting, setSubmitting] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
-  // 언어 명칭 정규화 함수
-  const normalizeLanguage = (lang: string) => {
-    const lowerLang = lang.toLowerCase();
-    if (lowerLang.includes('c++') || lowerLang === 'cpp') return 'C++17';
-    if (lowerLang === 'c' || lowerLang === 'c99') return 'C99';
-    if (lowerLang === 'java') return 'Java';
-    return 'C++17'; // 기본값
-  };
-
-  // 컴포넌트 마운트 시 초기값 설정
   useEffect(() => {
-    const initialCode = location.state?.code;
-    const initialLanguage = location.state?.language;
-
-    if (initialCode && initialLanguage) {
-      setFormData((prev) => ({
-        ...prev,
-        description: initialCode,
-        category: normalizeLanguage(initialLanguage),
-      }));
-    } else if (!formData.description.trim()) {
-      const template = getLanguageTemplate('C++17');
-      setFormData((prev) => ({
-        ...prev,
-        description: template,
-      }));
-    }
-  }, []);
-
-  // 언어를 Monaco Editor 언어 ID로 변환
-  const getMonacoLanguage = (language: string) => {
-    switch (language) {
-      case 'C++17':
-      case 'cpp':
-        return 'cpp';
-      case 'Java':
-        return 'java';
-      case 'C99':
-        return 'c';
-      default:
-        return 'plaintext';
-    }
-  };
-
-  // 언어별 기본 템플릿
-  const getLanguageTemplate = (language: string) => {
-    switch (language) {
-      case 'C++17':
-      case 'cpp':
-        return `#include <iostream>
-using namespace std;
-
-int main() {
-    // 여기에 코드를 작성하세요
-    
-    return 0;
-}`;
-      case 'Java':
-        return `import java.util.Scanner;
-
-public class Solution {
-    public static void main(String[] args) {
-        Scanner sc = new Scanner(System.in);
-        // 여기에 코드를 작성하세요
-        
-    }
-}`;
-      case 'C99':
-        return `#include <stdio.h>
-
-int main() {
-    // 여기에 코드를 작성하세요
-    
-    return 0;
-}`;
-      default:
-        return '';
-    }
-  };
-
-  const handleInputChange = (field: string, value: string) => {
-    if (field === 'category') {
-      setFormData((prev) => {
-        const prevTemplate = getLanguageTemplate(prev.category);
-        const nextTemplate = getLanguageTemplate(value);
-        const shouldReplace =
-          !prev.description.trim() || prev.description === prevTemplate;
-
-        return {
-          ...prev,
-          category: value,
-          description:
-            shouldReplace && nextTemplate ? nextTemplate : prev.description,
-        };
-      });
-      return;
-    }
-
-    setFormData((prev) => ({
-      ...prev,
-      [field]: value,
-    }));
-  };
-
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-
-    // 기본 검증
-    if (!formData.description || !formData.category) {
-      alert('소스코드와 언어를 선택해주세요.');
-      return;
-    }
-
-    // 제출 데이터 준비
-    const submissionData = {
-      title: problemTitle, // 선택된 문제 제목 사용
-      code: formData.description, // 소스코드 영역의 내용
-      language: formData.category,
-      problemId: problemId, // 문제 ID 추가
-      description: '문제를 해결하는 프로그램을 작성하시오.',
-      points: parseInt(formData.points) || 100,
-      nonce: Date.now().toString() + Math.random().toString(36).substr(2, 9), // 중복 제출 방지용 고유 ID
-    };
-
-    // 채점 상태 페이지로 이동 (제출 데이터와 함께)
-    navigate('/judging-status', {
-      state: {
-        submissionData,
-        isNewSubmission: true, // 새로운 제출임을 표시
-      },
+    if (!id) return;
+    getProblemDetailAPI(id).then((result) => {
+      if (result.success) setProblemTitle(result.data.title);
+      else setError(result.message);
     });
+  }, [id]);
+
+  const handleLanguageChange = (next: ContestLanguage) => {
+    const prevTemplate = findLanguage(language).template;
+    const nextTemplate = findLanguage(next).template;
+    setLanguage(next);
+    // 코드를 건드리지 않았다면 새 언어 템플릿으로 교체
+    if (!sourceCode.trim() || sourceCode === prevTemplate) {
+      setSourceCode(nextTemplate);
+    }
+  };
+
+  const handleReset = () => {
+    if (
+      sourceCode === findLanguage(language).template ||
+      confirm('작성 중인 코드를 지우고 기본 템플릿으로 되돌릴까요?')
+    ) {
+      setSourceCode(findLanguage(language).template);
+    }
+  };
+
+  const handleSubmit = async () => {
+    if (!id) return;
+    if (!sourceCode.trim()) {
+      alert('소스코드를 입력해주세요.');
+      return;
+    }
+
+    setSubmitting(true);
+    // language는 백엔드 SupportedLanguage가 받는 표시값을 그대로 전송
+    const result = await submitSolutionAPI({
+      problemId: Number(id),
+      language,
+      sourceCode,
+    });
+    setSubmitting(false);
+
+    if (result.success) {
+      simulateJudgement(result.data.submissionId); // MOCK: 채점 워커 미구현 대응
+      navigate(`/contest/status?tab=my&problem=${id}`);
+    } else {
+      alert(result.message);
+    }
   };
 
   return (
     <Layout>
-      <div className="min-h-screen pt-8">
-        <div className="container mx-auto px-4 py-6 max-w-6xl">
-          {/* 헤더 바 */}
-          <div className="bg-white border border-gray-300 rounded-t-lg px-6 py-4 flex items-center justify-between mb-6">
-            <h1 className="text-2xl font-bold text-black">
-              [문제 {problemId}] {problemTitle}
-            </h1>
-            <button
-              onClick={handleSubmit}
-              className="bg-black text-white px-4 py-2 text-sm font-medium rounded hover:bg-blue transition-colors"
-            >
-              제출
-            </button>
+      <div className="contest-page">
+        <PageHead
+          crumb="대회 · NIMDACON 2026 · 코드 제출"
+          title={problemTitle ? `${problemTitle}` : `문제 ${id ?? ''}`}
+          actions={
+            <Link to={`/contest/problems/${id}`} className="contest-btn contest-btn--secondary">
+              문제로 돌아가기
+            </Link>
+          }
+        />
+
+        {error && <p style={{ color: '#d64454', margin: 0 }}>{error}</p>}
+
+        {/* 언어 선택 */}
+        <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+          <span className="contest-meta__label">언어</span>
+          <select
+            value={language}
+            onChange={(e) => handleLanguageChange(e.target.value as ContestLanguage)}
+            style={{
+              width: 180,
+              padding: '8px 12px',
+              fontSize: 14,
+              border: '1px solid #bcbcbc',
+              borderRadius: 4,
+              background: '#ffffff',
+              color: '#0c0c0c',
+            }}
+          >
+            {LANGUAGES.map((lang) => (
+              <option key={lang.value} value={lang.value}>
+                {lang.label}
+              </option>
+            ))}
+          </select>
+        </div>
+
+        {/* 코드 에디터 */}
+        <div style={{ border: '1px solid #bcbcbc', borderRadius: 4, overflow: 'hidden' }}>
+          <div
+            style={{
+              display: 'flex',
+              justifyContent: 'space-between',
+              alignItems: 'center',
+              padding: '10px 16px',
+              background: '#ececec',
+              borderBottom: '1px solid #d4d4d4',
+            }}
+          >
+            <span style={{ fontSize: 14, fontWeight: 500, color: '#525252' }}>소스코드</span>
+            <span className="contest-mono" style={{ fontSize: 12, color: '#8b8b8b' }}>
+              {findLanguage(language).label}
+            </span>
           </div>
+          <div style={{ height: 460 }}>
+            <Editor
+              height="100%"
+              language={findLanguage(language).monaco}
+              theme="vs-light"
+              value={sourceCode}
+              onChange={(value) => setSourceCode(value ?? '')}
+              options={{
+                minimap: { enabled: false },
+                fontSize: 14,
+                wordWrap: 'on',
+                automaticLayout: true,
+                scrollBeyondLastLine: false,
+                lineNumbersMinChars: 3,
+                padding: { top: 16, bottom: 16 },
+              }}
+            />
+          </div>
+        </div>
 
-          <div className="flex flex-col md:flex-row gap-6">
-            {/* 왼쪽 사이드바 */}
-            <div className="w-full md:w-64 bg-white border border-gray-300 rounded-lg p-6 h-fit">
-              <div>
-                <label className="block text-sm font-bold text-black mb-2">
-                  언어
-                </label>
-                <select
-                  value={formData.category}
-                  onChange={(e) =>
-                    handleInputChange('category', e.target.value)
-                  }
-                  className="w-full px-3 py-2 text-sm border border-gray-300 rounded focus:outline-none focus:border-black focus:ring-1 focus:ring-black"
-                >
-                  <option value="C++17">C++17</option>
-                  <option value="C99">C99</option>
-                  <option value="Java">Java</option>
-                </select>
-              </div>
-            </div>
-
-            {/* 메인 콘텐츠 영역 */}
-            <div className="flex-1 flex flex-col">
-              {/* 문제 내용 영역 */}
-              <div className="bg-white border border-gray-300 rounded-lg overflow-hidden">
-                <div className="border-b border-gray-300 px-6 py-3 bg-gray-50">
-                  <span className="text-sm font-bold text-black">소스코드</span>
-                </div>
-                {/* 소스코드 입력 영역  */}
-                <div className="h-[600px]">
-                  <Editor
-                    height="100%"
-                    language={getMonacoLanguage(formData.category)}
-                    theme="vs-light"
-                    value={formData.description}
-                    onChange={(value) =>
-                      handleInputChange('description', value || '')
-                    }
-                    options={{
-                      minimap: { enabled: false },
-                      fontSize: 14,
-                      wordWrap: 'on',
-                      automaticLayout: true,
-                      scrollBeyondLastLine: false,
-                      lineNumbers: 'on',
-                      folding: false,
-                      glyphMargin: false,
-                      lineDecorationsWidth: 0,
-                      lineNumbersMinChars: 3,
-                      renderLineHighlight: 'line',
-                      contextmenu: true,
-                      selectOnLineNumbers: true,
-                      roundedSelection: false,
-                      readOnly: false,
-                      cursorStyle: 'line',
-                      smoothScrolling: true,
-                      padding: { top: 16, bottom: 16 },
-                    }}
-                  />
-                </div>
-              </div>
-            </div>
+        {/* 액션 바 */}
+        <div
+          style={{
+            display: 'flex',
+            justifyContent: 'space-between',
+            alignItems: 'center',
+            gap: 12,
+          }}
+        >
+          <span style={{ fontSize: 12, color: '#8b8b8b' }}>
+            제출 후에는 코드를 수정할 수 없습니다. 제출 횟수는 문제당 10회로 제한됩니다.
+          </span>
+          <div style={{ display: 'flex', gap: 8 }}>
+            <button type="button" className="contest-btn contest-btn--secondary" onClick={handleReset}>
+              초기화
+            </button>
+            <button
+              type="button"
+              className="contest-btn contest-btn--primary"
+              onClick={handleSubmit}
+              disabled={submitting}
+            >
+              {submitting ? '제출 중...' : '제출'}
+            </button>
           </div>
         </div>
       </div>
     </Layout>
   );
-}
+};
 
 export default ProblemSubmitPage;
