@@ -17,7 +17,7 @@ import Scoreboard from "@/domains/Contest/Scoreboard";
 import ProtectedRoute from "@/components/ProtectedRoute";
 import ForbiddenPage from "@/domains/Error/403";
 
-import ContestHome from "@/domains/Contest/Home";
+import ContestLanding from "@/domains/Contest/Landing";
 import BoardRoutePage from "@/domains/Board/BoardRoute";
 import BoardDetailPage from "@/domains/Board/BoardDetail";
 import BoardWritePage from "@/domains/Board/BoardWrite";
@@ -44,7 +44,7 @@ const Router = () => {
         <Route path="/problems/:id" element={<ProblemDetail />} />
         <Route path="/judging-status" element={<JudgingStatusPage />} />
         <Route path="/scoreboard" element={<Scoreboard />} />
-        <Route path="/contest" element={<ContestHome />} />
+        <Route path="/contest" element={<ContestLanding />} />
         <Route path="/user/:nickname" element={<UserProfilePage />} />
         <Route path="/board/picture-board" element={<PhotoGalleryBoard boardSlug="picture-board" boardTitle="사진첩" />} />
         <Route path="/board/banner" element={<PhotoGalleryBoard boardSlug="banner" boardTitle="배너" adminOnlyWrite={true} />} />
