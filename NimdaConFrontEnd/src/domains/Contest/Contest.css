@@ -1,0 +1,734 @@
+/* NIMDACON 대회 페이지 전용 스타일 (.contest- 접두사로 App.css와 격리)
+   색상은 피그마 시안 토큰을 직접 사용한다 — 전역 --color-* 는 index.css/App.css 가
+   서로 다른 값으로 정의하고 있어 여기서는 참조하지 않는다. */
+
+/* ---------- 공용 ---------- */
+
+.contest-page {
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+  font-family: 'Pretendard', sans-serif;
+}
+
+.contest-mono {
+  font-family: 'JetBrains Mono', ui-monospace, SFMono-Regular, Menlo, monospace;
+}
+
+/* ---------- 페이지 헤드 ---------- */
+
+.contest-page-head {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.contest-page-head__top {
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.contest-page-head__crumb {
+  font-size: 15px;
+  font-weight: 500;
+  color: #8b8b8b;
+  margin: 0 0 4px;
+}
+
+.contest-page-head__title {
+  font-size: 28px;
+  font-weight: 700;
+  line-height: 1.2;
+  color: #0c0c0c;
+  margin: 0;
+}
+
+.contest-page-head__desc {
+  font-size: 14px;
+  font-weight: 500;
+  color: #737373;
+  margin: 6px 0 0;
+}
+
+.contest-page-head__actions {
+  display: flex;
+  gap: 8px;
+  flex-shrink: 0;
+}
+
+.contest-divider {
+  border: 0;
+  border-top: 1px solid #d4d4d4;
+  margin: 0;
+}
+
+/* ---------- 버튼 ---------- */
+
+.contest-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 8px 16px;
+  border-radius: 8px;
+  font-size: 14px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: opacity 0.15s, background-color 0.15s;
+  text-decoration: none;
+}
+
+.contest-btn--primary {
+  background: #0c0c0c;
+  color: #f5f5f5;
+  border: 1px solid #0c0c0c;
+}
+
+.contest-btn--primary:hover {
+  opacity: 0.85;
+}
+
+.contest-btn--secondary {
+  background: #ffffff;
+  color: #525252;
+  border: 1px solid #bcbcbc;
+}
+
+.contest-btn--secondary:hover {
+  border-color: #737373;
+  color: #0c0c0c;
+}
+
+.contest-btn:disabled {
+  cursor: not-allowed;
+  opacity: 0.4;
+}
+
+/* ---------- 메타 스트립 (라벨 행 / 값 행) ---------- */
+
+.contest-meta {
+  display: flex;
+  flex-direction: column;
+}
+
+.contest-meta__row {
+  display: grid;
+  grid-auto-flow: column;
+  grid-auto-columns: 1fr;
+  padding: 10px 0;
+}
+
+.contest-meta__label {
+  font-size: 15px;
+  font-weight: 500;
+  color: #8b8b8b;
+}
+
+.contest-meta__value {
+  font-size: 15px;
+  font-weight: 600;
+  color: #0c0c0c;
+}
+
+/* ---------- 테이블 ---------- */
+
+.contest-table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+.contest-table th {
+  padding: 14px 8px;
+  text-align: left;
+  font-size: 15px;
+  font-weight: 700;
+  color: #0c0c0c;
+  border-bottom: 1px solid #d4d4d4;
+  white-space: nowrap;
+}
+
+.contest-table td {
+  padding: 16px 8px;
+  font-size: 15px;
+  color: #525252;
+  border-bottom: 1px solid #e5e5e5;
+  vertical-align: middle;
+}
+
+.contest-table tr:last-child td {
+  border-bottom: 1px solid #d4d4d4;
+}
+
+.contest-table--clickable tbody tr {
+  cursor: pointer;
+  transition: background-color 0.12s;
+}
+
+.contest-table--clickable tbody tr:hover {
+  background: #ececec66;
+}
+
+.contest-table__num {
+  color: #8b8b8b;
+}
+
+.contest-table__strong {
+  font-weight: 600;
+  color: #0c0c0c;
+}
+
+.contest-table__me {
+  background: rgba(74, 127, 204, 0.08);
+}
+
+.contest-table__medal-1 { color: #e8b446; font-weight: 700; }
+.contest-table__medal-2 { color: #a3a3a3; font-weight: 700; }
+.contest-table__medal-3 { color: #e17654; font-weight: 700; }
+
+/* ---------- 배지 ---------- */
+
+.contest-badge {
+  display: inline-flex;
+  align-items: center;
+  padding: 2px 8px;
+  border-radius: 4px;
+  font-size: 12px;
+  font-weight: 600;
+  white-space: nowrap;
+}
+
+/* ---------- 코드 박스 ---------- */
+
+.contest-code {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.contest-code__title {
+  font-size: 15px;
+  font-weight: 600;
+  color: #0c0c0c;
+  margin: 0;
+}
+
+.contest-code__box {
+  background: #ececec;
+  border: 1px solid #d4d4d4;
+  border-radius: 4px;
+  padding: 12px 16px;
+  margin: 0;
+  font-family: 'JetBrains Mono', ui-monospace, SFMono-Regular, Menlo, monospace;
+  font-size: 13px;
+  line-height: 1.7;
+  color: #525252;
+  white-space: pre-wrap;
+  word-break: break-all;
+  overflow-x: auto;
+}
+
+/* ---------- 문제 지문 HTML (S3 원문에 클래스가 없어 하위 선택자로 스타일링) ---------- */
+
+.contest-problem-html {
+  font-size: 15px;
+  line-height: 1.7;
+  color: #525252;
+}
+
+.contest-problem-html h1,
+.contest-problem-html h2,
+.contest-problem-html h3 {
+  font-size: 18px;
+  font-weight: 700;
+  color: #0c0c0c;
+  margin: 28px 0 10px;
+}
+
+.contest-problem-html h1:first-child,
+.contest-problem-html h2:first-child,
+.contest-problem-html h3:first-child {
+  margin-top: 0;
+}
+
+.contest-problem-html p {
+  margin: 0 0 12px;
+}
+
+.contest-problem-html pre {
+  background: #ececec;
+  border: 1px solid #d4d4d4;
+  border-radius: 4px;
+  padding: 12px 16px;
+  font-family: 'JetBrains Mono', ui-monospace, monospace;
+  font-size: 13px;
+  line-height: 1.7;
+  overflow-x: auto;
+}
+
+.contest-problem-html code {
+  font-family: 'JetBrains Mono', ui-monospace, monospace;
+  font-size: 0.9em;
+}
+
+.contest-problem-html table {
+  border-collapse: collapse;
+  margin: 12px 0;
+}
+
+.contest-problem-html th,
+.contest-problem-html td {
+  border: 1px solid #d4d4d4;
+  padding: 6px 12px;
+}
+
+/* ---------- 탭 ---------- */
+
+.contest-tabs {
+  display: flex;
+  gap: 8px;
+}
+
+.contest-tab {
+  padding: 6px 14px;
+  border-radius: 4px;
+  border: 0;
+  font-size: 14px;
+  font-weight: 500;
+  cursor: pointer;
+  background: #ececec;
+  color: #737373;
+  transition: background-color 0.15s, color 0.15s;
+}
+
+.contest-tab--active {
+  background: #0c0c0c;
+  color: #f5f5f5;
+}
+
+/* ---------- 풀블리드 (사이드바 없는 랜딩에서 942px 컬럼 밖으로 확장) ---------- */
+
+.contest-bleed {
+  width: 100vw;
+  margin-left: calc(50% - 50vw);
+}
+
+/* ---------- 랜딩 (다크 토큰은 여기 스코프에서만 정의) ---------- */
+
+.contest-landing {
+  --cl-bg: #0c0c0c;
+  --cl-panel: #000000;
+  --cl-panel-bar: #1a1a1a;
+  --cl-fg: #f5f5f5;
+  --cl-fg-soft: #bcbcbc;
+  --cl-fg-mute: #8b8b8b;
+  --cl-border: #525252;
+  --cl-green: #5cb85c;
+  --cl-cyan: #5bc0de;
+  --cl-yellow: #e8b446;
+  --cl-blue: #4a7fcc;
+  --cl-red: #d64454;
+  font-family: 'Pretendard', sans-serif;
+}
+
+.contest-landing__section {
+  padding: 88px 0;
+}
+
+.contest-landing__inner {
+  max-width: 960px;
+  margin: 0 auto;
+  padding: 0 24px;
+}
+
+.contest-landing__dark {
+  background: var(--cl-bg);
+  color: var(--cl-fg);
+}
+
+.contest-landing__gray {
+  background: #ececec;
+}
+
+/* 히어로 */
+
+.contest-hero {
+  display: flex;
+  gap: 40px;
+  align-items: flex-start;
+}
+
+.contest-hero__copy {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+  min-width: 0;
+}
+
+.contest-hero__prompt {
+  font-size: 13px;
+  color: var(--cl-green);
+  margin: 0;
+}
+
+.contest-hero__eyebrow {
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: 0.35em;
+  color: var(--cl-cyan);
+  margin: 0;
+}
+
+.contest-hero__logotype {
+  font-size: 54px;
+  font-weight: 800;
+  line-height: 1.05;
+  letter-spacing: -0.02em;
+  color: var(--cl-fg);
+  margin: 0;
+  white-space: pre-line;
+}
+
+.contest-hero__tagline {
+  font-size: 22px;
+  font-weight: 700;
+  color: var(--cl-fg-soft);
+  margin: 0;
+}
+
+.contest-hero__desc {
+  font-size: 15px;
+  line-height: 1.6;
+  color: var(--cl-fg-mute);
+  margin: 0;
+  max-width: 520px;
+  white-space: pre-line;
+}
+
+.contest-hero__meta {
+  font-size: 13px;
+  color: var(--cl-fg-mute);
+  margin: 0;
+}
+
+.contest-hero__cta {
+  display: flex;
+  gap: 12px;
+  margin-top: 8px;
+}
+
+.contest-btn--on-dark {
+  background: var(--cl-fg);
+  color: var(--cl-bg);
+  border: 1px solid var(--cl-fg);
+  padding: 12px 22px;
+  font-size: 15px;
+  font-weight: 600;
+}
+
+.contest-btn--on-dark:hover {
+  opacity: 0.85;
+}
+
+.contest-btn--on-dark-ghost {
+  background: transparent;
+  color: var(--cl-fg-soft);
+  border: 1px solid var(--cl-border);
+  padding: 12px 22px;
+  font-size: 15px;
+  font-weight: 600;
+}
+
+.contest-btn--on-dark-ghost:hover {
+  border-color: var(--cl-fg-soft);
+  color: var(--cl-fg);
+}
+
+/* 터미널 카드 */
+
+.contest-terminal {
+  width: 400px;
+  flex-shrink: 0;
+  border: 1px solid var(--cl-border);
+  border-radius: 6px;
+  overflow: hidden;
+  background: var(--cl-panel);
+}
+
+.contest-terminal__bar {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 12px;
+  background: var(--cl-panel-bar);
+}
+
+.contest-terminal__dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+}
+
+.contest-terminal__name {
+  font-size: 12px;
+  color: var(--cl-fg-mute);
+}
+
+.contest-terminal__body {
+  padding: 16px 16px 20px;
+  font-size: 12px;
+  line-height: 1.9;
+}
+
+.contest-terminal__body p {
+  margin: 0;
+  white-space: pre-wrap;
+}
+
+/* 스탯 스트립 */
+
+.contest-stats {
+  display: grid;
+  grid-auto-flow: column;
+  grid-auto-columns: 1fr;
+  align-items: center;
+}
+
+.contest-stats__cell {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+  border-left: 1px solid #d4d4d4;
+}
+
+.contest-stats__cell:first-child {
+  border-left: 0;
+}
+
+.contest-stats__label {
+  font-size: 14px;
+  font-weight: 500;
+  color: #8b8b8b;
+}
+
+.contest-stats__value {
+  font-size: 22px;
+  font-weight: 700;
+  color: #0c0c0c;
+}
+
+/* 섹션 헤드 */
+
+.contest-section-head {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin-bottom: 32px;
+}
+
+.contest-section-head__kicker {
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: 0.35em;
+  color: #4a7fcc;
+  margin: 0;
+}
+
+.contest-section-head__title {
+  font-size: 28px;
+  font-weight: 700;
+  color: #0c0c0c;
+  margin: 0;
+}
+
+.contest-section-head__sub {
+  font-size: 15px;
+  color: #737373;
+  margin: 0;
+}
+
+.contest-landing__dark .contest-section-head__title {
+  color: var(--cl-fg);
+}
+
+/* 트랙 카드 */
+
+.contest-tracks {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 24px;
+}
+
+.contest-track-card {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  padding: 24px;
+  border: 1px solid #d4d4d4;
+  border-radius: 6px;
+  background: #ffffff;
+}
+
+.contest-track-card__kicker {
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.35em;
+  margin: 0;
+}
+
+.contest-track-card__title {
+  font-size: 19px;
+  font-weight: 700;
+  color: #0c0c0c;
+  margin: 0;
+}
+
+.contest-track-card__body {
+  font-size: 14px;
+  line-height: 1.6;
+  color: #737373;
+  margin: 0;
+  flex: 1;
+}
+
+.contest-track-card__tags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+/* 타임라인 */
+
+.contest-timeline {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 24px;
+}
+
+.contest-step {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.contest-step__num {
+  font-size: 26px;
+  font-weight: 700;
+  color: #bcbcbc;
+  margin: 0;
+}
+
+.contest-step__rule {
+  height: 2px;
+  background: #d4d4d4;
+}
+
+.contest-step--current .contest-step__num { color: #4a7fcc; }
+.contest-step--current .contest-step__rule { background: #4a7fcc; }
+
+.contest-step__date {
+  font-size: 12px;
+  color: #8b8b8b;
+  margin: 0;
+}
+
+.contest-step__title {
+  font-size: 19px;
+  font-weight: 700;
+  color: #0c0c0c;
+  margin: 0;
+}
+
+.contest-step__body {
+  font-size: 14px;
+  line-height: 1.6;
+  color: #737373;
+  margin: 0;
+}
+
+/* 규칙 2단 */
+
+.contest-rules {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 24px;
+}
+
+.contest-rule-box {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  padding: 24px;
+  border-radius: 6px;
+  background: #ececec;
+}
+
+.contest-rule-box__title {
+  font-size: 19px;
+  font-weight: 700;
+  color: #0c0c0c;
+  margin: 0;
+}
+
+.contest-rule-box__item {
+  display: flex;
+  gap: 10px;
+  font-size: 14px;
+  line-height: 1.6;
+  color: #737373;
+}
+
+.contest-rule-box__marker {
+  font-weight: 700;
+  flex-shrink: 0;
+}
+
+/* CTA 밴드 */
+
+.contest-cta {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 14px;
+  text-align: center;
+}
+
+.contest-cta__kicker {
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: 0.35em;
+  color: var(--cl-green);
+  margin: 0;
+}
+
+.contest-cta__title {
+  font-size: 28px;
+  font-weight: 700;
+  color: var(--cl-fg);
+  margin: 0;
+}
+
+.contest-cta__sub {
+  font-size: 15px;
+  color: var(--cl-fg-mute);
+  margin: 0;
+  max-width: 520px;
+}
+
+.contest-cta__buttons {
+  display: flex;
+  gap: 12px;
+  margin-top: 8px;
+}
+
+/* ---------- 반응형 최소 대응 ---------- */
+
+@media (max-width: 960px) {
+  .contest-hero { flex-direction: column; }
+  .contest-terminal { width: 100%; }
+  .contest-tracks { grid-template-columns: 1fr; }
+  .contest-timeline { grid-template-columns: repeat(2, 1fr); }
+  .contest-rules { grid-template-columns: 1fr; }
+}
