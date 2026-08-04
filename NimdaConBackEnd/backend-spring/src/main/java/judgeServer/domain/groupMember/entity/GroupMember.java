@@ -38,4 +38,8 @@ public class GroupMember extends BaseTime {
         this.role = role;
     }
 
+    public void updateRole(MemberRole role) {
+        this.role = role;
+    }
+
 }
