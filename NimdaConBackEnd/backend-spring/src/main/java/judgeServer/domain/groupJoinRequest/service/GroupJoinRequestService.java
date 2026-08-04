@@ -10,9 +10,9 @@ import judgeServer.domain.groupJoinRequest.entity.GroupJoinRequest;
 import judgeServer.domain.groupJoinRequest.enums.JoinRequestStatus;
 import judgeServer.domain.groupJoinRequest.enums.JoinType;
 import judgeServer.domain.groupJoinRequest.repository.GroupJoinRequestRepository;
-import judgeServer.domain.groupMember.entity.GroupMember;
 import judgeServer.domain.groupMember.enums.MemberRole;
 import judgeServer.domain.groupMember.repository.GroupMemberRepository;
+import judgeServer.domain.groupMember.service.GroupMemberService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.access.AccessDeniedException;
 import org.springframework.stereotype.Service;
@@ -35,6 +35,9 @@ public class GroupJoinRequestService {
 
     @Autowired
     private GroupMemberRepository memberRepository;
+
+    @Autowired
+    private GroupMemberService groupMemberService;
 
     @Autowired
     private UserRepository userRepository;
@@ -84,17 +87,14 @@ public class GroupJoinRequestService {
         validateActor(request, actorId);
         validatePending(request);
 
-        Long groupId = request.getGroup().getId();
-        validateCapacity(groupId);
+        // 정원 확인 시 락을 사용해 동시성 문제를 방지하게 설정
+        Group group = groupRepository.findByIdForUpdate(request.getGroup().getId())
+                .orElseThrow(() -> new EntityNotFoundException("존재하지 않는 그룹입니다."));
+        validateCapacity(group);
 
         request.updateStatus(JoinRequestStatus.ACCEPTED);
 
-        GroupMember member = GroupMember.builder()
-                .group(request.getGroup())
-                .user(request.getUser())
-                .role(MemberRole.MEMBER)
-                .build();
-        memberRepository.save(member);
+        groupMemberService.addMember(group, request.getUser(), MemberRole.MEMBER);
     }
 
     // 요청 거절
@@ -119,7 +119,10 @@ public class GroupJoinRequestService {
         request.updateStatus(JoinRequestStatus.CANCELED);
     }
 
-    public List<GroupJoinRequestResponse> getPendingRequestsOfGroup(Long groupId) {
+    // 그룹장만 대기 중인 신청/초대 목록을 볼 수 있음
+    public List<GroupJoinRequestResponse> getPendingRequestsOfGroup(Long groupId, Long requesterId) {
+        validateLeader(groupId, requesterId);
+
         return joinRequestRepository.findByGroupIdAndStatus(groupId, JoinRequestStatus.PENDING)
                 .stream()
                 .map(GroupJoinRequestResponse::from)
@@ -132,15 +135,10 @@ public class GroupJoinRequestService {
                 .map(GroupJoinRequestResponse::from)
                 .toList();
     }
-
-    // --- private helpers ---
-
+    
     private void validateActor(GroupJoinRequest request, Long actorId) {
         boolean isTargetUser = request.getUser().getId().equals(actorId);
-        boolean isGroupLeader = memberRepository
-                .findByGroupIdAndRole(request.getGroup().getId(), MemberRole.LEADER)
-                .map(leader -> leader.getUser().getId().equals(actorId))
-                .orElse(false);
+        boolean isGroupLeader = groupMemberService.isLeader(request.getGroup().getId(), actorId);
 
         if (request.getJoinType() == JoinType.APPLY && !isGroupLeader) {
             throw new AccessDeniedException("그룹장만 신청을 수락/거절할 수 있습니다.");
@@ -169,20 +167,15 @@ public class GroupJoinRequestService {
         }
     }
 
-    private void validateCapacity(Long groupId) {
-        Group group = getGroup(groupId);
-        long currentCount = memberRepository.countByGroupId(groupId);
+    private void validateCapacity(Group group) {
+        long currentCount = memberRepository.countByGroupId(group.getId());
         if (currentCount >= group.getCapacity()) {
             throw new IllegalStateException("그룹 정원이 초과되었습니다.");
         }
     }
 
     private void validateLeader(Long groupId, Long userId) {
-        GroupMember member = memberRepository.findByGroupIdAndUserId(groupId, userId)
-                .orElseThrow(() -> new AccessDeniedException("그룹 멤버가 아닙니다."));
-        if (member.getRole() != MemberRole.LEADER) {
-            throw new AccessDeniedException("그룹장만 수행할 수 있습니다.");
-        }
+        groupMemberService.validateLeader(groupId, userId);
     }
 
     private Group getGroup(Long groupId) {
