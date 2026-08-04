@@ -169,22 +169,24 @@
   background: #ececec66;
 }
 
-.contest-table__num {
+/* `.contest-table td`(특이도 0,1,1)가 아래 수식 클래스들을 덮어쓰지 않도록
+   td 를 함께 붙여 특이도를 올린다. */
+.contest-table td.contest-table__num {
   color: #8b8b8b;
 }
 
-.contest-table__strong {
+.contest-table td.contest-table__strong {
   font-weight: 600;
   color: #0c0c0c;
 }
 
-.contest-table__me {
+.contest-table tr.contest-table__me td {
   background: rgba(74, 127, 204, 0.08);
 }
 
-.contest-table__medal-1 { color: #e8b446; font-weight: 700; }
-.contest-table__medal-2 { color: #a3a3a3; font-weight: 700; }
-.contest-table__medal-3 { color: #e17654; font-weight: 700; }
+.contest-table td.contest-table__medal-1 { color: #e8b446; font-weight: 700; }
+.contest-table td.contest-table__medal-2 { color: #a3a3a3; font-weight: 700; }
+.contest-table td.contest-table__medal-3 { color: #e17654; font-weight: 700; }
 
 /* ---------- 배지 ---------- */
 
@@ -331,14 +333,17 @@
   font-family: 'Pretendard', sans-serif;
 }
 
+/* 같은 요소에 __section 과 __inner 를 함께 쓰므로 padding 단축 속성을 쓰면 서로 덮어쓴다.
+   세로는 __section, 가로 폭은 __inner 가 각각 다른 속성으로 담당하게 분리한다. */
 .contest-landing__section {
-  padding: 88px 0;
+  padding-top: 88px;
+  padding-bottom: 88px;
 }
 
+/* 넓은 화면에서는 정확히 960px, 좁아지면 좌우 24px 여백 유지 */
 .contest-landing__inner {
-  max-width: 960px;
+  width: min(960px, calc(100% - 48px));
   margin: 0 auto;
-  padding: 0 24px;
 }
 
 .contest-landing__dark {

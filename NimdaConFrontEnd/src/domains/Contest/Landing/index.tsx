@@ -80,7 +80,7 @@ const ContestLanding = () => (
 
       {/* 스탯 스트립 */}
       <section className="contest-bleed contest-landing__gray">
-        <div className="contest-landing__inner" style={{ padding: '28px 24px' }}>
+        <div className="contest-landing__inner" style={{ paddingTop: 28, paddingBottom: 28 }}>
           <div className="contest-stats">
             {[
               ['참가 인원', CONTEST.stats.participants],
@@ -193,7 +193,7 @@ const ContestLanding = () => (
 
       {/* CTA */}
       <section className="contest-bleed contest-landing__dark">
-        <div className="contest-landing__inner" style={{ padding: '80px 24px' }}>
+        <div className="contest-landing__inner" style={{ paddingTop: 80, paddingBottom: 80 }}>
           <div className="contest-cta">
             <p className="contest-cta__kicker contest-mono">READY TO START ?</p>
             <h2 className="contest-cta__title">{CONTEST.name}에서 만나요</h2>

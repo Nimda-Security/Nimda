@@ -3,6 +3,7 @@ import tailwindcss from '@tailwindcss/vite'
 import react from '@vitejs/plugin-react'
 import path from "path";
 import fs from 'fs';
+import { devMockApi } from './dev-mock-api'; // VITE_MOCK_API=1 일 때만 동작 (개발 전용)
 
 export default defineConfig(({ mode }) => {
   const env = loadEnv(mode, process.cwd(), '')
@@ -16,6 +17,7 @@ export default defineConfig(({ mode }) => {
       __APP_VERSION__: JSON.stringify(appVersion),
     },
     plugins: [
+      devMockApi(),
       react(),
       tailwindcss(),
     ],
