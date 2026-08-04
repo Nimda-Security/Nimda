@@ -15,7 +15,6 @@ import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
-import java.util.Map;
 
 @RestController
 @RequestMapping("/api/groups")
@@ -33,8 +32,8 @@ public class GroupController {
             Long userId = userDetails.getUser().getId();
             GroupDetailResponse response = groupService.createGroup(userId, request);
 
-            return ApiResponse.ok("그룹이 성공적으로 생성되었습니다.",
-                    Map.of("group", response)).toResponse(HttpStatus.CREATED);
+            return ApiResponse.ok("그룹이 성공적으로 생성되었습니다.", response)
+                    .toResponse(HttpStatus.CREATED);
 
         } catch(Exception e) {
             return ApiResponse.fail("그룹 생성 중 오류가 발생하였습니다.")
@@ -51,8 +50,8 @@ public class GroupController {
                     ? groupService.getAllGroups()
                     : groupService.searchGroups(keyword);
 
-            return ApiResponse.ok("그룹 목록을 성공적으로 조회하였습니다.",
-                    Map.of("groups", groups)).toResponse(HttpStatus.OK);
+            return ApiResponse.ok("그룹 목록을 성공적으로 조회하였습니다.", groups)
+                    .toResponse(HttpStatus.OK);
         } catch (Exception e) {
             return ApiResponse.fail("그룹 목록 조회 중 오류가 발생하였습니다.")
                     .toResponse(HttpStatus.INTERNAL_SERVER_ERROR);
@@ -63,8 +62,8 @@ public class GroupController {
     public ResponseEntity<?> getGroup(@PathVariable Long groupId) {
         try {
             GroupDetailResponse response = groupService.getGroup(groupId);
-            return ApiResponse.ok("그룹을 성공적으로 조회하였습니다.",
-                    Map.of("group", response)).toResponse(HttpStatus.CREATED);
+            return ApiResponse.ok("그룹을 성공적으로 조회하였습니다.", response)
+                    .toResponse(HttpStatus.OK);
 
         } catch (Exception e) {
             return ApiResponse.fail("그룹 조회 중 오류가 발생하였습니다.")
