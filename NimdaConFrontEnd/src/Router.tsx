@@ -1,4 +1,4 @@
-import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
+import { BrowserRouter, Routes, Route, Navigate, useParams } from "react-router-dom";
 import ScrollToTop from "@/components/ScrollToTop";
 
 // 기존 임포트 항목들
@@ -11,7 +11,7 @@ import ProblemsPage from "@/domains/Contest/Problem/Problems";
 import ProblemCreatePage from "@/domains/Contest/Problem/ProblemCreate";
 import ProblemEditPage from "@/domains/Contest/Problem/ProblemEdit";
 import AdminDashboard from "@/domains/admin/AdminDashboard.jsx";
-import ProblemDetail from "@/domains/Contest/Problem/ProblemDetail/index.jsx";
+import ProblemDetail from "@/domains/Contest/Problem/ProblemDetail";
 import Home from "@/domains/Home";
 import Scoreboard from "@/domains/Contest/Scoreboard";
 import ProtectedRoute from "@/components/ProtectedRoute";
@@ -28,6 +28,12 @@ import UserProfilePage from "@/domains/User/UserProfile";
 // [추가] 관리자 마일리지 지급 페이지 컴포넌트 임포트
 import AdminMileage from "@/domains/admin/AdminMileage.jsx";
 
+// 구 /problems/:id → /contest/problems/:id 리다이렉트용
+const ProblemDetailRedirect = () => {
+  const { id } = useParams<{ id: string }>();
+  return <Navigate to={`/contest/problems/${id}`} replace />;
+};
+
 const Router = () => {
   return (
     <BrowserRouter>
@@ -40,7 +46,6 @@ const Router = () => {
 
         {/* 게스트 접근 가능 경로 */}
         <Route path="/" element={<Home />} />
-        <Route path="/problems/:id" element={<ProblemDetail />} />
         <Route path="/judging-status" element={<JudgingStatusPage />} />
         <Route path="/scoreboard" element={<Scoreboard />} />
 
@@ -54,9 +59,18 @@ const Router = () => {
             </ProtectedRoute>
           }
         />
+        <Route
+          path="/contest/problems/:id"
+          element={
+            <ProtectedRoute>
+              <ProblemDetail />
+            </ProtectedRoute>
+          }
+        />
 
         {/* 구 대회 URL 리다이렉트 */}
         <Route path="/problems" element={<Navigate to="/contest/problems" replace />} />
+        <Route path="/problems/:id" element={<ProblemDetailRedirect />} />
         <Route path="/user/:nickname" element={<UserProfilePage />} />
         <Route path="/board/picture-board" element={<PhotoGalleryBoard boardSlug="picture-board" boardTitle="사진첩" />} />
         <Route path="/board/banner" element={<PhotoGalleryBoard boardSlug="banner" boardTitle="배너" adminOnlyWrite={true} />} />
