@@ -42,5 +42,4 @@ public interface FileStore {
      */
     Optional<Resource> getResource(String storedFilename);
 
-    void uploadProblemFile(String problemCode, String relativePath, java.nio.file.Path filePath);
 }

@@ -105,9 +105,4 @@ public class LocalFileStore implements FileStore {
         }
         return Optional.of(new FileSystemResource(target.toFile()));
     }
-
-    @Override
-    public void uploadProblemFile(String problemCode, String relativePath, java.nio.file.Path filePath) {
-
-    }
 }
