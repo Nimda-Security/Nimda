@@ -6,13 +6,7 @@ import LoginPage from "@/domains/User/Login/Page";
 import SignUp from "@/domains/User/Register";
 import PasswordRecoveryPage from "@/domains/User/PasswordRecovery";
 import MyPageMileage from "@/domains/User/MyPage/Point/index"; // /mypage 연결 컴포넌트
-import ProblemSubmitPage from "@/domains/Contest/Problem/ProblemSubmit";
-import JudgingStatusPage from "@/domains/Contest/Problem/JudgingStatus";
-import ProblemsPage from "@/domains/Contest/Problem/Problems";
-import ProblemCreatePage from "@/domains/Contest/Problem/ProblemCreate";
-import ProblemEditPage from "@/domains/Contest/Problem/ProblemEdit";
 import AdminDashboard from "@/domains/admin/AdminDashboard.jsx";
-import ProblemDetail from "@/domains/Contest/Problem/ProblemDetail/index.jsx";
 import Home from "@/domains/Home";
 import Scoreboard from "@/domains/Contest/Scoreboard";
 import ProtectedRoute from "@/components/ProtectedRoute";
@@ -42,9 +36,6 @@ const Router = () => {
 
         {/* 게스트 접근 가능 경로 */}
         <Route path="/" element={<Home />} />
-        <Route path="/problems" element={<ProblemsPage />} />
-        <Route path="/problems/:id" element={<ProblemDetail />} />
-        <Route path="/judging-status" element={<JudgingStatusPage />} />
         <Route path="/scoreboard" element={<Scoreboard />} />
         <Route path="/contest" element={<ContestHome />} />
         <Route path="/user/:nickname" element={<UserProfilePage />} />
@@ -55,9 +46,6 @@ const Router = () => {
 
         {/* 로그인 필수 경로 */}
         <Route path="/mypage" element={<ProtectedRoute><MyPageMileage /></ProtectedRoute>} />
-        <Route path="/problem-submit" element={<ProtectedRoute><ProblemSubmitPage /></ProtectedRoute>} />
-        <Route path="/problem-create" element={<ProtectedRoute><ProblemCreatePage /></ProtectedRoute>} />
-        <Route path="/problem-edit/:id" element={<ProtectedRoute><ProblemEditPage /></ProtectedRoute>} />
         <Route path="/board/:boardType/write" element={<ProtectedRoute><BoardWritePage /></ProtectedRoute>} />
         <Route path="/board/:boardType/edit/:id" element={<ProtectedRoute><BoardWritePage /></ProtectedRoute>} />
 

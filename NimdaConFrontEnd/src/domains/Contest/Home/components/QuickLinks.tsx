@@ -1,20 +1,10 @@
-import { FileText, CheckCircle, Trophy } from 'lucide-react';
+import { Trophy } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { isAdmin } from '@/utils/jwt';
 
 export function QuickLinks() {
   const navigate = useNavigate();
   const links = [
-    {
-      icon: FileText,
-      title: '문제 바로가기',
-      path: '/problems',
-    },
-    // {
-    //   icon: CheckCircle,
-    //   title: '제출 현황',
-    //   path: '/status',
-    // },
     {
       icon: Trophy,
       title: '스코어보드',
