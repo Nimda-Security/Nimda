@@ -21,7 +21,7 @@ public class S3Properties {
     private String profileImagePath = "profiles/";
     private String boardImagePath = "boards/";
     private String boardFilePath = "boards/files/";
-    private String problemPath = "problems/";
+    private String challengePath = "challenges/";
 
     // 제약 사항
     private Long maxFileSize;
