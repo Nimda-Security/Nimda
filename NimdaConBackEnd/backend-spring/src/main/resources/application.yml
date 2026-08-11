@@ -118,7 +118,7 @@ aws:
     profile-image-path: profiles/ # 프로필 이미지 저장
     board-image-path: boards/ # 게시판 이미지
     board-file-path: boards/files/ # 게시판 첨부파일
-    problem-file-path: problems/
+    challenge-path: challenges/
 
     # 파일 크기 제한 
     max-file-size: 10485760 # 10mb
