@@ -123,22 +123,14 @@ public class SecurityConfig {
                         .requestMatchers(HttpMethod.DELETE, "/api/users/**").hasRole("ADMIN")
                         .requestMatchers(HttpMethod.PUT, "/api/users/*/role").hasRole("ADMIN")
                         .requestMatchers(HttpMethod.GET, "/api/cite/category/all").hasRole("ADMIN")
-                        .requestMatchers(HttpMethod.POST, "/api/groups", "/api/problems", "/api/contest").hasRole("ADMIN")
-                        .requestMatchers(HttpMethod.PUT, "/api/problems/**", "/api/contest/**").hasRole("ADMIN")
-                        .requestMatchers(HttpMethod.DELETE, "/api/problems/**", "/api/contest/**").hasRole("ADMIN")
+                        .requestMatchers(HttpMethod.POST, "/api/groups").hasRole("ADMIN")
                         .requestMatchers(HttpMethod.POST, "/api/cite/category/**").hasRole("ADMIN")
                         .requestMatchers(HttpMethod.PUT, "/api/cite/category/**").hasRole("ADMIN")
                         .requestMatchers(HttpMethod.DELETE, "/api/cite/category/**").hasRole("ADMIN")
-                        .requestMatchers(HttpMethod.GET, "/api/problems/*/admin").hasRole("ADMIN")
 
-                        // 채점 서버 api
-                        .requestMatchers(HttpMethod.POST, "/api/judge/problem").hasRole("ADMIN")
-                        .requestMatchers(HttpMethod.POST, "api/judge/problem/toggle-public").hasRole("ADMIN")
-                        .requestMatchers(HttpMethod.DELETE, "api/judge/problem").hasRole("ADMIN")
-                        .requestMatchers(HttpMethod.GET, "/api/judge/problem/**").authenticated()
-
-                        // 재출 api
-                        .requestMatchers(HttpMethod.POST, "api/judge/submission").authenticated()
+                        // CTF 문제 api (등록/삭제/공개전환은 관리자만)
+                        .requestMatchers(HttpMethod.POST, "/api/ctf/challenge/**").hasRole("ADMIN")
+                        .requestMatchers(HttpMethod.DELETE, "/api/ctf/challenge/**").hasRole("ADMIN")
 
                         // [우선순위 7] 나머지 모든 요청은 기본적으로 인증 필요
                         .anyRequest().authenticated()
