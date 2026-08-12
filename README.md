@@ -1,154 +1,174 @@
-# NIMDA
+<h1 align="center">NIMDA SECURITY</h1>
 
-> 공주대학교 정보보안 동아리 **NIMDA**의 통합 웹 플랫폼
+<p align="center">
+  A contest and community platform for the NIMDA SECURITY club.
+</p>
 
-동아리 커뮤니티 · 운영 · 자체 대회(님다콘)를 하나의 서비스로 연결합니다.
+<p align="center">
+  <a href="https://nimda.kr"><strong>Live App</strong></a> ·
+  <a href="README.ko.md">한국어</a> ·
+  <a href="#features">Features</a> ·
+  <a href="#quick-start">Quick Start</a> ·
+  <a href="#license-and-copyright">License</a>
+</p>
 
-|             |                                                      |
-| ----------- | ---------------------------------------------------- |
-| **Service** | [nimda.kr](https://nimda.kr)                         |
-| **Landing** | [nimda.space](https://nimda.space)                   |
-| **Period**  | 2025.09 —                                            |
-| **Stack**   | React · Spring Boot · MySQL · Redis · Nginx · Docker |
-
----
-
-## Overview
-
-|               |                                                    |
-| ------------- | -------------------------------------------------- |
-| **Community** | 게시판 · 댓글 · 좋아요 · 알림 · 첨부파일           |
-| **Members**   | 가입 승인 · JWT 인증 · 역할 기반 권한 · 마이페이지 |
-| **Ops**       | 관리자 대시보드 · 카테고리 · 태그 · 유저 운영      |
-| **Activity**  | 출석 · 마일리지 · 배지 · 프로필 장식               |
-| **Contest**   | 님다콘 — 문제 · 제출 · 스코어보드                  |
-| **Brand**     | 동아리 랜딩 — 활동 · 수상 · 지원                   |
+<p align="center">
+  <a href="https://github.com/Nimda-Security/Nimda/actions/workflows/ci.yml"><img alt="CI" src="https://img.shields.io/github/actions/workflow/status/Nimda-Security/Nimda/ci.yml?branch=main&label=CI" /></a>
+  <a href="https://nimda.kr"><img alt="Live app" src="https://img.shields.io/badge/Live-nimda.kr-111111" /></a>
+  <img alt="Java 17" src="https://img.shields.io/badge/Java-17-007396?logo=openjdk&logoColor=white" />
+  <img alt="Spring Boot" src="https://img.shields.io/badge/Spring_Boot-3.2-6DB33F?logo=springboot&logoColor=white" />
+  <img alt="React" src="https://img.shields.io/badge/React-19-61DAFB?logo=react&logoColor=111111" />
+  <img alt="Vite" src="https://img.shields.io/badge/Vite-7-646CFF?logo=vite&logoColor=white" />
+  <img alt="License" src="https://img.shields.io/badge/license-not_specified-lightgrey" />
+</p>
 
 ---
+
+## What is NIMDA SECURITY?
+
+NIMDA SECURITY is the production web platform for the NIMDA SECURITY club. It brings contest operations, problem solving, scoreboards, member activity, community boards, notifications, mileage rewards, and admin workflows into one service.
+
+## Features
+
+- **Contest**: problem list, problem detail pages, submissions, judging status, and scoreboards.
+- **Community**: category-based boards, comments, likes, photo gallery, rich text, and attachments.
+- **Member**: login, registration, profile, attendance, notifications, mileage, and profile decorations.
+- **Admin**: user approval, role management, board/category/tag management, and mileage grants.
+- **Operations**: Docker Compose runtime, Nginx routing, MySQL, Redis, S3, CI, and Blue-Green deployment.
 
 ## Architecture
 
-```mermaid
-flowchart TB
-    subgraph Client
-        FE[React App]
-        LP[Landing - Next.js]
-    end
+<p align="center">
+  <img src="assets/readme/framework.svg" alt="NIMDA SECURITY framework architecture" width="100%" />
+</p>
 
-    NG[Nginx - Blue Green]
+NIMDA SECURITY is centered on a React frontend and a Spring Boot API server. In production, Nginx routes traffic to the active Blue/Green backend, while GitHub Actions builds Docker images and triggers the deployment script.
 
-    API[Spring Boot]
+## Tech Stack
 
-    subgraph Storage
-        DB[(MySQL)]
-        RD[(Redis)]
-        S3[(S3)]
-    end
+| Area     | Stack                                                              |
+| -------- | ------------------------------------------------------------------ |
+| Frontend | React 19, TypeScript, Vite 7, Tailwind CSS, Tiptap, Axios          |
+| Backend  | Java 17, Spring Boot 3.2, Spring Security, Spring Data JPA, Flyway |
+| Data     | MySQL 8.0, Redis 7, AWS S3                                         |
+| Infra    | Docker Compose, Nginx, GitHub Actions, Blue-Green deployment       |
+| Tools    | Bruno API collection, load-test scripts, Prettier, ESLint          |
 
-    FE --> NG --> API
-    API --> DB
-    API --> RD
-    API --> S3
-    FE -.-> S3
+## Quick Start
+
+### Requirements
+
+- Node.js 20+
+- Java 17
+- Docker and Docker Compose
+
+### Frontend
+
+```bash
+cd NimdaConFrontEnd
+npm install
+npm run dev
 ```
 
----
+### Backend
 
-## Team
+```bash
+cd NimdaConBackEnd/backend-spring
+./mvnw spring-boot:run
+```
 
-### Backend · Infra
+Use `mvnw.cmd spring-boot:run` on Windows.
 
-<table>
-<tr>
-<td width="50%" valign="top">
+### Docker Compose
 
-**최도일**  
-`Backend Lead · Infra`
+Create a root `.env` file first, then run:
 
-- Spring Boot API · 인증·게시판·태그
-- Nginx · Docker Compose
-- Flyway 마이그레이션 · 보안 설정
-- Blue-Green 배포 파이프라인
+```bash
+docker compose up -d
+```
 
-</td>
-<td width="50%" valign="top">
+## Configuration
 
-**이도현**  
-`Backend · Contest · CI/CD`
+The root `.env` file is used by Docker Compose and the production backend.
 
-- 대회 도메인 (문제 · 제출 · 채점 연계)
-- 카테고리 · 상점 API
-- S3 문제 파일 스토어
-- CI/CD · 배포 안정화
+| Variable                                 | Description                     |
+| ---------------------------------------- | ------------------------------- |
+| `MYSQL_ROOT_PASSWORD`                    | MySQL root password             |
+| `MYSQL_DATABASE`                         | Database name, e.g. `nimda_con` |
+| `MYSQL_USER` / `MYSQL_PASSWORD`          | Application database account    |
+| `REDIS_PASSWORD`                         | Redis password                  |
+| `JWT_SECRET`                             | JWT signing secret              |
+| `AWS_S3_BUCKET`, `AWS_S3_REGION`         | S3 bucket settings              |
+| `AWS_S3_ACCESS_KEY`, `AWS_S3_SECRET_KEY` | S3 credentials                  |
+| `MAIL_HOST`, `MAIL_PORT`                 | SMTP server                     |
+| `MAIL_USERNAME`, `MAIL_PASSWORD`         | SMTP credentials                |
 
-</td>
-</tr>
-<tr>
-<td width="50%" valign="top">
+Frontend environment variables are optional for local development.
 
-**이명건**  
-`Backend · Domain`
+| Variable                   | Default       |
+| -------------------------- | ------------- |
+| `VITE_API_BASE_URL`        | `/api`        |
+| `VITE_SCOREBOARD_ENDPOINT` | `/scoreboard` |
 
-- 마일리지 일괄 지급 · 포인트 도메인
-- 댓글 · 좋아요 · 출석 · 알림
-- `ROLE_DEV` 등 권한 정책
-- Group 도메인 · Cite 구조 분리
+Do not commit `.env` files.
 
-</td>
-<td width="50%" valign="top">
+## Scripts
 
-**주윤호**  
-`Backend · Storage`
+| Command                                                    | Description                        |
+| ---------------------------------------------------------- | ---------------------------------- |
+| `npm run dev` in `NimdaConFrontEnd`                        | Start the Vite dev server          |
+| `npm run build` in `NimdaConFrontEnd`                      | Build the frontend                 |
+| `npm run lint` in `NimdaConFrontEnd`                       | Run frontend lint checks           |
+| `./mvnw test` in `NimdaConBackEnd/backend-spring`          | Run backend tests                  |
+| `./mvnw clean package` in `NimdaConBackEnd/backend-spring` | Build the backend JAR              |
+| `./deploy.sh status`                                       | Check Blue-Green deployment status |
+| `./deploy.sh rollback`                                     | Roll back to the standby backend   |
 
-- AWS S3 연동 · 첨부파일 파이프라인
-- CI S3 환경변수 · 시크릿 정리
-- JWT / Common 모듈 정리
-- 게시판·관리자 FE 연동
+## Deployment
 
-</td>
-</tr>
-</table>
+On every push to `main`, CI builds the backend image and pushes both `latest` and commit-hash tags. On the server, `deploy.sh` updates the standby Blue/Green container, checks health, and switches Nginx routing.
 
-### Frontend · Design
+See [DEPLOYMENT.md](DEPLOYMENT.md) for operational details.
 
-<table>
-<tr>
-<td width="50%" valign="top">
+## Design and Assets
 
-**서윤**  
-`Frontend Lead · Product`
+- Live service: [nimda.kr](https://nimda.kr)
+- Architecture image: `assets/readme/framework.svg`
+- Product and brand assets live under the frontend and landing-page `public` directories.
 
-- 게시판 · 댓글 · 에디터 UX
-- 마이페이지 · 프로필 · 배지 시스템
-- 마일리지 상점 · 구매 플로우
-- 레이아웃 · 알림 · 랜딩 기여
+Design assets, logos, banners, and screenshots belong to the NIMDA SECURITY project and should not be reused outside this project without permission from the maintainers.
 
-</td>
-<td width="50%" valign="top">
+## Contributors
 
-**정푸른**  
-`Frontend · Design`
+Major areas below are summarized from public GitHub PR and commit history.
 
-- BoardList · 탭 · 고정글 UI 폴리시
-- 동아리 랜딩 페이지 디자인·구현
-- 마이페이지 마일리지 UI
-- 비밀번호 변경 MCP 연동
+| Area     | Scope                                                   | Contributors                                                                   |
+| -------- | ------------------------------------------------------- | ------------------------------------------------------------------------------ |
+| Frontend | Core screens, MyPage, profile/badges, mileage shop, UI  | [@nuyoes](https://github.com/nuyoes)                                           |
+| Frontend | Admin/mileage UI, comments, user-detail integrations    | [@maenggeon](https://github.com/maenggeon)                                     |
+| Frontend | Scoreboard, early board screens, S3 attachment flow     | [@YknowsGit](https://github.com/YknowsGit)                                     |
+| Frontend | Landing-page intro and visual direction                 | [@JungBlue](https://github.com/JungBlue), [@nuyoes](https://github.com/nuyoes) |
+| Frontend | Point summary, sidebar imagery, auth/session UX         | [@xtkww971](https://github.com/xtkww971)                                       |
+| Backend  | Spring Security, CI, testing, operations foundation     | [@novvvv](https://github.com/novvvv)                                           |
+| Backend  | Points, attendance, notifications, likes, Redis/JWT, CD | [@xtkww971](https://github.com/xtkww971)                                       |
+| Backend  | Comments, board permissions, admin user/mileage APIs    | [@maenggeon](https://github.com/maenggeon)                                     |
+| Backend  | Contest/scoreboard, initial board domain, S3 files      | [@YknowsGit](https://github.com/YknowsGit)                                     |
+| Backend  | Password recovery and MCP integration                   | [@JungBlue](https://github.com/JungBlue)                                       |
 
-</td>
-</tr>
-</table>
+## License and Copyright
 
----
+This repository does not currently include a repository-level open-source license file. Until a license is added, the source code, service design, logo, banners, images, and other project assets are copyright © NIMDA SECURITY. All rights reserved.
 
-## Highlights
+## Repository Layout
 
-- **권한 분리** — `USER` / `ADMIN` / `DEV` / `CARTEL`
-- **마일리지** — 출석 · 활동 포인트 · 배지·장식 상점
-- **무중단 배포** — Blue-Green + Nginx graceful reload
-- **대회 플랫폼** — 문제 업로드 · 제출 · 스코어보드
-
----
-
-## Links
-
-[nimda.kr](https://nimda.kr) · [nimda.space](https://nimda.space) · [DEPLOYMENT.md](./DEPLOYMENT.md)
+```text
+Nimda/
+├── NimdaConFrontEnd/              # React + Vite application
+├── NimdaConBackEnd/backend-spring # Spring Boot API server
+├── NimdaLandingPage/              # Next.js landing page
+├── bruno/                         # API request collection
+├── load-tests/                    # Load-test scripts and results
+├── nginx/                         # Nginx routing configuration
+├── docker-compose.yml             # Runtime services
+└── deploy.sh                      # Blue-Green deployment script
+```
