@@ -10,15 +10,19 @@ import org.springframework.stereotype.Component;
 
 import java.nio.charset.StandardCharsets;
 
+/**
+ * 기동 시 인스턴스 요청 스트림에 컨슈머 그룹을 만든다 (이미 있으면 그냥 넘어간다).
+ * Go 조율자가 이 그룹의 컨슈머로 붙어 요청을 나눠 받는다.
+ */
 @Slf4j
 @Component
 @RequiredArgsConstructor
-public class JudgeQueueConfig implements ApplicationRunner {
+public class CtfQueueConfig implements ApplicationRunner {
 
     private static final String BUSY_GROUP_ERROR = "BUSYGROUP";
 
     private final StringRedisTemplate redisTemplate;
-    private final JudgeQueueProperties queueProperties;
+    private final CtfQueueProperties queueProperties;
 
     @Override
     public void run(ApplicationArguments args) {
