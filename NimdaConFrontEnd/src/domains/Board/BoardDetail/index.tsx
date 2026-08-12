@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useNavigate, useParams, Link } from 'react-router-dom';
 import DOMPurify, { type Config as DOMPurifyConfig } from 'dompurify';
 import { MessageBox } from '@/components/icons/MessageBox';
@@ -23,7 +23,23 @@ import { highlightCodeBlocks } from '@/utils/codeHighlight';
 import './BoardDetail.css';
 
 const MAX_VIEWER_FONT_SIZE_PX = 24;
+const MAX_VIEWER_IMAGE_DIMENSION_PX = 1600;
 const IMAGE_EXTENSIONS = ['jpg', 'jpeg', 'png', 'gif', 'webp', 'bmp', 'svg'];
+const CODE_LANGUAGES = new Set([
+  'plaintext',
+  'javascript',
+  'typescript',
+  'html',
+  'css',
+  'python',
+  'c',
+  'cpp',
+  'java',
+]);
+const ALLOWED_VIEWER_CLASSES = new Set([
+  'bw-code-block',
+  'comment-emoticon-inline',
+]);
 
 const getFirstImageAttachmentId = (board: Board): number | null => {
   if (!board.attachments || board.attachments.length === 0) return null;
@@ -63,6 +79,26 @@ const normalizeViewerFontSize = (size: string, fallbackPx = 14) => {
   return `${clamped}px`;
 };
 
+const normalizeViewerImageDimension = (value: string) => {
+  const match = value.trim().match(/^(\d+(?:\.\d+)?)(?:px)?$/i);
+  if (!match) return null;
+
+  const dimension = Number(match[1]);
+  if (!Number.isFinite(dimension) || dimension <= 0) return null;
+
+  return `${Math.min(MAX_VIEWER_IMAGE_DIMENSION_PX, Math.round(dimension))}px`;
+};
+
+const isSafeViewerColor = (value: string) =>
+  !/\b(?:url|var)\s*\(/i.test(value) &&
+  window.CSS?.supports('color', value) === true;
+
+const isAllowedViewerClass = (className: string) =>
+  ALLOWED_VIEWER_CLASSES.has(className) ||
+  /^language-(?:plaintext|javascript|typescript|html|css|python|c|cpp|java)$/.test(
+    className
+  );
+
 const flattenViewerNestedSpans = (root: HTMLElement) => {
   const sizedSpans = root.querySelectorAll<HTMLSpanElement>('span[style]');
   sizedSpans.forEach((span) => {
@@ -96,15 +132,13 @@ const PURIFY_CONFIG: DOMPurifyConfig = {
     'pre', 'code',
     'table', 'thead', 'tbody', 'tr', 'td', 'th',
     'hr', 'blockquote',
-    'select', 'option', 'button',
   ],
   ALLOWED_ATTR: [
     'href', 'src', 'alt', 'style', 'class',
     'target', 'rel',
     'width', 'height',
-    'data-language', 'data-language-label', 'data-code-empty', 'data-empty',
-    'data-emoticon-id',
-    'dir', 'type', 'value', 'title', 'aria-label', 'contenteditable',
+    'data-language', 'data-emoticon-id',
+    'dir',
   ],
   ALLOW_DATA_ATTR: false,
   FORCE_BODY: false,
@@ -113,39 +147,111 @@ const PURIFY_CONFIG: DOMPurifyConfig = {
 const sanitizeViewerContent = (html: string) => {
   if (!html || typeof window === 'undefined') return html;
 
-  // 1차: DOMPurify — script/iframe/이벤트 핸들러 등 위험 요소 제거
   const purified = DOMPurify.sanitize(html, PURIFY_CONFIG) as unknown as string;
-
   const template = document.createElement('template');
   template.innerHTML = purified;
 
-  const fonts = template.content.querySelectorAll<HTMLElement>('font[size]');
-  fonts.forEach((font) => {
-    const span = document.createElement('span');
-    span.style.setProperty(
-      'font-size',
-      normalizeViewerFontSize('14px'),
-      'important'
-    );
-    span.innerHTML = font.innerHTML;
-    font.replaceWith(span);
-  });
+  template.content.querySelectorAll<HTMLElement>('*').forEach((element) => {
+    const tagName = element.tagName.toLowerCase();
+    const isImage = tagName === 'img';
+    const isCode = tagName === 'pre' || tagName === 'code';
 
-  const styled = template.content.querySelectorAll<HTMLElement>('[style]');
-  styled.forEach((element) => {
-    if (!element.style.fontSize) return;
-    const normalized = normalizeViewerFontSize(element.style.fontSize);
-    element.style.setProperty('font-size', normalized, 'important');
+    const allowedClasses = Array.from(element.classList).filter(isAllowedViewerClass);
+    if (allowedClasses.length) element.className = allowedClasses.join(' ');
+    else element.removeAttribute('class');
+
+    if (isImage) {
+      for (const attribute of ['width', 'height']) {
+        const dimension = normalizeViewerImageDimension(element.getAttribute(attribute) ?? '');
+        if (dimension) element.setAttribute(attribute, dimension.slice(0, -2));
+        else element.removeAttribute(attribute);
+      }
+
+      const emoticonId = element.getAttribute('data-emoticon-id');
+      if (emoticonId && /^[A-Za-z0-9_-]{1,128}$/.test(emoticonId)) {
+        element.setAttribute('data-emoticon-id', emoticonId);
+      } else {
+        element.removeAttribute('data-emoticon-id');
+      }
+    } else {
+      element.removeAttribute('width');
+      element.removeAttribute('height');
+      element.removeAttribute('data-emoticon-id');
+    }
+
+    if (tagName === 'a') {
+      if (element.getAttribute('target') === '_blank') {
+        element.setAttribute('rel', 'noopener noreferrer');
+      } else {
+        element.removeAttribute('target');
+        element.removeAttribute('rel');
+      }
+    } else {
+      element.removeAttribute('target');
+      element.removeAttribute('rel');
+    }
+
+    if (tagName === 'pre') {
+      const language = (element.getAttribute('data-language') ?? '').toLowerCase();
+      if (CODE_LANGUAGES.has(language)) element.setAttribute('data-language', language);
+      else element.removeAttribute('data-language');
+    } else {
+      element.removeAttribute('data-language');
+    }
+
+    if (isCode && element.getAttribute('dir') === 'ltr') {
+      element.setAttribute('dir', 'ltr');
+    } else {
+      element.removeAttribute('dir');
+    }
+
+    const style = element.style;
+    const safeStyles: Array<[string, string]> = [];
+    const addStyle = (property: string, value: string | null) => {
+      if (value) safeStyles.push([property, value]);
+    };
+
+    addStyle(
+      'font-size',
+      style.fontSize ? normalizeViewerFontSize(style.fontSize) : null
+    );
+
+    if (isImage) {
+      addStyle('width', normalizeViewerImageDimension(style.width));
+      addStyle('height', normalizeViewerImageDimension(style.height));
+    }
+
+    if (style.color && isSafeViewerColor(style.color)) {
+      addStyle('color', style.color);
+    }
+
+    if (/^(?:left|right|center|justify|start|end)$/i.test(style.textAlign)) {
+      addStyle('text-align', style.textAlign.toLowerCase());
+    }
+
+    if (/^(?:normal|bold|bolder|lighter|[1-9]00)$/i.test(style.fontWeight)) {
+      addStyle('font-weight', style.fontWeight.toLowerCase());
+    }
+
+    if (/^(?:normal|italic|oblique)$/i.test(style.fontStyle)) {
+      addStyle('font-style', style.fontStyle.toLowerCase());
+    }
+
+    if (/^(?:none|underline|line-through|underline line-through|line-through underline)$/i.test(style.textDecorationLine)) {
+      addStyle('text-decoration-line', style.textDecorationLine.toLowerCase());
+    }
+
+    if (isCode && style.direction === 'ltr') addStyle('direction', 'ltr');
+    if (isCode && style.unicodeBidi === 'embed') addStyle('unicode-bidi', 'embed');
+
+    element.removeAttribute('style');
+    safeStyles.forEach(([property, value]) => element.style.setProperty(property, value));
+    if (!element.style.cssText.trim()) element.removeAttribute('style');
   });
 
   flattenViewerNestedSpans(template.content as unknown as HTMLElement);
 
-  const redundantSpans =
-    template.content.querySelectorAll<HTMLSpanElement>('span');
-  redundantSpans.forEach((span) => {
-    if (span.hasAttribute('style') && span.style.cssText.trim().length === 0) {
-      span.removeAttribute('style');
-    }
+  template.content.querySelectorAll<HTMLSpanElement>('span').forEach((span) => {
     if (span.attributes.length === 0) {
       span.replaceWith(...Array.from(span.childNodes));
     }
@@ -168,49 +274,26 @@ function BoardDetailPage() {
   const [showAttachments, setShowAttachments] = useState(false);
   const [shopImageUrl, setShopImageUrl] = useState<string | null>(null);
   const [isPurchasing, setIsPurchasing] = useState(false);
-  const normalizedViewerContent = sanitizeViewerContent(board?.content ?? '');
+  const normalizedViewerContent = useMemo(
+    () => sanitizeViewerContent(board?.content ?? ''),
+    [board?.content]
+  );
   const bodyRef = useRef<HTMLDivElement>(null);
 
-  useEffect(() => {
-    if (id) fetchBoard(parseInt(id));
-  }, [id]);
-
-  useEffect(() => {
-    const body = bodyRef.current;
-    if (body) {
-      highlightCodeBlocks(body);
+  const fetchLikeStatus = useCallback(async (boardId: number) => {
+    try {
+      const res = await getBoardLikeStatusAPI(boardId);
+      if (res.success && 'data' in res) {
+        const legacyData: { liked?: boolean } = res.data;
+        setLikeCount(res.data.likeCount);
+        setIsLiked(res.data.isLiked ?? legacyData.liked ?? false);
+      }
+    } catch {
+      /* 비로그인 상태 */
     }
-  }, [normalizedViewerContent]);
+  }, []);
 
-  useEffect(() => {
-    let cancelled = false;
-    const loadShopImage = async () => {
-      if (!board?.category?.shopEnabled) {
-        setShopImageUrl(null);
-        return;
-      }
-
-      const attachmentId = getFirstImageAttachmentId(board);
-      if (!attachmentId) {
-        setShopImageUrl(null);
-        return;
-      }
-
-      try {
-        const url = await getAttachmentPresignedUrl(attachmentId);
-        if (!cancelled) setShopImageUrl(url);
-      } catch {
-        if (!cancelled) setShopImageUrl(null);
-      }
-    };
-
-    loadShopImage();
-    return () => {
-      cancelled = true;
-    };
-  }, [board]);
-
-  const fetchBoard = async (boardId: number) => {
+  const fetchBoard = useCallback(async (boardId: number) => {
     try {
       setLoading(true);
       setError(null);
@@ -251,19 +334,46 @@ function BoardDetailPage() {
     } finally {
       setLoading(false);
     }
-  };
+  }, [fetchLikeStatus, navigate]);
 
-  const fetchLikeStatus = async (boardId: number) => {
-    try {
-      const res = await getBoardLikeStatusAPI(boardId);
-      if (res.success && 'data' in res) {
-        setLikeCount(res.data.likeCount);
-        setIsLiked(res.data.isLiked ?? (res.data as any).liked ?? false);
-      }
-    } catch {
-      /* 비로그인 상태 */
+  useEffect(() => {
+    if (id) fetchBoard(parseInt(id));
+  }, [fetchBoard, id]);
+
+  useEffect(() => {
+    const body = bodyRef.current;
+    if (body) {
+      highlightCodeBlocks(body);
     }
-  };
+  }, [normalizedViewerContent]);
+
+  useEffect(() => {
+    let cancelled = false;
+    const loadShopImage = async () => {
+      if (!board?.category?.shopEnabled) {
+        setShopImageUrl(null);
+        return;
+      }
+
+      const attachmentId = getFirstImageAttachmentId(board);
+      if (!attachmentId) {
+        setShopImageUrl(null);
+        return;
+      }
+
+      try {
+        const url = await getAttachmentPresignedUrl(attachmentId);
+        if (!cancelled) setShopImageUrl(url);
+      } catch {
+        if (!cancelled) setShopImageUrl(null);
+      }
+    };
+
+    loadShopImage();
+    return () => {
+      cancelled = true;
+    };
+  }, [board]);
 
   const handleGoBack = () => {
     if (board?.category?.slug) navigate(`/board/${board.category.slug}`);

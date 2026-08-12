@@ -70,7 +70,12 @@ public class User extends BaseTimeEntity {
     @Enumerated(EnumType.STRING)
     @Column(name = "status", nullable = false, length = 20)
     private ApprovalStatus status = ApprovalStatus.PENDING;
-    // 사용자 승인 상태 (PENDING: 승인 대기, APPROVED: 승인 완료, REJECTED: 승인 거부)
+
+    @Column(name = "auth_version", nullable = false)
+    private int authVersion = 0;
+    @JsonIgnore
+    @Column(name = "password_reset_token_id", length = 36)
+    private String passwordResetTokenId;
 
     @Column(name = "birth", length = 20)
     private String birth;
@@ -90,7 +95,7 @@ public class User extends BaseTimeEntity {
 
     // 마이페이지 이메일 숨기기
     @Column(name = "email_hide", nullable = false)
-    private boolean emailHide = false; // 기본값 설정
+    private boolean emailHide = true; // 기본값 설정
 
     // 기본 생성자
     public User() {
@@ -106,6 +111,10 @@ public class User extends BaseTimeEntity {
         this.studentNum = studentNum;
         this.email = email;
         this.major = major;
+    }
+
+    public void rotateAuthVersion() {
+        this.authVersion = Math.incrementExact(this.authVersion);
     }
 
     // 사용자 권한 관리 테이블

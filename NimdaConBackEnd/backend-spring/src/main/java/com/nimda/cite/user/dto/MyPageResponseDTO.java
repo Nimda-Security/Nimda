@@ -29,6 +29,7 @@ public class MyPageResponseDTO {
     private String birth;
     private String studentNum;
     private boolean emailHide;
+    private List<String> roles;
 
     private String profileImage;
     private String profileDecoration;

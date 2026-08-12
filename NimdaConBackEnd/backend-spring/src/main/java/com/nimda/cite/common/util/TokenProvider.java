@@ -77,7 +77,7 @@ public class TokenProvider implements InitializingBean {
                 .parseClaimsJws(token);
             return true;
         } catch (Exception e) {
-            logger.error("토큰 검증 실패", e);
+            logger.debug("토큰 검증 실패: {}", e.getClass().getSimpleName());
             return false;
         }
     }
@@ -99,7 +99,7 @@ public class TokenProvider implements InitializingBean {
 
     public String createTokenForPasswordChange(String userId, String studentNum, String email, boolean isEmailVerified) {
         Date now = new Date();
-        Date validity = new Date(now.getTime() + 600000);
+        Date validity = new Date(now.getTime() + 300000);
 
         return Jwts.builder()
                 .setSubject("PASSWORD_RESET")
@@ -107,6 +107,7 @@ public class TokenProvider implements InitializingBean {
                 .claim("studentNum",studentNum)
                 .claim("email",email)
                 .claim("isEmailVerified", isEmailVerified)
+                .setId(UUID.randomUUID().toString())
                 .setIssuedAt(now)
                 .setExpiration(validity)
                 .signWith(key, SignatureAlgorithm.HS256)

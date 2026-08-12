@@ -1,59 +1,67 @@
-# 🚀 NimdaCon 부하 테스트
+# NIMDA Load Tests
 
-## 📁 디렉토리 구조
-```
-load-tests/
-├── scripts/          # K6 테스트 스크립트들
-│   ├── auth/         # 인증 관련 테스트
-│   ├── judge/        # 채점 관련 테스트
-│   └── common/       # 공통 유틸리티
-├── data/            # 테스트 데이터 (사용자, 문제 등)
-├── results/         # 테스트 결과 파일들
-└── README.md        # 이 파일
-```
+This directory contains k6 scenarios for controlled, non-production performance testing. Never run these scenarios against `nimda.kr` or any production endpoint without a separately approved test window, rate limit, and rollback plan.
 
-## 🛠️ K6 설치
+## Prerequisites
 
-### macOS (Homebrew)
+- k6 installed locally or in CI
+- A disposable NIMDA environment with representative test data
+- A dedicated test account; never use a personal or administrator account
+
+All commands below run from `load-tests/`.
+
+## Configuration
+
+The shared defaults target the locally published blue backend at `http://localhost:8081`. Supply credentials through process environment variables; the checked-in fallback values are intentionally non-functional.
+
 ```bash
-brew install k6
-```
-
-### 다른 OS
-```bash
-# Linux/Windows WSL
-curl -fsSL https://dl.k6.io/key.gpg | gpg --dearmor -o /usr/share/keyrings/k6-archive-keyring.gpg
-echo "deb [signed-by=/usr/share/keyrings/k6-archive-keyring.gpg] https://dl.k6.io/deb stable main" | tee /etc/apt/sources.list.d/k6.list
-apt-get update && apt-get install k6
-```
-
-## 🏃‍♂️ 테스트 실행
-
-### 로그인 성능 테스트
-```bash
-k6 run scripts/auth/login-test.js
-```
-
-### 채점 시스템 부하 테스트  
-```bash
-k6 run scripts/judge/submit-test.js
-```
-
-### 전체 시나리오 테스트
-```bash
+BASE_URL=http://localhost:8081 \
+TEST_USERNAME=load-test-user \
+TEST_PASSWORD='<secret-from-approved-store>' \
 k6 run scripts/full-scenario.js
 ```
 
-## 📊 결과 분석
+On PowerShell:
 
-테스트 결과는 `results/` 디렉토리에 저장됩니다:
-- JSON 형식: `--out json=results/test-result.json`
-- HTML 리포트: `--out web-dashboard`
-- InfluxDB/Grafana 연동 가능
+```powershell
+$env:BASE_URL = 'http://localhost:8081'
+$env:TEST_USERNAME = 'load-test-user'
+$env:TEST_PASSWORD = '<secret-from-approved-store>'
+k6 run scripts/full-scenario.js
+```
 
-## 🎯 테스트 목표
+Do not place credentials in scripts, shell history, result files, tickets, or Git. The full scenario writes `results/full-scenario-summary.json`; `load-tests/results/` is ignored by Git.
 
-1. **로그인 성능**: 응답 시간 < 500ms
-2. **채점 처리량**: 초당 10개 이상 처리
-3. **동시 사용자**: 100명 동시 접속 지원
-4. **메모리 사용량**: 안정적인 메모리 사용
+## Scenarios
+
+```bash
+# Authentication only
+k6 run scripts/auth/login-test.js
+
+# Judge submission only
+k6 run scripts/judge/submit-test.js
+
+# Login, browse, submit, and history journey
+k6 run scripts/full-scenario.js
+```
+
+The full scenario tags requests by endpoint class so a slower judge operation does not hide regressions in ordinary reads.
+
+## Performance Gates
+
+| Endpoint class | Gate |
+| --- | --- |
+| Login | p95 below 500 ms |
+| General read APIs | p95 below 300 ms |
+| Judge submission | p95 below 5 s |
+| HTTP failures | below 0.5% |
+| Full-scenario success | above 99% |
+
+Treat these as release gates, not proof of capacity. A result is comparable only when data size, server resources, concurrency, warm-up, k6 version, and network path are held constant. Record at least two warm-up runs and five measured runs, then report median, p95, p99, throughput, error rate, CPU, and memory.
+
+## Results and Safety
+
+- Keep raw JSON and dashboards outside Git; preserve checksums or immutable artifact links in release notes.
+- Stop immediately if the target hostname, credentials, or dataset are not the approved test fixtures.
+- Never weaken authentication, authorization, validation, or rate limits to make a benchmark pass.
+- k6 was not available on the Windows verification workstation on 2026-07-10, so the scripts were syntax-reviewed there but require execution in the approved load-test environment.

@@ -1,4 +1,4 @@
-import { FileText, CheckCircle, Trophy } from 'lucide-react';
+import { FileText, Trophy } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { isAdmin } from '@/utils/jwt';
 
@@ -36,12 +36,12 @@ export function QuickLinks() {
 
   return (
     <div className="flex flex-col min-[820px]:flex-row gap-6 justify-center">
-      {links.map((link, index) => {
+      {links.map((link) => {
         const Icon = link.icon;
 
         return (
           <div
-            key={index}
+            key={link.path}
             onClick={() => handleLinkClick(link.path)}
             className="group bg-white rounded-2xl p-8 transition-all duration-300 cursor-pointer border border-[#e0e0e0] hover:border-gray-600 w-full min-[820px]:w-[250px] hover:shadow-lg"
           >

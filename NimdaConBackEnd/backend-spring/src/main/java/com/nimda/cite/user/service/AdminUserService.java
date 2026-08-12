@@ -66,18 +66,27 @@ public class AdminUserService {
      */
     @Transactional
     public User approveUser(Long userId) {
-        User user = userRepository.findById(userId)
+        User user = userRepository.findByIdForAuthMutation(userId)
                 .orElseThrow(() -> new RuntimeException("사용자를 찾을 수 없습니다: " + userId));
 
-        // status를 APPROVED로 변경
-        user.setStatus(ApprovalStatus.APPROVED);
+        boolean changed = user.getStatus() != ApprovalStatus.APPROVED;
+        if (changed) {
+            user.setStatus(ApprovalStatus.APPROVED);
+        }
 
         // ROLE_USER 권한 부여 (이미 권한이 있으면 추가하지 않음)
         Authority userRole = authorityRepository.findByAuthorityName("ROLE_USER")
                 .orElseThrow(() -> new RuntimeException("ROLE_USER 권한을 찾을 수 없습니다."));
 
-        if (!user.getAuthorities().contains(userRole)) {
+        boolean alreadyHasUserRole = user.getAuthorities().stream()
+                .anyMatch(authority -> "ROLE_USER".equals(authority.getAuthorityName()));
+        if (!alreadyHasUserRole) {
             user.getAuthorities().add(userRole);
+            changed = true;
+        }
+
+        if (changed) {
+            user.rotateAuthVersion();
         }
 
         return userRepository.save(user);
@@ -89,11 +98,13 @@ public class AdminUserService {
      */
     @Transactional
     public User rejectUser(Long userId) {
-        User user = userRepository.findById(userId)
+        User user = userRepository.findByIdForAuthMutation(userId)
                 .orElseThrow(() -> new RuntimeException("사용자를 찾을 수 없습니다: " + userId));
 
-        // status를 REJECTED로 변경
-        user.setStatus(ApprovalStatus.REJECTED);
+        if (user.getStatus() != ApprovalStatus.REJECTED) {
+            user.setStatus(ApprovalStatus.REJECTED);
+            user.rotateAuthVersion();
+        }
 
         return userRepository.save(user);
     }
@@ -126,7 +137,7 @@ public class AdminUserService {
         final String normalizedRole = normalized;
 
         // 2. 사용자 및 권한 존재 여부 확인
-        User user = userRepository.findById(userId)
+        User user = userRepository.findByIdForAuthMutation(userId)
                 .orElseThrow(() -> new RuntimeException("사용자를 찾을 수 없습니다. ID: " + userId));
 
         // final 변수로 선언하여 람다식 내부에서 안전하게 사용
@@ -141,6 +152,7 @@ public class AdminUserService {
 
         if (!alreadyHasRole) {
             user.getAuthorities().add(authority);
+            user.rotateAuthVersion();
             // JPA의 변경 감지(Dirty Checking) 기능 덕분에 @Transactional이 있으면 save를 명시하지 않아도 되지만, 
             // 명시적 가독성을 위해 남겨둘 수 있습니다.
             return userRepository.save(user);
@@ -164,13 +176,15 @@ public class AdminUserService {
         }
         final String normalizedRole = normalized;
 
-        User user = userRepository.findById(userId)
+        User user = userRepository.findByIdForAuthMutation(userId)
                 .orElseThrow(() -> new RuntimeException("사용자를 찾을 수 없습니다. ID: " + userId));
 
         boolean removed = user.getAuthorities().removeIf(a -> normalizedRole.equals(a.getAuthorityName()));
         if (!removed) {
             throw new RuntimeException("사용자에게 해당 권한이 없습니다: " + normalizedRole);
         }
+
+        user.rotateAuthVersion();
 
         return userRepository.save(user);
     }

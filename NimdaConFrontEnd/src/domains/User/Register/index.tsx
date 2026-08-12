@@ -1,4 +1,3 @@
-import "@/App.css";
 import "./Register.css";
 import Layout from "@/components/Layout";
 import { useNavigate } from "react-router-dom";

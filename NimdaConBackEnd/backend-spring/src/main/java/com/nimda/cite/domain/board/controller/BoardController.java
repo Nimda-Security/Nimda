@@ -24,6 +24,7 @@ import com.nimda.cite.user.entity.User;
 import com.nimda.cite.user.repository.UserRepository;
 import com.nimda.cite.user.security.CustomUserDetails;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
+import org.springframework.security.access.AccessDeniedException;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
@@ -34,6 +35,7 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -51,6 +53,11 @@ public class BoardController {
     private static final Set<String> ALLOWED_SORT_FIELDS = Set.of(
             "createdAt", "updatedAt", "title", "postView", "pinned"
     );
+    private static final Set<String> PUBLIC_LEGAL_SLUGS = Set.of(
+            "terms", "privacy", "youth-protection", "site-rules"
+    );
+    private static final int MAX_TITLE_LENGTH = 200;
+    private static final int MAX_CONTENT_LENGTH = 5_000_000;
 
     /** 클라이언트 sort 파라미터를 화이트리스트 기준으로 정제하고 페이지 크기를 제한 */
     private Pageable sanitizedPageable(Pageable pageable, int maxSize) {
@@ -68,6 +75,21 @@ public class BoardController {
     private boolean isValidSlug(String slug) {
         return slug != null && !slug.isEmpty() && slug.length() <= 50
                 && slug.matches("^[a-zA-Z0-9_-]+$");
+    }
+    private String validateBoardInput(String title, String content) {
+        if (title == null || title.isBlank()) {
+            return "제목을 입력해주세요.";
+        }
+        if (title.length() > MAX_TITLE_LENGTH) {
+            return "제목은 200자 이하여야 합니다.";
+        }
+        if (content == null || content.isBlank()) {
+            return "내용을 입력해주세요.";
+        }
+        if (content.length() > MAX_CONTENT_LENGTH) {
+            return "게시글 내용이 너무 깁니다.";
+        }
+        return null;
     }
 
     @Autowired
@@ -112,13 +134,63 @@ public class BoardController {
 
     // 카테고리(자신 또는 부모)의 slug가 일치하는지 확인
     private boolean isCategoryMatch(Category category, String slug) {
-        if (category == null) return false;
-        if (slug.equalsIgnoreCase(category.getSlug())) return true;
-        if (category.getParentId() != null) {
-            Category parent = categoryRepository.findById(category.getParentId()).orElse(null);
-            if (parent != null && slug.equalsIgnoreCase(parent.getSlug())) return true;
+        Set<Long> visited = new java.util.HashSet<>();
+        Category current = category;
+        while (current != null && (current.getId() == null || visited.add(current.getId()))) {
+            if (slug.equalsIgnoreCase(current.getSlug())) {
+                return true;
+            }
+            current = current.getParentId() == null
+                    ? null
+                    : categoryRepository.findById(current.getParentId()).orElse(null);
         }
         return false;
+    }
+    private boolean canViewCategory(Category category, User user) {
+        return category != null
+                && (!isCategoryMatch(category, "cartel")
+                || hasRole(user, "ROLE_CARTEL")
+                || hasRole(user, "ROLE_ADMIN"));
+    }
+
+    private List<Long> restrictedCategoryIds(User user) {
+        if (hasRole(user, "ROLE_CARTEL") || hasRole(user, "ROLE_ADMIN")) {
+            return List.of();
+        }
+
+        List<Category> categories = categoryRepository.findByIsActiveTrueOrderBySortOrderAsc();
+        Map<Long, Category> categoriesById = categories.stream()
+                .filter(category -> category.getId() != null)
+                .collect(Collectors.toMap(Category::getId, category -> category));
+
+        return categories.stream()
+                .filter(category -> isCategoryMatchInMemory(category, "cartel", categoriesById))
+                .map(Category::getId)
+                .filter(java.util.Objects::nonNull)
+                .toList();
+    }
+
+    private boolean isCategoryMatchInMemory(
+            Category category,
+            String slug,
+            Map<Long, Category> categoriesById) {
+        Set<Long> visited = new java.util.HashSet<>();
+        Category current = category;
+        while (current != null && (current.getId() == null || visited.add(current.getId()))) {
+            if (slug.equalsIgnoreCase(current.getSlug())) {
+                return true;
+            }
+            current = current.getParentId() == null
+                    ? null
+                    : categoriesById.get(current.getParentId());
+        }
+        return false;
+    }
+
+    private boolean canViewBoard(Board board, User user) {
+        return board != null
+                && board.getStatus() == BoardStatus.ACTIVE
+                && canViewCategory(board.getCategory(), user);
     }
 
     private boolean isShopCategory(Category category) {
@@ -140,6 +212,43 @@ public class BoardController {
     // 사용자가 해당 게시글을 좋아요 눌렀는지 확인
     private boolean isLiked(Board board, User user) {
         return user != null && boardLikeService.isUserLiked(user.getId(), board.getId());
+    }
+
+    private List<BoardResponseDTO> toListResponseDTOs(List<Board> boards, User user) {
+        if (boards == null || boards.isEmpty()) {
+            return List.of();
+        }
+
+        boards = boards.stream()
+                .filter(board -> canViewBoard(board, user))
+                .collect(Collectors.toList());
+        if (boards.isEmpty()) {
+            return List.of();
+        }
+
+        List<Long> boardIds = boards.stream()
+                .map(Board::getId)
+                .collect(Collectors.toList());
+        Map<Long, Long> likeCounts = boardLikeService.getLikeCounts(boardIds);
+        Set<Long> likedBoardIds = user == null
+                ? Set.of()
+                : boardLikeService.getLikedBoardIds(user.getId(), boardIds);
+
+        Map<Long, Long> commentCounts = new HashMap<>();
+        for (Object[] row : commentRepository.countNonDeletedByBoardIds(boardIds)) {
+            if (row != null && row.length >= 2 && row[0] instanceof Number boardId
+                    && row[1] instanceof Number count) {
+                commentCounts.put(boardId.longValue(), count.longValue());
+            }
+        }
+
+        return boards.stream()
+                .map(board -> BoardResponseDTO.from(
+                        board,
+                        likeCounts.getOrDefault(board.getId(), 0L),
+                        likedBoardIds.contains(board.getId()),
+                        commentCounts.getOrDefault(board.getId(), 0L)))
+                .collect(Collectors.toList());
     }
 
     private ShopItemType parseShopItemType(String itemType) {
@@ -184,7 +293,7 @@ public class BoardController {
             Pageable safePageable = sanitizedPageable(pageable, 100);
             Category category = null;
             if (categoryId != null) {
-                category = categoryRepository.findById(categoryId)
+                category = categoryRepository.findByIdAndIsActiveTrue(categoryId)
                         .orElseThrow(() -> new RuntimeException("카테고리를 찾을 수 없습니다."));
             } else if (slug != null) {
                 if (!isValidSlug(slug)) {
@@ -221,6 +330,7 @@ public class BoardController {
                             .findByParentIdAndIsActiveTrueOrderBySortOrderAsc(child.getId());
                     categories.addAll(grandChildren);
                 }
+                categories.removeIf(candidate -> !canViewCategory(candidate, user));
 
                 if (searchKeyword == null || searchKeyword.isEmpty()) {
                     boards = boardService.boardListByCategories(categories, safePageable);
@@ -236,13 +346,7 @@ public class BoardController {
             }
 
             // 게시글 목록에 좋아요 개수 추가하여 DTO로 변환
-            List<BoardResponseDTO> postsDTO = boards.getContent().stream()
-                    .map(board -> {
-                        long likeCount = boardLikeService.getLikeCount(board.getId());
-                        long commentCount = commentRepository.countByBoardIdAndStatusNot(board.getId(), STATUS.DELETED);
-                        return BoardResponseDTO.from(board, likeCount, isLiked(board, user) , commentCount);
-                    })
-                    .collect(java.util.stream.Collectors.toList());
+            List<BoardResponseDTO> postsDTO = toListResponseDTOs(boards.getContent(), user);
             resolveProfileImages(postsDTO);
 
             BoardListResponseDTO responseDTO = BoardListResponseDTO.builder()
@@ -274,7 +378,7 @@ public class BoardController {
             Pageable safePageable = sanitizedPageable(pageable, 20);
             Category category = null;
             if (categoryId != null) {
-                category = categoryRepository.findById(categoryId)
+                category = categoryRepository.findByIdAndIsActiveTrue(categoryId)
                         .orElseThrow(() -> new RuntimeException("카테고리를 찾을 수 없습니다."));
             } else if (slug != null) {
                 if (!isValidSlug(slug)) {
@@ -287,16 +391,15 @@ public class BoardController {
             }
 
             User user = userDetails != null ? userDetails.getUser() : null;
+            if (isCategoryMatch(category, "cartel")
+                    && !hasRole(user, "ROLE_CARTEL")
+                    && !hasRole(user, "ROLE_ADMIN")) {
+                return ApiResponse.fail("접근 권한이 없습니다.").toResponse(HttpStatus.FORBIDDEN);
+            }
             Page<Board> boards = boardService.boardListByCategoryWithPinned(category, safePageable);
 
             // 고정글 목록에 좋아요 개수 추가하여 DTO로 변환
-            List<BoardResponseDTO> postsDTO = boards.getContent().stream()
-                    .map(board -> {
-                        long likeCount = boardLikeService.getLikeCount(board.getId());
-                        long commentCount = commentRepository.countByBoardIdAndStatusNot(board.getId(), STATUS.DELETED);
-                        return BoardResponseDTO.from(board, likeCount, isLiked(board, user), commentCount);
-                    })
-                    .collect(java.util.stream.Collectors.toList());
+            List<BoardResponseDTO> postsDTO = toListResponseDTOs(boards.getContent(), user);
             resolveProfileImages(postsDTO);
 
             BoardListResponseDTO responseDTO = BoardListResponseDTO.builder()
@@ -334,7 +437,7 @@ public class BoardController {
 
             if (categoryId != null || slug != null) {
                 if (categoryId != null) {
-                    category = categoryRepository.findById(categoryId)
+                    category = categoryRepository.findByIdAndIsActiveTrue(categoryId)
                             .orElseThrow(() -> new RuntimeException("카테고리를 찾을 수 없습니다."));
                 } else {
                     if (!isValidSlug(slug)) {
@@ -343,19 +446,19 @@ public class BoardController {
                     category = categoryRepository.findBySlugAndIsActiveTrue(slug)
                             .orElseThrow(() -> new RuntimeException("카테고리를 찾을 수 없습니다."));
                 }
+                if (isCategoryMatch(category, "cartel")
+                        && !hasRole(user, "ROLE_CARTEL")
+                        && !hasRole(user, "ROLE_ADMIN")) {
+                    return ApiResponse.fail("접근 권한이 없습니다.").toResponse(HttpStatus.FORBIDDEN);
+                }
                 boards = boardService.boardListPopularByCategory(category, limitedPageable);
             } else {
-                boards = boardService.boardListPopular(limitedPageable);
+                boards = boardService.boardListPopularExcludingCategories(
+                        restrictedCategoryIds(user), limitedPageable);
             }
 
             // 인기글 목록에 좋아요 개수 추가하여 DTO로 변환
-            List<BoardResponseDTO> postsDTO = boards.getContent().stream()
-                    .map(board -> {
-                        long likeCount = boardLikeService.getLikeCount(board.getId());
-                        long commentCount = commentRepository.countByBoardIdAndStatusNot(board.getId(), STATUS.DELETED);
-                        return BoardResponseDTO.from(board, likeCount, isLiked(board, user), commentCount);
-                    })
-                    .collect(java.util.stream.Collectors.toList());
+            List<BoardResponseDTO> postsDTO = toListResponseDTOs(boards.getContent(), user);
             resolveProfileImages(postsDTO);
 
             BoardListResponseDTO responseDTO = BoardListResponseDTO.builder()
@@ -394,9 +497,13 @@ public class BoardController {
             if (userDetails == null) {
                 return ApiResponse.fail("로그인이 필요합니다.").toResponse(HttpStatus.UNAUTHORIZED);
             }
+            String inputError = validateBoardInput(title, content);
+            if (inputError != null) {
+                return ApiResponse.fail(inputError).toResponse(HttpStatus.BAD_REQUEST);
+            }
             User author = userDetails.getUser();
 
-            Category category = categoryRepository.findById(categoryId)
+            Category category = categoryRepository.findByIdAndIsActiveTrue(categoryId)
                     .orElseThrow(() -> new RuntimeException("카테고리를 찾을 수 없습니다: " + categoryId));
 
             // validation. tagId가 있으면 해당 카테고리 소속인지 검증
@@ -466,7 +573,7 @@ public class BoardController {
             }
 
             Board board = new Board();
-            board.setTitle(title);
+            board.setTitle(title.trim());
             board.setContent(content);
             board.setCategory(category);
             board.setTag(tagEntity);
@@ -503,26 +610,48 @@ public class BoardController {
         }
     }
 
+    @GetMapping("/legal/{legalSlug}")
+    public ResponseEntity<?> viewLegalDocument(@PathVariable String legalSlug) {
+        if (!PUBLIC_LEGAL_SLUGS.contains(legalSlug)) {
+            return ApiResponse.fail("법적 안내 문서를 찾을 수 없습니다.")
+                    .toResponse(HttpStatus.NOT_FOUND);
+        }
+
+        try {
+            Board board = boardService.getLegalDocument(legalSlug);
+            boardService.incrementViewCount(board);
+            long likeCount = boardLikeService.getLikeCount(board.getId());
+            long commentCount = commentRepository.countByBoardIdAndStatusNot(
+                    board.getId(), STATUS.DELETED);
+            var attachments = attachmentService.listAttachmentsForBoard(board.getId());
+            BoardResponseDTO boardDto = BoardResponseDTO.from(
+                    board, likeCount, false, commentCount, attachments);
+            resolveProfileImage(boardDto);
+            return ApiResponse.ok(
+                    "법적 안내 문서를 성공적으로 조회했습니다.",
+                    Map.of("board", boardDto)).toResponse();
+        } catch (RuntimeException exception) {
+            return ApiResponse.fail("법적 안내 문서를 찾을 수 없습니다.")
+                    .toResponse(HttpStatus.NOT_FOUND);
+        } catch (Exception exception) {
+            log.error("법적 안내 문서 조회 오류", exception);
+            return ApiResponse.fail("법적 안내 문서 조회 중 오류가 발생했습니다.")
+                    .toResponse(HttpStatus.INTERNAL_SERVER_ERROR);
+        }
+    }
+
     @GetMapping("/{id}")
     public ResponseEntity<?> view(
             @AuthenticationPrincipal CustomUserDetails userDetails,
             @PathVariable("id") Long id) {
         try {
-            Board board = boardService.boardView(id);
-
-            // 삭제된 게시글인 경우
-            if (board.getStatus() == BoardStatus.DELETED) {
-                return ApiResponse.ok("삭제된 게시글입니다.", Map.of("deleted", true)).toResponse();
-            }
-
+            Board board = boardService.getBoard(id);
             User user = userDetails != null ? userDetails.getUser() : null;
-
-            // "카르텔" 카테고리 접근 권한 확인
-            if (board.getCategory() != null && isCategoryMatch(board.getCategory(), "cartel")) {
-                if (!hasRole(user, "ROLE_CARTEL") && !hasRole(user, "ROLE_ADMIN")) {
-                    return ApiResponse.fail("접근 권한이 없습니다.").toResponse(HttpStatus.FORBIDDEN);
-                }
+            if (!canViewBoard(board, user)) {
+                return ApiResponse.fail("게시글을 찾을 수 없습니다.")
+                        .toResponse(HttpStatus.NOT_FOUND);
             }
+            boardService.incrementViewCount(board);
 
             long likeCount = boardLikeService.getLikeCount(board.getId());
             long commentCount = commentRepository.countByBoardIdAndStatusNot(board.getId(), STATUS.DELETED);
@@ -532,8 +661,7 @@ public class BoardController {
             return ApiResponse.ok("게시글을 성공적으로 조회했습니다.", Map.of("board", boardDto)).toResponse();
 
         } catch (RuntimeException e) {
-            return ApiResponse.fail(e.getMessage()).toResponse(HttpStatus.NOT_FOUND);
-
+            return ApiResponse.fail("게시글을 찾을 수 없습니다.").toResponse(HttpStatus.NOT_FOUND);
         } catch (Exception e) {
             log.error("게시글 조회 오류", e);
             return ApiResponse.fail("게시글 조회 중 오류가 발생했습니다.")
@@ -550,17 +678,23 @@ public class BoardController {
             @RequestParam("content") String content,
             @RequestParam(value = "tagId", required = false) Long tagId,
             @RequestParam(value = "attachmentIds", required = false) List<Long> attachmentIds,
+            @RequestParam(value = "syncAttachments", required = false, defaultValue = "false")
+            boolean syncAttachments,
             @RequestParam(value = "pinned", required = false) Boolean pinned,
             @RequestParam(value = "itemPrice", required = false) Long itemPrice,
             @RequestParam(value = "itemType", required = false) String itemType,
             @RequestParam(value = "profileDecorationId", required = false) Long profileDecorationId,
             @RequestParam(value = "thumbnailAttachmentId", required = false) Long thumbnailAttachmentId) {
         try {
-            Board boardTemp = boardService.boardView(id);
-
             if (userDetails == null) {
                 return ApiResponse.fail("로그인이 필요합니다.").toResponse(HttpStatus.UNAUTHORIZED);
             }
+            String inputError = validateBoardInput(title, content);
+            if (inputError != null) {
+                return ApiResponse.fail(inputError).toResponse(HttpStatus.BAD_REQUEST);
+            }
+
+            Board boardTemp = boardService.getBoard(id);
             User currentUser = userDetails.getUser();
 
             boolean isAdmin = hasRole(currentUser, "ROLE_ADMIN");
@@ -569,7 +703,7 @@ public class BoardController {
                 return ApiResponse.fail("게시글을 수정할 권한이 없습니다.").toResponse(HttpStatus.FORBIDDEN);
             }
 
-            Category category = categoryRepository.findById(categoryId)
+            Category category = categoryRepository.findByIdAndIsActiveTrue(categoryId)
                     .orElseThrow(() -> new RuntimeException("카테고리를 찾을 수 없습니다: " + categoryId));
 
             // Validation. tagId가 있으면 해당 카테고리 소속인지 검증
@@ -634,7 +768,7 @@ public class BoardController {
                         .toResponse(HttpStatus.BAD_REQUEST);
             }
 
-            boardTemp.setTitle(title);
+            boardTemp.setTitle(title.trim());
             boardTemp.setContent(content);
             boardTemp.setCategory(category);
             boardTemp.setTag(tagEntity);
@@ -648,7 +782,10 @@ public class BoardController {
                 boardTemp.setPinned(pinned);
             }
 
-            boardService.write(boardTemp, currentUser, attachmentIds);
+            List<Long> attachmentIdsToSync = syncAttachments && attachmentIds == null
+                    ? List.of()
+                    : attachmentIds;
+            boardService.write(boardTemp, currentUser, attachmentIdsToSync);
 
             long likeCount = boardLikeService.getLikeCount(boardTemp.getId());
             long commentCount = commentRepository.countByBoardIdAndStatusNot(boardTemp.getId(), STATUS.DELETED);
@@ -658,6 +795,8 @@ public class BoardController {
 
             return ApiResponse.ok("게시글이 성공적으로 수정되었습니다.", Map.of("board", boardDto)).toResponse();
 
+        } catch (AccessDeniedException exception) {
+            return ApiResponse.fail(exception.getMessage()).toResponse(HttpStatus.FORBIDDEN);
         } catch (RuntimeException e) {
             return ApiResponse.fail(e.getMessage()).toResponse(HttpStatus.NOT_FOUND);
 
@@ -678,16 +817,18 @@ public class BoardController {
             }
             User currentUser = userDetails.getUser();
 
-            Board board = boardService.boardView(id);
+            Board board = boardService.getBoard(id);
             boolean isAdmin = hasRole(currentUser, "ROLE_ADMIN");
 
             if (!isAdmin && !board.getAuthor().getId().equals(currentUser.getId())) {
                 return ApiResponse.fail("게시글을 삭제할 권한이 없습니다.").toResponse(HttpStatus.FORBIDDEN);
             }
 
-            boardService.boardDelete(id);
+            boardService.boardDelete(id, currentUser);
             return ApiResponse.ok("게시글이 성공적으로 삭제되었습니다.").toResponse();
 
+        } catch (AccessDeniedException exception) {
+            return ApiResponse.fail(exception.getMessage()).toResponse(HttpStatus.FORBIDDEN);
         } catch (RuntimeException e) {
             return ApiResponse.fail(e.getMessage()).toResponse(HttpStatus.NOT_FOUND);
 
@@ -767,14 +908,9 @@ public class BoardController {
             }
 
             User user = userDetails != null ? userDetails.getUser() : null;
-            List<Board> boards = boardService.getMyBoards(targetUser);
-            List<BoardResponseDTO> dtos = boards.stream()
-                    .map(b -> BoardResponseDTO.from(b,
-                            boardLikeService.getLikeCount(b.getId()),
-                            isLiked(b, user),
-                            commentRepository.countByBoardIdAndStatusNot(b.getId(), STATUS.DELETED)))
-                    .toList();
-            resolveProfileImages(new java.util.ArrayList<>(dtos));
+            List<BoardResponseDTO> dtos = toListResponseDTOs(
+                    boardService.getMyBoards(targetUser), user);
+            resolveProfileImages(dtos);
 
             return ApiResponse.ok("게시글 목록을 조회했습니다.", dtos).toResponse();
         } catch (Exception e) {
@@ -796,14 +932,9 @@ public class BoardController {
                 return ApiResponse.fail("로그인이 필요합니다.").toResponse(HttpStatus.UNAUTHORIZED);
             }
 
-            List<Board> boards = boardService.getMyBoards(currentUser);
-            List<BoardResponseDTO> dtos = boards.stream()
-                    .map(b -> BoardResponseDTO.from(b,
-                            boardLikeService.getLikeCount(b.getId()),
-                            isLiked(b, currentUser),
-                            commentRepository.countByBoardIdAndStatusNot(b.getId(), STATUS.DELETED)))
-                    .toList();
-            resolveProfileImages(new java.util.ArrayList<>(dtos));
+            List<BoardResponseDTO> dtos = toListResponseDTOs(
+                    boardService.getMyBoards(currentUser), currentUser);
+            resolveProfileImages(dtos);
 
             return ApiResponse.ok("내 게시글 목록을 조회했습니다.", dtos).toResponse();
         } catch (Exception e) {
@@ -833,6 +964,8 @@ public class BoardController {
 
             boardService.deleteMyBoards(boardIds, currentUser);
             return ApiResponse.ok("게시글이 삭제되었습니다.", null).toResponse();
+        } catch (AccessDeniedException exception) {
+            return ApiResponse.fail(exception.getMessage()).toResponse(HttpStatus.FORBIDDEN);
         } catch (Exception e) {
             log.error("내 게시글 삭제 오류", e);
             return ApiResponse.fail("게시글 삭제 중 오류가 발생했습니다.")
@@ -855,16 +988,11 @@ public class BoardController {
             List<Long> boardIds = commentRepository.findDistinctBoardIdsByAuthor(
                     currentUser, List.of(STATUS.DELETED));
 
-            List<BoardResponseDTO> dtos = new ArrayList<>();
+            List<Board> boards = new ArrayList<>();
             for (Long boardId : boardIds) {
-                boardService.findById(boardId).ifPresent(board -> {
-                    dtos.add(BoardResponseDTO.from(board,
-                            boardLikeService.getLikeCount(board.getId()),
-                            isLiked(board, currentUser),
-                            commentRepository.countByBoardIdAndStatusNot(board.getId(), STATUS.DELETED)));
-                });
+                boardService.findById(boardId).ifPresent(boards::add);
             }
-
+            List<BoardResponseDTO> dtos = toListResponseDTOs(boards, currentUser);
             resolveProfileImages(dtos);
             return ApiResponse.ok("댓글 단 게시글 목록을 조회했습니다.", dtos).toResponse();
         } catch (Exception e) {
@@ -876,25 +1004,16 @@ public class BoardController {
 
     @GetMapping("/recent-boards")
     public ResponseEntity<?> getRecentBoards(@AuthenticationPrincipal CustomUserDetails userDetails) {
-
-        User user = userDetails.getUser();
-
-        if(user == null) {
+        if (userDetails == null || userDetails.getUser() == null) {
             return ApiResponse.fail("유저 정보를 찾을 수 없습니다. 다시 로그인해주세요.")
                     .toResponse(HttpStatus.BAD_REQUEST);
         }
-        List<BoardResponseDTO> recentBoards = boardService.getRecentBoards()
-                .stream()
-                .map(board -> {
-                    // 모든 파라미터를 순서대로 전달
-                    long likeCount = boardLikeService.getLikeCount(board.getId());
-                    boolean isLiked = boardLikeService.isUserLiked(user.getId(), board.getId());
-                    long commentCount = commentRepository.countByBoardIdAndStatusNot(board.getId(), STATUS.DELETED);
 
-                    return BoardResponseDTO.from(board, likeCount, isLiked, commentCount);
-                })
-                .collect(Collectors.toList());
-
+        User user = userDetails.getUser();
+        List<BoardResponseDTO> recentBoards = toListResponseDTOs(
+                boardService.getRecentBoards(),
+                user);
+        resolveProfileImages(recentBoards);
         return ResponseEntity.ok(recentBoards);
     }
 

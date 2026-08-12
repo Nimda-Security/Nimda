@@ -4,6 +4,7 @@ import com.nimda.cite.domain.board.dto.CategoryCreateDTO;
 import com.nimda.cite.domain.board.dto.CategorySortOrderDTO;
 import com.nimda.cite.domain.board.dto.CategoryUpdateDTO;
 import com.nimda.cite.domain.board.entity.Category;
+import com.nimda.cite.domain.board.enums.BoardStatus;
 import com.nimda.cite.domain.board.repository.BoardRepository;
 import com.nimda.cite.domain.board.repository.CategoryRepository;
 import com.nimda.cite.user.entity.User;
@@ -15,7 +16,9 @@ import org.springframework.web.server.ResponseStatusException;
 
 import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
+import java.util.stream.Collectors;
 
 /**
  * 카테고리 서비스
@@ -55,6 +58,23 @@ public class CategoryService {
 
         return categoryRepository.findAllByOrderBySortOrderAsc();
     }
+    @Transactional(readOnly = true)
+    public Map<Long, Integer> getActiveBoardCountsByCategoryIds(List<Category> categories) {
+        List<Long> categoryIds = categories.stream()
+                .map(Category::getId)
+                .toList();
+
+        if (categoryIds.isEmpty()) {
+            return Map.of();
+        }
+
+        return boardRepository.countByCategoryIdsAndStatus(categoryIds, BoardStatus.ACTIVE).stream()
+                .collect(Collectors.toMap(
+                        row -> (Long) row[0],
+                        row -> ((Number) row[1]).intValue()
+                ));
+    }
+
 
     /**
      * Slug로 활성화된 카테고리 조회
@@ -155,23 +175,30 @@ public class CategoryService {
         if (updateDTO.getParentId() != null) {
             Long newParentId = updateDTO.getParentId();
 
-            // 자기 자신을 부모로 설정하는 것 방지
-            if (newParentId.equals(id)) {
-                throw new RuntimeException("자기 자신을 부모로 설정할 수 없습니다.");
+            if (newParentId == -1L) {
+                // -1을 보내면 최상위로 변경 (parentId = null)
+                category.setParentId(null);
+            } else {
+                // 자기 자신을 부모로 설정하는 것 방지
+                if (newParentId.equals(id)) {
+                    throw new RuntimeException("자기 자신을 부모로 설정할 수 없습니다.");
+                }
+
+                // 하위 카테고리가 있으면 다른 카테고리의 하위로 이동할 수 없음
+                if (!newParentId.equals(category.getParentId()) && categoryRepository.existsByParentId(id)) {
+                    throw new RuntimeException("하위 카테고리가 있는 카테고리는 다른 카테고리의 하위로 이동할 수 없습니다.");
+                }
+
+                // 부모 존재 및 활성화 확인
+                validateParent(newParentId);
+
+                // 순환 참조 방지 체크
+                if (hasCircularReference(id, newParentId)) {
+                    throw new RuntimeException("순환 참조가 발생합니다. 해당 카테고리를 부모로 설정할 수 없습니다.");
+                }
+
+                category.setParentId(newParentId);
             }
-
-            // 부모 존재 및 활성화 확인
-            validateParent(newParentId);
-
-            // 순환 참조 방지 체크
-            if (hasCircularReference(id, newParentId)) {
-                throw new RuntimeException("순환 참조가 발생합니다. 해당 카테고리를 부모로 설정할 수 없습니다.");
-            }
-
-            category.setParentId(newParentId);
-        } else if (updateDTO.getParentId() != null && updateDTO.getParentId() == -1) {
-            // -1을 보내면 최상위로 변경 (parentId = null)
-            category.setParentId(null);
         }
 
         // 4. 나머지 필드 업데이트 (null이면 기존 값 유지)
@@ -180,6 +207,13 @@ public class CategoryService {
         }
         if (updateDTO.getSortOrder() != null) {
             category.setSortOrder(updateDTO.getSortOrder());
+        }
+        if (Boolean.TRUE.equals(updateDTO.getIsActive()) && !category.getIsActive()
+                && category.getParentId() != null) {
+            validateParent(category.getParentId());
+        }
+        if (Boolean.FALSE.equals(updateDTO.getIsActive()) && category.getIsActive()) {
+            validateCategoryDeactivation(id);
         }
         if (updateDTO.getIsActive() != null) {
             category.setIsActive(updateDTO.getIsActive());
@@ -212,16 +246,7 @@ public class CategoryService {
         Category category = categoryRepository.findById(id)
                 .orElseThrow(() -> new RuntimeException("카테고리를 찾을 수 없습니다: " + id));
 
-        // 2. 자식 카테고리 존재 확인
-        List<Category> children = categoryRepository.findByParentIdAndIsActiveTrueOrderBySortOrderAsc(id);
-        if (!children.isEmpty()) {
-            throw new RuntimeException("하위 카테고리가 존재하여 삭제할 수 없습니다. 먼저 하위 카테고리를 삭제하거나 비활성화하세요.");
-        }
-
-        // 3. 게시글 존재 확인 (간단 체크: postCount 필드 활용)
-        if (category.getPostCount() != null && category.getPostCount() > 0) {
-            throw new RuntimeException("해당 카테고리에 게시글이 존재하여 삭제할 수 없습니다. (" + category.getPostCount() + "개)");
-        }
+        validateCategoryDeactivation(id);
 
         // 4. 소프트 삭제 (isActive = false)
         category.setIsActive(false);
@@ -280,6 +305,19 @@ public class CategoryService {
                 }
             }
             throw new RuntimeException("이미 사용 중인 슬러그입니다: " + slug);
+        }
+    }
+
+    private void validateCategoryDeactivation(Long categoryId) {
+        List<Category> children =
+                categoryRepository.findByParentIdAndIsActiveTrueOrderBySortOrderAsc(categoryId);
+        if (!children.isEmpty()) {
+            throw new RuntimeException(
+                    "하위 카테고리가 존재하여 비활성화할 수 없습니다. 먼저 하위 카테고리를 비활성화하세요.");
+        }
+        if (boardRepository.existsByCategoryIdAndStatusIn(
+                categoryId, List.of(BoardStatus.ACTIVE, BoardStatus.HIDDEN))) {
+            throw new RuntimeException("해당 카테고리에 게시글이 존재하여 비활성화할 수 없습니다.");
         }
     }
 

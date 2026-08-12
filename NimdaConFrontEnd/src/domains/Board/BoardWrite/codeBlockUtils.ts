@@ -1,8 +1,5 @@
 import { CODE_LANGUAGE_OPTIONS, getCodeLanguageLabel } from './constants';
-import {
-  getSelectionOffsetsInElement,
-  setSelectionInElementByOffset,
-} from './editorUtils';
+import { setSelectionInElementByOffset } from './editorUtils';
 import { highlightCodeBlocks } from '@/utils/codeHighlight';
 
 // ── Code element retrieval ──
@@ -102,9 +99,6 @@ export const refreshCodeBlockHighlight = (
 // ── Language update ──
 
 export const updateCodeBlockLanguage = (pre: HTMLElement, language: string) => {
-  const normalizedLanguage =
-    language === 'plaintext' ? 'plaintext' : language;
-
   const prevLanguageClass = Array.from(pre.classList).find((c) =>
     c.startsWith('language-')
   );
@@ -112,19 +106,19 @@ export const updateCodeBlockLanguage = (pre: HTMLElement, language: string) => {
     pre.classList.remove(prevLanguageClass);
   }
 
-  pre.classList.add('bw-code-block', `language-${normalizedLanguage}`);
-  pre.setAttribute('data-language', normalizedLanguage);
+  pre.classList.add('bw-code-block', `language-${language}`);
+  pre.setAttribute('data-language', language);
   pre.setAttribute(
     'data-language-label',
-    getCodeLanguageLabel(normalizedLanguage)
+    getCodeLanguageLabel(language)
   );
-  ensureCodeLanguageSelector(pre, normalizedLanguage);
+  ensureCodeLanguageSelector(pre, language);
 
   const code = getCodeElementInPre(pre);
   Array.from(code.classList)
     .filter((cls) => cls.startsWith('language-'))
     .forEach((cls) => code.classList.remove(cls));
-  code.classList.add(`language-${normalizedLanguage}`);
+  code.classList.add(`language-${language}`);
   code.removeAttribute('data-highlighted');
   syncCodeBlockEmptyState(pre);
 };
@@ -190,10 +184,9 @@ export const applyCodeLanguage = (
   if (!targetPre) {
     const range = selection.getRangeAt(0);
     const selectedText = range.toString();
-    const normalizedLanguage =
-      language === 'plaintext' ? 'plaintext' : language;
+
     const pre = document.createElement('pre');
-    pre.className = `bw-code-block language-${normalizedLanguage}`;
+    pre.className = `bw-code-block language-${language}`;
     pre.setAttribute('data-language', language);
     pre.setAttribute('data-language-label', getCodeLanguageLabel(language));
     pre.setAttribute('dir', 'ltr');
@@ -201,13 +194,13 @@ export const applyCodeLanguage = (
     pre.style.unicodeBidi = 'embed';
     pre.style.textAlign = 'left';
     const code = document.createElement('code');
-    code.className = `language-${normalizedLanguage}`;
+    code.className = `language-${language}`;
     code.setAttribute('dir', 'ltr');
     code.style.direction = 'ltr';
     code.style.unicodeBidi = 'embed';
     code.style.textAlign = 'left';
     code.textContent = selectedText || '';
-    ensureCodeLanguageSelector(pre, normalizedLanguage);
+    ensureCodeLanguageSelector(pre, language);
     pre.appendChild(code);
     syncCodeBlockEmptyState(pre);
 

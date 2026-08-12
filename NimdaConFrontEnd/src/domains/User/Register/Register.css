@@ -299,3 +299,61 @@
 .reg__btn--confirm {
   width: 102px;
 }
+
+@media (max-width: 767px) {
+  .reg {
+    box-sizing: border-box;
+    min-width: 0;
+    padding: 24px 16px;
+  }
+
+  .reg__steps {
+    width: 100%;
+    justify-content: center;
+    gap: 8px;
+  }
+
+  .reg__step {
+    font-size: 13px;
+    white-space: nowrap;
+  }
+
+  .reg__card {
+    box-sizing: border-box;
+    min-width: 0;
+    min-height: auto;
+    padding: 24px 16px;
+  }
+
+  .reg__columns {
+    width: 100%;
+    box-sizing: border-box;
+    flex-direction: column;
+    gap: 20px;
+    padding: 0;
+  }
+
+  .reg__col,
+  .reg__field {
+    width: 100%;
+    min-width: 0;
+  }
+
+  .reg__birth-row {
+    display: grid;
+    grid-template-columns: minmax(0, 1.5fr) repeat(2, minmax(0, 1fr));
+  }
+
+  .reg__birth-input--year,
+  .reg__birth-input--month,
+  .reg__birth-input--day {
+    box-sizing: border-box;
+    width: 100%;
+    min-width: 0;
+  }
+
+  .reg__actions {
+    flex-wrap: wrap;
+    padding: 0;
+  }
+}

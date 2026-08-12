@@ -38,7 +38,7 @@ const reEncodeImageFile = (file: File): Promise<File> =>
 
       const ctx = canvas.getContext('2d');
       if (!ctx) {
-        resolve(file);
+        reject(new Error('이 브라우저에서 안전한 이미지 변환을 시작할 수 없습니다.'));
         return;
       }
 
@@ -52,7 +52,7 @@ const reEncodeImageFile = (file: File): Promise<File> =>
       canvas.toBlob(
         (blob) => {
           if (!blob) {
-            resolve(file);
+            reject(new Error('이미지를 안전한 형식으로 변환하지 못했습니다.'));
             return;
           }
 
@@ -87,6 +87,38 @@ const parseJsonSafe = async (response: Response) => {
     return null;
   }
 };
+export type DeleteAttachmentsOptions = {
+  keepalive?: boolean;
+};
+
+export const deleteAttachments = async (
+  fileIds: number[],
+  options: DeleteAttachmentsOptions = {}
+): Promise<{ ok: true } | { ok: false; message: string }> => {
+  try {
+    const response = await fetch(ATTACHMENTS_BASE, {
+      method: 'DELETE',
+      headers: addVersionToHeaders({
+        'Content-Type': 'application/json',
+      }),
+      credentials: 'include',
+      keepalive: options.keepalive,
+      body: JSON.stringify({ fileIds }),
+    });
+    const result = await parseJsonSafe(response);
+
+    if (!response.ok || !result?.success) {
+      return {
+        ok: false,
+        message: (result?.message as string) || '첨부 파일 삭제에 실패했습니다.',
+      };
+    }
+
+    return { ok: true };
+  } catch {
+    return { ok: false, message: '첨부 파일 삭제 중 네트워크 오류가 발생했습니다.' };
+  }
+};
 
 export type PresignedBoardUploadResult = {
   uploadUrl: string;
@@ -95,15 +127,20 @@ export type PresignedBoardUploadResult = {
 
 /**
  * S3 업로드용 presigned URL 발급
- * - Content-Type은 서명에 포함하지 않음: 클라이언트가 PUT 시 file.type을 보내면 S3가 해당 타입으로 저장.
+ * - 서버가 실제 File 크기를 Content-Length에 묶어 10 MiB 제한을 저장소 경계에서도 적용한다.
  */
 export const requestPresignedUpload = async (
   type: 'board' | 'file' | 'profile' | 'profile-decoration',
-  fileName: string
-): Promise<{ ok: true; data: PresignedBoardUploadResult } | { ok: false; message: string }> => {
+  fileName: string,
+  fileSize: number
+): Promise<
+  | { ok: true; data: PresignedBoardUploadResult }
+  | { ok: false; message: string; status: number; code?: string }
+> => {
   const params = new URLSearchParams();
   params.set('type', type);
   params.set('fileName', fileName);
+  params.set('fileSize', String(fileSize));
 
   const response = await fetch(`${ATTACHMENTS_BASE}/presigned`, {
     method: 'POST',
@@ -119,6 +156,8 @@ export const requestPresignedUpload = async (
     return {
       ok: false,
       message: (result?.message as string) || 'Presigned URL 발급에 실패했습니다.',
+      status: response.status,
+      code: typeof result?.code === 'string' ? result.code : undefined,
     };
   }
 
@@ -126,7 +165,11 @@ export const requestPresignedUpload = async (
   const uploadUrl = data.uploadUrl as string | undefined;
   const key = data.key as string | undefined;
   if (!uploadUrl || !key) {
-    return { ok: false, message: 'Presigned 응답 형식이 올바르지 않습니다.' };
+    return {
+      ok: false,
+      message: 'Presigned 응답 형식이 올바르지 않습니다.',
+      status: response.status,
+    };
   }
 
   return { ok: true, data: { uploadUrl, key } };
@@ -252,9 +295,11 @@ export const uploadBoardFileViaS3 = async (
     }
   }
 
-  const presigned = await requestPresignedUpload('board', safeFile.name);
+  const presigned = await requestPresignedUpload('board', safeFile.name, safeFile.size);
   if (!presigned.ok) {
-    return uploadBoardFileLocally(safeFile, categoryId);
+    return presigned.status === 503 && presigned.code === 'UPLOAD_STORAGE_UNAVAILABLE'
+      ? uploadBoardFileLocally(safeFile, categoryId)
+      : { ok: false, message: presigned.message };
   }
 
   const put = await putFileToPresignedUrl(presigned.data.uploadUrl, safeFile);

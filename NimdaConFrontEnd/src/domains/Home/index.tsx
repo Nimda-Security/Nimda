@@ -1,4 +1,3 @@
-import "@/App.css";
 import Layout from "@/components/Layout";
 import Banner from "./components/banner";
 import NoticeSection from "./components/NoticeSection";

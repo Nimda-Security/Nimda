@@ -1,7 +1,6 @@
 import { useEffect, useState } from 'react';
-import { Navigate } from 'react-router-dom';
-import { isAdmin } from '@/utils/jwt';
-import { validateSession } from '@/api/auth';
+import { Navigate, useLocation } from 'react-router-dom';
+import { validateSession, type SessionValidation } from '@/api/auth';
 
 interface ProtectedRouteProps {
     children: React.ReactNode;
@@ -9,24 +8,48 @@ interface ProtectedRouteProps {
 }
 
 const ProtectedRoute = ({ children, requireAdmin = false }: ProtectedRouteProps) => {
-    const [checking, setChecking] = useState(true);
-    const [valid, setValid] = useState(false);
+    const location = useLocation();
+    const [session, setSession] = useState<SessionValidation | null>(null);
+    const [retryCount, setRetryCount] = useState(0);
 
     useEffect(() => {
-        // 쿠키가 실제 인증 수단이므로 항상 서버에 검증
-        validateSession().then((ok) => {
-            setValid(ok);
-            setChecking(false);
+        let mounted = true;
+
+        void validateSession().then((result) => {
+            if (mounted) {
+                setSession(result);
+            }
         });
-    }, []);
 
-    if (checking) return null; // 검증 중에는 아무것도 렌더링하지 않음
+        return () => {
+            mounted = false;
+        };
+    }, [retryCount]);
 
-    if (!valid) {
-        return <Navigate to="/login" replace />;
+    if (!session) return null;
+
+    if (session.status === 'unavailable') {
+        return (
+            <main role="alert">
+                <p>세션을 확인할 수 없습니다. 네트워크 연결을 확인한 후 다시 시도해주세요.</p>
+                <button type="button" onClick={() => setRetryCount((count) => count + 1)}>
+                    다시 시도
+                </button>
+            </main>
+        );
     }
 
-    if (requireAdmin && !isAdmin()) {
+    if (session.status === 'unauthenticated') {
+        return (
+            <Navigate
+                to="/login"
+                replace
+                state={{ from: `${location.pathname}${location.search}${location.hash}` }}
+            />
+        );
+    }
+
+    if (requireAdmin && !session.roles.includes('ROLE_ADMIN')) {
         return <Navigate to="/403" replace />;
     }
 

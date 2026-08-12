@@ -40,7 +40,10 @@ public class CategoryResponseDTO {
      * @return CategoryResponseDTO
      */
     public static CategoryResponseDTO from(Category category) {
+        return from(category, null);
+    }
 
+    public static CategoryResponseDTO from(Category category, Integer postCount) {
         if (category == null) {
             return null;
         }
@@ -52,7 +55,7 @@ public class CategoryResponseDTO {
                 .slug(category.getSlug())
                 .isActive(category.getIsActive())
                 .sortOrder(category.getSortOrder())
-                .postCount(category.getPostCount())
+                .postCount(postCount != null ? postCount : 0)
                 .redirectUrl(category.getRedirectUrl())
                 .shopEnabled(category.getShopEnabled())
                 .createdAt(category.getCreatedAt())

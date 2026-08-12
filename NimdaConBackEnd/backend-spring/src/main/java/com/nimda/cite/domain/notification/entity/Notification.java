@@ -1,20 +1,12 @@
 package com.nimda.cite.domain.notification.entity;
 
+import com.nimda.cite.common.entity.BaseTimeEntity;
 import com.nimda.cite.domain.notification.enums.NotificationType;
 import com.nimda.cite.user.entity.User;
-import jakarta.persistence.Entity;
-import jakarta.persistence.GeneratedValue;
-import jakarta.persistence.GenerationType;
-import jakarta.persistence.Id;
-import lombok.AllArgsConstructor;
-import lombok.Builder;
-import lombok.NoArgsConstructor;
-
-import java.time.LocalDateTime;
-
-import com.nimda.cite.common.entity.BaseTimeEntity; // 생성시간 관리를 위해 권장
 import jakarta.persistence.*;
 import lombok.*;
+
+import java.time.LocalDateTime;
 
 @Entity
 @Getter // 필드 조회를 위해 필수
@@ -43,6 +35,7 @@ public class Notification extends BaseTimeEntity {
     private String message;
 
     @Column(nullable = false, name = "is_read")
+    @Builder.Default
     private Boolean isRead = false; // 기본값 false
 
     @Column(name = "created_at", nullable = false) @Builder.Default

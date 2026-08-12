@@ -14,6 +14,7 @@ import {
   getUserPointBalanceByNickname,
   getUserPointDetailsByNickname,
 } from '@/api/user';
+import { getCurrentUser } from '@/api/auth';
 import type {
   UserPublicProfile,
   UserComment,
@@ -146,6 +147,7 @@ function ProfileInfoRow({ label, value }: { label: string; value: string }) {
 export default function UserProfilePage() {
   const { nickname } = useParams<{ nickname: string }>();
   const navigate = useNavigate();
+  const isSelf = getCurrentUser()?.nickname === nickname;
 
   const [profile, setProfile] = useState<UserPublicProfile | null>(null);
   const [boards, setBoards] = useState<BoardItem[]>([]);
@@ -171,38 +173,42 @@ export default function UserProfilePage() {
     setCommentsPage(1);
     setLikedPage(1);
     setPointFilter('all');
+    if (!isSelf) {
+      setActiveTab('my_posts');
+      setLikedBoards([]);
+      setPointBalance(0);
+      setPointDetails([]);
+    }
 
     Promise.all([
       getUserProfileByNickname(nickname),
       getUserBoardsAPI(nickname),
       getUserCommentsByNickname(nickname),
-      getUserLikedBoardsByNickname(nickname),
-      getUserPointBalanceByNickname(nickname),
-      getUserPointDetailsByNickname(nickname),
     ])
-      .then(
-        ([
-          profileData,
-          boardData,
-          commentData,
-          likedData,
-          balanceData,
-          detailsData,
-        ]) => {
-          if (!profileData) {
-            setNotFound(true);
-          } else {
-            setProfile(profileData);
-            setBoards(boardData as BoardItem[]);
-            setComments(commentData);
-            setLikedBoards(likedData);
-            setPointBalance(balanceData);
-            setPointDetails(detailsData);
-          }
+      .then(([profileData, boardData, commentData]) => {
+        if (!profileData) {
+          setNotFound(true);
+          return;
         }
-      )
+
+        setProfile(profileData);
+        setBoards(boardData as BoardItem[]);
+        setComments(commentData);
+
+        if (!isSelf) return;
+
+        return Promise.all([
+          getUserLikedBoardsByNickname(nickname),
+          getUserPointBalanceByNickname(nickname),
+          getUserPointDetailsByNickname(nickname),
+        ]).then(([likedData, balanceData, detailsData]) => {
+          setLikedBoards(likedData);
+          setPointBalance(balanceData);
+          setPointDetails(detailsData);
+        });
+      })
       .finally(() => setLoading(false));
-  }, [nickname]);
+  }, [nickname, isSelf]);
 
   /* ── 로딩 ── */
   if (loading) {
@@ -266,7 +272,7 @@ export default function UserProfilePage() {
     stats: [
       { label: '작성글', value: String(boards.length) },
       { label: '댓글', value: String(comments.length) },
-      { label: '좋아요', value: String(likedBoards.length) },
+      ...(isSelf ? [{ label: '좋아요', value: String(likedBoards.length) }] : []),
     ],
   };
 
@@ -288,9 +294,13 @@ export default function UserProfilePage() {
     if (pointFilter === 'expire') return item.type === 'expire';
     return true;
   });
+  const displayedActiveTab =
+    !isSelf && (activeTab === 'liked_posts' || activeTab === 'points')
+      ? 'my_posts'
+      : activeTab;
 
   const renderTabContent = () => {
-    switch (activeTab) {
+    switch (displayedActiveTab) {
       case 'profile':
         return (
           <div
@@ -570,6 +580,9 @@ export default function UserProfilePage() {
         return null;
     }
   };
+  const visibleTabs = isSelf
+    ? TABS
+    : TABS.filter((tab) => tab.key !== 'liked_posts' && tab.key !== 'points');
 
   return (
     <div className="min-h-screen bg-[#F5F5F5] font-['Pretendard',sans-serif] text-[#0c0c0c] flex flex-col">
@@ -595,7 +608,7 @@ export default function UserProfilePage() {
 
             {/* 탭 바 */}
             <div className="w-full flex items-center gap-8 border-b border-[#e5e5e5] bg-transparent">
-              {TABS.map((tab) => {
+              {visibleTabs.map((tab) => {
                 const isActive = activeTab === tab.key;
                 return (
                   <button

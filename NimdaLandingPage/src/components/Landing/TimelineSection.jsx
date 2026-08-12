@@ -1,4 +1,5 @@
 'use client';
+import Image from 'next/image';
 import { motion } from 'framer-motion';
 import ScrollReveal from './ScrollReveal';
 
@@ -40,15 +41,17 @@ export default function TimelineSection() {
         >
           {marqueeList.map((act, i) => (
             <div
-              key={i}
+              key={`${act.img}-${Math.floor(i / ACTIVITIES.length)}`}
               className="relative h-[400px] w-[300px] flex-shrink-0 rounded-2xl bg-neutral-900 border border-white/10 overflow-hidden group hover:border-indigo-500/50 transition-colors duration-500"
             >
               {/* Image Background */}
               <div className="absolute inset-0">
-                <img 
-                  src={act.img} 
+                <Image
+                  src={act.img}
                   alt={act.title}
-                  className="w-full h-full object-cover opacity-60 group-hover:opacity-40 group-hover:scale-110 transition-all duration-700 ease-out"
+                  fill
+                  sizes="300px"
+                  className="object-cover opacity-60 group-hover:opacity-40 group-hover:scale-110 transition-all duration-700 ease-out"
                 />
                 <div className="absolute inset-0 bg-gradient-to-b from-transparent via-black/50 to-black/90" />
               </div>

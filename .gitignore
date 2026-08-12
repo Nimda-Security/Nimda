@@ -93,3 +93,8 @@ load-tests/results/
 # Docker volumes
 mysql_data/
 replacements.txt
+
+# Local GJC workflow and audit evidence
+/.gjc/
+/audit-assets/
+/.insane-review/

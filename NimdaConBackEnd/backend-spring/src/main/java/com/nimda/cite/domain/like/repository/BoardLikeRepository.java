@@ -19,6 +19,14 @@ public interface BoardLikeRepository extends JpaRepository<BoardLike, Long> {
 
         // 현재 로그인한 사용자가 이 글에 좋아요를 눌렀는지 확인
         boolean existsByBoardIdAndLikerId(Long boardId, Long userId);
+        @Query("SELECT bl.board.id, COUNT(bl) FROM BoardLike bl " +
+                "WHERE bl.board.id IN :boardIds GROUP BY bl.board.id")
+        List<Object[]> countByBoardIds(@Param("boardIds") List<Long> boardIds);
+
+        @Query("SELECT bl.board.id FROM BoardLike bl " +
+                "WHERE bl.liker.id = :userId AND bl.board.id IN :boardIds")
+        List<Long> findLikedBoardIds(@Param("userId") Long userId,
+                                     @Param("boardIds") List<Long> boardIds);
 
         // 자신이 받은 게시글 좋아요 카운트
         @Query("SELECT COUNT(bl) FROM BoardLike bl WHERE bl.author.id = :authorId")

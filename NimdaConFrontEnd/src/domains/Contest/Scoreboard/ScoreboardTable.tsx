@@ -42,12 +42,6 @@ const getCellText = (score: ProblemScore) => {
   return '';
 };
 
-const formatMinutes = (minutes?: number) => {
-  if (minutes === undefined || minutes === null) {
-    return '-';
-  }
-  return `${minutes} min.`;
-};
 
 const ScoreboardTable: React.FC<ScoreboardTableProps> = ({
   entries,

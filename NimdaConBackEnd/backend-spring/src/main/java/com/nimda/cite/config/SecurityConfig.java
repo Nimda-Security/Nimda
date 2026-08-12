@@ -25,6 +25,8 @@ public class SecurityConfig {
 
     @Autowired
     private JwtAuthenticationFilter jwtAuthenticationFilter;
+    @Autowired
+    private UnsafeRequestOriginFilter unsafeRequestOriginFilter;
 
     @Bean
     public PasswordEncoder passwordEncoder() {
@@ -36,17 +38,7 @@ public class SecurityConfig {
     public CorsConfigurationSource corsConfigurationSource() {
         CorsConfiguration configuration = new CorsConfiguration();
 
-        configuration.setAllowedOriginPatterns(Arrays.asList(
-                "http://localhost:*",
-                "http://43.200.36.32:*",
-                "https://43.200.36.32:*",
-                "https://nimda.kr",
-                "https://*.nimda.kr",
-                "http://nimda.kr",
-                "http://*.nimda.kr",
-                "https://*.vercel.app",
-                "http://*.vercel.app"
-        ));
+        configuration.setAllowedOrigins(UnsafeRequestOriginFilter.ALLOWED_ORIGINS);
 
         configuration.setAllowedMethods(Arrays.asList("GET", "POST", "PUT", "DELETE", "PATCH", "OPTIONS"));
         configuration.setAllowedHeaders(Arrays.asList("*"));
@@ -64,13 +56,15 @@ public class SecurityConfig {
                 // 1. CORS 설정 연동
                 .cors(cors -> cors.configurationSource(corsConfigurationSource()))
 
-                // 2. CSRF 비활성화 (JWT 사용)
+                // 2. Spring CSRF tokens are disabled; UnsafeRequestOriginFilter protects
+                // unsafe browser requests with an exact-origin policy.
                 .csrf(csrf -> csrf.disable())
 
                 // 3. 세션 정책 설정 (Stateless)
                 .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
 
                 // 4. JWT 인증 필터 추가 (UsernamePasswordAuthenticationFilter 실행 전 검사)
+                .addFilterBefore(unsafeRequestOriginFilter, UsernamePasswordAuthenticationFilter.class)
                 .addFilterBefore(jwtAuthenticationFilter, UsernamePasswordAuthenticationFilter.class)
 
                 // 5. 요청별 권한 제어 (순서가 매우 중요함)
@@ -79,26 +73,50 @@ public class SecurityConfig {
                         .requestMatchers(HttpMethod.OPTIONS, "/**").permitAll()
 
                         // [우선순위 2] 인증 관련 기본 API
-                        .requestMatchers("/api/auth/login", "/api/auth/register").permitAll()
+                        .requestMatchers("/api/auth/login", "/api/auth/register", "/api/auth/logout").permitAll()
                         .requestMatchers(
                                 "/api/auth/me",
                                 "/api/auth/email-hide",
                                 "/api/auth/profile-image",
                                 "/api/auth/profile-decoration"
                         ).authenticated()
-                        .requestMatchers("/api/actuator/**").permitAll()
+                        .requestMatchers(
+                                "/api/actuator/health/liveness",
+                                "/api/actuator/health/readiness"
+                        ).permitAll()
+                        .requestMatchers("/api/actuator/**").hasRole("ADMIN")
                         // [우선순위 3] 비로그인 허용 (Public API - 정보성 데이터)
                         // 메인 페이지 구성에 필요한 기초 정보들은 로그인 없이 GET 허용
                         .requestMatchers(HttpMethod.GET, "/api/cite/profile-decorations/**").permitAll()
                         .requestMatchers(HttpMethod.GET, "/api/cite/attendance/today").permitAll()
-                        .requestMatchers(HttpMethod.GET, "/api/cite/category/**").permitAll()
-                        .requestMatchers(HttpMethod.GET, "/api/cite/attachments/*/download-url").permitAll()
+                        // Category administration rules must precede the public category reads.
+                        .requestMatchers(HttpMethod.GET, "/api/cite/category/all").hasRole("ADMIN")
+                        .requestMatchers(HttpMethod.POST,
+                                "/api/cite/category",
+                                "/api/cite/category/enable-shop/*"
+                        ).hasRole("ADMIN")
+                        .requestMatchers(HttpMethod.PUT,
+                                "/api/cite/category/*",
+                                "/api/cite/category/sort-order"
+                        ).hasRole("ADMIN")
+                        .requestMatchers(HttpMethod.DELETE, "/api/cite/category/*").hasRole("ADMIN")
+                        .requestMatchers(HttpMethod.GET,
+                                "/api/cite/category",
+                                "/api/cite/category/slug/*"
+                        ).permitAll()
                         .requestMatchers("/api/cite/mail/**").permitAll()
-                        .requestMatchers("api/cite/passwordChange/**").permitAll()
+                        .requestMatchers("/api/cite/passwordChange/**").permitAll()
                         .requestMatchers("/error").permitAll()
 
                         // [우선순위 4] 인증 필수 API (로그인하지 않으면 접근 불가)
                         // 게시판 조회(GET)를 포함한 모든 게시판 활동은 인증 필요
+                        // Public legal documents use immutable slugs; numeric board IDs stay protected.
+                        .requestMatchers(HttpMethod.GET,
+                                "/api/cite/board/legal/terms",
+                                "/api/cite/board/legal/privacy",
+                                "/api/cite/board/legal/youth-protection",
+                                "/api/cite/board/legal/site-rules"
+                        ).permitAll()
                         .requestMatchers("/api/cite/board/**").authenticated()
                         .requestMatchers("/api/cite/attendance/**").authenticated()
                         .requestMatchers("/api/cite/point/**").authenticated()
@@ -122,13 +140,10 @@ public class SecurityConfig {
                         .requestMatchers("/api/cite/admin/profile-decorations/**").hasRole("ADMIN")
                         .requestMatchers(HttpMethod.DELETE, "/api/users/**").hasRole("ADMIN")
                         .requestMatchers(HttpMethod.PUT, "/api/users/*/role").hasRole("ADMIN")
-                        .requestMatchers(HttpMethod.GET, "/api/groups", "/api/cite/category/all").hasRole("ADMIN")
+                        .requestMatchers(HttpMethod.GET, "/api/groups").hasRole("ADMIN")
                         .requestMatchers(HttpMethod.POST, "/api/groups", "/api/problems", "/api/contest").hasRole("ADMIN")
                         .requestMatchers(HttpMethod.PUT, "/api/problems/**", "/api/contest/**").hasRole("ADMIN")
                         .requestMatchers(HttpMethod.DELETE, "/api/problems/**", "/api/contest/**").hasRole("ADMIN")
-                        .requestMatchers(HttpMethod.POST, "/api/cite/category/**").hasRole("ADMIN")
-                        .requestMatchers(HttpMethod.PUT, "/api/cite/category/**").hasRole("ADMIN")
-                        .requestMatchers(HttpMethod.DELETE, "/api/cite/category/**").hasRole("ADMIN")
                         .requestMatchers(HttpMethod.GET, "/api/problems/*/admin").hasRole("ADMIN")
 
                         // 채점 서버 api

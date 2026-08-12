@@ -193,7 +193,7 @@ const ProfileDecorationManagement = () => {
           <span className="admin__form-label">배지 이미지</span>
           <input
             type="file"
-            accept=".svg,image/svg+xml,image/png,image/jpeg,image/webp"
+            accept="image/png,image/jpeg"
             onChange={(event) => setFile(event.target.files?.[0] || null)}
             className="admin__form-input"
           />

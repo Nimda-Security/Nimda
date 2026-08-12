@@ -1,75 +1,47 @@
 import Layout from '@/components/Layout';
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import Editor from '@monaco-editor/react';
 
-function ProblemSubmitPage() {
-  const navigate = useNavigate();
-  const location = useLocation();
+interface ProblemSubmitLocationState {
+  problemId?: number;
+  problemTitle?: string;
+  code?: string;
+  language?: string;
+}
 
-  // URL 파라미터에서 문제 정보 가져오기
-  const problemId = location.state?.problemId || 1; // 기본값 1 (A + B)
-  const problemTitle = location.state?.problemTitle || 'A + B';
-  const [formData, setFormData] = useState({
-    title: '',
-    difficulty: '',
-    category: 'C++17', // C++을 기본값으로 설정
-    points: '',
-    description: '',
-    flag: '',
-    hints: '',
-  });
+const normalizeLanguage = (language: string) => {
+  const normalizedLanguage = language.toLowerCase();
+  if (
+    normalizedLanguage.includes('c++') ||
+    normalizedLanguage === 'cpp'
+  ) {
+    return 'C++17';
+  }
+  if (normalizedLanguage === 'c' || normalizedLanguage === 'c99') return 'C99';
+  if (normalizedLanguage === 'java') return 'Java';
+  return 'C++17';
+};
 
-  // 언어 명칭 정규화 함수
-  const normalizeLanguage = (lang: string) => {
-    const lowerLang = lang.toLowerCase();
-    if (lowerLang.includes('c++') || lowerLang === 'cpp') return 'C++17';
-    if (lowerLang === 'c' || lowerLang === 'c99') return 'C99';
-    if (lowerLang === 'java') return 'Java';
-    return 'C++17'; // 기본값
-  };
+const getMonacoLanguage = (language: string) => {
+  switch (language) {
+    case 'C++17':
+    case 'cpp':
+      return 'cpp';
+    case 'Java':
+      return 'java';
+    case 'C99':
+      return 'c';
+    default:
+      return 'plaintext';
+  }
+};
 
-  // 컴포넌트 마운트 시 초기값 설정
-  useEffect(() => {
-    const initialCode = location.state?.code;
-    const initialLanguage = location.state?.language;
-
-    if (initialCode && initialLanguage) {
-      setFormData((prev) => ({
-        ...prev,
-        description: initialCode,
-        category: normalizeLanguage(initialLanguage),
-      }));
-    } else if (!formData.description.trim()) {
-      const template = getLanguageTemplate('C++17');
-      setFormData((prev) => ({
-        ...prev,
-        description: template,
-      }));
-    }
-  }, []);
-
-  // 언어를 Monaco Editor 언어 ID로 변환
-  const getMonacoLanguage = (language: string) => {
-    switch (language) {
-      case 'C++17':
-      case 'cpp':
-        return 'cpp';
-      case 'Java':
-        return 'java';
-      case 'C99':
-        return 'c';
-      default:
-        return 'plaintext';
-    }
-  };
-
-  // 언어별 기본 템플릿
-  const getLanguageTemplate = (language: string) => {
-    switch (language) {
-      case 'C++17':
-      case 'cpp':
-        return `#include <iostream>
+const getLanguageTemplate = (language: string) => {
+  switch (language) {
+    case 'C++17':
+    case 'cpp':
+      return `#include <iostream>
 using namespace std;
 
 int main() {
@@ -77,8 +49,8 @@ int main() {
     
     return 0;
 }`;
-      case 'Java':
-        return `import java.util.Scanner;
+    case 'Java':
+      return `import java.util.Scanner;
 
 public class Solution {
     public static void main(String[] args) {
@@ -87,18 +59,44 @@ public class Solution {
         
     }
 }`;
-      case 'C99':
-        return `#include <stdio.h>
+    case 'C99':
+      return `#include <stdio.h>
 
 int main() {
     // 여기에 코드를 작성하세요
     
     return 0;
 }`;
-      default:
-        return '';
-    }
-  };
+    default:
+      return '';
+  }
+};
+
+function ProblemSubmitPage() {
+  const navigate = useNavigate();
+  const location = useLocation();
+  const locationState = location.state as ProblemSubmitLocationState | null;
+
+  // URL 파라미터에서 문제 정보 가져오기
+  const problemId = locationState?.problemId || 1; // 기본값 1 (A + B)
+  const problemTitle = locationState?.problemTitle || 'A + B';
+  const [formData, setFormData] = useState(() => {
+    const hasPreviousSubmission = locationState?.code && locationState.language;
+
+    return {
+      title: '',
+      difficulty: '',
+      category: hasPreviousSubmission
+        ? normalizeLanguage(locationState.language)
+        : 'C++17',
+      points: '',
+      description: hasPreviousSubmission
+        ? locationState.code
+        : getLanguageTemplate('C++17'),
+      flag: '',
+      hints: '',
+    };
+  });
 
   const handleInputChange = (field: string, value: string) => {
     if (field === 'category') {
@@ -124,7 +122,7 @@ int main() {
     }));
   };
 
-  const handleSubmit = async (e: React.FormEvent) => {
+  const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
 
     // 기본 검증
@@ -141,7 +139,8 @@ int main() {
       problemId: problemId, // 문제 ID 추가
       description: '문제를 해결하는 프로그램을 작성하시오.',
       points: parseInt(formData.points) || 100,
-      nonce: Date.now().toString() + Math.random().toString(36).substr(2, 9), // 중복 제출 방지용 고유 ID
+      nonce:
+        Date.now().toString() + Math.random().toString(36).slice(2, 11), // 중복 제출 방지용 고유 ID
     };
 
     // 채점 상태 페이지로 이동 (제출 데이터와 함께)

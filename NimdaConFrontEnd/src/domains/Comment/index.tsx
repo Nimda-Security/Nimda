@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState, useRef } from 'react';
+import { useCallback, useEffect, useMemo, useState, useRef } from 'react';
 import { Link } from 'react-router-dom';
 import Avatar from '@/components/Avatar/Avatar';
 import { Heart } from '@/components/icons/Heart';
@@ -17,11 +17,10 @@ import {
 import { toggleCommentLike } from '@/api/commentLike';
 import type {
   CommentResponse,
-  CommentCreateRequest,
-  CommentStatusUpdateRequest,
   CommentStatus,
 } from '@/domains/Comment/types';
-import EmoticonPicker, { parseEmoticons, getEmoticonSrc } from './EmoticonPicker';
+import EmoticonPicker from './EmoticonPicker';
+import { getEmoticonSrc, parseEmoticons } from './emoticonUtils';
 import './Comment.css';
 import { formatDate } from '@/utils/formatDate';
 import { isAdmin } from '@/utils/jwt';
@@ -81,6 +80,37 @@ const flattenCommentsTree = (
     ...flattenCommentsTree(comment.children ?? [], depth + 1),
   ]);
 
+const serializeEditor = (element: HTMLElement): string => {
+  let result = '';
+  element.childNodes.forEach((node) => {
+    if (node.nodeType === Node.TEXT_NODE) {
+      result += node.textContent ?? '';
+    } else if (node.nodeName === 'IMG') {
+      const id = (node as HTMLImageElement).dataset.emoticonId;
+      if (id) result += `[nimda:${id}]`;
+    } else if (node.nodeName === 'BR') {
+      result += '\n';
+    } else if (node.nodeType === Node.ELEMENT_NODE) {
+      const tag = (node as HTMLElement).tagName.toUpperCase();
+      const inner = serializeEditor(node as HTMLElement);
+      result += ['DIV', 'P'].includes(tag) ? '\n' + inner : inner;
+    }
+  });
+  return result;
+};
+
+const commentTextToHTML = (text: string): string =>
+  text
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(
+      /\[nimda:(\d{2})\]/g,
+      (_, id: string) =>
+        `<img src="${getEmoticonSrc(id)}" alt="[nimda:${id}]" data-emoticon-id="${id}" class="comment-emoticon-inline" draggable="false" />`
+    )
+    .replace(/\n/g, '<br>');
+
 /**
  * 댓글 리스트의 각 아이템 아바타
  */
@@ -132,43 +162,13 @@ function CommentInput({
   const lastEmittedRef = useRef('');
   const [isEmpty, setIsEmpty] = useState(true);
 
-  // DOM → 마커 텍스트 직렬화
-  const serialize = (el: HTMLElement): string => {
-    let result = '';
-    el.childNodes.forEach((node) => {
-      if (node.nodeType === Node.TEXT_NODE) {
-        result += node.textContent ?? '';
-      } else if (node.nodeName === 'IMG') {
-        const id = (node as HTMLImageElement).dataset.emoticonId;
-        if (id) result += `[nimda:${id}]`;
-      } else if (node.nodeName === 'BR') {
-        result += '\n';
-      } else if (node.nodeType === Node.ELEMENT_NODE) {
-        const tag = (node as HTMLElement).tagName.toUpperCase();
-        const inner = serialize(node as HTMLElement);
-        result += ['DIV', 'P'].includes(tag) ? '\n' + inner : inner;
-      }
-    });
-    return result;
-  };
-
-  // 마커 텍스트 → innerHTML 역직렬화
-  const toHTML = (text: string): string =>
-    text
-      .replace(/&/g, '&amp;')
-      .replace(/</g, '&lt;')
-      .replace(/>/g, '&gt;')
-      .replace(/\[nimda:(\d{2})\]/g, (_, id) =>
-        `<img src="${getEmoticonSrc(id)}" alt="[nimda:${id}]" data-emoticon-id="${id}" class="comment-emoticon-inline" draggable="false" />`
-      )
-      .replace(/\n/g, '<br>');
 
   // 외부에서 value가 바뀔 때(제출 후 초기화, 수정 모드) 에디터 동기화
   useEffect(() => {
     const editor = editorRef.current;
     if (!editor) return;
     if (value === lastEmittedRef.current) return;
-    editor.innerHTML = value ? toHTML(value) : '';
+    editor.innerHTML = value ? commentTextToHTML(value) : '';
     lastEmittedRef.current = value;
     setIsEmpty(!value.trim());
   }, [value]);
@@ -176,7 +176,7 @@ function CommentInput({
   const handleInput = () => {
     const editor = editorRef.current;
     if (!editor) return;
-    const text = serialize(editor);
+    const text = serializeEditor(editor);
     lastEmittedRef.current = text;
     const nextIsEmpty = !text.trim();
     if (nextIsEmpty && editor.innerHTML !== '') {
@@ -236,7 +236,7 @@ function CommentInput({
       editor.appendChild(img);
       insertAfter(img);
     }
-    const text = serialize(editor);
+    const text = serializeEditor(editor);
     lastEmittedRef.current = text;
     setIsEmpty(!text.trim());
     onChange(text);
@@ -267,6 +267,8 @@ function CommentInput({
           className={`comment-input__textarea comment-input__editor${isEmpty ? ' comment-input__editor--empty' : ''}`}
           role="textbox"
           aria-multiline="true"
+          aria-label={placeholder ?? '댓글 입력'}
+          aria-busy={isSubmitting}
         />
         <div className="comment-input__footer">
           <EmoticonPicker onSelect={handleEmoticonSelect} />
@@ -275,6 +277,8 @@ function CommentInput({
             onClick={onSubmit}
             disabled={isSubmitting || !value.trim()}
             className="comment-input__submit"
+            aria-label={isSubmitting ? `${buttonLabel} 처리 중` : buttonLabel}
+            aria-busy={isSubmitting}
           >
             {isSubmitting ? '처리 중...' : buttonLabel}
           </button>
@@ -401,6 +405,7 @@ interface CommentItemProps {
   onDelete: (commentId: number) => void;
   onHide: (commentId: number, status: CommentStatus) => void;
   onToggleLike: (commentId: number) => void;
+  isLiking: boolean;
   replyTargetId: number | null;
   replyTargetName: string;
   replyContext: string;
@@ -421,6 +426,7 @@ function CommentItem({
   onDelete,
   onHide,
   onToggleLike,
+  isLiking,
   replyTargetId,
   replyTargetName,
   replyContext,
@@ -486,12 +492,22 @@ function CommentItem({
                 type="button"
                 onClick={() => onReply(comment.id, comment.authorName)}
                 className="comment-item__reply-btn"
+                aria-label={`${comment.authorName}님의 댓글에 답글 작성, 답글 ${comment.children?.length ?? 0}개`}
+                aria-expanded={replyTargetId === comment.id}
               >
                 <MessageBox />
                 <span>{comment.children?.length ?? 0}</span>
               </button>
             )}
-            <button type="button" className={`comment-item__like-btn${comment.isLiked ? ' comment-item__like-btn--active' : ''}`} onClick={() => onToggleLike(comment.id)}>
+            <button
+              type="button"
+              className={`comment-item__like-btn${comment.isLiked ? ' comment-item__like-btn--active' : ''}`}
+              onClick={() => onToggleLike(comment.id)}
+              disabled={isLiking}
+              aria-label={comment.isLiked ? `${comment.authorName}님의 댓글 좋아요 취소, ${comment.likeCount}개` : `${comment.authorName}님의 댓글 좋아요, ${comment.likeCount}개`}
+              aria-pressed={comment.isLiked}
+              aria-busy={isLiking}
+            >
               <Heart filled={comment.isLiked} />
               <span>{comment.likeCount}</span>
             </button>
@@ -535,13 +551,30 @@ function CommentSection({ boardId }: CommentSectionProps) {
   const [editingId, setEditingId] = useState<number | null>(null);
   const [editContext, setEditContext] = useState('');
   const [isEditSubmitting, setIsEditSubmitting] = useState(false);
+  const [likingCommentId, setLikingCommentId] = useState<number | null>(null);
   const replyInputRef = useRef<HTMLDivElement | null>(null);
 
   // [추가] 내 프로필 이미지 상태
   const [myProfileImage, setMyProfileImage] = useState<string | null>(null);
   const [myProfileDecoration, setMyProfileDecoration] = useState<string | null>(null);
 
-  useEffect(() => { fetchComments(); }, [boardId]);
+  const fetchComments = useCallback(async () => {
+    try {
+      setLoading(true);
+      setError(null);
+      const res = await getCommentsAPI(boardId);
+      if (res.success) setComments(res.comments as CommentResponse[]);
+      else setError(res.message);
+    } catch {
+      setError('댓글을 불러오는 중 오류가 발생했습니다.');
+    } finally {
+      setLoading(false);
+    }
+  }, [boardId]);
+
+  useEffect(() => {
+    void fetchComments();
+  }, [fetchComments]);
 
   // [추가] 내 프로필 정보를 가져오는 이펙트 (MyPagePoint 방식)
   useEffect(() => {
@@ -561,16 +594,6 @@ function CommentSection({ boardId }: CommentSectionProps) {
     fetchMyInfo();
   }, []);
 
-  const fetchComments = async () => {
-    try {
-      setLoading(true);
-      setError(null);
-      const res = await getCommentsAPI(boardId);
-      if (res.success) setComments(res.comments as (CommentResponse)[]);
-      else setError(res.message);
-    } catch { setError('댓글을 불러오는 중 오류가 발생했습니다.'); }
-    finally { setLoading(false); }
-  };
 
   const handleSubmitComment = async () => {
     if (!newContext.trim() || isSubmitting) return;
@@ -642,17 +665,21 @@ function CommentSection({ boardId }: CommentSectionProps) {
     });
 
   const handleToggleLike = async (commentId: number) => {
+    if (likingCommentId !== null) return;
     try {
+      setLikingCommentId(commentId);
       const res = await toggleCommentLike(commentId);
       if (res.success && res.data) {
-        const liked = res.data.isLiked ?? (res.data as any).liked ?? false;
-        setComments(prev => updateCommentLike(prev, commentId, res.data.likeCount, liked));
+        const data = res.data as typeof res.data & { liked?: boolean };
+        const liked = data.isLiked ?? data.liked ?? false;
+        setComments(prev => updateCommentLike(prev, commentId, data.likeCount, liked));
       }
     } catch { /* 비로그인 등 */ }
+    finally { setLikingCommentId(null); }
   };
 
-  const countAll = (list: (CommentResponse)[]): number =>
-    list.reduce((n, c) => n + 1 + countAll((c.children ?? []) as (CommentResponse)[]), 0);
+  const countAll = (list: CommentResponse[]): number =>
+    list.reduce((n, c) => n + 1 + countAll(c.children ?? []), 0);
 
   const totalCount = countAll(comments);
   const sortedComments = useMemo(
@@ -747,6 +774,7 @@ function CommentSection({ boardId }: CommentSectionProps) {
                   onDelete={handleDelete}
                   onHide={handleHide}
                   onToggleLike={handleToggleLike}
+                  isLiking={likingCommentId === comment.id}
                   replyTargetId={replyTargetId}
                   replyTargetName={replyTargetName}
                   replyContext={replyContext}

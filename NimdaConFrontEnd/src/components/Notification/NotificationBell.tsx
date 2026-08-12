@@ -8,6 +8,7 @@ const NotificationBell: React.FC = () => {
   const [hasUnread, setHasUnread] = useState(false);
   const [refreshKey, setRefreshKey] = useState(0);
   const ref = useRef<HTMLDivElement>(null);
+  const openRef = useRef(false);
 
   // 마운트 시 초기 읽지 않은 알림 상태 확인
   useEffect(() => {
@@ -26,15 +27,20 @@ const NotificationBell: React.FC = () => {
 
     const controller = notificationApi.subscribe(() => {
       setHasUnread(true);
-      setRefreshKey((k) => k + 1); // 패널이 열려있으면 리스트 갱신 트리거
+      if (openRef.current) {
+        setRefreshKey((k) => k + 1);
+      }
     });
 
     return () => controller?.abort();
   }, []);
 
-  // 패널이 닫힐 때 읽음 상태 재확인 (열람 후 빨간 점 갱신)
+  // 패널이 열린 뒤 닫힐 때 읽음 상태 재확인 (열람 후 빨간 점 갱신)
   useEffect(() => {
-    if (!open) {
+    const wasOpen = openRef.current;
+    openRef.current = open;
+
+    if (wasOpen && !open) {
       notificationApi
         .checkUnreadStatus()
         .then((res) => {

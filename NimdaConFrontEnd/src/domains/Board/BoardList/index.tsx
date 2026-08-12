@@ -1,4 +1,5 @@
-import { useEffect, useState, useMemo } from 'react';
+import { useEffect, useState, useMemo, useRef } from 'react';
+import type { KeyboardEvent, MouseEvent } from 'react';
 import { useNavigate, useParams, useSearchParams, Link } from 'react-router-dom';
 import Layout from '@/components/Layout';
 import { getBoardListAPI, getPinnedPostsAPI } from '@/api/board';
@@ -40,12 +41,8 @@ function BoardListPage({ slug: propSlug }: BoardListPageProps) {
   const [searchTrigger, setSearchTrigger] = useState(0);
   const [selectedTag, setSelectedTag] = useState<string | null>(null);
   const [availableTags, setAvailableTags] = useState<string[]>([]);
+  const searchKeywordRef = useRef('');
 
-  // ★ 해결 포인트 1: 의존성 배열의 참조값 고정
-  // boards나 pinnedPosts가 실제로 변하지 않으면 새로운 배열을 만들지 않음
-  const allPostsForLikes = useMemo(() => {
-    return [...noticePosts, ...pinnedPosts, ...boards];
-  }, [noticePosts, pinnedPosts, boards]);
 
   // 공지사항 중 '필독' 태그 글만 로딩 (최초 1회)
   useEffect(() => {
@@ -83,14 +80,14 @@ function BoardListPage({ slug: propSlug }: BoardListPageProps) {
   // 카테고리 정보 로딩
   useEffect(() => {
     let cancelled = false;
-    setCategory(null);
-    setChildCategories([]);
-    setActiveTab(tabFromUrl || 'all');
-    setCurrentPage(0);
-    setSearchKeyword('');
-    setSelectedTag(null);
-
     const loadCategoryInfo = async () => {
+      setCategory(null);
+      setChildCategories([]);
+      setActiveTab(tabFromUrl || 'all');
+      setCurrentPage(0);
+      setSearchKeyword('');
+      searchKeywordRef.current = '';
+      setSelectedTag(null);
       try {
         const [catInfoResponse, allCats] = await Promise.all([
           getBoardListAPI({ slug, page: 0, size: 1, sort: 'createdAt,desc' }),
@@ -150,7 +147,7 @@ function BoardListPage({ slug: propSlug }: BoardListPageProps) {
 
         const response = await getBoardListAPI({
           slug: targetSlug,
-          searchKeyword: searchKeyword || undefined,
+          searchKeyword: searchKeywordRef.current || undefined,
           page: currentPage,
           size: 20,
           sort: 'createdAt,desc',
@@ -172,7 +169,7 @@ function BoardListPage({ slug: propSlug }: BoardListPageProps) {
           setBoards(regular);
           setTotalPages(response.totalPages);
 
-          // ★ 해결 포인트 2: ID 비교를 통한 무한 루프 방지
+          // Avoid replacing category state with an equivalent API object.
           if (activeTab === 'all' && response.category?.id) {
             setCategory(prev => (prev?.id === response.category.id ? prev : response.category));
           }
@@ -198,6 +195,14 @@ function BoardListPage({ slug: propSlug }: BoardListPageProps) {
 
   // 핸들러 함수들
   const handleBoardClick = (id: number) => navigate(`/board/${slug}/${id}`);
+  const handleRowKeyDown = (event: KeyboardEvent<HTMLDivElement>, destination: string) => {
+    if (event.key !== 'Enter' && event.key !== ' ') return;
+    event.preventDefault();
+    navigate(destination);
+  };
+  const stopRowNavigation = (event: MouseEvent<HTMLAnchorElement> | KeyboardEvent<HTMLAnchorElement>) => {
+    event.stopPropagation();
+  };
   const handleWriteClick = () => {
     const tagParam = selectedTag ? `?tag=${encodeURIComponent(selectedTag)}` : '';
     navigate(`/board/${slug}/write${tagParam}`);
@@ -293,7 +298,12 @@ function BoardListPage({ slug: propSlug }: BoardListPageProps) {
           <h1 className="board-list__title">{categoryName}</h1>
 
             {canWrite && (
-            <button className="board-list__write-btn" onClick={handleWriteClick}>
+            <button
+              type="button"
+              className="board-list__write-btn"
+              onClick={handleWriteClick}
+              aria-label={`${categoryName}에 게시글 작성`}
+            >
               <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
                 <path d="M12 20h9"></path>
                 <path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"></path>
@@ -308,6 +318,8 @@ function BoardListPage({ slug: propSlug }: BoardListPageProps) {
           <button
             className={`board-list__tag-filter-item ${selectedTag === null ? 'board-list__tag-filter-item--active' : ''}`}
             onClick={() => handleTagClick(null)}
+            type="button"
+            aria-pressed={selectedTag === null}
           >
             전체
           </button>
@@ -316,6 +328,8 @@ function BoardListPage({ slug: propSlug }: BoardListPageProps) {
               key={tag}
               className={`board-list__tag-filter-item ${selectedTag === tag ? 'board-list__tag-filter-item--active' : ''}`}
               onClick={() => handleTagClick(tag)}
+              type="button"
+              aria-pressed={selectedTag === tag}
             >
               {tag}
             </button>
@@ -325,9 +339,24 @@ function BoardListPage({ slug: propSlug }: BoardListPageProps) {
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginTop: '16px', marginBottom: '8px' }}>
           {childCategories.length > 0 ? (
             <div className="board-list__tabs" style={{ marginBottom: 0 }}>
-              <button className={`board-list__tab ${activeTab === 'all' ? 'board-list__tab--active' : ''}`} onClick={() => handleTabClick('all')}>전체</button>
+              <button
+                type="button"
+                className={`board-list__tab ${activeTab === 'all' ? 'board-list__tab--active' : ''}`}
+                onClick={() => handleTabClick('all')}
+                aria-pressed={activeTab === 'all'}
+              >
+                전체
+              </button>
               {childCategories.map((child) => (
-                <button key={child.id} className={`board-list__tab ${activeTab === child.slug ? 'board-list__tab--active' : ''}`} onClick={() => handleTabClick(child.slug)}>{child.name}</button>
+                <button
+                  key={child.id}
+                  type="button"
+                  className={`board-list__tab ${activeTab === child.slug ? 'board-list__tab--active' : ''}`}
+                  onClick={() => handleTabClick(child.slug)}
+                  aria-pressed={activeTab === child.slug}
+                >
+                  {child.name}
+                </button>
               ))}
             </div>
           ) : <div />}
@@ -343,7 +372,15 @@ function BoardListPage({ slug: propSlug }: BoardListPageProps) {
           <>
             {/* 글로벌 공지 */}
             {displayGlobalNotices.map((post) => (
-              <div key={`notice-${post.id}`} className="board-list__row board-list__row--pinned" onClick={() => navigate(`/board/notice/${post.id}`)}>
+              <div
+                key={`notice-${post.id}`}
+                className="board-list__row board-list__row--pinned"
+                role="link"
+                tabIndex={0}
+                aria-label={`${post.title} 게시글 보기`}
+                onClick={() => navigate(`/board/notice/${post.id}`)}
+                onKeyDown={(event) => handleRowKeyDown(event, `/board/notice/${post.id}`)}
+              >
 
                 <div className="board-list__row-content">
                   <span className="board-list__category-tag"># 필독</span>
@@ -355,7 +392,7 @@ function BoardListPage({ slug: propSlug }: BoardListPageProps) {
                 </div>
                 <div className="board-list__meta">
                   <div className="board-list__author-info">
-                    <Link to={post.author?.nickname ? `/user/${post.author.nickname}` : '#'} className="board-list__author" onClick={(e) => e.stopPropagation()}>{post.author?.nickname || '익명'}</Link>
+                    <Link to={post.author?.nickname ? `/user/${post.author.nickname}` : '#'} className="board-list__author" onClick={stopRowNavigation} onKeyDown={stopRowNavigation}>{post.author?.nickname || '익명'}</Link>
                     <span className="board-list__date">{formatDate(post.createdAt)}</span>
                   </div>
                   <Avatar src={post.author?.profileImage} decorationKey={post.author?.profileDecoration} size={32} className="board-list__avatar" />
@@ -366,7 +403,15 @@ function BoardListPage({ slug: propSlug }: BoardListPageProps) {
 
             {/* 현재 카테고리 고정글 */}
             {pinnedPosts.map((post) => (
-              <div key={`pinned-${post.id}`} className="board-list__row board-list__row--notice" onClick={() => handleBoardClick(post.id)}>
+              <div
+                key={`pinned-${post.id}`}
+                className="board-list__row board-list__row--notice"
+                role="link"
+                tabIndex={0}
+                aria-label={`${post.title} 게시글 보기`}
+                onClick={() => handleBoardClick(post.id)}
+                onKeyDown={(event) => handleRowKeyDown(event, `/board/${slug}/${post.id}`)}
+              >
                 <div className="board-list__row-content">
                   <span className="board-list__category-tag">{isNoticeCategory ? '# 필독' : '# 고정'}</span>
                   <div className="board-list__title-line">
@@ -377,7 +422,7 @@ function BoardListPage({ slug: propSlug }: BoardListPageProps) {
                 </div >
                 <div className="board-list__meta">
                   <div className="board-list__author-info">
-                    <Link to={post.author?.nickname ? `/user/${post.author.nickname}` : '#'} className="board-list__author" onClick={(e) => e.stopPropagation()}>{post.author?.nickname || '익명'}</Link>
+                    <Link to={post.author?.nickname ? `/user/${post.author.nickname}` : '#'} className="board-list__author" onClick={stopRowNavigation} onKeyDown={stopRowNavigation}>{post.author?.nickname || '익명'}</Link>
                     <span className="board-list__date">{formatDate(post.createdAt)}</span>
                   </div>
                   <Avatar src={post.author?.profileImage} decorationKey={post.author?.profileDecoration} size={32} className="board-list__avatar" />
@@ -393,7 +438,15 @@ function BoardListPage({ slug: propSlug }: BoardListPageProps) {
                 <div className="board-list__status">게시글이 없습니다.</div>
               ) : (
                 boards.map((post) => (
-                  <div key={post.id} className="board-list__row" onClick={() => handleBoardClick(post.id)}>
+                  <div
+                    key={post.id}
+                    className="board-list__row"
+                    role="link"
+                    tabIndex={0}
+                    aria-label={`${post.title} 게시글 보기`}
+                    onClick={() => handleBoardClick(post.id)}
+                    onKeyDown={(event) => handleRowKeyDown(event, `/board/${slug}/${post.id}`)}
+                  >
                     <div className="board-list__row-content">
                       {getCategoryTagLabel(post) && <span className="board-list__category-tag">{getCategoryTagLabel(post)}</span>}
                       <div className="board-list__title-line">
@@ -404,7 +457,7 @@ function BoardListPage({ slug: propSlug }: BoardListPageProps) {
                     </div>
                     <div className="board-list__meta">
                       <div className="board-list__author-info">
-                        <Link to={post.author?.nickname ? `/user/${post.author.nickname}` : '#'} className="board-list__author" onClick={(e) => e.stopPropagation()}>{post.author?.nickname || '익명'}</Link>
+                        <Link to={post.author?.nickname ? `/user/${post.author.nickname}` : '#'} className="board-list__author" onClick={stopRowNavigation} onKeyDown={stopRowNavigation}>{post.author?.nickname || '익명'}</Link>
                         <span className="board-list__date">{formatDate(post.createdAt)}</span>
                       </div>
                       <Avatar src={post.author?.profileImage} decorationKey={post.author?.profileDecoration} size={32} className="board-list__avatar" />
@@ -419,20 +472,30 @@ function BoardListPage({ slug: propSlug }: BoardListPageProps) {
             {
               totalPages > 1 && (
                 <div className="board-list__pagination">
-                  <button className="board-list__page-btn" onClick={() => handlePageChange(0)} disabled={currentPage === 0}>«</button>
-                  <button className="board-list__page-btn" onClick={() => handlePageChange(Math.max(0, currentPage - 1))} disabled={currentPage === 0}>‹</button>
+                  <button type="button" className="board-list__page-btn" onClick={() => handlePageChange(0)} disabled={currentPage === 0} aria-label="첫 페이지">«</button>
+                  <button type="button" className="board-list__page-btn" onClick={() => handlePageChange(Math.max(0, currentPage - 1))} disabled={currentPage === 0} aria-label="이전 페이지">‹</button>
                   {renderPageNumbers().map((page) => (
-                    <button key={page} className={`board-list__page-num ${page === currentPage ? 'board-list__page-num--active' : ''}`} onClick={() => handlePageChange(page)}>{page + 1}</button>
+                    <button type="button" key={page} className={`board-list__page-num ${page === currentPage ? 'board-list__page-num--active' : ''}`} onClick={() => handlePageChange(page)} aria-label={`${page + 1}페이지로 이동`} aria-current={page === currentPage ? 'page' : undefined}>{page + 1}</button>
                   ))}
-                  <button className="board-list__page-btn" onClick={() => handlePageChange(Math.min(totalPages - 1, currentPage + 1))} disabled={currentPage >= totalPages - 1}>›</button>
-                  <button className="board-list__page-btn" onClick={() => handlePageChange(totalPages - 1)} disabled={currentPage >= totalPages - 1}>»</button>
+                  <button type="button" className="board-list__page-btn" onClick={() => handlePageChange(Math.min(totalPages - 1, currentPage + 1))} disabled={currentPage >= totalPages - 1} aria-label="다음 페이지">›</button>
+                  <button type="button" className="board-list__page-btn" onClick={() => handlePageChange(totalPages - 1)} disabled={currentPage >= totalPages - 1} aria-label="마지막 페이지">»</button>
                 </div>
               )
             }
 
             {/* 검색 */}
             <form className="board-list__search" onSubmit={handleSearch}>
-              <input type="text" className="board-list__search-input" placeholder="검색어를 입력하세요" value={searchKeyword} onChange={(e) => setSearchKeyword(e.target.value)} />
+              <input
+                type="text"
+                className="board-list__search-input"
+                placeholder="검색어를 입력하세요"
+                aria-label="게시글 검색어"
+                value={searchKeyword}
+                onChange={(e) => {
+                  setSearchKeyword(e.target.value);
+                  searchKeywordRef.current = e.target.value;
+                }}
+              />
               <button type="submit" className="board-list__search-btn">검색</button>
             </form>
           </>

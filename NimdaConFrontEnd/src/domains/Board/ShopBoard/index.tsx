@@ -37,6 +37,7 @@ const ShopBoard: React.FC<ShopBoardProps> = ({ boardSlug }) => {
   const [posts, setPosts] = useState<Board[]>([]);
   const [thumbnails, setThumbnails] = useState<Record<number, string | null>>({});
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
   const [categoryName, setCategoryName] = useState('마일리지 상점');
   const [currentPage, setCurrentPage] = useState(0);
   const [totalPages, setTotalPages] = useState(0);
@@ -45,6 +46,7 @@ const ShopBoard: React.FC<ShopBoardProps> = ({ boardSlug }) => {
 
   const loadPosts = useCallback(async (page: number) => {
     setLoading(true);
+    setError(null);
     try {
       const result = await getBoardListAPI({
         slug: boardSlug,
@@ -53,32 +55,40 @@ const ShopBoard: React.FC<ShopBoardProps> = ({ boardSlug }) => {
         sort: 'createdAt,desc',
       });
 
-      if (result.success) {
-        setPosts(result.posts);
-        setTotalPages(result.totalPages);
-        setCategoryName(result.category?.name || '마일리지 상점');
+      if (!result.success) {
+        setPosts([]);
+        setThumbnails({});
+        setTotalPages(0);
+        setError(result.message || '상품 목록을 불러올 수 없습니다.');
+        return;
+      }
 
-        const thumbMap: Record<number, string | null> = {};
-        await Promise.all(
-          result.posts.map(async (post) => {
-            try {
-              const detail = await getBoardDetailAPI(post.id);
-              if (detail.success && 'board' in detail) {
-                const attachmentId = getFirstImageAttachmentId(detail.board);
-                thumbMap[post.id] = attachmentId ? await getAttachmentPresignedUrl(attachmentId) : null;
-              } else {
-                thumbMap[post.id] = null;
-              }
-            } catch {
+      setPosts(result.posts);
+      setTotalPages(result.totalPages);
+      setCategoryName(result.category?.name || '마일리지 상점');
+
+      const thumbMap: Record<number, string | null> = {};
+      await Promise.all(
+        result.posts.map(async (post) => {
+          try {
+            const detail = await getBoardDetailAPI(post.id);
+            if (detail.success && 'board' in detail) {
+              const attachmentId = getFirstImageAttachmentId(detail.board);
+              thumbMap[post.id] = attachmentId ? await getAttachmentPresignedUrl(attachmentId) : null;
+            } else {
               thumbMap[post.id] = null;
             }
-          })
-        );
-        setThumbnails(thumbMap);
-      } else {
-        setPosts([]);
-        setTotalPages(0);
-      }
+          } catch {
+            thumbMap[post.id] = null;
+          }
+        })
+      );
+      setThumbnails(thumbMap);
+    } catch {
+      setPosts([]);
+      setThumbnails({});
+      setTotalPages(0);
+      setError('상품 목록을 불러오는 중 오류가 발생했습니다.');
     } finally {
       setLoading(false);
     }
@@ -169,11 +179,31 @@ const ShopBoard: React.FC<ShopBoardProps> = ({ boardSlug }) => {
         <div className="board-list__divider" />
 
         {loading && <div className="board-list__status">상품을 불러오는 중...</div>}
-        {!loading && displayPosts.length === 0 && (
-          <div className="board-list__status">등록된 상품이 없습니다.</div>
+        {!loading && error && (
+          <div className="board-list__status board-list__status--error" role="alert">
+            <p>{error}</p>
+            <button type="button" onClick={() => loadPosts(currentPage)}>다시 시도</button>
+          </div>
+        )}
+        {!loading && !error && displayPosts.length === 0 && (
+          <div className="board-list__status">
+            {selectedTag ? (
+              <p>선택한 분류에 등록된 상품이 없습니다. 다른 분류를 선택해보세요.</p>
+            ) : (
+              <>
+                <p>상품을 준비하고 있습니다.</p>
+                <p>NC는 사이트 활동으로 쌓아 상점 상품을 구매할 때 사용하는 마일리지입니다. 현재 보유 NC는 안전하게 유지됩니다.</p>
+                <p>
+                  <Link to="/mypage">내 마일리지 보기</Link>
+                  {' · '}
+                  <a href="mailto:nimda0410@gmail.com">문의하기 (nimda0410@gmail.com)</a>
+                </p>
+              </>
+            )}
+          </div>
         )}
 
-        {!loading && displayPosts.length > 0 && (
+        {!loading && !error && displayPosts.length > 0 && (
           <>
             <div className="shop-board__grid">
               {displayPosts.map((post) => (

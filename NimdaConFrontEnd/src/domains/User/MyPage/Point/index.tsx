@@ -92,10 +92,13 @@ function MyPagePoint() {
         }
 
         if (balanceRes && balanceRes.success) {
+          const balanceData = (
+            balanceRes as typeof balanceRes & {
+              data?: { totalAmount?: number };
+            }
+          ).data;
           const amount =
-            (balanceRes as any).data?.totalAmount ??
-            balanceRes.currentBalance ??
-            0;
+            balanceData?.totalAmount ?? balanceRes.currentBalance ?? 0;
           setUserBalance(amount);
         }
 

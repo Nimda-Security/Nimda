@@ -1,6 +1,7 @@
 package com.nimda.cite.user.security;
 
 import com.nimda.cite.user.entity.User;
+import com.nimda.cite.user.enums.ApprovalStatus;
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.userdetails.UserDetails;
@@ -62,7 +63,7 @@ public class CustomUserDetails implements UserDetails {
     // isEnabled - 계정 활성화 기능
     @Override
     public boolean isEnabled() {
-        return true; // 현재는 계정 비활성화 기능 미사용
+        return user.getStatus() == ApprovalStatus.APPROVED;
     }
 
     // Domain Entity 반환용 Getter

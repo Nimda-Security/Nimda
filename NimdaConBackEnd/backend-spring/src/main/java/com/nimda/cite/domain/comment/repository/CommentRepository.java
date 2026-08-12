@@ -77,6 +77,11 @@ public interface CommentRepository extends JpaRepository<Comment, Long> {
 
     // 게시글별 댓글 수 조회
     long countByBoardIdAndStatusNot(Long boardId, STATUS status);
+    @Query("SELECT c.board.id, COUNT(c) FROM Comment c " +
+            "WHERE c.board.id IN :boardIds " +
+            "AND c.status != com.nimda.cite.domain.comment.enums.STATUS.DELETED " +
+            "GROUP BY c.board.id")
+    List<Object[]> countNonDeletedByBoardIds(@Param("boardIds") List<Long> boardIds);
 
     // 내가 댓글을 단 게시글 ID 목록 (중복 제거, 최신 댓글 기준 정렬)
     @Query("SELECT DISTINCT c.board.id FROM Comment c " +

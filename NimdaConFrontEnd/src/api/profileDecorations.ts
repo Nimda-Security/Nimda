@@ -213,7 +213,7 @@ export const revokeProfileDecorationAPI = async ({
 };
 
 export const uploadProfileDecorationImageAPI = async (file: File) => {
-  const presigned = await requestPresignedUpload('profile-decoration', file.name);
+  const presigned = await requestPresignedUpload('profile-decoration', file.name, file.size);
   if (!presigned.ok) return presigned;
 
   const upload = await putFileToPresignedUrl(

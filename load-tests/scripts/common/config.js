@@ -2,28 +2,28 @@
 
 export const CONFIG = {
   // 서버 설정
-  BASE_URL: 'http://localhost:3001',
+  BASE_URL: __ENV.BASE_URL || 'http://localhost:8081',
   
   // 테스트 사용자
   TEST_USER: {
-    username: 'admin',
-    password: 'password'
+    username: __ENV.TEST_USERNAME || 'load-test-user',
+    password: __ENV.TEST_PASSWORD || 'load-test-password'
   },
   
   // 성능 임계값
   THRESHOLDS: {
     login: {
-      response_time: 500,    // 로그인 응답 시간 (ms)
-      error_rate: 0.1,       // 에러율 (10%)
+      response_time: 500,    // 로그인 API p95 응답 시간 (ms)
+      error_rate: 0.005,     // 에러율 (0.5%)
     },
     judge: {
-      response_time: 5000,   // 채점 응답 시간 (ms)
-      error_rate: 0.05,      // 에러율 (5%)
-      success_rate: 0.8,     // 채점 성공률 (80%)
+      response_time: 5000,   // 채점 API p95 응답 시간 (ms)
+      error_rate: 0.005,     // 에러율 (0.5%)
+      success_rate: 0.99,    // 채점 성공률 (99%)
     },
     general: {
-      response_time: 3000,   // 일반 API 응답 시간 (ms)
-      error_rate: 0.05,      // 에러율 (5%)
+      response_time: 300,    // 일반 읽기 API p95 응답 시간 (ms)
+      error_rate: 0.005,     // 에러율 (0.5%)
     }
   },
   

@@ -16,8 +16,21 @@ import {
   type ProfileDecorationOption,
 } from "@/api/profileDecorations";
 
+interface ProfileUserInfo {
+  name: string;
+  id: string;
+  profileImage?: string | null;
+  profileDecoration?: string | null;
+  roles?: string[];
+  stats: {
+    label: string;
+    value: string;
+    isPrimary?: boolean;
+  }[];
+}
+
 interface ProfileHeaderProps {
-  userInfo: any;
+  userInfo: ProfileUserInfo;
   activeTab: string;
   setActiveTab: (tab: string) => void;
   onProfileImageChange?: (newUrl: string) => void;
@@ -120,7 +133,7 @@ const ProfileHeader: React.FC<ProfileHeaderProps> = ({
 
     setUploading(true);
     try {
-      const presigned = await requestPresignedUpload("profile", file.name);
+      const presigned = await requestPresignedUpload("profile", file.name, file.size);
       if (!presigned.ok) {
         alert(presigned.message);
         return;

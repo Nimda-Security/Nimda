@@ -26,6 +26,7 @@ public interface CategoryRepository extends JpaRepository<Category, Long> {
      * parentId가 null이면 최상위 카테고리 조회
      */
     List<Category> findByParentIdAndIsActiveTrueOrderBySortOrderAsc(Long parentId);
+    boolean existsByParentId(Long parentId);
 
     /**
      * 최상위 카테고리 조회 (parentId가 null)
@@ -36,6 +37,11 @@ public interface CategoryRepository extends JpaRepository<Category, Long> {
      * Slug로 카테고리 조회 (활성화된 것만)
      */
     Optional<Category> findBySlugAndIsActiveTrue(String slug);
+
+    /**
+     * ID로 활성화된 카테고리만 조회
+     */
+    Optional<Category> findByIdAndIsActiveTrue(Long id);
 
     /**
      * Slug 존재 여부 확인

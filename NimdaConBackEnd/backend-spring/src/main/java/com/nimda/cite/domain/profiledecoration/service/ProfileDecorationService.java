@@ -1,5 +1,6 @@
 package com.nimda.cite.domain.profiledecoration.service;
 
+import com.nimda.cite.domain.attachment.service.AttachmentService;
 import com.nimda.cite.domain.profiledecoration.repository.ProfileDecorationRepository;
 import com.nimda.cite.domain.profiledecoration.dto.ProfileDecorationCreateRequest;
 import com.nimda.cite.domain.profiledecoration.entity.ProfileDecoration;
@@ -15,6 +16,7 @@ import java.util.Locale;
 public class ProfileDecorationService {
 
     private final ProfileDecorationRepository repository;
+    private final AttachmentService attachmentService;
 
     @Transactional(readOnly = true)
     public List<ProfileDecoration> getActiveDecorations() {
@@ -39,10 +41,14 @@ public class ProfileDecorationService {
     }
 
     @Transactional
-    public ProfileDecoration create(ProfileDecorationCreateRequest request) {
+    public ProfileDecoration create(ProfileDecorationCreateRequest request, Long actorUserId) {
+        if (request == null) {
+            throw new IllegalArgumentException("배지 정보가 필요합니다.");
+        }
+
         String key = normalizeKey(request.getKey());
         String label = request.getLabel() == null ? "" : request.getLabel().trim();
-        String filePath = request.getFilePath() == null ? "" : request.getFilePath().trim();
+        String requestedFilePath = request.getFilePath() == null ? "" : request.getFilePath().trim();
         String requiredRole = null;
         boolean purchaseRequired = true;
 
@@ -55,16 +61,27 @@ public class ProfileDecorationService {
         if (label.isBlank()) {
             throw new IllegalArgumentException("배지 이름을 입력해주세요.");
         }
-        if (filePath.isBlank()) {
+        if (requestedFilePath.isBlank()) {
             throw new IllegalArgumentException("배지 이미지 경로가 필요합니다.");
         }
+
         ProfileDecoration existing = repository.findByKey(key).orElse(null);
+        if (existing != null && existing.isActive()) {
+            throw new IllegalArgumentException("이미 존재하는 배지 키입니다.");
+        }
+
+        String filePath = requestedFilePath.startsWith("pending/users/")
+                ? attachmentService.finalizeProfileDecorationImage(requestedFilePath, actorUserId)
+                : requestedFilePath;
+
         if (existing != null) {
-            if (existing.isActive()) {
-                throw new IllegalArgumentException("이미 존재하는 배지 키입니다.");
-            }
+            String previousFilePath = existing.getFilePath();
+            boolean previousFilePathIsShared = previousFilePath != null
+                    && !previousFilePath.equals(filePath)
+                    && repository.existsByFilePathAndIdNot(previousFilePath, existing.getId());
             existing.update(label, filePath, requiredRole, true);
             existing.setPurchaseRequired(purchaseRequired);
+            enqueueReplacedImage(previousFilePath, filePath, previousFilePathIsShared);
             return existing;
         }
 
@@ -72,6 +89,22 @@ public class ProfileDecorationService {
         decoration.update(label, filePath, requiredRole, true);
         decoration.setPurchaseRequired(purchaseRequired);
         return repository.save(decoration);
+    }
+
+    private void enqueueReplacedImage(
+            String previousFilePath,
+            String currentFilePath,
+            boolean previousFilePathIsShared) {
+        if (previousFilePath == null
+                || previousFilePath.isBlank()
+                || previousFilePath.startsWith("/")
+                || previousFilePath.startsWith("http://")
+                || previousFilePath.startsWith("https://")
+                || previousFilePath.equals(currentFilePath)
+                || previousFilePathIsShared) {
+            return;
+        }
+        attachmentService.enqueueProfileDecorationDeletion(previousFilePath);
     }
 
     @Transactional

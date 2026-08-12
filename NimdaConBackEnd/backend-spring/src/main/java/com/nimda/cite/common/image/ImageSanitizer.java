@@ -5,11 +5,14 @@ import org.slf4j.LoggerFactory;
 import org.springframework.web.multipart.MultipartFile;
 
 import javax.imageio.ImageIO;
+import javax.imageio.ImageReader;
+import javax.imageio.stream.ImageInputStream;
 import java.awt.image.BufferedImage;
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
+import java.util.Iterator;
 import java.util.Set;
 
 /**
@@ -23,6 +26,9 @@ public final class ImageSanitizer {
     private static final Set<String> RE_ENCODE_EXTENSIONS = Set.of(
             "jpg", "jpeg", "png", "gif", "webp", "bmp"
     );
+    // Decode-bomb limits: 8K per side and 40 megapixels.
+    private static final int MAX_DIMENSION = 8_192;
+    private static final long MAX_PIXELS = 40_000_000L;
 
     private ImageSanitizer() {}
 
@@ -45,19 +51,51 @@ public final class ImageSanitizer {
      * @throws IOException 이미지가 손상되었거나 읽을 수 없는 경우
      */
     public static byte[] reEncode(MultipartFile file, String ext) throws IOException {
+        try (InputStream input = file.getInputStream()) {
+            return reEncode(input, file.getSize(), ext);
+        }
+    }
+
+    public static byte[] reEncode(byte[] data, String ext) throws IOException {
+        try (InputStream input = new ByteArrayInputStream(data)) {
+            return reEncode(input, data.length, ext);
+        }
+    }
+
+    private static byte[] reEncode(InputStream input, long originalSize, String ext) throws IOException {
         BufferedImage image;
-        try (InputStream is = file.getInputStream()) {
-            image = ImageIO.read(is);
+        try (ImageInputStream imageInput = ImageIO.createImageInputStream(input)) {
+            if (imageInput == null) {
+                throw new IOException("이미지 파일을 읽을 수 없습니다.");
+            }
+            Iterator<ImageReader> readers = ImageIO.getImageReaders(imageInput);
+            if (!readers.hasNext()) {
+                throw new IOException("이미지 파일을 읽을 수 없습니다. 파일이 손상되었을 수 있습니다.");
+            }
+
+            ImageReader reader = readers.next();
+            try {
+                reader.setInput(imageInput, true, true);
+                int width = reader.getWidth(0);
+                int height = reader.getHeight(0);
+                long pixels = Math.multiplyExact((long) width, (long) height);
+                if (width <= 0 || height <= 0
+                        || width > MAX_DIMENSION || height > MAX_DIMENSION || pixels > MAX_PIXELS) {
+                    throw new IOException("이미지 크기가 허용 범위를 초과합니다.");
+                }
+                image = reader.read(0);
+            } catch (ArithmeticException e) {
+                throw new IOException("이미지 크기가 허용 범위를 초과합니다.", e);
+            } finally {
+                reader.dispose();
+            }
         }
 
         if (image == null) {
             throw new IOException("이미지 파일을 읽을 수 없습니다. 파일이 손상되었을 수 있습니다.");
         }
 
-        // PNG는 lossless 유지, 나머지는 JPEG로 통일
         String outputFormat = "png".equalsIgnoreCase(ext) ? "png" : "jpg";
-
-        // JPEG는 알파 채널 지원 안 함 → 알파 제거
         BufferedImage output = image;
         if ("jpg".equals(outputFormat) && image.getColorModel().hasAlpha()) {
             output = new BufferedImage(
@@ -72,8 +110,7 @@ public final class ImageSanitizer {
         }
 
         log.debug("이미지 재인코딩 완료: {}KB → {}KB ({})",
-                file.getSize() / 1024, baos.size() / 1024, outputFormat);
-
+                originalSize / 1024, baos.size() / 1024, outputFormat);
         return baos.toByteArray();
     }
 

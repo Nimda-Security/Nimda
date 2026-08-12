@@ -1,9 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import Logo from '@/components/icons/Logo';
-import { getCurrentNickname, isAdmin } from '@/utils/jwt';
 import {
-  isLoggedIn,
   logoutAPI,
   getMyPageInfo,
   validateSession,
@@ -13,65 +11,94 @@ import Logout from '@/components/icons/Logout.svg';
 import NotificationBell from '@/components/Notification/NotificationBell';
 import Avatar from '@/components/Avatar/Avatar';
 
+type AuthStatus = 'unknown' | 'loading' | 'authenticated' | 'anonymous';
+
 const Navbar: React.FC = () => {
   const navigate = useNavigate();
-  const [nickname, setNickname] = useState<string | null>(null);
+  const [authStatus, setAuthStatus] = useState<AuthStatus>('unknown');
   const [adminStatus, setAdminStatus] = useState(false);
-  const [isLoggedInState, setIsLoggedInState] = useState(false);
   const [profileImage, setProfileImage] = useState<string | null>(null);
+  const [isLoggingOut, setIsLoggingOut] = useState(false);
 
   useEffect(() => {
-    const currentNickname = getCurrentNickname();
-    const adminCheck = isAdmin();
-    const loggedIn = isLoggedIn();
-    setNickname(currentNickname);
-    setAdminStatus(adminCheck);
-    setIsLoggedInState(loggedIn);
+    let cancelled = false;
 
-    if (loggedIn) {
-      // 서버에 세션 유효성 검증 — 만료 시 로컬 상태만 초기화 (강제 리다이렉트 없음)
-      validateSession().then((ok) => {
-        if (!ok) {
-          setNickname(null);
-          setAdminStatus(false);
-          setIsLoggedInState(false);
+    const loadAuthState = async () => {
+      setAuthStatus('loading');
+      try {
+        const session = await validateSession();
+        if (session.status !== 'authenticated') {
+          if (!cancelled) {
+            setAdminStatus(false);
+            setProfileImage(null);
+            setAuthStatus('anonymous');
+          }
           return;
         }
-        getMyPageInfo().then((result) => {
-          if (result.success && result.data) {
-            setProfileImage(result.data.profileImage ?? null);
+
+        const result = await getMyPageInfo();
+        if (!result.success || !result.data) {
+          if (!cancelled) {
+            setAdminStatus(false);
+            setProfileImage(null);
+            setAuthStatus('anonymous');
           }
-        });
-      });
-    }
+          return;
+        }
+
+        if (!cancelled) {
+          setProfileImage(result.data.profileImage ?? null);
+          setAdminStatus(session.roles.includes('ROLE_ADMIN'));
+          setAuthStatus('authenticated');
+        }
+      } catch {
+        if (!cancelled) {
+          setAdminStatus(false);
+          setProfileImage(null);
+          setAuthStatus('anonymous');
+        }
+      }
+    };
+
+    void loadAuthState();
 
     const handleProfileUpdated = (event: Event) => {
       const detail = (event as CustomEvent<Record<string, unknown> | null>).detail;
-      setProfileImage((detail?.profileImage as string | null) ?? null);
+      const updatedProfileImage = detail?.profileImage;
+      setProfileImage(
+        typeof updatedProfileImage === 'string' ? updatedProfileImage : null
+      );
     };
 
     window.addEventListener(PROFILE_UPDATED_EVENT, handleProfileUpdated);
     return () => {
+      cancelled = true;
       window.removeEventListener(PROFILE_UPDATED_EVENT, handleProfileUpdated);
     };
   }, []);
 
-  const handleLogout = () => {
-    logoutAPI();
-    setNickname(null);
+  const handleLogout = async () => {
+    if (isLoggingOut) return;
+
+    setIsLoggingOut(true);
+    setAuthStatus('loading');
     setAdminStatus(false);
-    setIsLoggedInState(false);
-    window.location.href = '/login';
+    setProfileImage(null);
+
+    try {
+      const serverLogoutSucceeded = await logoutAPI();
+      if (!serverLogoutSucceeded) {
+        alert('서버 로그아웃을 확인하지 못했습니다. 다시 로그인하기 전에 네트워크를 확인해주세요.');
+      }
+    } finally {
+      window.location.assign('/login');
+    }
   };
 
   const handleProfileClick = () => {
     navigate('/mypage');
   };
 
-  const displayNickname =
-    nickname && nickname.length > 8
-      ? `${nickname.substring(0, 7)}...`
-      : nickname;
 
   return (
     <nav className="layout__header">
@@ -85,7 +112,7 @@ const Navbar: React.FC = () => {
 
         {/* 오른쪽: 로그인/회원가입 또는 유저 정보 */}
         <div style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
-          {isLoggedInState ? (
+          {authStatus === 'authenticated' ? (
             <>
               {/* 알림 */}
               <NotificationBell />
@@ -131,6 +158,7 @@ const Navbar: React.FC = () => {
               {/* 로그아웃 버튼 */}
               <button
                 onClick={handleLogout}
+                disabled={isLoggingOut}
                 style={{
                   padding: '8px',
                   borderRadius: '6px',
@@ -146,7 +174,7 @@ const Navbar: React.FC = () => {
                 <img src={Logout} alt="로그아웃" style={{ width: '20px', height: '20px' }} />
               </button>
             </>
-          ) : (
+          ) : authStatus === 'anonymous' ? (
             <>
               <Link
                 to="/signup"
@@ -170,7 +198,7 @@ const Navbar: React.FC = () => {
                 로그인
               </Link>
             </>
-          )}
+          ) : null}
         </div>
       </div>
     </nav>

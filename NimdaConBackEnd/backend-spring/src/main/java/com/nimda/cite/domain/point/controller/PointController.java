@@ -6,6 +6,7 @@ import com.nimda.cite.domain.point.dto.ManualBalanceUpdateRequest;
 import com.nimda.cite.domain.point.dto.PointDetailResponse;
 import com.nimda.cite.domain.point.entity.UserBalance;
 import com.nimda.cite.domain.point.service.PointService;
+import com.nimda.cite.user.entity.User;
 import com.nimda.cite.user.repository.UserRepository;
 import com.nimda.cite.user.security.CustomUserDetails;
 import lombok.RequiredArgsConstructor;
@@ -15,6 +16,7 @@ import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.server.ResponseStatusException;
+
 
 import java.util.List;
 import java.util.stream.Collectors;
@@ -91,49 +93,60 @@ public class PointController {
 
 
     /**
-     * 닉네임으로 특정 유저 마일리지 잔액 조회 (공개 프로필용, 인증 불필요)
+     * 닉네임으로 특정 유저 마일리지 잔액 조회
      * GET /api/cite/point/user/{nickname}
      */
     @GetMapping("/user/{nickname}")
-    public ResponseEntity<?> getBalanceByNickname(@PathVariable String nickname) {
-        try {
-            return userRepository.findByNickname(nickname)
-                    .map(user -> {
-                        UserBalance balance = pointService.findUserBalance(user.getId());
-                        BalanceResponse dto = BalanceResponse.builder()
-                                .totalAmount(balance.getTotalAmount())
-                                .updatedAt(balance.getUpdatedAt())
-                                .build();
-                        return ApiResponse.ok("계좌 조회에 성공했습니다.", dto).toResponse();
-                    })
-                    .orElseThrow(
-                        () -> new IllegalArgumentException("사용자를 찾을 수 없습니다.")
-                    );
-        } catch (Exception e) {
-            return ApiResponse.fail("조회 중 오류가 발생했습니다.")
-                    .toResponse(HttpStatus.INTERNAL_SERVER_ERROR);
+    public ResponseEntity<?> getBalanceByNickname(
+            @AuthenticationPrincipal CustomUserDetails userDetails,
+            @PathVariable String nickname) {
+        Long targetUserId = resolvePrivateActivityUserId(userDetails, nickname);
+        if (targetUserId == null) {
+            return ApiResponse.fail("접근 권한이 없습니다.").toResponse(HttpStatus.FORBIDDEN);
         }
+
+        UserBalance balance = pointService.findUserBalance(targetUserId);
+        BalanceResponse dto = BalanceResponse.builder()
+                .totalAmount(balance.getTotalAmount())
+                .updatedAt(balance.getUpdatedAt())
+                .build();
+        return ApiResponse.ok("계좌 조회에 성공했습니다.", dto).toResponse();
     }
 
     /**
-     * 닉네임으로 특정 유저 마일리지 내역 조회 (공개 프로필용, 인증 불필요)
+     * 닉네임으로 특정 유저 마일리지 내역 조회
      * GET /api/cite/point/user/{nickname}/details
      */
     @GetMapping("/user/{nickname}/details")
-    public ResponseEntity<?> getPointDetailsByNickname(@PathVariable String nickname) {
-        try {
-            return userRepository.findByNickname(nickname)
-                    .map(user -> {
-                        List<PointDetailResponse> dto = pointService.findPointDetail(user.getId()).stream()
-                                .map(PointDetailResponse::from).toList();
-                        return ApiResponse.ok("포인트 내역 조회에 성공했습니다.", dto).toResponse();
-                    })
-                    .orElseThrow(() ->
-                            new ResponseStatusException(HttpStatus.NOT_FOUND));
-        } catch (Exception e) {
-            return ApiResponse.fail("조회 중 오류가 발생했습니다.")
-                    .toResponse(HttpStatus.INTERNAL_SERVER_ERROR);
+    public ResponseEntity<?> getPointDetailsByNickname(
+            @AuthenticationPrincipal CustomUserDetails userDetails,
+            @PathVariable String nickname) {
+        Long targetUserId = resolvePrivateActivityUserId(userDetails, nickname);
+        if (targetUserId == null) {
+            return ApiResponse.fail("접근 권한이 없습니다.").toResponse(HttpStatus.FORBIDDEN);
         }
+
+        List<PointDetailResponse> dto = pointService.findPointDetail(targetUserId).stream()
+                .map(PointDetailResponse::from)
+                .toList();
+        return ApiResponse.ok("포인트 내역 조회에 성공했습니다.", dto).toResponse();
+    }
+
+    private Long resolvePrivateActivityUserId(
+            CustomUserDetails userDetails, String nickname) {
+        if (userDetails == null || userDetails.getUser() == null) {
+            return null;
+        }
+        boolean isAdministrator = userDetails.getAuthorities().stream()
+                .anyMatch(authority -> "ROLE_ADMIN".equals(authority.getAuthority()));
+        if (!isAdministrator) {
+            return userDetails.getUser().getNickname().equals(nickname)
+                    ? userDetails.getUser().getId()
+                    : null;
+        }
+        return userRepository.findByNickname(nickname)
+                .map(User::getId)
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND));
     }
 
 }

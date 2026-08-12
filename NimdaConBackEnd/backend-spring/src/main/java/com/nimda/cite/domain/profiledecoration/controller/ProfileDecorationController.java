@@ -90,9 +90,15 @@ public class ProfileDecorationController {
 
     @PreAuthorize("hasRole('ADMIN')")
     @PostMapping("/admin/profile-decorations")
-    public ResponseEntity<?> createDecoration(@RequestBody ProfileDecorationCreateRequest request) {
+    public ResponseEntity<?> createDecoration(
+            @AuthenticationPrincipal CustomUserDetails userDetails,
+            @RequestBody ProfileDecorationCreateRequest request) {
         try {
-            ProfileDecoration decoration = service.create(request);
+            if (userDetails == null || userDetails.getUser() == null) {
+                return ApiResponse.fail("로그인이 필요합니다.").toResponse(HttpStatus.UNAUTHORIZED);
+            }
+            ProfileDecoration decoration = service.create(
+                    request, userDetails.getUser().getId());
             return ApiResponse.ok("프로필 배지가 등록되었습니다.", ProfileDecorationDto.from(decoration)).toResponse();
         } catch (IllegalArgumentException e) {
             return ApiResponse.fail(e.getMessage()).toResponse(HttpStatus.BAD_REQUEST);

@@ -1,0 +1,232 @@
+package com.nimda.cite.domain.board.service;
+
+import com.nimda.cite.domain.alarm.service.AlarmService;
+import com.nimda.cite.domain.attachment.service.AttachmentService;
+import com.nimda.cite.domain.board.entity.Board;
+import com.nimda.cite.domain.board.enums.BoardStatus;
+import com.nimda.cite.domain.board.repository.BoardRepository;
+import com.nimda.cite.domain.comment.repository.CommentRepository;
+import com.nimda.cite.domain.like.repository.BoardLikeRepository;
+import com.nimda.cite.user.entity.Authority;
+import com.nimda.cite.user.entity.User;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.InjectMocks;
+import org.mockito.Mock;
+import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.security.access.AccessDeniedException;
+
+import java.util.List;
+
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertSame;
+import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.never;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.when;
+
+@ExtendWith(MockitoExtension.class)
+class BoardServiceTest {
+
+    @Mock
+    private BoardRepository boardRepository;
+    @Mock
+    private CommentRepository commentRepository;
+    @Mock
+    private BoardLikeRepository boardLikeRepository;
+    @Mock
+    private AlarmService alarmService;
+    @Mock
+    private AttachmentService attachmentService;
+
+    @InjectMocks
+    private BoardService boardService;
+
+    @Test
+    void incrementViewCountUsesOneAtomicUpdateWithoutSavingTheEntity() {
+        Board board = activeBoard(7L, 12);
+        when(boardRepository.incrementPostView(7L, BoardStatus.ACTIVE)).thenReturn(1);
+
+        boardService.incrementViewCount(board);
+
+        assertEquals(13, board.getPostView());
+        verify(boardRepository).incrementPostView(7L, BoardStatus.ACTIVE);
+        verify(boardRepository, never()).save(any(Board.class));
+    }
+
+    @Test
+    void incrementViewCountTreatsANullCounterAsZero() {
+        Board board = activeBoard(8L, null);
+        when(boardRepository.incrementPostView(8L, BoardStatus.ACTIVE)).thenReturn(1);
+
+        boardService.incrementViewCount(board);
+
+        assertEquals(1, board.getPostView());
+    }
+
+    @Test
+    void incrementViewCountFailsWhenTheBoardIsNoLongerActive() {
+        Board board = activeBoard(9L, 4);
+        when(boardRepository.incrementPostView(9L, BoardStatus.ACTIVE)).thenReturn(0);
+
+        RuntimeException error = assertThrows(
+                RuntimeException.class,
+                () -> boardService.incrementViewCount(board));
+
+        assertEquals("게시글을 찾을 수 없습니다: 9", error.getMessage());
+        assertEquals(4, board.getPostView());
+    }
+
+    @Test
+    void recentBoardsAreRestrictedToActiveRows() {
+        Board board = activeBoard(10L, 0);
+        when(boardRepository.findTop10ByStatusOrderByCreatedAtDesc(BoardStatus.ACTIVE))
+                .thenReturn(List.of(board));
+
+        List<Board> result = boardService.getRecentBoards();
+
+        assertEquals(1, result.size());
+        assertSame(board, result.get(0));
+        verify(boardRepository).findTop10ByStatusOrderByCreatedAtDesc(BoardStatus.ACTIVE);
+    }
+    @Test
+    void updatingABoardPreservesItsOriginalAuthor() {
+        User originalAuthor = new User();
+        originalAuthor.setId(1L);
+        User actingAdmin = new User();
+        actingAdmin.setId(2L);
+        Board board = activeBoard(11L, 3);
+        board.setAuthor(originalAuthor);
+        when(boardRepository.findById(11L)).thenReturn(java.util.Optional.of(board));
+
+        boardService.write(board, actingAdmin, null);
+
+        assertSame(originalAuthor, board.getAuthor());
+        verify(boardRepository).save(board);
+    }
+
+    @Test
+    void nonAdministratorAuthorCannotModifyOrDeleteALegalDocument() {
+        User author = new User();
+        author.setId(7L);
+        Board legalBoard = activeBoard(12L, 0);
+        legalBoard.setAuthor(author);
+        legalBoard.setLegalSlug("terms");
+        when(boardRepository.findById(12L)).thenReturn(java.util.Optional.of(legalBoard));
+
+        assertThrows(
+                AccessDeniedException.class,
+                () -> boardService.write(legalBoard, author, null));
+        assertThrows(
+                AccessDeniedException.class,
+                () -> boardService.boardDelete(12L, author));
+        verify(boardRepository, never()).save(legalBoard);
+    }
+
+    @Test
+    void nonAdministratorAuthorCannotBulkDeleteALegalDocument() {
+        User author = new User();
+        author.setId(7L);
+        Board legalBoard = activeBoard(13L, 0);
+        legalBoard.setAuthor(author);
+        legalBoard.setLegalSlug("privacy");
+        when(boardRepository.findAllById(List.of(13L))).thenReturn(List.of(legalBoard));
+
+        assertThrows(
+                AccessDeniedException.class,
+                () -> boardService.deleteMyBoards(List.of(13L), author));
+
+        verify(boardRepository, never()).save(legalBoard);
+    }
+
+    @Test
+    void currentAdministratorCanModifyALegalDocumentWithoutChangingItsSlug() {
+        User administrator = new User();
+        administrator.setId(8L);
+        administrator.getAuthorities().add(new Authority(1L, "ROLE_ADMIN"));
+        Board legalBoard = activeBoard(14L, 0);
+        legalBoard.setAuthor(administrator);
+        legalBoard.setLegalSlug("site-rules");
+        when(boardRepository.findById(14L)).thenReturn(java.util.Optional.of(legalBoard));
+
+        boardService.write(legalBoard, administrator, null);
+
+        assertEquals("site-rules", legalBoard.getLegalSlug());
+        verify(boardRepository).save(legalBoard);
+    }
+
+    @Test
+    void legalDocumentIdentityIsCheckedAgainstThePersistedRow() {
+        User administrator = new User();
+        administrator.setId(8L);
+        administrator.getAuthorities().add(new Authority(1L, "ROLE_ADMIN"));
+
+        Board persistedLegalBoard = activeBoard(15L, 0);
+        persistedLegalBoard.setAuthor(administrator);
+        persistedLegalBoard.setLegalSlug("terms");
+
+        Board tamperedUpdate = activeBoard(15L, 0);
+        tamperedUpdate.setAuthor(administrator);
+        tamperedUpdate.setLegalSlug(null);
+        when(boardRepository.findById(15L))
+                .thenReturn(java.util.Optional.of(persistedLegalBoard));
+
+        assertThrows(
+                IllegalArgumentException.class,
+                () -> boardService.write(tamperedUpdate, administrator, null));
+        verify(boardRepository, never()).save(tamperedUpdate);
+    }
+
+    @Test
+    void administratorCannotDeleteOrHideALegalDocument() {
+        User administrator = new User();
+        administrator.setId(8L);
+        administrator.getAuthorities().add(new Authority(1L, "ROLE_ADMIN"));
+
+        Board persistedLegalBoard = activeBoard(16L, 0);
+        persistedLegalBoard.setAuthor(administrator);
+        persistedLegalBoard.setLegalSlug("privacy");
+
+        Board hiddenUpdate = activeBoard(16L, 0);
+        hiddenUpdate.setAuthor(administrator);
+        hiddenUpdate.setLegalSlug("privacy");
+        hiddenUpdate.setStatus(BoardStatus.HIDDEN);
+
+        when(boardRepository.findById(16L))
+                .thenReturn(java.util.Optional.of(persistedLegalBoard));
+
+        assertThrows(
+                AccessDeniedException.class,
+                () -> boardService.boardDelete(16L, administrator));
+        assertThrows(
+                AccessDeniedException.class,
+                () -> boardService.write(hiddenUpdate, administrator, null));
+
+        verify(boardRepository, never()).save(hiddenUpdate);
+        verify(boardRepository, never()).save(persistedLegalBoard);
+    }
+
+    @Test
+    void nonAdministratorCannotCreateALegalDocument() {
+        User author = new User();
+        author.setId(7L);
+        Board legalBoard = activeBoard(null, 0);
+        legalBoard.setAuthor(author);
+        legalBoard.setLegalSlug("terms");
+
+        assertThrows(
+                AccessDeniedException.class,
+                () -> boardService.write(legalBoard, author, null));
+
+        verify(boardRepository, never()).save(legalBoard);
+    }
+
+    private Board activeBoard(Long id, Integer views) {
+        Board board = new Board();
+        board.setId(id);
+        board.setStatus(BoardStatus.ACTIVE);
+        board.setPostView(views);
+        return board;
+    }
+}

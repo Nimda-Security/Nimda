@@ -1,45 +1,57 @@
-import { useEffect, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { addVersionToHeaders } from '@/constants/version';
 import Layout from '@/components/Layout';
 import ProblemItem, { type Problem } from './components/ProblemItem';
 
-// 로직만 따로 관리하는 커스텀 훅
+type ProblemsError = {
+  kind: 'unavailable' | 'temporary';
+  status: number | null;
+};
+
 const useProblems = () => {
   const [problems, setProblems] = useState<Problem[]>([]);
   const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
+  const [error, setError] = useState<ProblemsError | null>(null);
 
-  useEffect(() => {
-    const fetchProblems = async () => {
-      try {
-        setLoading(true);
-        const res = await fetch('/api/problems', {
-          headers: addVersionToHeaders(),
-          credentials: 'include',
+  const fetchProblems = useCallback(async () => {
+    try {
+      setLoading(true);
+      setError(null);
+      const res = await fetch('/api/problems', {
+        headers: addVersionToHeaders(),
+        credentials: 'include',
+      });
+
+      if (!res.ok) {
+        setProblems([]);
+        setError({
+          kind: res.status === 404 ? 'unavailable' : 'temporary',
+          status: res.status,
         });
-        if (!res.ok) throw new Error('응답 에러');
-        const data = await res.json();
-        if (data.problems && Array.isArray(data.problems)) {
-          setProblems(data.problems);
-        } else {
-          setProblems([]);
-        }
-      } catch (err) {
-        setError(err instanceof Error ? err.message : '알 수 없는 오류');
-      } finally {
-        setLoading(false);
+        return;
       }
-    };
-    fetchProblems();
+
+      const data = await res.json();
+      setProblems(data.problems && Array.isArray(data.problems) ? data.problems : []);
+    } catch {
+      setProblems([]);
+      setError({ kind: 'temporary', status: null });
+    } finally {
+      setLoading(false);
+    }
   }, []);
 
-  return { problems, loading, error };
+  useEffect(() => {
+    fetchProblems();
+  }, [fetchProblems]);
+
+  return { problems, loading, error, retry: fetchProblems };
 };
 
 function ProblemsPage() {
   const navigate = useNavigate();
-  const { problems, loading, error } = useProblems();
+  const { problems, loading, error, retry } = useProblems();
 
   const handleGoBack = () => navigate('/contest');
   const handleSolve = (id: number) => {
@@ -70,14 +82,43 @@ function ProblemsPage() {
             )}
 
             {error && (
-              <div className="text-center py-12 text-red-600">{error}</div>
+              <div className="text-center py-12" role="alert">
+                <h2 className="text-lg font-semibold text-black">
+                  {error.kind === 'unavailable'
+                    ? '문제 서비스는 아직 준비 중입니다.'
+                    : '문제 목록을 지금 불러올 수 없습니다.'}
+                </h2>
+                <p className="mt-2 text-sm text-gray-600">
+                  {error.kind === 'unavailable'
+                    ? `요청한 기능을 아직 사용할 수 없습니다. (상태 코드: ${error.status})`
+                    : error.status
+                      ? `서버에서 일시적인 응답 오류가 발생했습니다. (상태 코드: ${error.status})`
+                      : '네트워크 연결 또는 서버 상태를 확인한 뒤 다시 시도해주세요.'}
+                </p>
+                <div className="mt-5 flex justify-center gap-3">
+                  <button
+                    type="button"
+                    onClick={retry}
+                    className="rounded bg-black px-4 py-2 text-sm text-white hover:bg-gray-800"
+                  >
+                    다시 시도
+                  </button>
+                  <button
+                    type="button"
+                    onClick={handleGoBack}
+                    className="rounded border border-gray-300 px-4 py-2 text-sm text-gray-700 hover:bg-gray-50"
+                  >
+                    대회 메인으로 돌아가기
+                  </button>
+                </div>
+              </div>
             )}
 
             {!loading && !error && (
               <div className="space-y-4">
                 {problems.length === 0 ? (
                   <div className="text-center py-12 text-gray-600">
-                    문제가 없습니다.
+                    현재 등록된 문제가 없습니다. 새로운 문제가 등록되면 여기에서 확인할 수 있습니다.
                   </div>
                 ) : (
                   problems.map((problem) => (
