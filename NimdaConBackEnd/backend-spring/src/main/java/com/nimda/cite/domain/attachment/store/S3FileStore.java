@@ -10,17 +10,27 @@ import org.springframework.core.io.Resource;
 import org.springframework.stereotype.Component;
 import org.springframework.web.multipart.MultipartFile;
 import software.amazon.awssdk.core.sync.RequestBody;
+import software.amazon.awssdk.core.sync.ResponseTransformer;
 import software.amazon.awssdk.services.s3.S3Client;
 import software.amazon.awssdk.services.s3.model.DeleteObjectRequest;
 import software.amazon.awssdk.services.s3.model.GetObjectRequest;
 import software.amazon.awssdk.services.s3.model.HeadObjectRequest;
+import software.amazon.awssdk.services.s3.model.Delete;
+import software.amazon.awssdk.services.s3.model.DeleteObjectsRequest;
+import software.amazon.awssdk.services.s3.model.ListObjectsV2Request;
+import software.amazon.awssdk.services.s3.model.ListObjectsV2Response;
+import software.amazon.awssdk.services.s3.model.ObjectIdentifier;
 import software.amazon.awssdk.services.s3.model.PutObjectRequest;
 import software.amazon.awssdk.services.s3.presigner.S3Presigner;
 import software.amazon.awssdk.services.s3.presigner.model.PutObjectPresignRequest;
 
 import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Path;
 import java.time.Duration;
+import java.util.List;
 import java.util.Optional;
+import java.util.stream.Collectors;
 import java.util.Set;
 import java.util.UUID;
 
@@ -222,6 +232,76 @@ public class S3FileStore implements FileStore {
                     .bucket(s3Properties.getBucket())
                     .key(oldKey)
                     .build());
+        }
+    }
+
+    @Override
+    public void uploadProblemFile(String problemCode, String relativePath, Path filePath) {
+        String basePath = s3Properties.getProblemPath();
+        if (basePath == null || basePath.isBlank()) basePath = "problems/";
+        if (!basePath.endsWith("/")) basePath += "/";
+        String key = basePath + problemCode + "/" + relativePath.replace("\\", "/");
+        String contentType = determineContentType(filePath);
+        PutObjectRequest request = PutObjectRequest.builder()
+                .bucket(s3Properties.getBucket()).key(key).contentType(contentType).build();
+        try {
+            s3Client.putObject(request, RequestBody.fromFile(filePath));
+        } catch (RuntimeException e) {
+            throw new RuntimeException("S3 문제 파일 업로드에 실패했습니다: " + key, e);
+        }
+    }
+
+    public byte[] getProblemHtml(String problemLocation) {
+        String basePath = s3Properties.getProblemPath();
+        if (basePath == null || basePath.isBlank()) basePath = "problems/";
+        if (!basePath.endsWith("/")) basePath += "/";
+        String key = basePath + problemLocation + "/problem.html";
+        try {
+            return s3Client.getObject(GetObjectRequest.builder()
+                    .bucket(s3Properties.getBucket()).key(key).build(),
+                    ResponseTransformer.toBytes()).asByteArray();
+        } catch (RuntimeException e) {
+            throw new RuntimeException("S3 문제 내용을 불러오는 데 실패했습니다: " + key, e);
+        }
+    }
+
+    private String determineContentType(Path filePath) {
+        String fileName = filePath.getFileName().toString().toLowerCase();
+        if (fileName.endsWith(".html")) return "text/html; charset=utf-8";
+        if (fileName.endsWith(".json")) return "application/json; charset=utf-8";
+        if (fileName.endsWith(".in") || fileName.endsWith(".out") || fileName.endsWith(".txt")) return "text/plain; charset=utf-8";
+        try {
+            String probed = Files.probeContentType(filePath);
+            return probed == null ? "application/octet-stream" : probed;
+        } catch (Exception ignored) {
+            return "application/octet-stream";
+        }
+    }
+
+    public void deleteProblemDirectory(String problemLocation) {
+        String basePath = s3Properties.getProblemPath();
+        if (basePath == null || basePath.isBlank()) basePath = "problems/";
+        if (!basePath.endsWith("/")) basePath += "/";
+        String prefix = basePath + problemLocation + "/";
+        try {
+            ListObjectsV2Request request = ListObjectsV2Request.builder()
+                    .bucket(s3Properties.getBucket()).prefix(prefix).build();
+            ListObjectsV2Response page;
+            do {
+                page = s3Client.listObjectsV2(request);
+                if (!page.contents().isEmpty()) {
+                    List<ObjectIdentifier> keys = page.contents().stream()
+                            .map(item -> ObjectIdentifier.builder().key(item.key()).build())
+                            .collect(Collectors.toList());
+                    s3Client.deleteObjects(DeleteObjectsRequest.builder()
+                            .bucket(s3Properties.getBucket())
+                            .delete(Delete.builder().objects(keys).build())
+                            .build());
+                }
+                request = request.toBuilder().continuationToken(page.nextContinuationToken()).build();
+            } while (page.isTruncated());
+        } catch (RuntimeException e) {
+            throw new RuntimeException("S3 문제 파일 삭제에 실패했습니다: " + prefix, e);
         }
     }
 

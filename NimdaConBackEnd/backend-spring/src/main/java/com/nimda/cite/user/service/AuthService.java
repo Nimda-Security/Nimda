@@ -1,6 +1,7 @@
 package com.nimda.cite.user.service;
 
 import com.nimda.cite.domain.attachment.service.AttachmentService;
+import redis.util.RedisUtil;
 import com.nimda.cite.domain.point.entity.UserBalance;
 import com.nimda.cite.domain.point.repositroy.UserBalanceRepository;
 import com.nimda.cite.user.dto.LoginResponseDTO;

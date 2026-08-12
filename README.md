@@ -1,224 +1,154 @@
-<h1 align="center">NIMDA SECURITY</h1>
+# NIMDA
 
-<p align="center">
-  Contest, community, member, and operations platform for the NIMDA SECURITY club.
-</p>
+> 공주대학교 정보보안 동아리 **NIMDA**의 통합 웹 플랫폼
 
-<p align="center">
-  <a href="https://nimda.kr"><strong>Live App</strong></a> ·
-  <a href="README.ko.md">한국어</a> ·
-  <a href="#features">Features</a> ·
-  <a href="#architecture">Architecture</a> ·
-  <a href="#quick-start">Quick Start</a> ·
-  <a href="DEPLOYMENT.md">Deployment</a>
-</p>
+동아리 커뮤니티 · 운영 · 자체 대회(님다콘)를 하나의 서비스로 연결합니다.
 
-<p align="center">
-  <a href="https://github.com/Nimda-Security/Nimda/actions/workflows/ci.yml"><img alt="CI" src="https://img.shields.io/github/actions/workflow/status/Nimda-Security/Nimda/ci.yml?branch=main&label=CI" /></a>
-  <a href="https://nimda.kr"><img alt="Live app" src="https://img.shields.io/badge/Live-nimda.kr-111111" /></a>
-  <img alt="Java 17" src="https://img.shields.io/badge/Java-17-007396?logo=openjdk&logoColor=white" />
-  <img alt="Spring Boot 3.2" src="https://img.shields.io/badge/Spring_Boot-3.2-6DB33F?logo=springboot&logoColor=white" />
-  <img alt="React 19" src="https://img.shields.io/badge/React-19-61DAFB?logo=react&logoColor=111111" />
-  <img alt="Vite 7" src="https://img.shields.io/badge/Vite-7-646CFF?logo=vite&logoColor=white" />
-</p>
+|             |                                                      |
+| ----------- | ---------------------------------------------------- |
+| **Service** | [nimda.kr](https://nimda.kr)                         |
+| **Landing** | [nimda.space](https://nimda.space)                   |
+| **Period**  | 2025.09 —                                            |
+| **Stack**   | React · Spring Boot · MySQL · Redis · Nginx · Docker |
 
 ---
 
-## What is NIMDA SECURITY?
+## Overview
 
-NIMDA SECURITY is the club's production web platform. It combines programming contests, submissions and scoreboards, community boards, member activity, notifications, mileage rewards, profile decorations, and administrator workflows in one service.
+|               |                                                    |
+| ------------- | -------------------------------------------------- |
+| **Community** | 게시판 · 댓글 · 좋아요 · 알림 · 첨부파일           |
+| **Members**   | 가입 승인 · JWT 인증 · 역할 기반 권한 · 마이페이지 |
+| **Ops**       | 관리자 대시보드 · 카테고리 · 태그 · 유저 운영      |
+| **Activity**  | 출석 · 마일리지 · 배지 · 프로필 장식               |
+| **Contest**   | 님다콘 — 문제 · 제출 · 스코어보드                  |
+| **Brand**     | 동아리 랜딩 — 활동 · 수상 · 지원                   |
 
-## Features
-
-- **Contest:** problem and scoreboard interface with explicit unavailable states; live judging APIs remain a staged rollout
-- **Community:** category-based boards, rich text, comments, likes, galleries, and attachments
-- **Member:** registration, approval, profiles, attendance, notifications, mileage, and decorations
-- **Admin:** user and role management, categories, tags, boards, contests, and mileage grants
-- **Operations:** pull-request verification gates, immutable images, Docker Compose, Nginx, and validated Blue/Green promotion
+---
 
 ## Architecture
 
-<p align="center">
-  <img src="assets/readme/framework.svg" alt="NIMDA SECURITY production architecture" width="100%" />
-</p>
+```mermaid
+flowchart TB
+    subgraph Client
+        FE[React App]
+        LP[Landing - Next.js]
+    end
 
-The Vite community frontend and Next.js landing page are independently built web applications. Browser API traffic reaches the Spring Boot Blue/Green backend through the TLS-terminating Nginx proxy. MySQL stores core data, Redis supports runtime coordination, and private S3 stores validated attachments. GitHub Actions runs all quality gates before publishing an immutable commit-SHA backend image and invoking the promotion script.
+    NG[Nginx - Blue Green]
 
-> Blue/Green promotion is validated before traffic is switched, but complete zero-downtime behavior is not claimed until connection-draining tests pass. See [`DEPLOYMENT.md`](DEPLOYMENT.md).
+    API[Spring Boot]
 
-## Technology Stack
+    subgraph Storage
+        DB[(MySQL)]
+        RD[(Redis)]
+        S3[(S3)]
+    end
 
-| Area               | Stack                                                          |
-| ------------------ | -------------------------------------------------------------- |
-| Community frontend | React 19, TypeScript, Vite 7, Tailwind CSS, Tiptap             |
-| Landing page       | Next.js 16 static export, React 19                             |
-| Backend            | Java 17, Spring Boot 3.2, Spring Security, JPA, Flyway         |
-| Data and storage   | MySQL 8, Redis 7, private AWS S3                               |
-| Infrastructure     | Docker Compose v2, Nginx, GitHub Actions, Blue/Green promotion |
-| Verification       | Maven, ESLint, Vite, Next.js, npm audit, Bruno, k6 scripts     |
-
-## Repository Layout
-
-| Area                 | Path                                        |
-| -------------------- | ------------------------------------------- |
-| Community frontend   | `NimdaConFrontEnd/`                         |
-| Landing page         | `NimdaLandingPage/`                         |
-| API server           | `NimdaConBackEnd/backend-spring/`           |
-| Proxy and deployment | `nginx/`, `docker-compose.yml`, `deploy.sh` |
-| API collection       | `bruno/`                                    |
-| Load-test scenarios  | `load-tests/`                               |
-
-The root `package.json` is not an application entry point. Run each command from the corresponding subproject directory.
-
-## Quick Start
-
-### Requirements
-
-- Node.js 22 LTS and npm 10+
-- Java 17
-- Git
-- Docker Engine and Docker Compose v2 for the integrated runtime
-- k6 only for approved, isolated performance tests
-
-### Community frontend
-
-```bash
-cd NimdaConFrontEnd
-npm ci
-npm run dev
+    FE --> NG --> API
+    API --> DB
+    API --> RD
+    API --> S3
+    FE -.-> S3
 ```
 
-Quality gates:
+---
 
-```bash
-npm run lint
-npm run build
-npm audit --omit=dev
-```
+## Team
 
-The frontend currently has no automated `npm test` script.
+### Backend · Infra
 
-### Landing page
+<table>
+<tr>
+<td width="50%" valign="top">
 
-```bash
-cd NimdaLandingPage
-npm ci
-npm run dev
-```
+**최도일**  
+`Backend Lead · Infra`
 
-Quality gates:
+- Spring Boot API · 인증·게시판·태그
+- Nginx · Docker Compose
+- Flyway 마이그레이션 · 보안 설정
+- Blue-Green 배포 파이프라인
 
-```bash
-npm run lint
-npm run build
-npm audit --omit=dev
-```
+</td>
+<td width="50%" valign="top">
 
-A successful production build statically generates `/` and `/_not-found` under ignored output directories.
+**이도현**  
+`Backend · Contest · CI/CD`
 
-### Backend
+- 대회 도메인 (문제 · 제출 · 채점 연계)
+- 카테고리 · 상점 API
+- S3 문제 파일 스토어
+- CI/CD · 배포 안정화
 
-```bash
-cd NimdaConBackEnd/backend-spring
+</td>
+</tr>
+<tr>
+<td width="50%" valign="top">
 
-# Linux/macOS
-./mvnw -B clean verify
-./mvnw spring-boot:run
+**이명건**  
+`Backend · Domain`
 
-# Windows
-mvnw.cmd -B clean verify
-mvnw.cmd spring-boot:run
-```
+- 마일리지 일괄 지급 · 포인트 도메인
+- 댓글 · 좋아요 · 출석 · 알림
+- `ROLE_DEV` 등 권한 정책
+- Group 도메인 · Cite 구조 분리
 
-Tests use the `test` profile and H2; they do not require production MySQL or Redis credentials. `BUILD SUCCESS` is the pass signal.
+</td>
+<td width="50%" valign="top">
 
-### Integrated runtime
+**주윤호**  
+`Backend · Storage`
 
-From the repository root:
+- AWS S3 연동 · 첨부파일 파이프라인
+- CI S3 환경변수 · 시크릿 정리
+- JWT / Common 모듈 정리
+- 게시판·관리자 FE 연동
 
-```bash
-cp .env.example .env
-BACKEND_IMAGE_TAG=<verified-commit-SHA> docker compose config
-BACKEND_IMAGE_TAG=<verified-commit-SHA> docker compose up -d
-```
+</td>
+</tr>
+</table>
 
-`docker compose config` can print substituted secrets. Do not publish its output. Production promotion uses `BACKEND_IMAGE_TAG=<verified-commit-SHA> ./deploy.sh`; the script has no `status` or `rollback` subcommands.
+### Frontend · Design
 
-## Configuration and Secret Handling
+<table>
+<tr>
+<td width="50%" valign="top">
 
-Only the root `.env.example` and `NimdaConFrontEnd/.env.example` templates are tracked.
+**서윤**  
+`Frontend Lead · Product`
 
-- Inject DB, Redis, JWT, SMTP, and AWS values from an approved secret store.
-- Never place real passwords, tokens, private keys, certificate material, or environment dumps in Git, issues, screenshots, or build logs.
-- Deploy only immutable commit-SHA image tags. The deployment path does not fall back to `latest`.
-- Frontend defaults are `/api` for the API and `/scoreboard` for the scoreboard endpoint.
+- 게시판 · 댓글 · 에디터 UX
+- 마이페이지 · 프로필 · 배지 시스템
+- 마일리지 상점 · 구매 플로우
+- 레이아웃 · 알림 · 랜딩 기여
 
-## Security and Data-Integrity Invariants
+</td>
+<td width="50%" valign="top">
 
-- The authentication cookie is `HttpOnly`, secure by default in production, and `SameSite=Lax`. Credentialed browser requests trust only exact owned origins; unsafe cross-site requests are rejected before authentication.
-- Login validates the password, approval state, roles, and `authVersion` from one database snapshot. Logout uses an atomic version increment; password, approval, and role mutations lock the user row before rotating the version. Every authenticated request reloads the approved account and requires the current version.
-- Password-recovery initiation and mail-request responses are indistinguishable for known and unknown identities. HTTP handling enqueues the same asynchronous dispatch shape instead of waiting for SMTP, and code verification performs both the identity and challenge lookups to reduce timing differences. A mail code is atomically consumed by its random recovery challenge, only the latest verified challenge can be used once under a user-row lock, and a successful reset clears both the challenge and old sessions.
-- Private activity endpoints expose liked posts and NC history only to the owner or an administrator. Board responses omit author email and login ID; V29 changes existing and new email visibility to private by default. Student numbers are read-only recovery identifiers in ordinary profile flows.
-- Administrator category and Actuator matchers precede public rules. Legal documents are public only through the four immutable slug routes established by V30; numeric board resources remain protected. Mutation services reload the persisted legal identity, require a current administrator, and keep the legal-slug column out of ordinary updates.
-- Board, comment, and attachment reads enforce `ACTIVE` visibility and cartel membership. Administrator edits preserve the original board author, cross-board comment parents are rejected, and unlinked attachments remain owner-only.
-- Presigned PUTs bind the authenticated user, upload purpose, and exact size up to 10 MiB. Objects start under `pending/users/<userId>/<purpose>/`, are validated and images are pixel-bounded/re-encoded, then move under `users/<userId>/active/`.
-- Draft navigation, pagehide, upload, explicit removal, and submit share synchronized ownership rules so uploads cannot leak into another draft and files being committed cannot be deleted by cleanup. Failed image re-encoding never falls back to the original bytes, and local upload fallback requires the explicit `UPLOAD_STORAGE_UNAVAILABLE` capability code. V28/V30 permit one case-sensitive deletion-outbox key of at most 512 characters; an unrepresentable key also aborts metadata deletion. Quarantine is dominant, live references prevent deletion, failures are persisted under the task lock, and the keyset orphan scan proceeds to its natural end.
-- Pull requests run frontend, landing, dependency, and backend verification. Image publication and production deployment run only for a successful push to `main` in `Nimda-Security/Nimda`.
+**정푸른**  
+`Frontend · Design`
 
-## Performance Budgets and Evidence
+- BoardList · 탭 · 고정글 UI 폴리시
+- 동아리 랜딩 페이지 디자인·구현
+- 마이페이지 마일리지 UI
+- 비밀번호 변경 MCP 연동
 
-| Layer      | Gate                                                                                           |
-| ---------- | ---------------------------------------------------------------------------------------------- |
-| Frontend   | Initial-route JS ≤ 300 KiB gzip; CSS ≤ 100 KiB gzip; LCP p75 ≤ 2.5 s; INP ≤ 200 ms; CLS ≤ 0.10 |
-| Backend    | Normal reads p95 ≤ 300 ms; writes p95 ≤ 500 ms; errors < 0.5%                                  |
-| Proxy      | p95 overhead ≤ 20 ms versus direct upstream; throughput ≥ 95%                                  |
-| End-to-end | Login p95 ≤ 500 ms; normal API p95 ≤ 300 ms; judging p95 ≤ 5 s; success > 99%                  |
+</td>
+</tr>
+</table>
 
-Comparisons must use the same data, roles, resources, browser/tool versions, cache state, network, and concurrency. Warm up twice, measure at least five times, and retain median, p95/p99, error rate, throughput, CPU, and memory. Never load-test production without approval.
+---
 
-Local production-preview evidence from 2026-07-10:
+## Highlights
 
-| Metric                      |      Before |     After | Change |
-| --------------------------- | ----------: | --------: | -----: |
-| Initial JS transferred      |   354,490 B |  99,864 B | -71.8% |
-| Initial JS decoded          | 1,201,360 B | 297,056 B | -75.3% |
-| Total resources transferred |   419,164 B | 191,418 B | -54.3% |
-| Median DOMContentLoaded     |      363 ms |  122.6 ms | -66.2% |
-| Median FCP                  |      652 ms |    156 ms | -76.1% |
+- **권한 분리** — `USER` / `ADMIN` / `DEV` / `CARTEL`
+- **마일리지** — 출석 · 활동 포인트 · 배지·장식 상점
+- **무중단 배포** — Blue-Green + Nginx graceful reload
+- **대회 플랫폼** — 문제 업로드 · 제출 · 스코어보드
 
-For a 10-board page, like/comment metadata queries dropped from 20 to 2 for anonymous users and from at least 30 to 3 for authenticated users. View counts use one conditional atomic update instead of read-modify-write.
+---
 
-## Verification
+## Links
 
-Verified on 2026-07-11:
-
-- Community frontend: lint and production build passed; production dependency audit found 0 vulnerabilities
-- Landing page: lint and static production build passed; production dependency audit found 0 vulnerabilities
-- Backend: `mvnw.cmd -B clean verify` passed with **116 tests**, 0 failures, 0 errors, and 0 skipped
-- Security regressions cover auth-version/status enforcement, single-snapshot login, challenge-bound one-time recovery, exact-origin filtering, exact public legal routes and immutable legal-document status, private activity, public-author DTO privacy, administrator matchers, attachment authentication, S3 ownership/purpose/size limits, image pixel limits, preallocated canonical upload keys, rollback cleanup in an independent transaction, dominant deletion quarantine, referenced-key protection, and category hierarchy transitions
-- Local 390 px production preview: home, signup, board writing, and 404 had no horizontal overflow; protected writing redirected to login and returned to the original writing route after a mocked login; cancelling logo navigation preserved the draft
-- Production read-only smoke: desktop login and home navigation succeeded; unauthenticated administrator category returned 401 and an untrusted-origin preflight returned 403
-- GPT-5.6 Sol with Pro reasoning independently re-reviewed both the attachment transaction/ambiguous-S3-success paths and the legal-document mutation/deletion guards; both reviews returned `RELEASE: APPROVE`, while packs and responses remain ignored local audit artifacts
-
-The deployed production frontend was still older at verification time and retained a 390 px overflow. Recheck after deployment. A nonexistent unauthenticated attachment URL also returned 500 in the old deployment; the current local security contract blocks it before the controller.
-
-## Deployment and Operations
-
-Read [`DEPLOYMENT.md`](DEPLOYMENT.md) before promotion. It documents:
-
-- immutable image tags and Blue/Green promotion
-- V27–V30 migration effects and preflight requirements
-- exact browser origins and private-S3 requirements
-- the exact `pending/` lifecycle rule
-- authorization and origin smoke checks
-- deletion-outbox monitoring and rollback constraints
-
-This Windows verification host did not have Docker or k6, so container startup, `nginx -t`, proxy load, traffic switching, and connection draining remain Linux CI/host gates.
-
-## Audit and Commit Hygiene
-
-Do not commit `.gjc/`, `.insane-review/`, `audit-assets/`, `load-tests/results/`, `dist/`, `.next/`, `out/`, `target/`, logs, or real environment files. GPT-5.6 Pro web-review packs and responses are local audit material only. Bruno requests reference `{{jwtToken}}` instead of literal bearer tokens. Before committing, inspect status, run `git diff --check`, review the changed-file list, and scan for secrets.
-
-## License and Copyright
-
-This repository currently has no root-level open-source license file. Until maintainers add one, the source, service design, logos, banners, images, and other project assets remain copyright © NIMDA SECURITY. All rights reserved.
+[nimda.kr](https://nimda.kr) · [nimda.space](https://nimda.space) · [DEPLOYMENT.md](./DEPLOYMENT.md)

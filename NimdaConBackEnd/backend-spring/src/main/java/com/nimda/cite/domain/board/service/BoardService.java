@@ -98,7 +98,8 @@ public class BoardService {
     // Note. boardListByCategory - 카테고리별 게시글 목록을 페이지네이션으로 조회한다.
     @Transactional(readOnly = true)
     public Page<Board> boardListByCategory(Category category, Pageable pageable) {
-        return boardRepository.findByCategoryAndStatus(category, BoardStatus.ACTIVE, pageable);
+        return boardRepository.findByCategoryAndStatusOrderByPinnedDescCreatedAtDesc(
+            category, BoardStatus.ACTIVE, pageable);
     }
 
     // Note. boardListByCategoryWithPinned - 카테고리별 게시글 고정 목록을 페이지네이션으로 조회한다.

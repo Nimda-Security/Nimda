@@ -146,10 +146,14 @@ public class SecurityConfig {
                         .requestMatchers(HttpMethod.DELETE, "/api/problems/**", "/api/contest/**").hasRole("ADMIN")
                         .requestMatchers(HttpMethod.GET, "/api/problems/*/admin").hasRole("ADMIN")
 
-                        // [우선순위 6] 기타 공개 조회용 (문제/대회 등)
-                        // .requestMatchers(HttpMethod.GET, "/api/contest/**").permitAll()
-                        // .requestMatchers(HttpMethod.GET, "/api/problems/**").permitAll()
-                        // .requestMatchers(HttpMethod.GET, "/api/scoreboard/**").permitAll()
+                        // 채점 서버 api
+                        .requestMatchers(HttpMethod.POST, "/api/judge/problem").hasRole("ADMIN")
+                        .requestMatchers(HttpMethod.POST, "api/judge/problem/toggle-public").hasRole("ADMIN")
+                        .requestMatchers(HttpMethod.DELETE, "api/judge/problem").hasRole("ADMIN")
+                        .requestMatchers(HttpMethod.GET, "/api/judge/problem/**").authenticated()
+
+                        // 재출 api
+                        .requestMatchers(HttpMethod.POST, "api/judge/submission").authenticated()
 
                         // [우선순위 7] 나머지 모든 요청은 기본적으로 인증 필요
                         .anyRequest().authenticated()

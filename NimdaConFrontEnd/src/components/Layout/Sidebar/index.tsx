@@ -186,7 +186,7 @@ const Sidebar: React.FC = () => {
             alt="프로필"
             size="100%"
             className="w-full h-full border-0"
-            decorationScale={1.16}
+            decorationScale={1.3}
           />
         </div>
         <p className="sidebar-profile__name">
@@ -404,7 +404,7 @@ const Sidebar: React.FC = () => {
                       alt="avatar"
                       size="100%"
                       className="w-full h-full border-0"
-                      decorationScale={1.1}
+                      decorationScale={1.3}
                     />
                   </div>
                   <Link
