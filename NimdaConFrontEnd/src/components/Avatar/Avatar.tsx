@@ -10,6 +10,7 @@ interface AvatarProps {
   wrapperClassName?: string;
   decorationScale?: number;
   reserveDecorationSpace?: boolean;
+  decorationPadding?: number;
 }
 
 const DEFAULT_PROFILE = '/default_user_profile.svg';
@@ -21,15 +22,30 @@ const Avatar: React.FC<AvatarProps> = ({
   size = 40,
   className = '',
   wrapperClassName = '',
-  decorationScale = 1.24,
+  decorationScale = 1.3,
   reserveDecorationSpace = false,
+  decorationPadding,
 }) => {
+  const hasExplicitDecorationPadding =
+    typeof size === 'number' && typeof decorationPadding === 'number' && decorationPadding > 0;
   const shouldReserveDecorationSpace =
-    reserveDecorationSpace && typeof size === 'number' && decorationScale > 1;
-  const reservedSize =
-    shouldReserveDecorationSpace && typeof size === 'number'
+    (hasExplicitDecorationPadding || reserveDecorationSpace) &&
+    typeof size === 'number' &&
+    (hasExplicitDecorationPadding || decorationScale > 1);
+  const reservedSize = hasExplicitDecorationPadding && typeof size === 'number'
+    ? size + decorationPadding * 2
+    : shouldReserveDecorationSpace && typeof size === 'number'
       ? size * decorationScale
       : size;
+  const profileInset = hasExplicitDecorationPadding && typeof size === 'number'
+    ? decorationPadding
+    : typeof size === 'number'
+      ? ((decorationScale - 1) / 2) * size
+      : 0;
+  const explicitDecorationSize =
+    hasExplicitDecorationPadding && typeof size === 'number'
+      ? size * decorationScale
+      : null;
 
   const sizeStyle =
     typeof reservedSize === 'number'
@@ -38,18 +54,22 @@ const Avatar: React.FC<AvatarProps> = ({
 
   const effectiveSrc = src?.trim() ? src : DEFAULT_PROFILE;
   const decorationSrc = resolveProfileDecorationSrc(decorationKey);
-  const decorationOffset = shouldReserveDecorationSpace
+  const decorationOffset = explicitDecorationSize !== null && typeof reservedSize === 'number'
+    ? `${(reservedSize - explicitDecorationSize) / 2}px`
+    : shouldReserveDecorationSpace
     ? '0px'
     : `${((1 - decorationScale) / 2) * 100}%`;
-  const decorationSize = shouldReserveDecorationSpace
+  const decorationSize = explicitDecorationSize !== null
+    ? `${explicitDecorationSize}px`
+    : shouldReserveDecorationSpace
     ? '100%'
     : `${decorationScale * 100}%`;
   const profileImageStyle: React.CSSProperties | undefined =
     shouldReserveDecorationSpace && typeof size === 'number'
       ? {
           position: 'absolute',
-          left: `${((decorationScale - 1) / 2) * size}px`,
-          top: `${((decorationScale - 1) / 2) * size}px`,
+          left: `${profileInset}px`,
+          top: `${profileInset}px`,
           width: `${size}px`,
           height: `${size}px`,
         }

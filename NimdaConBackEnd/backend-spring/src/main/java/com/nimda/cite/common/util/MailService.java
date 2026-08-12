@@ -1,6 +1,6 @@
 package com.nimda.cite.common.util;
 
-import com.nimda.cite.common.util.Redis.RedisUtil;
+import redis.util.RedisUtil;
 import jakarta.mail.MessagingException;
 import jakarta.mail.internet.MimeMessage;
 import lombok.RequiredArgsConstructor;

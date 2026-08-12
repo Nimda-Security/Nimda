@@ -99,7 +99,7 @@ function CommentAvatar({
       size={40}
       wrapperClassName="comment-item__avatar"
       className="border-0"
-      decorationScale={1.16}
+      decorationScale={1.3}
     />
   );
 }
@@ -251,7 +251,7 @@ function CommentInput({
             decorationKey={profileDecoration}
             size="100%"
             className="border-0"
-            decorationScale={1.16}
+            decorationScale={1.3}
           />
         </div>
       )}
