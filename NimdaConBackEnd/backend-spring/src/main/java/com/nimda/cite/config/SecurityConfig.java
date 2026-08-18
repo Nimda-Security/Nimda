@@ -26,6 +26,14 @@ public class SecurityConfig {
     @Autowired
     private JwtAuthenticationFilter jwtAuthenticationFilter;
 
+    // 인스턴스 서브도메인 프록시 필터 구성요소 (judgeServer.domain.challenge.instance)
+    @Autowired
+    private judgeServer.domain.challenge.instance.InstanceProperties instanceProperties;
+    @Autowired
+    private judgeServer.domain.challenge.instance.InstanceResultStore instanceResultStore;
+    @Autowired
+    private judgeServer.domain.challenge.instance.InstanceProxy instanceProxy;
+
     @Bean
     public PasswordEncoder passwordEncoder() {
         return new BCryptPasswordEncoder();
@@ -72,6 +80,13 @@ public class SecurityConfig {
 
                 // 4. JWT 인증 필터 추가 (UsernamePasswordAuthenticationFilter 실행 전 검사)
                 .addFilterBefore(jwtAuthenticationFilter, UsernamePasswordAuthenticationFilter.class)
+
+                // 4-1. 인스턴스 서브도메인 프록시 필터 (JWT 인증 직후 → SecurityContext에 사용자 채워짐).
+                //      inst-{token}.{도메인} 요청이면 소유권 확인 후 인스턴스로 프록시하고 체인을 끊는다.
+                .addFilterAfter(
+                        new judgeServer.domain.challenge.instance.SubdomainInstanceProxyFilter(
+                                instanceProperties, instanceResultStore, instanceProxy),
+                        JwtAuthenticationFilter.class)
 
                 // 5. 요청별 권한 제어 (순서가 매우 중요함)
                 .authorizeHttpRequests(authz -> authz
@@ -129,6 +144,9 @@ public class SecurityConfig {
                         .requestMatchers(HttpMethod.DELETE, "/api/cite/category/**").hasRole("ADMIN")
 
                         // CTF 문제 api (등록/삭제/공개전환은 관리자만)
+                        // 첨부파일 다운로드는 참가자가 쓰는 기능이라 아래 ADMIN 규칙보다 먼저 둔다
+                        // (규칙은 먼저 걸리는 것이 이긴다).
+                        .requestMatchers(HttpMethod.POST, "/api/ctf/challenge/*/download").authenticated()
                         .requestMatchers(HttpMethod.POST, "/api/ctf/challenge/**").hasRole("ADMIN")
                         .requestMatchers(HttpMethod.DELETE, "/api/ctf/challenge/**").hasRole("ADMIN")
 
