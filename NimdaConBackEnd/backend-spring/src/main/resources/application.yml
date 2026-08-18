@@ -1,7 +1,7 @@
 app:
   version: ${APP_VERSION:1.0.0}
   
-spring: 
+spring:
   data:
     redis:
       host: ${SPRING_REDIS_HOST:localhost}
@@ -101,6 +101,11 @@ ctf:
     consumer-group: ${CTF_QUEUE_CONSUMER_GROUP:ctf-provisioners}
     result-stream-key: ${CTF_QUEUE_RESULT_STREAM_KEY:ctf:instance:results}
     result-consumer-group: ${CTF_QUEUE_RESULT_CONSUMER_GROUP:ctf-result-consumers}
+    # 첨부파일 다운로드(presigned URL) 발급 요청/결과. Go 조율자 설정과 같아야 한다.
+    download-stream-key: ${CTF_QUEUE_DOWNLOAD_STREAM_KEY:ctf:challenge:download:ops}
+    download-consumer-group: ${CTF_QUEUE_DOWNLOAD_CONSUMER_GROUP:ctf-download-provisioners}
+    download-result-stream-key: ${CTF_QUEUE_DOWNLOAD_RESULT_STREAM_KEY:ctf:challenge:download:results}
+    download-result-consumer-group: ${CTF_QUEUE_DOWNLOAD_RESULT_CONSUMER_GROUP:ctf-download-result-consumers}
   # 인스턴스 서브도메인 접근 (ADR-0011). base-domain 비우면 서브도메인 프록시 비활성.
   instance:
     base-domain: ${CTF_INSTANCE_BASE_DOMAIN:}
