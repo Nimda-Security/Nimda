@@ -19,4 +19,8 @@ public class CtfQueueProperties {
 
     private String streamKey = "ctf:instance:ops";
     private String consumerGroup = "ctf-provisioners";
+
+    // 조율자가 인스턴스 생성 결과(host/port)를 돌려주는 스트림.
+    private String resultStreamKey = "ctf:instance:results";
+    private String resultConsumerGroup = "ctf-result-consumers";
 }
