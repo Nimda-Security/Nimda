@@ -1,5 +1,6 @@
 package judgeServer.domain.challenge.mq.message;
 
+import judgeServer.domain.challenge.mq.stream.StreamFields;
 import lombok.Builder;
 import lombok.Getter;
 
@@ -98,17 +99,10 @@ public class InstanceResultMessage {
     }
 
     private static String required(Map<String, String> fields, String key) {
-        String value = fields.get(key);
-        if (value == null || value.isEmpty()) {
-            throw new IllegalArgumentException("결과 메시지 필수 필드 누락: " + key);
-        }
-        return value;
+        return StreamFields.required(fields, key, "결과 메시지");
     }
 
     private static Integer parseIntOrNull(String value) {
-        if (value == null || value.isEmpty()) {
-            return null;
-        }
-        return Integer.valueOf(value);
+        return StreamFields.intOrNull(value);
     }
 }
