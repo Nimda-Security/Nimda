@@ -26,9 +26,13 @@ public class CtfQueueConfig implements ApplicationRunner {
 
     @Override
     public void run(ApplicationArguments args) {
-        String streamKey = queueProperties.getStreamKey();
-        String consumerGroup = queueProperties.getConsumerGroup();
+        // 인스턴스 생성 요청 스트림
+        createGroup(queueProperties.getStreamKey(), queueProperties.getConsumerGroup());
+        // 첨부파일 다운로드(presigned URL) 요청 스트림
+        createGroup(queueProperties.getDownloadStreamKey(), queueProperties.getDownloadConsumerGroup());
+    }
 
+    private void createGroup(String streamKey, String consumerGroup) {
         try {
             byte[] rawKey = streamKey.getBytes(StandardCharsets.UTF_8);
             redisTemplate.execute((org.springframework.data.redis.core.RedisCallback<String>) connection ->

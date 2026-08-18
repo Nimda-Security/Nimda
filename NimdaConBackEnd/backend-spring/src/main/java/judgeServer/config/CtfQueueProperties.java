@@ -23,4 +23,11 @@ public class CtfQueueProperties {
     // 조율자가 인스턴스 생성 결과(host/port)를 돌려주는 스트림.
     private String resultStreamKey = "ctf:instance:results";
     private String resultConsumerGroup = "ctf-result-consumers";
+
+    // 첨부파일 다운로드(presigned URL) 발급 요청/결과 스트림.
+    // 인스턴스 경로와 결과 모양(host/port vs url/expiresAt)이 달라 한 쌍을 따로 판다.
+    private String downloadStreamKey = "ctf:challenge:download:ops";
+    private String downloadConsumerGroup = "ctf-download-provisioners";
+    private String downloadResultStreamKey = "ctf:challenge:download:results";
+    private String downloadResultConsumerGroup = "ctf-download-result-consumers";
 }
