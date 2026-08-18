@@ -1,7 +1,7 @@
 app:
   version: ${APP_VERSION:1.0.0}
   
-spring:
+spring: 
   data:
     redis:
       host: ${SPRING_REDIS_HOST:localhost}
@@ -99,6 +99,12 @@ ctf:
   queue:
     stream-key: ${CTF_QUEUE_STREAM_KEY:ctf:instance:ops}
     consumer-group: ${CTF_QUEUE_CONSUMER_GROUP:ctf-provisioners}
+    result-stream-key: ${CTF_QUEUE_RESULT_STREAM_KEY:ctf:instance:results}
+    result-consumer-group: ${CTF_QUEUE_RESULT_CONSUMER_GROUP:ctf-result-consumers}
+  # 인스턴스 서브도메인 접근 (ADR-0011). base-domain 비우면 서브도메인 프록시 비활성.
+  instance:
+    base-domain: ${CTF_INSTANCE_BASE_DOMAIN:}
+    subdomain-prefix: ${CTF_INSTANCE_SUBDOMAIN_PREFIX:inst-}
 
 # 첨부파일 로컬 저장 (cite attachment)
 nimda:
