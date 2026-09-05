@@ -43,6 +43,15 @@ jobs:
             xtkww971/nimda-backend:latest
             xtkww971/nimda-backend:${{ steps.vars.outputs.sha_short }}
 
+      - name: S3 핑 테스트
+        working-directory: NimdaConBackEnd/backend-spring
+        env:
+          AWS_S3_ACCESS_KEY: ${{ secrets.AWS_ACCESS_KEY }}
+          AWS_S3_SECRET_KEY: ${{ secrets.AWS_SECRET_KEY }}
+          AWS_S3_BUCKET: ${{ secrets.AWS_S3_BUCKET }}
+          AWS_S3_REGION: ${{ secrets.AWS_REGION }}
+        run: ./mvnw test -Dtest=S3BucketPingTest
+
       - name: 배포 스크립트 전송
         uses: appleboy/scp-action@v0.1.7
         with:
