@@ -94,6 +94,9 @@ jwt:
 auth:
   cookie:
     secure: ${AUTH_COOKIE_SECURE:true}
+    # 인증 쿠키를 서브도메인까지 보낼 때만 지정한다 (문제 인스턴스 접속 = inst-{id}.도메인).
+    # 예) 운영: nimda.kr / 로컬: 127.0.0.1.nip.io. 비우면 호스트 전용 쿠키.
+    domain: ${AUTH_COOKIE_DOMAIN:}
 
 ctf:
   queue:
@@ -110,6 +113,8 @@ ctf:
   instance:
     base-domain: ${CTF_INSTANCE_BASE_DOMAIN:}
     subdomain-prefix: ${CTF_INSTANCE_SUBDOMAIN_PREFIX:inst-}
+    # userId:challengeId -> requestId 매핑 보관 시간. 결과 보관 시간(10분)보다 넉넉해야 한다.
+    mapping-ttl: ${CTF_INSTANCE_MAPPING_TTL:30m}
 
 # 첨부파일 로컬 저장 (cite attachment)
 nimda:

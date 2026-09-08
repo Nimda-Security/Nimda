@@ -6,7 +6,6 @@ import jakarta.servlet.http.HttpServletRequest;
 import judgeServer.domain.challenge.entity.Challenge;
 import judgeServer.domain.challenge.mq.message.InstanceResultMessage;
 import judgeServer.domain.challenge.mq.message.InstanceStatus;
-import judgeServer.domain.challenge.mq.producer.InstanceRequestProducer;
 import judgeServer.domain.challenge.repository.ChallengeRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpHeaders;
@@ -17,14 +16,20 @@ import org.springframework.web.bind.annotation.*;
 import org.springframework.web.server.ResponseStatusException;
 
 import java.io.IOException;
+import java.util.LinkedHashMap;
 import java.util.Map;
 
 /**
- * 사용자가 문제 인스턴스를 요청하고, 준비되면 그 화면을 (프록시로) 보는 API.
+ * 동적 인스턴스 접근 컨트롤러.
  *
- *   POST /api/ctf/instance/{code}            -> 인스턴스 생성 요청, requestId 반환
- *   GET  /api/ctf/instance/{requestId}       -> 상태/접속정보(host,port) 조회
- *   *    /api/ctf/instance/{requestId}/app/** -> 인스턴스로 리버스 프록시 (화면 열람)
+ * <pre>
+ *   POST /api/ctf/instance/{code}              생성 요청 → requestId
+ *   GET  /api/ctf/instance/{code}              이 문제로 내가 띄운 인스턴스 (문제 페이지에서 씀)
+ *   GET  /api/ctf/instance/status/{requestId}  생성 직후 폴링
+ * </pre>
+ *
+ * 문제 코드와 requestId는 둘 다 한 조각 경로라 같은 자리에 둘 수 없다(매핑 충돌). 그래서
+ * requestId 조회는 {@code /status/} 아래로 내린다.
  */
 @RestController
 @RequestMapping("/api/ctf/instance")
@@ -32,30 +37,93 @@ import java.util.Map;
 public class InstanceController {
 
     private final ChallengeRepository challengeRepository;
-    private final InstanceRequestProducer producer;
-    private final InstanceResultStore resultStore;
+    private final InstanceService instanceService;
     private final InstanceProxy proxy;
 
-    /** 인스턴스 생성 요청을 큐에 발행하고, 결과를 짝지을 requestId를 돌려준다. */
+    // 컨테이너 생성 요청
     @PostMapping("/{code}")
     public ResponseEntity<?> create(@PathVariable String code,
                                     @AuthenticationPrincipal CustomUserDetails user) {
-        Challenge challenge = challengeRepository.findByCode(code)
-                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "존재하지 않는 문제입니다."));
-        String requestId = producer.requestCreate(challenge, user.getUser().getId());
+        Challenge challenge = findChallenge(code);
+        String requestId = instanceService.createInstance(challenge, currentUserId(user));
         return ApiResponse.ok(Map.of("requestId", requestId)).toResponse();
     }
 
-    /** 인스턴스 준비 상태와 접속 정보를 조회한다 (준비 전이면 PENDING). */
-    @GetMapping("/{requestId}")
+    /**
+     * 이 문제에 대해 내가 띄운 인스턴스 정보. 문제 페이지를 열 때마다 호출하면 되고,
+     * 새로고침하거나 다른 기기에서 들어와도 requestId를 몰라도 이어서 볼 수 있다.
+     *
+     * <ul>
+     *   <li>요청한 적 없음 → {@code hasInstance:false}</li>
+     *   <li>요청했지만 결과 대기 중 → {@code hasInstance:true, status:"PENDING"}</li>
+     *   <li>결과 있음 → 상태/주소 전체</li>
+     * </ul>
+     */
+    @GetMapping("/{code}")
+    public ResponseEntity<?> myInstance(@PathVariable String code,
+                                        @AuthenticationPrincipal CustomUserDetails user,
+                                        HttpServletRequest request) {
+        Challenge challenge = findChallenge(code);
+        Long userId = currentUserId(user);
+
+        String requestId = instanceService.findRequestId(userId, challenge.getId()).orElse(null);
+        if (requestId == null) {
+            return ApiResponse.ok(Map.of("hasInstance", false)).toResponse();
+        }
+
+        InstanceResultMessage result = instanceService.findByRequestId(requestId).orElse(null);
+        if (result == null) {
+            // 매핑은 있는데 결과가 없다 = 조율자가 아직 만들고 있는 중.
+            return ApiResponse.ok(Map.of(
+                    "hasInstance", true,
+                    "requestId", requestId,
+                    "status", "PENDING")).toResponse();
+        }
+
+        Map<String, Object> view = toView(result, request);
+        view.put("hasInstance", true);
+        return ApiResponse.ok(view).toResponse();
+    }
+
+    // 인스턴스 상태 조회 api (생성 직후 폴링)
+    @GetMapping("/status/{requestId}")
     public ResponseEntity<?> status(@PathVariable String requestId,
-                                    @AuthenticationPrincipal CustomUserDetails user) {
-        InstanceResultMessage result = resultStore.find(requestId).orElse(null);
+                                    @AuthenticationPrincipal CustomUserDetails user,
+                                    HttpServletRequest request) {
+        InstanceResultMessage result = instanceService.findByRequestId(requestId).orElse(null);
         if (result == null) {
             return ApiResponse.ok(Map.of("status", "PENDING")).toResponse();
         }
         checkOwner(result, user);
-        return ApiResponse.ok(result).toResponse();
+        return ApiResponse.ok(toView(result, request)).toResponse();
+    }
+
+    // 결과 메시지 객체화
+    private Map<String, Object> toView(InstanceResultMessage result, HttpServletRequest request) {
+        Map<String, Object> view = new LinkedHashMap<>();
+        view.put("requestId", result.getRequestId());
+        view.put("challengeCode", result.getChallengeCode());
+        view.put("status", result.getStatus());
+        view.put("host", result.getHost());
+        view.put("port", result.getPort());
+        view.put("expiresAt", result.getExpiresAt());
+        view.put("message", result.getMessage());
+        view.put("accessUrl", instanceService.accessUrl(result, request.getScheme(), request.getServerPort()));
+        return view;
+    }
+
+    // ------------------------------helper--------
+
+    private Challenge findChallenge(String code) {
+        return challengeRepository.findByCode(code)
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "존재하지 않는 문제입니다."));
+    }
+
+    private Long currentUserId(CustomUserDetails user) {
+        if (user == null) {
+            throw new ResponseStatusException(HttpStatus.UNAUTHORIZED, "로그인이 필요합니다.");
+        }
+        return user.getUser().getId();
     }
 
     /**
@@ -69,7 +137,7 @@ public class InstanceController {
     public ResponseEntity<byte[]> proxy(@PathVariable String requestId,
                                         @AuthenticationPrincipal CustomUserDetails user,
                                         HttpServletRequest request) throws IOException {
-        InstanceResultMessage result = resultStore.find(requestId)
+        InstanceResultMessage result = instanceService.findByRequestId(requestId)
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "인스턴스를 찾을 수 없습니다."));
         checkOwner(result, user);
         if (result.getStatus() != InstanceStatus.READY || result.getHost() == null || result.getPort() == null) {

@@ -16,11 +16,14 @@ import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.web.filter.OncePerRequestFilter;
 
 import java.io.IOException;
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.Enumeration;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import java.util.Set;
+import java.util.stream.Collectors;
 
 /**
  * inst-{token}.{baseDomain} 로 들어온 요청을, 그 token이 가리키는 문제 인스턴스로 프록시한다.
@@ -37,6 +40,9 @@ import java.util.Optional;
 @Slf4j
 @RequiredArgsConstructor
 public class SubdomainInstanceProxyFilter extends OncePerRequestFilter {
+
+    /** 문제 컨테이너로 넘기지 않는 플랫폼 쿠키 (사용자 세션·복구 토큰). */
+    private static final Set<String> PLATFORM_COOKIES = Set.of("Authorization", "password_change_token");
 
     private final InstanceProperties props;
     private final InstanceResultStore resultStore;
@@ -101,9 +107,39 @@ public class SubdomainInstanceProxyFilter extends OncePerRequestFilter {
         Enumeration<String> names = request.getHeaderNames();
         while (names.hasMoreElements()) {
             String name = names.nextElement();
-            headers.put(name, Collections.list(request.getHeaders(name)));
+            List<String> values = Collections.list(request.getHeaders(name));
+
+            if (HttpHeaders.COOKIE.equalsIgnoreCase(name)) {
+                values = values.stream()
+                        .map(SubdomainInstanceProxyFilter::stripPlatformCookies)
+                        .filter(v -> !v.isEmpty())
+                        .toList();
+                if (values.isEmpty()) {
+                    continue;
+                }
+            }
+            headers.put(name, values);
         }
         return headers;
+    }
+
+    /**
+     * 문제 컨테이너로 넘기면 안 되는 쿠키를 걸러낸다.
+     *
+     * <p>인증 쿠키에 도메인을 걸어 두면(서브도메인 접속에 필요) 이 요청에도 딸려 온다. 그대로
+     * 전달하면 문제 컨테이너가 사용자의 로그인 토큰을 그냥 읽는다. CTF 문제는 본래 적대적인
+     * 코드라 신뢰 대상이 아니므로, 플랫폼 쿠키는 여기서 떼고 문제 자신의 쿠키만 넘긴다.
+     */
+    private static String stripPlatformCookies(String cookieHeader) {
+        return Arrays.stream(cookieHeader.split(";"))
+                .map(String::trim)
+                .filter(pair -> !pair.isEmpty())
+                .filter(pair -> {
+                    int eq = pair.indexOf('=');
+                    String name = eq >= 0 ? pair.substring(0, eq) : pair;
+                    return !PLATFORM_COOKIES.contains(name.trim());
+                })
+                .collect(Collectors.joining("; "));
     }
 
     private void writeResponse(HttpServletResponse response, ResponseEntity<byte[]> upstream) throws IOException {

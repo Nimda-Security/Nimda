@@ -5,6 +5,8 @@ import lombok.Setter;
 import org.springframework.boot.context.properties.ConfigurationProperties;
 import org.springframework.stereotype.Component;
 
+import java.time.Duration;
+
 /**
  * 인스턴스 서브도메인 접근 설정 (application.yml의 ctf.instance.*).
  *
@@ -26,4 +28,12 @@ public class InstanceProperties {
 
     /** 서브도메인 접두사. */
     private String subdomainPrefix = "inst-";
+
+    /**
+     * "이 사용자가 이 문제로 띄운 인스턴스" 매핑(userId:challengeId → requestId)을 들고 있는 시간.
+     *
+     * <p>인스턴스 결과 자체의 보관 시간(InstanceResultConsumer.RESULT_TTL)보다 짧으면, 결과는
+     * 살아 있는데 문제 코드로는 못 찾는 상태가 된다. 그래서 결과 TTL보다 넉넉하게 잡는다.
+     */
+    private Duration mappingTtl = Duration.ofMinutes(30);
 }

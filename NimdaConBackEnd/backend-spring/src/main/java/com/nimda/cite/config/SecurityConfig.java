@@ -46,6 +46,12 @@ public class SecurityConfig {
 
         configuration.setAllowedOriginPatterns(Arrays.asList(
                 "http://localhost:*",
+                "http://127.0.0.1:*",
+                // 개발용. CTF 인스턴스는 inst-{id}.{도메인} 서브도메인으로 접속하므로(ADR-0011)
+                // 로컬에서도 도메인 트리가 있는 호스트가 필요해 nip.io를 쓴다. 이 이름들은 항상
+                // 루프백(127.0.0.1)으로만 풀리니 외부에 열리는 출처가 아니다.
+                "http://127.0.0.1.nip.io:*",
+                "http://*.127.0.0.1.nip.io:*",
                 "http://43.200.36.32:*",
                 "https://43.200.36.32:*",
                 "https://nimda.kr",

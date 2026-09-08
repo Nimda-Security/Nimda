@@ -50,6 +50,16 @@ public class AuthController {
     private boolean secureAuthCookie;
 
     /**
+     * 인증 쿠키를 보낼 도메인. 비우면 지금까지처럼 호스트 전용 쿠키다(그 호스트에만 전송).
+     *
+     * <p>CTF 문제 인스턴스는 {@code inst-{id}.도메인} 서브도메인으로 접속한다(ADR-0011).
+     * 서브도메인 프록시가 소유자를 확인하려면 그 호스트에도 인증 쿠키가 가야 하므로,
+     * 그때만 상위 도메인(예: nimda.kr, 로컬은 127.0.0.1.nip.io)을 지정한다.
+     */
+    @Value("${auth.cookie.domain:}")
+    private String authCookieDomain;
+
+    /**
      * 로그인
      *
      * @param loginRequest 로그인 요청 데이터
@@ -101,13 +111,18 @@ public class AuthController {
     }
 
     private ResponseCookie createAuthCookie(String value, long maxAgeSeconds) {
-        return ResponseCookie.from("Authorization", value)
+        ResponseCookie.ResponseCookieBuilder builder = ResponseCookie.from("Authorization", value)
                 .httpOnly(true)
                 .secure(secureAuthCookie)
                 .path("/")
                 .maxAge(maxAgeSeconds)
-                .sameSite("Lax")
-                .build();
+                .sameSite("Lax");
+
+        // 도메인을 지정하면 서브도메인까지 쿠키가 간다. 필요할 때만 켠다.
+        if (authCookieDomain != null && !authCookieDomain.isBlank()) {
+            builder.domain(authCookieDomain);
+        }
+        return builder.build();
     }
 
     /**

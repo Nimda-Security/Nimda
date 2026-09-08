@@ -33,9 +33,17 @@ public class RedisCtfRequestProducer implements InstanceRequestProducer, Challen
     private final StringRedisTemplate redisTemplate;
     private final CtfQueueProperties queueProperties;
 
+    /*
+    * challngeId는 버킷에서 문제를 탐색
+    * requestId+userId로 인스턴스 ID 생성
+    * */
     @Override
     public String requestCreate(Challenge challenge, Long userId) {
-        String requestId = UUID.randomUUID().toString();
+        return requestCreate(challenge, userId, UUID.randomUUID().toString());
+    }
+
+    @Override
+    public String requestCreate(Challenge challenge, Long userId, String requestId) {
         publish(queueProperties.getStreamKey(),
                 InstanceCreateMessage.of(challenge, userId, requestId).toStreamFields(),
                 "인스턴스 생성", requestId, challenge, userId);
