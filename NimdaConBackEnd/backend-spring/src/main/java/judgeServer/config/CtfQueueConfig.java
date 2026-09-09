@@ -1,5 +1,6 @@
 package judgeServer.config;
 
+import judgeServer.domain.challenge.mq.stream.RedisStreamErrors;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.boot.ApplicationArguments;
@@ -19,8 +20,6 @@ import java.nio.charset.StandardCharsets;
 @RequiredArgsConstructor
 public class CtfQueueConfig implements ApplicationRunner {
 
-    private static final String BUSY_GROUP_ERROR = "BUSYGROUP";
-
     private final StringRedisTemplate redisTemplate;
     private final CtfQueueProperties queueProperties;
 
@@ -39,7 +38,8 @@ public class CtfQueueConfig implements ApplicationRunner {
                     connection.streamCommands().xGroupCreate(rawKey, consumerGroup, ReadOffset.from("0"), true));
             log.info("Consumer Group Create: streamKey={}, group={}", streamKey, consumerGroup);
         } catch (Exception e) {
-            if (e.getMessage() != null && e.getMessage().contains(BUSY_GROUP_ERROR)) {
+            // 그룹이 이미 있는 건 정상이다. BUSYGROUP은 감싸인 예외의 cause에만 들어 있어서 체인을 훑어야 한다.
+            if (RedisStreamErrors.isBusyGroup(e)) {
                 log.debug("Consumer Group is already exist: streamKey={}, group={}", streamKey, consumerGroup);
             } else {
                 log.warn("Fail to create Consumer Group : streamKey={}, group={}", streamKey, consumerGroup, e);
