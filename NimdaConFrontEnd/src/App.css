@@ -829,31 +829,31 @@ body {
   background-color: var(--color-gray-200);
 }
 
-/* 하단 영역 (인기글 + 사진첩) */
+/* 하단 영역 (최신글 + 사진첩) */
 .home__bottom {
   display: flex;
   gap: 24px;
 }
 
-/* 전체 인기글 */
-.home-popular {
+/* 전체 최신글 */
+.home-latest {
   width: 336px;
   flex-shrink: 0;
 }
 
-.home-popular__divider {
+.home-latest__divider {
   height: 1px;
   background-color: var(--color-gray-200);
   margin-top: 16px;
 }
 
-.home-popular__list {
+.home-latest__list {
   display: flex;
   flex-direction: column;
   padding: 0;
 }
 
-.home-popular__row {
+.home-latest__row {
   display: grid;
   grid-template-columns: minmax(0, 1fr) 36px 36px 36px;
   align-items: center;
@@ -865,11 +865,11 @@ body {
   box-sizing: border-box;
 }
 
-.home-popular__row:hover {
+.home-latest__row:hover {
   background-color: #e5e5e5;
 }
 
-.home-popular__tag {
+.home-latest__tag {
   font-size: 12px;
   font-weight: 600;
   color: var(--color-pink);
@@ -879,14 +879,14 @@ body {
   margin-right: 6px;
 }
 
-.home-popular__title-wrap {
+.home-latest__title-wrap {
   display: flex;
   flex-direction: row;
   align-items: center;
   min-width: 0;
 }
 
-.home-popular__title {
+.home-latest__title {
   min-width: 0;
   font-size: 14px;
   font-weight: 500;
@@ -897,7 +897,7 @@ body {
   text-overflow: ellipsis;
 }
 
-.home-popular__comments {
+.home-latest__comments {
   display: flex;
   align-items: center;
   justify-content: flex-start;
@@ -906,13 +906,13 @@ body {
   color: var(--color-blue);
 }
 
-.home-popular__comments-count {
+.home-latest__comments-count {
   font-size: 12px;
   font-weight: 700;
   font-variant-numeric: tabular-nums;
 }
 
-.home-popular__likes {
+.home-latest__likes {
   display: flex;
   align-items: center;
   justify-content: flex-start;
@@ -921,13 +921,13 @@ body {
   color: var(--color-red);
 }
 
-.home-popular__likes-count {
+.home-latest__likes-count {
   font-size: 12px;
   font-weight: 700;
   font-variant-numeric: tabular-nums;
 }
 
-.home-popular__date {
+.home-latest__date {
   font-size: 12px;
   font-weight: 400;
   color: var(--color-gray-400);
@@ -936,7 +936,7 @@ body {
   font-variant-numeric: tabular-nums;
 }
 
-.home-popular__row-divider {
+.home-latest__row-divider {
   position: absolute;
   bottom: 0;
   left: 0;

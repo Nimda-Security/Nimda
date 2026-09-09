@@ -875,27 +875,40 @@ public class BoardController {
     }
 
     @GetMapping("/recent-boards")
-    public ResponseEntity<?> getRecentBoards(@AuthenticationPrincipal CustomUserDetails userDetails) {
+    public ResponseEntity<?> getRecentBoards(
+            @AuthenticationPrincipal CustomUserDetails userDetails,
+            @PageableDefault(size = 10) Pageable pageable) {
+        try {
+            Pageable recentPageable = PageRequest.of(
+                    pageable.getPageNumber(),
+                    Math.min(pageable.getPageSize(), 10),
+                    Sort.by(Sort.Direction.DESC, "createdAt"));
+            Page<Board> boards = boardService.boardList(recentPageable);
+            User user = userDetails != null ? userDetails.getUser() : null;
 
-        User user = userDetails.getUser();
+            List<BoardResponseDTO> postsDTO = boards.getContent().stream()
+                    .map(board -> BoardResponseDTO.from(
+                            board,
+                            boardLikeService.getLikeCount(board.getId()),
+                            isLiked(board, user),
+                            commentRepository.countByBoardIdAndStatusNot(board.getId(), STATUS.DELETED)))
+                    .collect(Collectors.toList());
+            resolveProfileImages(postsDTO);
 
-        if(user == null) {
-            return ApiResponse.fail("유저 정보를 찾을 수 없습니다. 다시 로그인해주세요.")
-                    .toResponse(HttpStatus.BAD_REQUEST);
+            BoardListResponseDTO responseDTO = BoardListResponseDTO.builder()
+                    .posts(postsDTO)
+                    .totalElements(boards.getTotalElements())
+                    .totalPages(boards.getTotalPages())
+                    .currentPage(boards.getNumber())
+                    .category(null)
+                    .build();
+
+            return ApiResponse.ok("최신글 목록을 성공적으로 조회했습니다.", responseDTO).toResponse();
+        } catch (Exception e) {
+            log.error("최신글 목록 조회 오류", e);
+            return ApiResponse.fail("최신글 목록 조회 중 오류가 발생했습니다.")
+                    .toResponse(HttpStatus.INTERNAL_SERVER_ERROR);
         }
-        List<BoardResponseDTO> recentBoards = boardService.getRecentBoards()
-                .stream()
-                .map(board -> {
-                    // 모든 파라미터를 순서대로 전달
-                    long likeCount = boardLikeService.getLikeCount(board.getId());
-                    boolean isLiked = boardLikeService.isUserLiked(user.getId(), board.getId());
-                    long commentCount = commentRepository.countByBoardIdAndStatusNot(board.getId(), STATUS.DELETED);
-
-                    return BoardResponseDTO.from(board, likeCount, isLiked, commentCount);
-                })
-                .collect(Collectors.toList());
-
-        return ResponseEntity.ok(recentBoards);
     }
 
 }

@@ -506,6 +506,64 @@ export const getPopularPostsAPI = async (
 };
 
 /**
+ * 최신글 목록 조회 API (메인 페이지 최신글 섹션용)
+ */
+export const getRecentPostsAPI = async (
+  size: number = 10
+): Promise<BoardListResponse> => {
+  try {
+    const queryParams = new URLSearchParams({
+      page: '0',
+      size: size.toString(),
+    });
+
+    const response = await fetch(`${API_BASE_URL}/recent-boards?${queryParams.toString()}`, {
+      method: 'GET',
+      headers: addVersionToHeaders({
+        'Content-Type': 'application/json',
+      }),
+      credentials: 'include',
+    });
+
+    const result = await parseJsonSafe(response);
+
+    if (response.ok && result) {
+      const data = result.data || result;
+      return {
+        success: true,
+        message: result.message || '최신글 목록을 성공적으로 조회했습니다.',
+        posts: data.posts || [],
+        totalElements: data.totalElements || 0,
+        totalPages: data.totalPages || 0,
+        currentPage: data.currentPage || 0,
+        category: data.category || ({} as Category),
+      };
+    }
+
+    return {
+      success: false,
+      message: (result?.message as string) || '최신글 목록을 불러올 수 없습니다.',
+      posts: [],
+      totalElements: 0,
+      totalPages: 0,
+      currentPage: 0,
+      category: {} as Category,
+    };
+  } catch (error) {
+    console.error('최신글 목록 조회 API 오류:', error);
+    return {
+      success: false,
+      message: '최신글 목록을 불러올 수 없습니다.',
+      posts: [],
+      totalElements: 0,
+      totalPages: 0,
+      currentPage: 0,
+      category: {} as Category,
+    };
+  }
+};
+
+/**
  * 파일 다운로드 URL 생성
  * 
  * @param filepath 파일 경로 (예: /api/download/filename.pdf)
@@ -858,4 +916,3 @@ export const deleteMyBoardsAPI = async (boardIds: number[]): Promise<{ success: 
     return { success: false, message: '게시글 삭제 중 오류가 발생했습니다.' };
   }
 };
-

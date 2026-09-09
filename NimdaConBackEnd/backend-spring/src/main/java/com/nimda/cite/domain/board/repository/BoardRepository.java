@@ -41,6 +41,7 @@ import java.util.List;
 public interface BoardRepository extends JpaRepository<Board, Long> { // [수정] Integer → Long
 
     // ========== [전체 게시글 조회 (상태 필터)] ==========
+    @EntityGraph(attributePaths = { "author", "category" })
     Page<Board> findByStatus(BoardStatus status, Pageable pageable);
 
     // ========== [ERD 구조 반영] ==========
@@ -108,9 +109,6 @@ public interface BoardRepository extends JpaRepository<Board, Long> { // [수정
     // 내가 작성한 게시글 목록 (최신순, 활성 상태만)
     @EntityGraph(attributePaths = { "author", "category" })
     List<Board> findByAuthorAndStatusOrderByCreatedAtDesc(User author, BoardStatus status);
-
-    // 최신글 조회
-    List<Board> findTop10ByOrderByCreatedAtDesc();
 
     @Modifying(clearAutomatically = true)
     @Query("UPDATE Board b SET b.status = :status " +

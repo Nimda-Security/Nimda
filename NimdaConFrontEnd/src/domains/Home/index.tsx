@@ -2,7 +2,7 @@ import "@/App.css";
 import Layout from "@/components/Layout";
 import Banner from "./components/banner";
 import NoticeSection from "./components/NoticeSection";
-import PopularPostsSection from "./components/PopularPostsSection";
+import LatestPostsSection from "./components/LatestPostsSection";
 import PhotoGallerySection from "./components/PhotoGallerySection";
 
 function Home() {
@@ -15,9 +15,9 @@ function Home() {
         {/* 공지사항 영역 */}
         <NoticeSection />
 
-        {/* 하단: 전체 인기글 + 사진첩 */}
+        {/* 하단: 전체 최신글 + 사진첩 */}
         <div className="home__bottom">
-          <PopularPostsSection />
+          <LatestPostsSection />
           <PhotoGallerySection />
         </div>
       </div>

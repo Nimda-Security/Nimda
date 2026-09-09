@@ -1,34 +1,32 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { getPopularPostsAPI } from '@/api/board';
+import { getRecentPostsAPI } from '@/api/board';
 import type { Board } from '@/domains/Board/types';
 import { Heart } from '@/components/icons/Heart';
 import { MessageBox } from '@/components/icons/MessageBox';
 
-const PopularPostsSection: React.FC = () => {
+const LatestPostsSection: React.FC = () => {
   const navigate = useNavigate();
-  const [popularPosts, setPopularPosts] = useState<Board[]>([]);
+  const [latestPosts, setLatestPosts] = useState<Board[]>([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    const loadPopularPosts = async () => {
+    const loadLatestPosts = async () => {
       try {
         setLoading(true);
-        // 전체 인기글 조회 (카테고리 제한 없음, 최대 10개)
-        const response = await getPopularPostsAPI(undefined, undefined, 10);
+        const response = await getRecentPostsAPI(10);
 
         if (response.success && response.posts) {
-          // 최대 10개로 제한
-          setPopularPosts(response.posts.slice(0, 10));
+          setLatestPosts(response.posts);
         }
       } catch (error) {
-        console.error('인기글 로드 오류:', error);
+        console.error('최신글 로드 오류:', error);
       } finally {
         setLoading(false);
       }
     };
 
-    loadPopularPosts();
+    loadLatestPosts();
   }, []);
 
   const formatDate = (dateString: string): string => {
@@ -63,10 +61,10 @@ const PopularPostsSection: React.FC = () => {
 
   if (loading) {
     return (
-      <section className="home-popular">
-        <h2 className="home-section-title">전체 인기글</h2>
-        <div className="home-popular__divider" />
-        <div className="home-popular__list">
+      <section className="home-latest">
+        <h2 className="home-section-title">전체 최신글</h2>
+        <div className="home-latest__divider" />
+        <div className="home-latest__list">
           <div style={{ padding: '16px', textAlign: 'center', color: '#999' }}>
             로딩 중...
           </div>
@@ -75,14 +73,14 @@ const PopularPostsSection: React.FC = () => {
     );
   }
 
-  if (popularPosts.length === 0) {
+  if (latestPosts.length === 0) {
     return (
-      <section className="home-popular">
-        <h2 className="home-section-title">전체 인기글</h2>
-        <div className="home-popular__divider" />
-        <div className="home-popular__list">
+      <section className="home-latest">
+        <h2 className="home-section-title">전체 최신글</h2>
+        <div className="home-latest__divider" />
+        <div className="home-latest__list">
           <div style={{ padding: '16px', textAlign: 'center', color: '#999' }}>
-            인기글이 없습니다.
+            최신글이 없습니다.
           </div>
         </div>
       </section>
@@ -90,41 +88,41 @@ const PopularPostsSection: React.FC = () => {
   }
 
   return (
-    <section className="home-popular">
-      <h2 className="home-section-title">전체 인기글</h2>
-      <div className="home-popular__divider" />
-      <div className="home-popular__list">
-        {popularPosts.map((post) => {
+    <section className="home-latest">
+      <h2 className="home-section-title">전체 최신글</h2>
+      <div className="home-latest__divider" />
+      <div className="home-latest__list">
+        {latestPosts.map((post) => {
           const categorySlug = getCategorySlug(post);
           return (
             <div
               key={post.id}
-              className="home-popular__row"
+              className="home-latest__row"
               style={{ padding: '0 16px' }}
               onClick={() => navigate(`/board/${categorySlug}/${post.id}`)}
             >
-              <div className="home-popular__title-wrap">
+              <div className="home-latest__title-wrap">
                 {post.tag?.tagName && (
-                  <span className="home-popular__tag">{post.tag.tagName}</span>
+                  <span className="home-latest__tag">{post.tag.tagName}</span>
                 )}
-                <p className="home-popular__title">{post.title}</p>
+                <p className="home-latest__title">{post.title}</p>
               </div>
-              <div className="home-popular__comments">
+              <div className="home-latest__comments">
                 <MessageBox />
-                <span className="home-popular__comments-count">
+                <span className="home-latest__comments-count">
                   {post.commentCount ?? 0}
                 </span>
               </div>
-              <div className="home-popular__likes">
+              <div className="home-latest__likes">
                 <Heart filled={post.isLiked} />
-                <span className="home-popular__likes-count">
+                <span className="home-latest__likes-count">
                   {post.likeCount || 0}
                 </span>
               </div>
-              <span className="home-popular__date">
+              <span className="home-latest__date">
                 {formatDate(post.createdAt)}
               </span>
-              <div className="home-popular__row-divider" />
+              <div className="home-latest__row-divider" />
             </div>
           );
         })}
@@ -133,4 +131,4 @@ const PopularPostsSection: React.FC = () => {
   );
 };
 
-export default PopularPostsSection;
+export default LatestPostsSection;
