@@ -40,7 +40,7 @@ public class InstanceResultMessage {
     private final Long userId;
 
     /** 처리 결과. READY면 host/port가 유효하고, FAILED면 message에 사유가 담긴다. */
-    private final InstanceStatus status;
+    private final RequestStatus status;
 
     /** 접속할 호스트 (도메인 또는 IP). FAILED면 null. */
     private final String host;
@@ -64,7 +64,7 @@ public class InstanceResultMessage {
                 .requestId(required(fields, "requestId"))
                 .challengeCode(required(fields, "challengeCode"))
                 .userId(Long.valueOf(required(fields, "userId")))
-                .status(InstanceStatus.valueOf(statusRaw))
+                .status(RequestStatus.valueOf(statusRaw))
                 .host(fields.get("host"))
                 .port(parseIntOrNull(fields.get("port")))
                 .expiresAt(fields.get("expiresAt"))

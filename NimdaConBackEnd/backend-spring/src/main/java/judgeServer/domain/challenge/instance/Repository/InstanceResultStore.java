@@ -1,4 +1,4 @@
-package judgeServer.domain.challenge.instance;
+package judgeServer.domain.challenge.instance.Repository;
 
 import judgeServer.domain.challenge.mq.consumer.InstanceResultConsumer;
 import judgeServer.domain.challenge.mq.message.InstanceResultMessage;
