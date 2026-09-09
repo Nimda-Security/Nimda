@@ -23,8 +23,6 @@ import java.util.UUID;
 public abstract class StreamResultConsumer<T>
         implements StreamListener<String, MapRecord<String, String, String>>, InitializingBean, DisposableBean {
 
-    private static final String BUSY_GROUP = "BUSYGROUP";
-
     protected final Logger log = LoggerFactory.getLogger(getClass());
 
     private final RedisConnectionFactory connectionFactory;
@@ -90,10 +88,11 @@ public abstract class StreamResultConsumer<T>
                             streamKey().getBytes(StandardCharsets.UTF_8), consumerGroup(), ReadOffset.from("0"), true));
             log.info("{} 컨슈머 그룹 생성: {} / {}", resultName(), streamKey(), consumerGroup());
         } catch (Exception e) {
-            if (e.getMessage() != null && e.getMessage().contains(BUSY_GROUP)) {
+            // 그룹이 이미 있는 건 정상이다. BUSYGROUP은 감싸인 예외의 cause에만 들어 있어서 체인을 훑어야 한다.
+            if (RedisStreamErrors.isBusyGroup(e)) {
                 log.debug("{} 컨슈머 그룹 이미 존재: {} / {}", resultName(), streamKey(), consumerGroup());
             } else {
-                log.warn("{} 컨슈머 그룹 생성 실패: {}", resultName(), e.getMessage());
+                log.warn("{} 컨슈머 그룹 생성 실패: {}", resultName(), e.getMessage(), e);
             }
         }
     }
