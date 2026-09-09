@@ -2,11 +2,14 @@ package judgeServer.domain.challenge.mq.producer;
 
 import judgeServer.config.CtfQueueProperties;
 import judgeServer.domain.challenge.entity.Challenge;
+import judgeServer.domain.challenge.mq.message.ActionType;
 import judgeServer.domain.challenge.mq.message.ChallengeDownloadMessage;
 import judgeServer.domain.challenge.mq.message.InstanceCreateMessage;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.data.redis.connection.stream.MapRecord;
 import org.springframework.data.redis.connection.stream.RecordId;
+import org.springframework.data.redis.connection.stream.StreamOffset;
 import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.stereotype.Component;
 
@@ -38,15 +41,36 @@ public class RedisCtfRequestProducer implements InstanceRequestProducer, Challen
     * requestId+userId로 인스턴스 ID 생성
     * */
     @Override
-    public String requestCreate(Challenge challenge, Long userId) {
-        return requestCreate(challenge, userId, UUID.randomUUID().toString());
-    }
-
-    @Override
-    public String requestCreate(Challenge challenge, Long userId, String requestId) {
-        publish(queueProperties.getStreamKey(),
-                InstanceCreateMessage.of(challenge, userId, requestId).toStreamFields(),
+    public String requestCreate(Challenge challenge, Long userId, String requestId, ActionType actionType) {
+        RecordId recordId = publish(queueProperties.getStreamKey(),
+                InstanceCreateMessage.of(challenge, userId, requestId, actionType).toStreamFields(),
                 "인스턴스 생성", requestId, challenge, userId);
+        // 디버깅용 로그 출력
+        try {
+            var records = redisTemplate.opsForStream().read(
+                    StreamOffset.fromStart(queueProperties.getStreamKey())
+            );
+
+            System.out.println("====== [DEBUG] Redis Stream 데이터 조회 시작 ======");
+            if (records != null && !records.isEmpty()) {
+                for (MapRecord<String, Object, Object> record : records) {
+                    // 방금 보낸 RecordId와 일치하는 데이터 출력
+                    if (record.getId().equals(recordId)) {
+                        System.out.println("Stream Key  : " + record.getStream());
+                        System.out.println("Record ID   : " + record.getId());
+                        System.out.println("Message Value: " + record.getValue());
+                    }
+                }
+            } else {
+                System.out.println("Stream에 읽을 수 있는 데이터가 없습니다.");
+            }
+            System.out.println("====== [DEBUG] Redis Stream 데이터 조회 종료 ======");
+        } catch (Exception e) {
+            log.error("디버깅용 Redis Stream 조회 중 오류 발생", e);
+        }
+
+        System.out.println("인스턴스 생성 완료");
+
         return requestId;
     }
 
@@ -59,11 +83,13 @@ public class RedisCtfRequestProducer implements InstanceRequestProducer, Challen
         return requestId;
     }
 
-    private void publish(String streamKey, Map<String, String> fields, String what,
+    private RecordId publish(String streamKey, Map<String, String> fields, String what,
                          String requestId, Challenge challenge, Long userId) {
         RecordId recordId = redisTemplate.opsForStream().add(streamKey, fields);
 
         log.info("{} 요청 발행: requestId={}, challengeCode={}, userId={}, stream={}, recordId={}",
                 what, requestId, challenge.getCode(), userId, streamKey, recordId);
+
+        return recordId;
     }
 }
