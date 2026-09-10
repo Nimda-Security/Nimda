@@ -25,10 +25,7 @@ public class CtfQueueConfig implements ApplicationRunner {
 
     @Override
     public void run(ApplicationArguments args) {
-        // 인스턴스 생성 요청 스트림
         createGroup(queueProperties.getStreamKey(), queueProperties.getConsumerGroup());
-        // 첨부파일 다운로드(presigned URL) 요청 스트림
-        createGroup(queueProperties.getDownloadStreamKey(), queueProperties.getDownloadConsumerGroup());
     }
 
     private void createGroup(String streamKey, String consumerGroup) {
@@ -38,7 +35,7 @@ public class CtfQueueConfig implements ApplicationRunner {
                     connection.streamCommands().xGroupCreate(rawKey, consumerGroup, ReadOffset.from("0"), true));
             log.info("Consumer Group Create: streamKey={}, group={}", streamKey, consumerGroup);
         } catch (Exception e) {
-            // 그룹이 이미 있는 건 정상이다. BUSYGROUP은 감싸인 예외의 cause에만 들어 있어서 체인을 훑어야 한다.
+            // 그룹이 이미 존재하는 경우에는 그대로 사용
             if (RedisStreamErrors.isBusyGroup(e)) {
                 log.debug("Consumer Group is already exist: streamKey={}, group={}", streamKey, consumerGroup);
             } else {
