@@ -92,7 +92,7 @@ public class SecurityConfig {
                         .requestMatchers(HttpMethod.GET, "/api/cite/profile-decorations/**").permitAll()
                         .requestMatchers(HttpMethod.GET, "/api/cite/attendance/today").permitAll()
                         .requestMatchers(HttpMethod.GET, "/api/cite/category/**").permitAll()
-                        .requestMatchers(HttpMethod.GET, "/api/cite/board/recent-boards").permitAll()
+                        .requestMatchers(HttpMethod.GET, "/api/cite/board/recent-boards").authenticated()
                         .requestMatchers(HttpMethod.GET, "/api/cite/attachments/*/download-url").permitAll()
                         .requestMatchers("/api/cite/mail/**").permitAll()
                         .requestMatchers("api/cite/passwordChange/**").permitAll()
