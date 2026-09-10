@@ -74,11 +74,13 @@ flowchart TB
 <td width="50%" valign="top">
 
 **이도현**  
-`Backend · Contest · CI/CD`
+`Backend · Contest · CI/CD · Infra`
 
 - 대회 도메인 (문제 · 제출 · 채점 연계)
-- 카테고리 · 상점 API
+- CTF 서버 설계
+- Blue-Green 파이프 라인 구현
 - S3 문제 파일 스토어
+- AWS Util 구현
 - CI/CD · 배포 안정화
 
 </td>
