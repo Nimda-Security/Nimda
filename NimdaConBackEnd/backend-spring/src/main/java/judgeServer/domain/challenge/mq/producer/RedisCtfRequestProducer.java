@@ -2,94 +2,69 @@ package judgeServer.domain.challenge.mq.producer;
 
 import judgeServer.config.CtfQueueProperties;
 import judgeServer.domain.challenge.entity.Challenge;
-import judgeServer.domain.challenge.mq.message.ActionType;
-import judgeServer.domain.challenge.mq.message.ChallengeDownloadMessage;
-import judgeServer.domain.challenge.mq.message.InstanceCreateMessage;
+import judgeServer.domain.challenge.mq.message.CtfRequestMessage;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.data.redis.connection.stream.MapRecord;
 import org.springframework.data.redis.connection.stream.RecordId;
-import org.springframework.data.redis.connection.stream.StreamOffset;
 import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.stereotype.Component;
 
+import java.time.Duration;
+import java.util.LinkedHashMap;
 import java.util.Map;
-import java.util.UUID;
 
-/**
- * CTF 서버(Go 조율자)로 나가는 요청을 Redis Stream(XADD)에 싣는 발행자.
- *
- * <p>인스턴스 생성이든 첨부파일 다운로드든 발행 절차가 같다 — 상관 ID(requestId)를 만들고,
- * 메시지를 field-value 맵으로 펴서, 그 요청이 가야 할 스트림에 XADD한다. 요청 종류마다
- * 달라지는 건 <b>어떤 메시지를 어느 스트림에</b> 넣느냐뿐이라 한 클래스에서 처리한다.
- *
- * <p>상관 ID를 발행하는 쪽에서 만드는 이유는, 요청한 쪽이 그 ID를 쥐고 있어야 나중에 돌아오는
- * 결과와 짝지을 수 있기 때문이다.
- *
- * <p>스트림에 쌓인 엔트리는 자동 삭제되지 않는다. 트리밍(MAXLEN/XTRIM) 정책은 후속 작업이다.
- */
 @Slf4j
 @Component
 @RequiredArgsConstructor
-public class RedisCtfRequestProducer implements InstanceRequestProducer, ChallengeDownloadProducer {
+public class RedisCtfRequestProducer implements CtfRequestProducer {
+
+    /** uuid → {userId, challengeCode} 매핑 키 접두사. */
+    public static final String OWNER_KEY_PREFIX = "ctf:request:owner:";
+
+    /** 결과를 받아 처리할 때까지만 있으면 된다. 결과 보관 TTL(10분)보다 넉넉히 잡는다. */
+    private static final Duration OWNER_TTL = Duration.ofMinutes(30);
 
     private final StringRedisTemplate redisTemplate;
     private final CtfQueueProperties queueProperties;
 
-    /*
-    * challngeId는 버킷에서 문제를 탐색
-    * requestId+userId로 인스턴스 ID 생성
-    * */
     @Override
-    public String requestCreate(Challenge challenge, Long userId, String requestId, ActionType actionType) {
-        RecordId recordId = publish(queueProperties.getStreamKey(),
-                InstanceCreateMessage.of(challenge, userId, requestId, actionType).toStreamFields(),
-                "인스턴스 생성", requestId, challenge, userId);
-        // 디버깅용 로그 출력
-        try {
-            var records = redisTemplate.opsForStream().read(
-                    StreamOffset.fromStart(queueProperties.getStreamKey())
-            );
+    public String request(Challenge challenge, Long userId, String uuid) {
+        // 매핑을 먼저 남긴다. 발행 뒤에 남기면 그 사이에 결과가 도착해 매핑을 못 찾을 수 있다.
+        Map<String, String> owner = new LinkedHashMap<>();
+        owner.put("userId", String.valueOf(userId));
+        owner.put("challengeCode", challenge.getCode());
+        String ownerKey = OWNER_KEY_PREFIX + uuid;
+        redisTemplate.opsForHash().putAll(ownerKey, owner);
+        redisTemplate.expire(ownerKey, OWNER_TTL);
 
-            System.out.println("====== [DEBUG] Redis Stream 데이터 조회 시작 ======");
-            if (records != null && !records.isEmpty()) {
-                for (MapRecord<String, Object, Object> record : records) {
-                    // 방금 보낸 RecordId와 일치하는 데이터 출력
-                    if (record.getId().equals(recordId)) {
-                        System.out.println("Stream Key  : " + record.getStream());
-                        System.out.println("Record ID   : " + record.getId());
-                        System.out.println("Message Value: " + record.getValue());
-                    }
-                }
-            } else {
-                System.out.println("Stream에 읽을 수 있는 데이터가 없습니다.");
-            }
-            System.out.println("====== [DEBUG] Redis Stream 데이터 조회 종료 ======");
-        } catch (Exception e) {
-            log.error("디버깅용 Redis Stream 조회 중 오류 발생", e);
+        RecordId recordId = redisTemplate.opsForStream().add(
+                queueProperties.getStreamKey(),
+                CtfRequestMessage.of(challenge, uuid).toStreamFields());
+
+        log.info("CTF 요청 발행: uuid={}, challengeCode={}, category={}, stream={}, recordId={}",
+                uuid, challenge.getCode(), challenge.getCategory(),
+                queueProperties.getStreamKey(), recordId);
+
+        return uuid;
+    }
+
+    /** 이 uuid를 요청한 사용자. 매핑이 만료됐으면 null. */
+    public Long findUserId(String uuid) {
+        Object raw = redisTemplate.opsForHash().get(OWNER_KEY_PREFIX + uuid, "userId");
+        if (raw == null) {
+            return null;
         }
-
-        System.out.println("인스턴스 생성 완료");
-
-        return requestId;
+        try {
+            return Long.valueOf(raw.toString());
+        } catch (NumberFormatException e) {
+            log.warn("요청 매핑의 userId를 읽지 못했습니다: uuid={}, raw={}", uuid, raw);
+            return null;
+        }
     }
 
-    @Override
-    public String requestDownload(Challenge challenge, Long userId) {
-        String requestId = UUID.randomUUID().toString();
-        publish(queueProperties.getDownloadStreamKey(),
-                ChallengeDownloadMessage.of(challenge, userId, requestId).toStreamFields(),
-                "첨부파일 다운로드", requestId, challenge, userId);
-        return requestId;
-    }
-
-    private RecordId publish(String streamKey, Map<String, String> fields, String what,
-                         String requestId, Challenge challenge, Long userId) {
-        RecordId recordId = redisTemplate.opsForStream().add(streamKey, fields);
-
-        log.info("{} 요청 발행: requestId={}, challengeCode={}, userId={}, stream={}, recordId={}",
-                what, requestId, challenge.getCode(), userId, streamKey, recordId);
-
-        return recordId;
+    /** 이 uuid가 어느 문제의 요청이었는지. 매핑이 만료됐으면 null. */
+    public String findChallengeCode(String uuid) {
+        Object raw = redisTemplate.opsForHash().get(OWNER_KEY_PREFIX + uuid, "challengeCode");
+        return raw == null ? null : raw.toString();
     }
 }
