@@ -37,6 +37,9 @@ public class SecurityConfig {
     private InstanceResultStore instanceResultStore;
     @Autowired
     private InstanceProxy instanceProxy;
+    // 결과 메시지에 userId가 없어져서, 소유권 확인은 발행 시 남긴 uuid → 사용자 매핑으로 한다.
+    @Autowired
+    private judgeServer.domain.challenge.mq.producer.RedisCtfRequestProducer ctfRequestProducer;
 
     @Bean
     public PasswordEncoder passwordEncoder() {
@@ -95,7 +98,7 @@ public class SecurityConfig {
                 //      inst-{token}.{도메인} 요청이면 소유권 확인 후 인스턴스로 프록시하고 체인을 끊는다.
                 .addFilterAfter(
                         new SubdomainInstanceProxyFilter(
-                                instanceProperties, instanceResultStore, instanceProxy),
+                                instanceProperties, instanceResultStore, instanceProxy, ctfRequestProducer),
                         JwtAuthenticationFilter.class)
 
                 // 5. 요청별 권한 제어 (순서가 매우 중요함)
