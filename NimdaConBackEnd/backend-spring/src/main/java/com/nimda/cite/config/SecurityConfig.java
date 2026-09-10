@@ -1,5 +1,9 @@
 package com.nimda.cite.config;
 
+import judgeServer.domain.challenge.instance.Config.InstanceProperties;
+import judgeServer.domain.challenge.instance.Proxy.InstanceProxy;
+import judgeServer.domain.challenge.instance.Proxy.SubdomainInstanceProxyFilter;
+import judgeServer.domain.challenge.instance.Repository.InstanceResultStore;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.security.config.annotation.method.configuration.EnableMethodSecurity;
@@ -28,11 +32,11 @@ public class SecurityConfig {
 
     // 인스턴스 서브도메인 프록시 필터 구성요소 (judgeServer.domain.challenge.instance)
     @Autowired
-    private judgeServer.domain.challenge.instance.InstanceProperties instanceProperties;
+    private InstanceProperties instanceProperties;
     @Autowired
-    private judgeServer.domain.challenge.instance.InstanceResultStore instanceResultStore;
+    private InstanceResultStore instanceResultStore;
     @Autowired
-    private judgeServer.domain.challenge.instance.InstanceProxy instanceProxy;
+    private InstanceProxy instanceProxy;
 
     @Bean
     public PasswordEncoder passwordEncoder() {
@@ -90,7 +94,7 @@ public class SecurityConfig {
                 // 4-1. 인스턴스 서브도메인 프록시 필터 (JWT 인증 직후 → SecurityContext에 사용자 채워짐).
                 //      inst-{token}.{도메인} 요청이면 소유권 확인 후 인스턴스로 프록시하고 체인을 끊는다.
                 .addFilterAfter(
-                        new judgeServer.domain.challenge.instance.SubdomainInstanceProxyFilter(
+                        new SubdomainInstanceProxyFilter(
                                 instanceProperties, instanceResultStore, instanceProxy),
                         JwtAuthenticationFilter.class)
 
