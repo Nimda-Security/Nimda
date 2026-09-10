@@ -7,7 +7,8 @@ import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import judgeServer.domain.challenge.instance.Config.InstanceProperties;
 import judgeServer.domain.challenge.instance.Repository.InstanceResultStore;
-import judgeServer.domain.challenge.mq.message.InstanceResultMessage;
+import judgeServer.domain.challenge.mq.message.CtfResultMessage;
+import judgeServer.domain.challenge.mq.producer.RedisCtfRequestProducer;
 import judgeServer.domain.challenge.mq.message.RequestStatus;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -49,6 +50,7 @@ public class SubdomainInstanceProxyFilter extends OncePerRequestFilter {
     private final InstanceProperties props;
     private final InstanceResultStore resultStore;
     private final InstanceProxy proxy;
+    private final RedisCtfRequestProducer producer;
 
     @Override
     protected void doFilterInternal(HttpServletRequest request, HttpServletResponse response, FilterChain chain)
@@ -62,7 +64,7 @@ public class SubdomainInstanceProxyFilter extends OncePerRequestFilter {
         }
         String token = tokenOpt.get();
 
-        InstanceResultMessage instance = resultStore.find(token).orElse(null);
+        CtfResultMessage instance = resultStore.find(token).orElse(null);
         if (instance == null || instance.getStatus() != RequestStatus.READY
                 || instance.getHost() == null || instance.getPort() == null) {
             response.sendError(HttpServletResponse.SC_SERVICE_UNAVAILABLE, "인스턴스가 준비되지 않았습니다.");
@@ -75,7 +77,11 @@ public class SubdomainInstanceProxyFilter extends OncePerRequestFilter {
             response.sendError(HttpServletResponse.SC_UNAUTHORIZED, "로그인이 필요합니다.");
             return;
         }
-        if (!userId.equals(instance.getUserId())) {
+        // 결과 메시지에는 더 이상 userId가 없다(식별자가 uuid 하나로 줄었다). 발행할 때
+        // 남겨둔 uuid → 사용자 매핑으로 확인한다. 매핑이 만료됐으면 확인할 근거가 없으므로
+        // 막는다 — 통과시키면 uuid를 아는 누구나 남의 인스턴스에 붙을 수 있다.
+        Long owner = producer.findUserId(token);
+        if (owner == null || !userId.equals(owner)) {
             response.sendError(HttpServletResponse.SC_FORBIDDEN, "본인 인스턴스가 아닙니다.");
             return;
         }

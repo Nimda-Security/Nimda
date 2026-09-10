@@ -8,10 +8,9 @@ import judgeServer.domain.challenge.instance.ObjectStatus.Status;
 import judgeServer.domain.challenge.instance.Repository.InstanceResultStore;
 import judgeServer.domain.challenge.instance.Proxy.SubdomainInstanceProxyFilter;
 import judgeServer.domain.challenge.instance.Repository.InstanceStatusStore;
-import judgeServer.domain.challenge.mq.message.ActionType;
-import judgeServer.domain.challenge.mq.message.InstanceResultMessage;
+import judgeServer.domain.challenge.mq.message.CtfResultMessage;
 import judgeServer.domain.challenge.mq.message.RequestStatus;
-import judgeServer.domain.challenge.mq.producer.InstanceRequestProducer;
+import judgeServer.domain.challenge.mq.producer.CtfRequestProducer;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
@@ -27,7 +26,7 @@ import java.util.UUID;
 @RequiredArgsConstructor
 public class InstanceService {
 
-    private final InstanceRequestProducer producer;
+    private final CtfRequestProducer producer;
     private final InstanceStatusStore instanceStatusStore;
     private final InstanceProperties instanceProperties;
     private final RedisUtil redisUtil;
@@ -45,8 +44,8 @@ public class InstanceService {
             // 인스턴스 상태 redis 저장
             instanceStatusStore.saveStatus(uuid, instanceStatus);
 
-            // redis stream에 message 발행
-            producer.requestCreate(challenge, userId, uuid, ActionType.CREATE);
+            // redis stream에 message 발행. 무엇을 할지는 조율자가 문제 유형을 보고 정한다.
+            producer.request(challenge, userId, uuid);
             return uuid;
         }
         // todo SHARE인 경우는 아직 미구현
@@ -60,7 +59,7 @@ public class InstanceService {
      * @param scheme      사용자가 플랫폼에 접속한 스킴 (http/https)
      * @param serverPort  사용자가 플랫폼에 접속한 포트
      */
-    public String accessUrl(InstanceResultMessage result, String scheme, int serverPort) {
+    public String accessUrl(CtfResultMessage result, String scheme, int serverPort) {
         String baseDomain = instanceProperties.getBaseDomain();
         if (result == null || result.getStatus() != RequestStatus.READY
                 || baseDomain == null || baseDomain.isBlank()) {
@@ -70,7 +69,9 @@ public class InstanceService {
         boolean defaultPort = ("http".equals(scheme) && serverPort == 80)
                 || ("https".equals(scheme) && serverPort == 443);
 
-        return scheme + "://" + instanceProperties.getSubdomainPrefix() + result.getRequestId()
+        // 주소에 uuid가 들어간다. 이 값을 모르면 남의 인스턴스 주소를 만들 수 없다 —
+        // uuid를 쓰기로 한 이유가 이것이다.
+        return scheme + "://" + instanceProperties.getSubdomainPrefix() + result.getUuid()
                 + "." + baseDomain + (defaultPort ? "" : ":" + serverPort);
     }
 }

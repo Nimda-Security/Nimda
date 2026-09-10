@@ -7,7 +7,7 @@ import judgeServer.domain.challenge.entity.Challenge;
 import judgeServer.domain.challenge.enums.ChallengeCategory;
 import judgeServer.domain.challenge.instance.Proxy.InstanceProxy;
 import judgeServer.domain.challenge.instance.Service.InstanceService;
-import judgeServer.domain.challenge.mq.message.InstanceResultMessage;
+import judgeServer.domain.challenge.mq.message.CtfResultMessage;
 import judgeServer.domain.challenge.mq.message.RequestStatus;
 import judgeServer.domain.challenge.repository.ChallengeRepository;
 import lombok.RequiredArgsConstructor;
@@ -28,9 +28,9 @@ import java.util.Optional;
  * 동적 인스턴스 접근 컨트롤러.
  *
  * <pre>
- *   POST /api/ctf/instance/{code}              생성 요청 → requestId
+ *   POST /api/ctf/instance/{code}              생성 요청 → uuid
  *   GET  /api/ctf/instance/{code}              이 문제로 내가 띄운 인스턴스 (문제 페이지에서 씀)
- *   GET  /api/ctf/instance/status/{requestId}  생성 직후 폴링
+ *   GET  /api/ctf/instance/status/{uuid}       생성 직후 폴링
  * </pre>
  *
  * 문제 코드와 requestId는 둘 다 한 조각 경로라 같은 자리에 둘 수 없다(매핑 충돌). 그래서
@@ -56,8 +56,8 @@ public class InstanceController {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "해당 문제는 인스턴스 기능을 지원하지 않습니다.");
         }
 
-        String requestId = instanceService.createInstance(challenge, currentUserId(user));
-        return ApiResponse.ok(Map.of("requestId", requestId)).toResponse();
+        String uuid = instanceService.createInstance(challenge, currentUserId(user));
+        return ApiResponse.ok(Map.of("uuid", uuid)).toResponse();
     }
 
     /**
@@ -83,7 +83,7 @@ public class InstanceController {
             return ApiResponse.ok(Map.of("hasInstance", false)).toResponse();
         }
 
-        InstanceResultMessage result = instanceService.findByRequestId(requestId).orElse(null);
+        CtfResultMessage result = instanceService.findByRequestId(requestId).orElse(null);
         if (result == null) {
             // 매핑은 있는데 결과가 없다 = 조율자가 아직 만들고 있는 중.
             return ApiResponse.ok(Map.of(
@@ -102,7 +102,7 @@ public class InstanceController {
     public ResponseEntity<?> status(@PathVariable String requestId,
                                     @AuthenticationPrincipal CustomUserDetails user,
                                     HttpServletRequest request) {
-        InstanceResultMessage result = instanceService.findByRequestId(requestId).orElse(null);
+        CtfResultMessage result = instanceService.findByRequestId(requestId).orElse(null);
         if (result == null) {
             return ApiResponse.ok(Map.of("status", "PENDING")).toResponse();
         }
@@ -111,15 +111,15 @@ public class InstanceController {
     }
  */
     // 결과 메시지 객체화
-    private Map<String, Object> toView(InstanceResultMessage result, HttpServletRequest request) {
+    private Map<String, Object> toView(CtfResultMessage result, HttpServletRequest request) {
         Map<String, Object> view = new LinkedHashMap<>();
-        view.put("requestId", result.getRequestId());
-        view.put("challengeCode", result.getChallengeCode());
+        view.put("uuid", result.getUuid());
         view.put("status", result.getStatus());
         view.put("host", result.getHost());
         view.put("port", result.getPort());
         view.put("expiresAt", result.getExpiresAt());
         view.put("message", result.getMessage());
+        view.put("downloadUrl", result.getDownloadUrl());
         view.put("accessUrl", instanceService.accessUrl(result, request.getScheme(), request.getServerPort()));
         return view;
     }
@@ -150,7 +150,7 @@ public class InstanceController {
     public ResponseEntity<byte[]> proxy(@PathVariable String requestId,
                                         @AuthenticationPrincipal CustomUserDetails user,
                                         HttpServletRequest request) throws IOException {
-        InstanceResultMessage result = instanceService.findByRequestId(requestId)
+        CtfResultMessage result = instanceService.findByRequestId(requestId)
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "인스턴스를 찾을 수 없습니다."));
         checkOwner(result, user);
         if (result.getStatus() != RequestStatus.READY || result.getHost() == null || result.getPort() == null) {
@@ -171,7 +171,7 @@ public class InstanceController {
                 request.getQueryString(), request.getMethod(), headers, body);
     }
 
-    private void checkOwner(InstanceResultMessage result, CustomUserDetails user) {
+    private void checkOwner(CtfResultMessage result, CustomUserDetails user) {
         if (user == null || result.getUserId() == null
                 || !result.getUserId().equals(user.getUser().getId())) {
             throw new ResponseStatusException(HttpStatus.FORBIDDEN, "본인 인스턴스가 아닙니다.");

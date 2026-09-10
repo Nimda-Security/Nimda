@@ -3,9 +3,9 @@ package judgeServer.domain.challenge.download;
 import com.nimda.cite.common.response.ApiResponse;
 import com.nimda.cite.user.security.CustomUserDetails;
 import judgeServer.domain.challenge.entity.Challenge;
-import judgeServer.domain.challenge.mq.message.ChallengeDownloadResultMessage;
-import judgeServer.domain.challenge.mq.message.DownloadStatus;
-import judgeServer.domain.challenge.mq.producer.ChallengeDownloadProducer;
+import judgeServer.domain.challenge.mq.message.CtfResultMessage;
+import judgeServer.domain.challenge.mq.message.RequestStatus;
+import judgeServer.domain.challenge.mq.producer.RedisCtfRequestProducer;
 import judgeServer.domain.challenge.repository.ChallengeRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
@@ -30,7 +30,7 @@ public class ChallengeDownloadController {
     private static final long POLL_INTERVAL_MS = 100;
 
     private final ChallengeRepository challengeRepository;
-    private final ChallengeDownloadProducer producer;
+    private final RedisCtfRequestProducer producer;
     private final ChallengeDownloadStore resultStore;
     private final ChallengeDownloadUrlCache urlCache;
 
@@ -55,15 +55,16 @@ public class ChallengeDownloadController {
         Optional<ChallengeDownloadUrlCache.CachedUrl> cached = urlCache.find(code);
         if (cached.isPresent()) {
             return ApiResponse.ok(Map.of(
-                    "status", DownloadStatus.READY.name(),
+                    "status", RequestStatus.READY.name(),
                     "url", cached.get().url(),
                     "expiresAt", cached.get().expiresAt() != null ? cached.get().expiresAt() : "",
                     "cached", true)).toResponse();
         }
 
-        String requestId = producer.requestDownload(challenge, userId);
+        // uuid는 여기서 만든다. 발행 전에 이 값으로 소유자 매핑이 먼저 기록돼야 한다.
+        String requestId = producer.request(challenge, userId, java.util.UUID.randomUUID().toString());
 
-        Optional<ChallengeDownloadResultMessage> result = awaitResult(requestId);
+        Optional<CtfResultMessage> result = awaitResult(requestId);
         if (result.isEmpty()) {
             return ApiResponse.ok(Map.of("status", "PENDING", "requestId", requestId))
                     .toResponse(HttpStatus.ACCEPTED);
@@ -75,19 +76,19 @@ public class ChallengeDownloadController {
     @GetMapping("/download/{requestId}")
     public ResponseEntity<?> status(@PathVariable String requestId,
                                     @AuthenticationPrincipal CustomUserDetails user) {
-        ChallengeDownloadResultMessage result = resultStore.find(requestId).orElse(null);
+        CtfResultMessage result = resultStore.find(requestId).orElse(null);
         if (result == null) {
             return ApiResponse.ok(Map.of("status", "PENDING", "requestId", requestId)).toResponse();
         }
-        checkOwner(result, user);
+        checkOwner(requestId, user);
         return respond(result, requestId);
     }
 
     // redis 결과 대기
-    private Optional<ChallengeDownloadResultMessage> awaitResult(String requestId) {
+    private Optional<CtfResultMessage> awaitResult(String requestId) {
         long deadline = System.nanoTime() + WAIT_TIMEOUT.toNanos();
         while (true) {
-            Optional<ChallengeDownloadResultMessage> found = resultStore.find(requestId);
+            Optional<CtfResultMessage> found = resultStore.find(requestId);
             if (found.isPresent()) {
                 return found;
             }
@@ -103,8 +104,8 @@ public class ChallengeDownloadController {
         }
     }
 
-    private ResponseEntity<?> respond(ChallengeDownloadResultMessage result, String requestId) {
-        if (result.getStatus() != DownloadStatus.READY || result.getUrl() == null) {
+    private ResponseEntity<?> respond(CtfResultMessage result, String requestId) {
+        if (result.getStatus() != RequestStatus.READY || result.getDownloadUrl() == null) {
             // 발급 실패는 CTF 서버가 준 사유를 그대로 전한다 (첨부파일 없음, 허용되지 않는 경로 등).
             String reason = result.getMessage() != null ? result.getMessage() : "다운로드 링크를 발급하지 못했습니다.";
             return ApiResponse.fail(reason).toResponse(HttpStatus.SERVICE_UNAVAILABLE);
@@ -112,14 +113,19 @@ public class ChallengeDownloadController {
         return ApiResponse.ok(Map.of(
                 "status", result.getStatus().name(),
                 "requestId", requestId,
-                "url", result.getUrl(),
+                "url", result.getDownloadUrl(),
                 "expiresAt", result.getExpiresAt() != null ? result.getExpiresAt() : "",
                 "cached", false)).toResponse();
     }
 
-    private void checkOwner(ChallengeDownloadResultMessage result, CustomUserDetails user) {
-        if (user == null || result.getUserId() == null
-                || !result.getUserId().equals(user.getUser().getId())) {
+    /**
+     * 결과 메시지에는 더 이상 userId가 없다(식별자가 uuid 하나로 줄었다). 그래서 발행할 때
+     * 남겨둔 uuid → 사용자 매핑으로 확인한다. 매핑이 만료됐으면 확인할 근거가 없으므로 막는다 —
+     * 확인 못 하는 요청을 통과시키면 uuid를 아는 누구나 남의 링크를 받아갈 수 있다.
+     */
+    private void checkOwner(String requestId, CustomUserDetails user) {
+        Long owner = producer.findUserId(requestId);
+        if (user == null || owner == null || !owner.equals(user.getUser().getId())) {
             throw new ResponseStatusException(HttpStatus.FORBIDDEN, "본인이 요청한 다운로드가 아닙니다.");
         }
     }

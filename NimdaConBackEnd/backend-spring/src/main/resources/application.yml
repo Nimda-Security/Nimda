@@ -9,7 +9,7 @@ spring:
       password: ${SPRING_REDIS_PASSWORD:}
   application:
     name: nimda-cup
-  # 이메일 설정 (Spring Mail)
+  # AWS SMTP 이메일 설정
   mail:
     host: ${MAIL_HOST:smtp.gmail.com}
     port: ${MAIL_PORT:587}
@@ -94,29 +94,24 @@ jwt:
 auth:
   cookie:
     secure: ${AUTH_COOKIE_SECURE:true}
-    # 인증 쿠키를 서브도메인까지 보낼 때만 지정한다 (문제 인스턴스 접속 = inst-{id}.도메인).
-    # 예) 운영: nimda.kr / 로컬: 127.0.0.1.nip.io. 비우면 호스트 전용 쿠키.
+    # todo 인스턴스 접근 보안 로직 미구현
     domain: ${AUTH_COOKIE_DOMAIN:}
 
 ctf:
   queue:
-    stream-key: ${CTF_QUEUE_STREAM_KEY:ctf:instance:ops}
+    # 인스턴스 생성과 첨부파일 발급이 한 스트림을 쓴다. Go 조율자의 CTF_QUEUE_* 와 같아야 한다.
+    stream-key: ${CTF_QUEUE_STREAM_KEY:ctf:request:ops}
     consumer-group: ${CTF_QUEUE_CONSUMER_GROUP:ctf-provisioners}
-    result-stream-key: ${CTF_QUEUE_RESULT_STREAM_KEY:ctf:instance:results}
+    result-stream-key: ${CTF_QUEUE_RESULT_STREAM_KEY:ctf:request:results}
     result-consumer-group: ${CTF_QUEUE_RESULT_CONSUMER_GROUP:ctf-result-consumers}
-    # 첨부파일 다운로드(presigned URL) 발급 요청/결과. Go 조율자 설정과 같아야 한다.
-    download-stream-key: ${CTF_QUEUE_DOWNLOAD_STREAM_KEY:ctf:challenge:download:ops}
-    download-consumer-group: ${CTF_QUEUE_DOWNLOAD_CONSUMER_GROUP:ctf-download-provisioners}
-    download-result-stream-key: ${CTF_QUEUE_DOWNLOAD_RESULT_STREAM_KEY:ctf:challenge:download:results}
-    download-result-consumer-group: ${CTF_QUEUE_DOWNLOAD_RESULT_CONSUMER_GROUP:ctf-download-result-consumers}
-  # 인스턴스 서브도메인 접근 (ADR-0011). base-domain 비우면 서브도메인 프록시 비활성.
+  # todo 인스턴스 서브도메인 접근 로직 단순화
   instance:
     base-domain: ${CTF_INSTANCE_BASE_DOMAIN:}
     subdomain-prefix: ${CTF_INSTANCE_SUBDOMAIN_PREFIX:inst-}
-    # userId:challengeId -> requestId 매핑 보관 시간. 결과 보관 시간(10분)보다 넉넉해야 한다.
+    # userId:challengeId -> requestId 매핑 보관 시간. todo 미구현
     mapping-ttl: ${CTF_INSTANCE_MAPPING_TTL:30m}
 
-# 첨부파일 로컬 저장 (cite attachment)
+# 첨부파일 로컬 저장 (cite attachment) - S3 연결이 안되면 로컬 디스크에 저장됩니다.
 nimda:
   file:
     upload-dir: ${FILE_UPLOAD_DIR:${user.home}/nimda-attachments}
