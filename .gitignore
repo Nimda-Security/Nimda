@@ -94,3 +94,7 @@ load-tests/results/
 mysql_data/
 replacements.txt
 bruno
+
+# 로컬 MySQL 덤프 (실데이터라 커밋하지 않는다)
+mysql-init/*.sql
+docker-compose-local.yml
