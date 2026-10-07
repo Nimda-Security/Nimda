@@ -1,6 +1,7 @@
 package judgeServer.domain.challenge.mq.producer;
 
 import judgeServer.config.CtfQueueProperties;
+import judgeServer.config.CtfTtlProperties;
 import judgeServer.domain.challenge.entity.Challenge;
 import judgeServer.domain.challenge.mq.message.CtfRequestMessage;
 import lombok.RequiredArgsConstructor;
@@ -9,7 +10,6 @@ import org.springframework.data.redis.connection.stream.RecordId;
 import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.stereotype.Component;
 
-import java.time.Duration;
 import java.util.LinkedHashMap;
 import java.util.Map;
 
@@ -21,11 +21,9 @@ public class RedisCtfRequestProducer implements CtfRequestProducer {
     /** uuid → {userId, challengeCode} 매핑 키 접두사. */
     public static final String OWNER_KEY_PREFIX = "ctf:request:owner:";
 
-    /** 결과를 받아 처리할 때까지만 있으면 된다. 결과 보관 TTL(10분)보다 넉넉히 잡는다. */
-    private static final Duration OWNER_TTL = Duration.ofMinutes(30);
-
     private final StringRedisTemplate redisTemplate;
     private final CtfQueueProperties queueProperties;
+    private final CtfTtlProperties ttlProperties;
 
     @Override
     public String request(Challenge challenge, Long userId, String uuid) {
@@ -35,9 +33,17 @@ public class RedisCtfRequestProducer implements CtfRequestProducer {
         owner.put("challengeCode", challenge.getCode());
         String ownerKey = OWNER_KEY_PREFIX + uuid;
         redisTemplate.opsForHash().putAll(ownerKey, owner);
-        redisTemplate.expire(ownerKey, OWNER_TTL);
+        redisTemplate.expire(ownerKey, ttlProperties.getOwner());
 
-        RecordId recordId = redisTemplate.opsForStream().add(
+        /*      CtfRequestMessage = {
+                uuid
+                challengeCode
+                challengeCategory
+                isolationType
+                flagType
+                }
+         */
+         RecordId recordId = redisTemplate.opsForStream().add(
                 queueProperties.getStreamKey(),
                 CtfRequestMessage.of(challenge, uuid).toStreamFields());
 
