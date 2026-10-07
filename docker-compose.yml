@@ -84,6 +84,11 @@ services:
       - MAIL_PORT=${MAIL_PORT}
       - MAIL_USERNAME=${MAIL_USERNAME}
       - MAIL_PASSWORD=${MAIL_PASSWORD}
+      # CTF Redis TTL (단위: s/m/h). 비우면 기본값 사용
+      - CTF_TTL_RESULT=${CTF_TTL_RESULT:-10m}
+      - CTF_TTL_OWNER=${CTF_TTL_OWNER:-30m}
+      - CTF_TTL_STATUS=${CTF_TTL_STATUS:-10m}
+      - CTF_TTL_MAPPING=${CTF_TTL_MAPPING:-30m}
     restart: always
 
   backend-green:
@@ -124,6 +129,11 @@ services:
       - MAIL_PORT=${MAIL_PORT}
       - MAIL_USERNAME=${MAIL_USERNAME}
       - MAIL_PASSWORD=${MAIL_PASSWORD}
+      # CTF Redis TTL (단위: s/m/h). 비우면 기본값 사용
+      - CTF_TTL_RESULT=${CTF_TTL_RESULT:-10m}
+      - CTF_TTL_OWNER=${CTF_TTL_OWNER:-30m}
+      - CTF_TTL_STATUS=${CTF_TTL_STATUS:-10m}
+      - CTF_TTL_MAPPING=${CTF_TTL_MAPPING:-30m}
     restart: always
 
   nginx:
