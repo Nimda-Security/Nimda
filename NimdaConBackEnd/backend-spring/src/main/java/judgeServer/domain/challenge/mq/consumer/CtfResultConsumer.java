@@ -1,6 +1,7 @@
 package judgeServer.domain.challenge.mq.consumer;
 
 import judgeServer.config.CtfQueueProperties;
+import judgeServer.config.CtfTtlProperties;
 import judgeServer.domain.challenge.download.ChallengeDownloadUrlCache;
 import judgeServer.domain.challenge.mq.message.CtfResultMessage;
 import judgeServer.domain.challenge.mq.message.RequestStatus;
@@ -24,22 +25,23 @@ import java.util.Map;
 @Component
 public class CtfResultConsumer extends StreamResultConsumer<CtfResultMessage> {
 
-    private static final Duration RESULT_TTL = Duration.ofMinutes(10);
-
     /** 사용자가 결과를 조회할 때 쓰는 키 접두사: ctf:result:{uuid} */
     public static final String RESULT_KEY_PREFIX = "ctf:result:";
 
     private final CtfQueueProperties props;
+    private final CtfTtlProperties ttlProperties;
     private final ChallengeDownloadUrlCache urlCache;
     private final RedisCtfRequestProducer producer;
 
     public CtfResultConsumer(RedisConnectionFactory connectionFactory,
                              StringRedisTemplate redisTemplate,
                              CtfQueueProperties props,
+                             CtfTtlProperties ttlProperties,
                              ChallengeDownloadUrlCache urlCache,
                              RedisCtfRequestProducer producer) {
         super(connectionFactory, redisTemplate);
         this.props = props;
+        this.ttlProperties = ttlProperties;
         this.urlCache = urlCache;
         this.producer = producer;
     }
@@ -61,7 +63,7 @@ public class CtfResultConsumer extends StreamResultConsumer<CtfResultMessage> {
 
     @Override
     protected Duration resultTtl() {
-        return RESULT_TTL;
+        return ttlProperties.getResult();
     }
 
     @Override
