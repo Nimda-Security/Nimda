@@ -13,7 +13,6 @@ import org.springframework.scheduling.annotation.EnableScheduling;
 @EnableScheduling
 @EnableJpaAuditing
 @EnableAsync // 알림 비동기 방식으로 처리
-@SpringBootApplication
 @SpringBootApplication(exclude = RedisRepositoriesAutoConfiguration.class)
 @ComponentScan(basePackages = {"com.nimda.cite", "judgeServer", "redis"})
 @EnableJpaRepositories(basePackages = {"com.nimda.cite", "judgeServer"})
