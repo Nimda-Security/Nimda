@@ -52,6 +52,7 @@ public class SubdomainInstanceProxyFilter extends OncePerRequestFilter {
     private final InstanceProxy proxy;
     private final RedisCtfRequestProducer producer;
 
+    // SecurityConfig에 SecurityChainFilter 이후에 실행되기 때문에 내부에 Cookie-set이 들어 있다.
     @Override
     protected void doFilterInternal(HttpServletRequest request, HttpServletResponse response, FilterChain chain)
             throws ServletException, IOException {
@@ -62,16 +63,18 @@ public class SubdomainInstanceProxyFilter extends OncePerRequestFilter {
             chain.doFilter(request, response); // 인스턴스 서브도메인 아님 → 평소대로
             return;
         }
+        // UUID 추출
         String token = tokenOpt.get();
-
+        // UUID : instance로 매칭되는 결과가 있는지 확인한다.
         CtfResultMessage instance = resultStore.find(token).orElse(null);
+        // 매칭되는 결과가 존재하지 않음 == 최초 실행
         if (instance == null || instance.getStatus() != RequestStatus.READY
                 || instance.getHost() == null || instance.getPort() == null) {
             response.sendError(HttpServletResponse.SC_SERVICE_UNAVAILABLE, "인스턴스가 준비되지 않았습니다.");
             return;
         }
 
-        // ── 소유권 검사 ──────────────────────────────────────────────────
+        // 소유권 검사 - todo 로직 보완 필요
         Long userId = currentUserId();
         if (userId == null) {
             response.sendError(HttpServletResponse.SC_UNAUTHORIZED, "로그인이 필요합니다.");
@@ -93,13 +96,12 @@ public class SubdomainInstanceProxyFilter extends OncePerRequestFilter {
             path = path.substring(1);
         }
         byte[] body = request.getInputStream().readAllBytes();
-
+        // 매개변수로 요청 조립 후 프록시 요청
         ResponseEntity<byte[]> upstream = proxy.forward(
                 instance.getHost(), instance.getPort(), path, request.getQueryString(),
                 request.getMethod(), copyRequestHeaders(request), body);
 
         writeResponse(response, upstream);
-        // 체인을 더 진행하지 않는다: 문제 트래픽은 프록시로 끝낸다.
     }
 
     private Long currentUserId() {

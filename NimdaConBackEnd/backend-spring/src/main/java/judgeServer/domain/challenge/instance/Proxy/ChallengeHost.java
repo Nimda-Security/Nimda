@@ -2,7 +2,7 @@ package judgeServer.domain.challenge.instance.Proxy;
 
 import java.util.Optional;
 
-// 도메인을 보고 호스트를 판단하는 모듈 분리할 필요 있음
+// 웹사이트 내부에서 ctf 서버로 보내는 요청을 처리하는 호스트
 public final class ChallengeHost {
 
     private ChallengeHost() {

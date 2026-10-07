@@ -16,10 +16,11 @@ import java.util.Locale;
 import java.util.Map;
 import java.util.Set;
 
-// HttpClient로 사용자의 브라우저를 새롭게 만들어진 인스턴스 주소로 리다이렉트하는 프록시 기능을 수행
+// ctf 서버로 보내는 요청을 전달하는 Proxy
 @Component
 public class InstanceProxy {
 
+    // 인스턴스 서버에 전달하지 않는 값
     private static final Set<String> HOP_BY_HOP = Set.of(
             "connection", "keep-alive", "proxy-authenticate", "proxy-authorization",
             "te", "trailer", "transfer-encoding", "upgrade",
@@ -30,18 +31,18 @@ public class InstanceProxy {
             .followRedirects(HttpClient.Redirect.NEVER) // 리다이렉트는 브라우저가 처리하게 그대로 전달
             .build();
 
-    /**
-     * 인스턴스로 요청을 전달한다.
-     *
-     * @param inHeaders 전달할 원본 요청 헤더 (쿠키 등). null이면 헤더 없이 보낸다.
-     */
+    
     public ResponseEntity<byte[]> forward(String host, int port, String path, String query,
                                           String method, HttpHeaders inHeaders, byte[] body) {
+        
+        // 쿼리가 있는지 없는지 확인
         String q = (query != null && !query.isEmpty()) ? "?" + query : "";
+        // host, port, path + q로 url을 조합한다.
         URI uri = URI.create("http://" + host + ":" + port + "/" + path + q);
-
+        // 해당 도메인으로 요청을 보내고 대기한다. 타임아웃 15초
         HttpRequest.Builder builder = HttpRequest.newBuilder(uri).timeout(Duration.ofSeconds(15));
 
+        //
         if (inHeaders != null) {
             inHeaders.forEach((name, values) -> {
                 if (!HOP_BY_HOP.contains(name.toLowerCase(Locale.ROOT))) {
@@ -50,12 +51,15 @@ public class InstanceProxy {
             });
         }
 
+        // 요청에 전달할 값이 있는지 확인
+        // 있다면 바이트 배열로 변환 후 전달
         if (body != null && body.length > 0) {
             builder.method(method, HttpRequest.BodyPublishers.ofByteArray(body));
         } else {
             builder.method(method, HttpRequest.BodyPublishers.noBody());
         }
-
+    
+        // 메소드 전달
         try {
             HttpResponse<byte[]> resp = client.send(builder.build(), HttpResponse.BodyHandlers.ofByteArray());
 
@@ -65,7 +69,7 @@ public class InstanceProxy {
                     continue; // 컨테이너가 다시 계산/관리하는 헤더는 넘기지 않는다
                 }
                 for (String v : e.getValue()) {
-                    outHeaders.add(e.getKey(), v); // Set-Cookie/Location 등 그대로 전달
+                    outHeaders.add(e.getKey(), v); // Set-Cookie/Location 등 요청을 보낸 클라이언트에게 전달
                 }
             }
             return new ResponseEntity<>(resp.body(), outHeaders, resp.statusCode());
