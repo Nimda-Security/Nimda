@@ -108,8 +108,16 @@ ctf:
   instance:
     base-domain: ${CTF_INSTANCE_BASE_DOMAIN:}
     subdomain-prefix: ${CTF_INSTANCE_SUBDOMAIN_PREFIX:inst-}
-    # userId:challengeId -> requestId 매핑 보관 시간. todo 미구현
-    mapping-ttl: ${CTF_INSTANCE_MAPPING_TTL:30m}
+  # Redis 키 보관 시간 (CtfTtlProperties). 단위 예: 30s, 10m, 1h. result <= owner, mapping 을 지킬 것.
+  ttl:
+    # 조율자 결과(ctf:result:{uuid})
+    result: ${CTF_TTL_RESULT:10m}
+    # uuid -> {userId, challengeCode} 요청 매핑
+    owner: ${CTF_TTL_OWNER:30m}
+    # 인스턴스 상태(ctf:instance:status{uuid})
+    status: ${CTF_TTL_STATUS:10m}
+    # userId:challengeId -> requestId 매핑. todo 미구현
+    mapping: ${CTF_TTL_MAPPING:30m}
 
 # 첨부파일 로컬 저장 (cite attachment) - S3 연결이 안되면 로컬 디스크에 저장됩니다.
 nimda:
