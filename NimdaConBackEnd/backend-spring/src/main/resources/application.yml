@@ -85,6 +85,37 @@ server:
   # 기본값: 8080 (nginx가 프록시하므로 내부 포트 사용)
   port: ${SERVER_PORT:8080}
 
+# Actuator (헬스체크 전용)
+#
+# 보안 설계:
+# - management.server.port 를 애플리케이션 포트와 분리한다. nginx 는 8080 만
+#   프록시하므로 /actuator 경로가 외부 인터넷에 노출되지 않는다.
+# - health 엔드포인트만 노출하고 show-details: never 로 내부 구성요소 상태를
+#   숨긴다. (DB 종류·버전·연결 정보가 응답에 담기지 않는다)
+management:
+  server:
+    port: ${MANAGEMENT_SERVER_PORT:9090}
+  endpoints:
+    web:
+      exposure:
+        include: health
+  endpoint:
+    health:
+      show-details: never
+      show-components: never
+      probes:
+        enabled: true
+      group:
+        # readiness = 트래픽을 받을 준비가 됐는가.
+        # DB 는 포함한다(없으면 대부분의 API 가 실패).
+        # Redis 는 의도적으로 제외한다: 메일 인증코드·채점 큐 용도이므로
+        # Redis 장애가 무중단 배포 자체를 막아서는 안 된다.
+        # (전체 상태는 /actuator/health 에서 여전히 확인 가능)
+        readiness:
+          include: readinessState,db
+        liveness:
+          include: livenessState
+
 # JWT 설정
 jwt:
   header: Authorization # JWT Token을 Request Header에서 탐색할 때 사용할 헤더 이름 

@@ -41,6 +41,14 @@
             <artifactId>spring-boot-starter-security</artifactId>
         </dependency>
 
+        <!-- Spring Boot Actuator: 컨테이너/배포 헬스체크용 -->
+        <!-- management.endpoints.web.exposure.include 로 health 만 노출하고,
+             별도 관리 포트(management.server.port)에 바인딩해 외부 노출을 막는다. -->
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-actuator</artifactId>
+        </dependency>
+
         <dependency>
             <groupId>org.springframework.boot</groupId>
             <artifactId>spring-boot-starter-mail</artifactId>

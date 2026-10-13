@@ -54,10 +54,15 @@ services:
     # 내부 컨테이너만 접근 가능하게 설정
     ports:
       - "127.0.0.1:8081:8080"
+      # 관리 포트(actuator health). 127.0.0.1 바인딩이라 외부에서 접근 불가하고,
+      # nginx 는 8080 만 프록시하므로 /actuator 가 공개되지 않는다.
+      - "127.0.0.1:9091:9090"
     networks:
       - nimda-network
     healthcheck:
-      test: [ "CMD", "curl", "http://localhost:8080/error" ]
+      # curl 에 -f 를 붙여야 HTTP 5xx 를 실패로 취급한다.
+      # (-f 없이는 500 응답에도 exit 0 이라 헬스체크가 통과해버린다)
+      test: [ "CMD", "curl", "-f", "http://localhost:9090/actuator/health/readiness" ]
       interval: 10s
       timeout: 5s
       retries: 3
@@ -93,13 +98,16 @@ services:
       - nimda-network
     ports:
       - "127.0.0.1:8082:8080"
+      # 관리 포트(actuator health)
+      - "127.0.0.1:9092:9090"
     depends_on:
       mysql:
         condition: service_healthy
       redis:
         condition: service_healthy
     healthcheck:
-      test: [ "CMD", "curl", "http://localhost:8080/error" ]
+      # curl 에 -f 를 붙여야 HTTP 5xx 를 실패로 취급한다.
+      test: [ "CMD", "curl", "-f", "http://localhost:9090/actuator/health/readiness" ]
       interval: 10s
       timeout: 5s
       retries: 3
