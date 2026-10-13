@@ -93,3 +93,10 @@ load-tests/results/
 # Docker volumes
 mysql_data/
 replacements.txt
+
+# Vendored Maven distribution / build logs
+# mvnw 는 .mvn/wrapper/maven-wrapper.properties 의 distributionUrl 에서
+# 배포본을 자체적으로 내려받으므로 저장소에 커밋할 필요가 없다.
+apache-maven-*/
+maven_output.txt
+*/maven_output.txt
