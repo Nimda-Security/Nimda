@@ -1,0 +1,515 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1320" height="1884" viewBox="0 0 1320 1884" role="img" aria-labelledby="t d">
+<title id="t">NIMDA Backend Modules</title>
+<desc id="d">Spring Boot 백엔드 — 요청 처리 순서, 커뮤니티·대회 도메인 모듈별 기능과 연동, 공통 인프라와 저장소</desc>
+<defs><marker id="ah" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" markerUnits="userSpaceOnUse" orient="auto-start-reverse"><path d="M0,1 L9,5 L0,9 z" fill="#9a9a9a"/></marker></defs>
+<rect width="1320" height="1884" rx="14" fill="#161616"/>
+<text x="32.0" y="46.0" font-family="Pretendard, 'Apple SD Gothic Neo', 'Noto Sans KR', 'Malgun Gothic', -apple-system, 'Segoe UI', sans-serif" font-size="22" font-weight="800" fill="#f0f0f0" text-anchor="start">NIMDA Backend · 모듈 / 기능</text>
+<text x="32.0" y="70.0" font-family="Pretendard, 'Apple SD Gothic Neo', 'Noto Sans KR', 'Malgun Gothic', -apple-system, 'Segoe UI', sans-serif" font-size="12.5" font-weight="400" fill="#a3a3a3" text-anchor="start">단일 Spring Boot 애플리케이션 — com.nimda.cite · judgeServer · redis 패키지를 함께 스캔 · 엔드포인트 138개</text>
+<rect x="28.0" y="96.0" width="1264.0" height="128.0" rx="10" fill="#1b1b1b" stroke="#333" stroke-width="1"/>
+<text x="44.0" y="122.0" font-family="Pretendard, 'Apple SD Gothic Neo', 'Noto Sans KR', 'Malgun Gothic', -apple-system, 'Segoe UI', sans-serif" font-size="13" font-weight="700" fill="#f0f0f0" text-anchor="start">요청 처리 순서 — 인증이 필요한 API 기준</text>
+<rect x="44.0" y="142.0" width="122.7" height="58.0" rx="7" fill="#222" stroke="#3c3c3c" stroke-width="1.1"/>
+<text x="53.0" y="160.0" font-family="Pretendard, 'Apple SD Gothic Neo', 'Noto Sans KR', 'Malgun Gothic', -apple-system, 'Segoe UI', sans-serif" font-size="10" font-weight="700" fill="#727272" text-anchor="start">1</text>
+<text x="53.0" y="178.0" font-family="Pretendard, 'Apple SD Gothic Neo', 'Noto Sans KR', 'Malgun Gothic', -apple-system, 'Segoe UI', sans-serif" font-size="11.5" font-weight="700" fill="#f0f0f0" text-anchor="start">Nginx</text>
+<text x="53.0" y="193.0" font-family="Pretendard, 'Apple SD Gothic Neo', 'Noto Sans KR', 'Malgun Gothic', -apple-system, 'Segoe UI', sans-serif" font-size="10" font-weight="400" fill="#a3a3a3" text-anchor="start">TLS · rate limit</text>
+<path d="M 168.7 171.0 L 180.7 171.0" fill="none" stroke="#7c7c7c" stroke-width="1.3" stroke-linejoin="round" marker-end="url(#ah)"/>
+<rect x="182.7" y="142.0" width="122.7" height="58.0" rx="7" fill="#222" stroke="#3c3c3c" stroke-width="1.1"/>
+<text x="191.7" y="160.0" font-family="Pretendard, 'Apple SD Gothic Neo', 'Noto Sans KR', 'Malgun Gothic', -apple-system, 'Segoe UI', sans-serif" font-size="10" font-weight="700" fill="#727272" text-anchor="start">2</text>
+<text x="191.7" y="178.0" font-family="Pretendard, 'Apple SD Gothic Neo', 'Noto Sans KR', 'Malgun Gothic', -apple-system, 'Segoe UI', sans-serif" font-size="11.5" font-weight="700" fill="#f0f0f0" text-anchor="start">CorsFilter</text>
+<text x="191.7" y="193.0" font-family="Pretendard, 'Apple SD Gothic Neo', 'Noto Sans KR', 'Malgun Gothic', -apple-system, 'Segoe UI', sans-serif" font-size="10" font-weight="400" fill="#a3a3a3" text-anchor="start">허용 Origin</text>
+<path d="M 307.3 171.0 L 319.3 171.0" fill="none" stroke="#7c7c7c" stroke-width="1.3" stroke-linejoin="round" marker-end="url(#ah)"/>
+<rect x="321.3" y="142.0" width="122.7" height="58.0" rx="7" fill="#26181c" stroke="#e0607a" stroke-width="1.1"/>
+<text x="330.3" y="160.0" font-family="Pretendard, 'Apple SD Gothic Neo', 'Noto Sans KR', 'Malgun Gothic', -apple-system, 'Segoe UI', sans-serif" font-size="10" font-weight="700" fill="#727272" text-anchor="start">3</text>
+<text x="330.3" y="178.0" font-family="Pretendard, 'Apple SD Gothic Neo', 'Noto Sans KR', 'Malgun Gothic', -apple-system, 'Segoe UI', sans-serif" font-size="11.5" font-weight="700" fill="#f0f0f0" text-anchor="start">JwtAuthFilter</text>
+<text x="330.3" y="193.0" font-family="Pretendard, 'Apple SD Gothic Neo', 'Noto Sans KR', 'Malgun Gothic', -apple-system, 'Segoe UI', sans-serif" font-size="10" font-weight="400" fill="#a3a3a3" text-anchor="start">쿠키 → 유저</text>
+<path d="M 446.0 171.0 L 458.0 171.0" fill="none" stroke="#7c7c7c" stroke-width="1.3" stroke-linejoin="round" marker-end="url(#ah)"/>
+<rect x="460.0" y="142.0" width="122.7" height="58.0" rx="7" fill="#26181c" stroke="#e0607a" stroke-width="1.1"/>
+<text x="469.0" y="160.0" font-family="Pretendard, 'Apple SD Gothic Neo', 'Noto Sans KR', 'Malgun Gothic', -apple-system, 'Segoe UI', sans-serif" font-size="10" font-weight="700" fill="#727272" text-anchor="start">4</text>
+<text x="469.0" y="178.0" font-family="Pretendard, 'Apple SD Gothic Neo', 'Noto Sans KR', 'Malgun Gothic', -apple-system, 'Segoe UI', sans-serif" font-size="11.5" font-weight="700" fill="#f0f0f0" text-anchor="start">AuthzFilter</text>
+<text x="469.0" y="193.0" font-family="Pretendard, 'Apple SD Gothic Neo', 'Noto Sans KR', 'Malgun Gothic', -apple-system, 'Segoe UI', sans-serif" font-size="10" font-weight="400" fill="#a3a3a3" text-anchor="start">URL 규칙 · ROLE</text>
+<path d="M 584.7 171.0 L 596.7 171.0" fill="none" stroke="#7c7c7c" stroke-width="1.3" stroke-linejoin="round" marker-end="url(#ah)"/>
+<rect x="598.7" y="142.0" width="122.7" height="58.0" rx="7" fill="#222" stroke="#3c3c3c" stroke-width="1.1"/>
+<text x="607.7" y="160.0" font-family="Pretendard, 'Apple SD Gothic Neo', 'Noto Sans KR', 'Malgun Gothic', -apple-system, 'Segoe UI', sans-serif" font-size="10" font-weight="700" fill="#727272" text-anchor="start">5</text>
+<text x="607.7" y="178.0" font-family="Pretendard, 'Apple SD Gothic Neo', 'Noto Sans KR', 'Malgun Gothic', -apple-system, 'Segoe UI', sans-serif" font-size="11.5" font-weight="700" fill="#f0f0f0" text-anchor="start">DispatcherServlet</text>
+<text x="607.7" y="193.0" font-family="Pretendard, 'Apple SD Gothic Neo', 'Noto Sans KR', 'Malgun Gothic', -apple-system, 'Segoe UI', sans-serif" font-size="10" font-weight="400" fill="#a3a3a3" text-anchor="start">핸들러 매핑</text>
+<path d="M 723.3 171.0 L 735.3 171.0" fill="none" stroke="#7c7c7c" stroke-width="1.3" stroke-linejoin="round" marker-end="url(#ah)"/>
+<rect x="737.3" y="142.0" width="122.7" height="58.0" rx="7" fill="#222" stroke="#3c3c3c" stroke-width="1.1"/>
+<text x="746.3" y="160.0" font-family="Pretendard, 'Apple SD Gothic Neo', 'Noto Sans KR', 'Malgun Gothic', -apple-system, 'Segoe UI', sans-serif" font-size="10" font-weight="700" fill="#727272" text-anchor="start">6</text>
+<text x="746.3" y="178.0" font-family="Pretendard, 'Apple SD Gothic Neo', 'Noto Sans KR', 'Malgun Gothic', -apple-system, 'Segoe UI', sans-serif" font-size="11.5" font-weight="700" fill="#f0f0f0" text-anchor="start">@RestController</text>
+<text x="746.3" y="193.0" font-family="Pretendard, 'Apple SD Gothic Neo', 'Noto Sans KR', 'Malgun Gothic', -apple-system, 'Segoe UI', sans-serif" font-size="10" font-weight="400" fill="#a3a3a3" text-anchor="start">24개 · ApiResponse</text>
+<path d="M 862.0 171.0 L 874.0 171.0" fill="none" stroke="#7c7c7c" stroke-width="1.3" stroke-linejoin="round" marker-end="url(#ah)"/>
+<rect x="876.0" y="142.0" width="122.7" height="58.0" rx="7" fill="#222" stroke="#3c3c3c" stroke-width="1.1"/>
+<text x="885.0" y="160.0" font-family="Pretendard, 'Apple SD Gothic Neo', 'Noto Sans KR', 'Malgun Gothic', -apple-system, 'Segoe UI', sans-serif" font-size="10" font-weight="700" fill="#727272" text-anchor="start">7</text>
+<text x="885.0" y="178.0" font-family="Pretendard, 'Apple SD Gothic Neo', 'Noto Sans KR', 'Malgun Gothic', -apple-system, 'Segoe UI', sans-serif" font-size="11.5" font-weight="700" fill="#f0f0f0" text-anchor="start">@Service</text>
+<text x="885.0" y="193.0" font-family="Pretendard, 'Apple SD Gothic Neo', 'Noto Sans KR', 'Malgun Gothic', -apple-system, 'Segoe UI', sans-serif" font-size="10" font-weight="400" fill="#a3a3a3" text-anchor="start">@Transactional</text>
+<path d="M 1000.7 171.0 L 1012.7 171.0" fill="none" stroke="#7c7c7c" stroke-width="1.3" stroke-linejoin="round" marker-end="url(#ah)"/>
+<rect x="1014.7" y="142.0" width="122.7" height="58.0" rx="7" fill="#222" stroke="#3c3c3c" stroke-width="1.1"/>
+<text x="1023.7" y="160.0" font-family="Pretendard, 'Apple SD Gothic Neo', 'Noto Sans KR', 'Malgun Gothic', -apple-system, 'Segoe UI', sans-serif" font-size="10" font-weight="700" fill="#727272" text-anchor="start">8</text>
+<text x="1023.7" y="178.0" font-family="Pretendard, 'Apple SD Gothic Neo', 'Noto Sans KR', 'Malgun Gothic', -apple-system, 'Segoe UI', sans-serif" font-size="11.5" font-weight="700" fill="#f0f0f0" text-anchor="start">JpaRepository</text>
+<text x="1023.7" y="193.0" font-family="Pretendard, 'Apple SD Gothic Neo', 'Noto Sans KR', 'Malgun Gothic', -apple-system, 'Segoe UI', sans-serif" font-size="10" font-weight="400" fill="#a3a3a3" text-anchor="start">Hibernate · Hikari</text>
+<path d="M 1139.3 171.0 L 1151.3 171.0" fill="none" stroke="#7c7c7c" stroke-width="1.3" stroke-linejoin="round" marker-end="url(#ah)"/>
+<rect x="1153.3" y="142.0" width="122.7" height="58.0" rx="7" fill="#222" stroke="#3c3c3c" stroke-width="1.1"/>
+<text x="1162.3" y="160.0" font-family="Pretendard, 'Apple SD Gothic Neo', 'Noto Sans KR', 'Malgun Gothic', -apple-system, 'Segoe UI', sans-serif" font-size="10" font-weight="700" fill="#727272" text-anchor="start">9</text>
+<text x="1162.3" y="178.0" font-family="Pretendard, 'Apple SD Gothic Neo', 'Noto Sans KR', 'Malgun Gothic', -apple-system, 'Segoe UI', sans-serif" font-size="11.5" font-weight="700" fill="#f0f0f0" text-anchor="start">MySQL 8.0</text>
+<text x="1162.3" y="193.0" font-family="Pretendard, 'Apple SD Gothic Neo', 'Noto Sans KR', 'Malgun Gothic', -apple-system, 'Segoe UI', sans-serif" font-size="10" font-weight="400" fill="#a3a3a3" text-anchor="start">Flyway 스키마</text>
+<rect x="28.0" y="248.0" width="1022.0" height="1486.0" rx="10" fill="none" stroke="#3b82f6" stroke-width="2"/>
+<text x="42.0" y="268.0" font-family="Pretendard, 'Apple SD Gothic Neo', 'Noto Sans KR', 'Malgun Gothic', -apple-system, 'Segoe UI', sans-serif" font-size="11.5" font-weight="600" fill="#93bbff" text-anchor="start">nimda-backend · Spring Boot 3.2 · Java 17</text>
+<g transform="translate(1024.0 256.0) scale(1.125)">
+<rect width="16" height="16" rx="3.5" fill="#6DB33F"/>
+<path d="M12.6 3.2 C 6 3 2.8 7 3.6 12.3 C 9.5 12.8 13.2 9 12.6 3.2 Z" fill="#fff"/><path d="M4.4 11.6 C 7 9.6 9 7.4 10.6 5" stroke="#6DB33F" stroke-width="1.2" fill="none"/>
+</g>
+<rect x="40.0" y="278.0" width="724.0" height="1116.0" rx="10" fill="none" stroke="#444" stroke-width="1.2"/>
+<text x="54.0" y="298.0" font-family="Pretendard, 'Apple SD Gothic Neo', 'Noto Sans KR', 'Malgun Gothic', -apple-system, 'Segoe UI', sans-serif" font-size="11.5" font-weight="600" fill="#a3a3a3" text-anchor="start">com.nimda.cite — 커뮤니티 · 운영</text>
+<rect x="44.0" y="312.0" width="230.7" height="362.0" rx="8" fill="#202020" stroke="#383838" stroke-width="1.2"/>
+<text x="58.0" y="339.5" font-family="Pretendard, 'Apple SD Gothic Neo', 'Noto Sans KR', 'Malgun Gothic', -apple-system, 'Segoe UI', sans-serif" font-size="14" font-weight="700" fill="#f0f0f0" text-anchor="start">인증 · 회원</text>
+<rect x="211.5" y="327.0" width="49.2" height="18.0" rx="9" fill="#2b2b2b" stroke="#444" stroke-width="1"/>
+<text x="236.1" y="339.6" font-family="Pretendard, 'Apple SD Gothic Neo', 'Noto Sans KR', 'Malgun Gothic', -apple-system, 'Segoe UI', sans-serif" font-size="10" font-weight="600" fill="#a3a3a3" text-anchor="middle">23 API</text>
+<text x="58.0" y="357.0" font-family="'JetBrains Mono', 'SF Mono', Menlo, Consolas, monospace" font-size="10.5" font-weight="400" fill="#727272" text-anchor="start">user</text>
+<text x="58.0" y="373.0" font-family="'JetBrains Mono', 'SF Mono', Menlo, Consolas, monospace" font-size="10.5" font-weight="400" fill="#a3a3a3" text-anchor="start">/api/auth · /api/users</text>
+<text x="58.0" y="389.0" font-family="'JetBrains Mono', 'SF Mono', Menlo, Consolas, monospace" font-size="10.5" font-weight="400" fill="#a3a3a3" text-anchor="start">/api/admin/users</text>
+<text x="58.0" y="405.0" font-family="'JetBrains Mono', 'SF Mono', Menlo, Consolas, monospace" font-size="10.5" font-weight="400" fill="#a3a3a3" text-anchor="start">/api/cite/passwordChange</text>
+<text x="58.0" y="427.0" font-family="Pretendard, 'Apple SD Gothic Neo', 'Noto Sans KR', 'Malgun Gothic', -apple-system, 'Segoe UI', sans-serif" font-size="10" font-weight="600" fill="#727272" text-anchor="start" letter-spacing="0.6">기능</text>
+<rect x="58.0" y="432.0" width="98.0" height="20.0" rx="5" fill="#191919" stroke="#4a4a4a" stroke-width="1"/>
+<text x="107.0" y="446.0" font-family="Pretendard, 'Apple SD Gothic Neo', 'Noto Sans KR', 'Malgun Gothic', -apple-system, 'Segoe UI', sans-serif" font-size="11" font-weight="500" fill="#d4d4d4" text-anchor="middle">로그인 · 로그아웃</text>
+<rect x="58.0" y="458.0" width="101.2" height="20.0" rx="5" fill="#191919" stroke="#4a4a4a" stroke-width="1"/>
+<text x="108.6" y="472.0" font-family="Pretendard, 'Apple SD Gothic Neo', 'Noto Sans KR', 'Malgun Gothic', -apple-system, 'Segoe UI', sans-serif" font-size="11" font-weight="500" fill="#d4d4d4" text-anchor="middle">가입 (관리자 승인)</text>
+<rect x="58.0" y="484.0" width="108.5" height="20.0" rx="5" fill="#191919" stroke="#4a4a4a" stroke-width="1"/>
+<text x="112.2" y="498.0" font-family="Pretendard, 'Apple SD Gothic Neo', 'Noto Sans KR', 'Malgun Gothic', -apple-system, 'Segoe UI', sans-serif" font-size="11" font-weight="500" fill="#d4d4d4" text-anchor="middle">마이페이지 · 프로필</text>
+<rect x="58.0" y="510.0" width="101.6" height="20.0" rx="5" fill="#191919" stroke="#4a4a4a" stroke-width="1"/>
+<text x="108.8" y="524.0" font-family="Pretendard, 'Apple SD Gothic Neo', 'Noto Sans KR', 'Malgun Gothic', -apple-system, 'Segoe UI', sans-serif" font-size="11" font-weight="500" fill="#d4d4d4" text-anchor="middle">이미지 · 장식 적용</text>
+<rect x="58.0" y="536.0" width="111.7" height="20.0" rx="5" fill="#191919" stroke="#4a4a4a" stroke-width="1"/>
+<text x="113.8" y="550.0" font-family="Pretendard, 'Apple SD Gothic Neo', 'Noto Sans KR', 'Malgun Gothic', -apple-system, 'Segoe UI', sans-serif" font-size="11" font-weight="500" fill="#d4d4d4" text-anchor="middle">비밀번호 찾기 4단계</text>
+<rect x="58.0" y="562.0" width="91.1" height="20.0" rx="5" fill="#191919" stroke="#4a4a4a" stroke-width="1"/>
+<text x="103.6" y="576.0" font-family="Pretendard, 'Apple SD Gothic Neo', 'Noto Sans KR', 'Malgun Gothic', -apple-system, 'Segoe UI', sans-serif" font-size="11" font-weight="500" fill="#d4d4d4" text-anchor="middle">승인 · 권한 부여</text>
+<text x="58.0" y="601.0" font-family="Pretendard, 'Apple SD Gothic Neo', 'Noto Sans KR', 'Malgun Gothic', -apple-system, 'Segoe UI', sans-serif" font-size="10" font-weight="600" fill="#727272" text-anchor="start" letter-spacing="0.6">연동</text>
+<rect x="58.0" y="606.0" width="59.5" height="20.0" rx="5" fill="#1d1e20" stroke="#9aa0a6" stroke-width="1"/>
+<text x="87.8" y="620.0" font-family="Pretendard, 'Apple SD Gothic Neo', 'Noto Sans KR', 'Malgun Gothic', -apple-system, 'Segoe UI', sans-serif" font-size="11" font-weight="500" fill="#9aa0a6" text-anchor="middle">JWT 쿠키</text>
+<rect x="123.5" y="606.0" width="28.1" height="20.0" rx="5" fill="#1c2410" stroke="#8fbf3a" stroke-width="1"/>
+<text x="137.6" y="620.0" font-family="Pretendard, 'Apple SD Gothic Neo', 'Noto Sans KR', 'Malgun Gothic', -apple-system, 'Segoe UI', sans-serif" font-size="11" font-weight="500" fill="#8fbf3a" text-anchor="middle">S3</text>
+<rect x="157.6" y="606.0" width="88.0" height="20.0" rx="5" fill="#2a1513" stroke="#ff6f61" stroke-width="1"/>
+<text x="201.6" y="620.0" font-family="Pretendard, 'Apple SD Gothic Neo', 'Noto Sans KR', 'Malgun Gothic', -apple-system, 'Segoe UI', sans-serif" font-size="11" font-weight="500" fill="#ff6f61" text-anchor="middle">Redis 인증코드</text>
+<rect x="58.0" y="632.0" width="35.1" height="20.0" rx="5" fill="#2a2111" stroke="#f5b54a" stroke-width="1"/>
+<text x="75.6" y="646.0" font-family="Pretendard, 'Apple SD Gothic Neo', 'Noto Sans KR', 'Malgun Gothic', -apple-system, 'Segoe UI', sans-serif" font-size="11" font-weight="500" fill="#f5b54a" text-anchor="middle">SES</text>
+<rect x="99.1" y="632.0" width="80.2" height="20.0" rx="5" fill="#1f1a2b" stroke="#c4a6ff" stroke-width="1"/>
+<text x="139.2" y="646.0" font-family="Pretendard, 'Apple SD Gothic Neo', 'Noto Sans KR', 'Malgun Gothic', -apple-system, 'Segoe UI', sans-serif" font-size="11" font-weight="500" fill="#c4a6ff" text-anchor="middle">로그인 이벤트</text>
+<rect x="286.7" y="312.0" width="230.7" height="362.0" rx="8" fill="#202020" stroke="#383838" stroke-width="1.2"/>
+<text x="300.7" y="339.5" font-family="Pretendard, 'Apple SD Gothic Neo', 'Noto Sans KR', 'Malgun Gothic', -apple-system, 'Segoe UI', sans-serif" font-size="14" font-weight="700" fill="#f0f0f0" text-anchor="start">게시판 · 카테고리</text>
+<rect x="454.1" y="327.0" width="49.2" height="18.0" rx="9" fill="#2b2b2b" stroke="#444" stroke-width="1"/>
+<text x="478.7" y="339.6" font-family="Pretendard, 'Apple SD Gothic Neo', 'Noto Sans KR', 'Malgun Gothic', -apple-system, 'Segoe UI', sans-serif" font-size="10" font-weight="600" fill="#a3a3a3" text-anchor="middle">26 API</text>
+<text x="300.7" y="357.0" font-family="'JetBrains Mono', 'SF Mono', Menlo, Consolas, monospace" font-size="10.5" font-weight="400" fill="#727272" text-anchor="start">board</text>
+<text x="300.7" y="373.0" font-family="'JetBrains Mono', 'SF Mono', Menlo, Consolas, monospace" font-size="10.5" font-weight="400" fill="#a3a3a3" text-anchor="start">/api/cite/board · /category</text>
+<text x="300.7" y="389.0" font-family="'JetBrains Mono', 'SF Mono', Menlo, Consolas, monospace" font-size="10.5" font-weight="400" fill="#a3a3a3" text-anchor="start">/api/admin/boards</text>
+<text x="300.7" y="411.0" font-family="Pretendard, 'Apple SD Gothic Neo', 'Noto Sans KR', 'Malgun Gothic', -apple-system, 'Segoe UI', sans-serif" font-size="10" font-weight="600" fill="#727272" text-anchor="start" letter-spacing="0.6">기능</text>
+<rect x="300.7" y="416.0" width="77.0" height="20.0" rx="5" fill="#191919" stroke="#4a4a4a" stroke-width="1"/>
+<text x="339.2" y="430.0" font-family="Pretendard, 'Apple SD Gothic Neo', 'Noto Sans KR', 'Malgun Gothic', -apple-system, 'Segoe UI', sans-serif" font-size="11" font-weight="500" fill="#d4d4d4" text-anchor="middle">게시글 CRUD</text>
+<rect x="383.7" y="416.0" width="98.5" height="20.0" rx="5" fill="#191919" stroke="#4a4a4a" stroke-width="1"/>
+<text x="432.9" y="430.0" font-family="Pretendard, 'Apple SD Gothic Neo', 'Noto Sans KR', 'Malgun Gothic', -apple-system, 'Segoe UI', sans-serif" font-size="11" font-weight="500" fill="#d4d4d4" text-anchor="middle">고정 · 인기 · 최근</text>
+<rect x="300.7" y="442.0" width="87.6" height="20.0" rx="5" fill="#191919" stroke="#4a4a4a" stroke-width="1"/>
+<text x="344.5" y="456.0" font-family="Pretendard, 'Apple SD Gothic Neo', 'Noto Sans KR', 'Malgun Gothic', -apple-system, 'Segoe UI', sans-serif" font-size="11" font-weight="500" fill="#d4d4d4" text-anchor="middle">카테고리 · 순서</text>
+<rect x="394.3" y="442.0" width="80.2" height="20.0" rx="5" fill="#191919" stroke="#4a4a4a" stroke-width="1"/>
+<text x="434.4" y="456.0" font-family="Pretendard, 'Apple SD Gothic Neo', 'Noto Sans KR', 'Malgun Gothic', -apple-system, 'Segoe UI', sans-serif" font-size="11" font-weight="500" fill="#d4d4d4" text-anchor="middle">상점 카테고리</text>
+<rect x="300.7" y="468.0" width="183.2" height="20.0" rx="5" fill="#191919" stroke="#4a4a4a" stroke-width="1"/>
+<text x="392.3" y="482.0" font-family="Pretendard, 'Apple SD Gothic Neo', 'Noto Sans KR', 'Malgun Gothic', -apple-system, 'Segoe UI', sans-serif" font-size="11" font-weight="500" fill="#d4d4d4" text-anchor="middle">작성 권한 ADMIN · DEV · CARTEL</text>
+<rect x="300.7" y="494.0" width="83.7" height="20.0" rx="5" fill="#191919" stroke="#4a4a4a" stroke-width="1"/>
+<text x="342.5" y="508.0" font-family="Pretendard, 'Apple SD Gothic Neo', 'Noto Sans KR', 'Malgun Gothic', -apple-system, 'Segoe UI', sans-serif" font-size="11" font-weight="500" fill="#d4d4d4" text-anchor="middle">태그 단위 숨김</text>
+<text x="300.7" y="533.0" font-family="Pretendard, 'Apple SD Gothic Neo', 'Noto Sans KR', 'Malgun Gothic', -apple-system, 'Segoe UI', sans-serif" font-size="10" font-weight="600" fill="#727272" text-anchor="start" letter-spacing="0.6">연동</text>
+<rect x="300.7" y="538.0" width="28.1" height="20.0" rx="5" fill="#1c2410" stroke="#8fbf3a" stroke-width="1"/>
+<text x="314.7" y="552.0" font-family="Pretendard, 'Apple SD Gothic Neo', 'Noto Sans KR', 'Malgun Gothic', -apple-system, 'Segoe UI', sans-serif" font-size="11" font-weight="500" fill="#8fbf3a" text-anchor="middle">S3</text>
+<rect x="334.7" y="538.0" width="97.7" height="20.0" rx="5" fill="#2b1820" stroke="#f0a3bf" stroke-width="1"/>
+<text x="383.6" y="552.0" font-family="Pretendard, 'Apple SD Gothic Neo', 'Noto Sans KR', 'Malgun Gothic', -apple-system, 'Segoe UI', sans-serif" font-size="11" font-weight="500" fill="#f0a3bf" text-anchor="middle">공지 → 전체 알림</text>
+<rect x="529.3" y="312.0" width="230.7" height="362.0" rx="8" fill="#202020" stroke="#383838" stroke-width="1.2"/>
+<text x="543.3" y="339.5" font-family="Pretendard, 'Apple SD Gothic Neo', 'Noto Sans KR', 'Malgun Gothic', -apple-system, 'Segoe UI', sans-serif" font-size="14" font-weight="700" fill="#f0f0f0" text-anchor="start">댓글</text>
+<rect x="703.2" y="327.0" width="42.8" height="18.0" rx="9" fill="#2b2b2b" stroke="#444" stroke-width="1"/>
+<text x="724.6" y="339.6" font-family="Pretendard, 'Apple SD Gothic Neo', 'Noto Sans KR', 'Malgun Gothic', -apple-system, 'Segoe UI', sans-serif" font-size="10" font-weight="600" fill="#a3a3a3" text-anchor="middle">9 API</text>
+<text x="543.3" y="357.0" font-family="'JetBrains Mono', 'SF Mono', Menlo, Consolas, monospace" font-size="10.5" font-weight="400" fill="#727272" text-anchor="start">comment</text>
+<text x="543.3" y="373.0" font-family="'JetBrains Mono', 'SF Mono', Menlo, Consolas, monospace" font-size="10.5" font-weight="400" fill="#a3a3a3" text-anchor="start">/api/board/{id}/comments</text>
+<text x="543.3" y="389.0" font-family="'JetBrains Mono', 'SF Mono', Menlo, Consolas, monospace" font-size="10.5" font-weight="400" fill="#a3a3a3" text-anchor="start">/api/comments · /api/my-page</text>
+<text x="543.3" y="411.0" font-family="Pretendard, 'Apple SD Gothic Neo', 'Noto Sans KR', 'Malgun Gothic', -apple-system, 'Segoe UI', sans-serif" font-size="10" font-weight="600" fill="#727272" text-anchor="start" letter-spacing="0.6">기능</text>
+<rect x="543.3" y="416.0" width="101.6" height="20.0" rx="5" fill="#191919" stroke="#4a4a4a" stroke-width="1"/>
+<text x="594.1" y="430.0" font-family="Pretendard, 'Apple SD Gothic Neo', 'Noto Sans KR', 'Malgun Gothic', -apple-system, 'Segoe UI', sans-serif" font-size="11" font-weight="500" fill="#d4d4d4" text-anchor="middle">댓글 · 대댓글 트리</text>
+<rect x="543.3" y="442.0" width="101.6" height="20.0" rx="5" fill="#191919" stroke="#4a4a4a" stroke-width="1"/>
+<text x="594.1" y="456.0" font-family="Pretendard, 'Apple SD Gothic Neo', 'Noto Sans KR', 'Malgun Gothic', -apple-system, 'Segoe UI', sans-serif" font-size="11" font-weight="500" fill="#d4d4d4" text-anchor="middle">수정 · 소프트 삭제</text>
+<rect x="650.9" y="442.0" width="80.7" height="20.0" rx="5" fill="#191919" stroke="#4a4a4a" stroke-width="1"/>
+<text x="691.2" y="456.0" font-family="Pretendard, 'Apple SD Gothic Neo', 'Noto Sans KR', 'Malgun Gothic', -apple-system, 'Segoe UI', sans-serif" font-size="11" font-weight="500" fill="#d4d4d4" text-anchor="middle">숨김 (ADMIN)</text>
+<rect x="543.3" y="468.0" width="73.3" height="20.0" rx="5" fill="#191919" stroke="#4a4a4a" stroke-width="1"/>
+<text x="580.0" y="482.0" font-family="Pretendard, 'Apple SD Gothic Neo', 'Noto Sans KR', 'Malgun Gothic', -apple-system, 'Segoe UI', sans-serif" font-size="11" font-weight="500" fill="#d4d4d4" text-anchor="middle">내 댓글 관리</text>
+<text x="543.3" y="507.0" font-family="Pretendard, 'Apple SD Gothic Neo', 'Noto Sans KR', 'Malgun Gothic', -apple-system, 'Segoe UI', sans-serif" font-size="10" font-weight="600" fill="#727272" text-anchor="start" letter-spacing="0.6">연동</text>
+<rect x="543.3" y="512.0" width="69.8" height="20.0" rx="5" fill="#1f1a2b" stroke="#c4a6ff" stroke-width="1"/>
+<text x="578.2" y="526.0" font-family="Pretendard, 'Apple SD Gothic Neo', 'Noto Sans KR', 'Malgun Gothic', -apple-system, 'Segoe UI', sans-serif" font-size="11" font-weight="500" fill="#c4a6ff" text-anchor="middle">댓글 이벤트</text>
+<rect x="619.1" y="512.0" width="28.1" height="20.0" rx="5" fill="#1c2410" stroke="#8fbf3a" stroke-width="1"/>
+<text x="633.1" y="526.0" font-family="Pretendard, 'Apple SD Gothic Neo', 'Noto Sans KR', 'Malgun Gothic', -apple-system, 'Segoe UI', sans-serif" font-size="11" font-weight="500" fill="#8fbf3a" text-anchor="middle">S3</text>
+<rect x="44.0" y="686.0" width="230.7" height="242.0" rx="8" fill="#202020" stroke="#383838" stroke-width="1.2"/>
+<text x="58.0" y="713.5" font-family="Pretendard, 'Apple SD Gothic Neo', 'Noto Sans KR', 'Malgun Gothic', -apple-system, 'Segoe UI', sans-serif" font-size="14" font-weight="700" fill="#f0f0f0" text-anchor="start">좋아요</text>
+<rect x="217.9" y="701.0" width="42.8" height="18.0" rx="9" fill="#2b2b2b" stroke="#444" stroke-width="1"/>
+<text x="239.3" y="713.6" font-family="Pretendard, 'Apple SD Gothic Neo', 'Noto Sans KR', 'Malgun Gothic', -apple-system, 'Segoe UI', sans-serif" font-size="10" font-weight="600" fill="#a3a3a3" text-anchor="middle">9 API</text>
+<text x="58.0" y="731.0" font-family="'JetBrains Mono', 'SF Mono', Menlo, Consolas, monospace" font-size="10.5" font-weight="400" fill="#727272" text-anchor="start">like</text>
+<text x="58.0" y="747.0" font-family="'JetBrains Mono', 'SF Mono', Menlo, Consolas, monospace" font-size="10.5" font-weight="400" fill="#a3a3a3" text-anchor="start">/api/like/board · /comment</text>
+<text x="58.0" y="769.0" font-family="Pretendard, 'Apple SD Gothic Neo', 'Noto Sans KR', 'Malgun Gothic', -apple-system, 'Segoe UI', sans-serif" font-size="10" font-weight="600" fill="#727272" text-anchor="start" letter-spacing="0.6">기능</text>
+<rect x="58.0" y="774.0" width="101.6" height="20.0" rx="5" fill="#191919" stroke="#4a4a4a" stroke-width="1"/>
+<text x="108.8" y="788.0" font-family="Pretendard, 'Apple SD Gothic Neo', 'Noto Sans KR', 'Malgun Gothic', -apple-system, 'Segoe UI', sans-serif" font-size="11" font-weight="500" fill="#d4d4d4" text-anchor="middle">게시글 · 댓글 토글</text>
+<rect x="165.6" y="774.0" width="91.1" height="20.0" rx="5" fill="#191919" stroke="#4a4a4a" stroke-width="1"/>
+<text x="211.1" y="788.0" font-family="Pretendard, 'Apple SD Gothic Neo', 'Noto Sans KR', 'Malgun Gothic', -apple-system, 'Segoe UI', sans-serif" font-size="11" font-weight="500" fill="#d4d4d4" text-anchor="middle">좋아요 수 · 여부</text>
+<rect x="58.0" y="800.0" width="101.6" height="20.0" rx="5" fill="#191919" stroke="#4a4a4a" stroke-width="1"/>
+<text x="108.8" y="814.0" font-family="Pretendard, 'Apple SD Gothic Neo', 'Noto Sans KR', 'Malgun Gothic', -apple-system, 'Segoe UI', sans-serif" font-size="11" font-weight="500" fill="#d4d4d4" text-anchor="middle">받은 · 누른 좋아요</text>
+<text x="58.0" y="839.0" font-family="Pretendard, 'Apple SD Gothic Neo', 'Noto Sans KR', 'Malgun Gothic', -apple-system, 'Segoe UI', sans-serif" font-size="10" font-weight="600" fill="#727272" text-anchor="start" letter-spacing="0.6">연동</text>
+<rect x="58.0" y="844.0" width="80.2" height="20.0" rx="5" fill="#1f1a2b" stroke="#c4a6ff" stroke-width="1"/>
+<text x="98.1" y="858.0" font-family="Pretendard, 'Apple SD Gothic Neo', 'Noto Sans KR', 'Malgun Gothic', -apple-system, 'Segoe UI', sans-serif" font-size="11" font-weight="500" fill="#c4a6ff" text-anchor="middle">좋아요 이벤트</text>
+<rect x="144.2" y="844.0" width="34.9" height="20.0" rx="5" fill="#2b1820" stroke="#f0a3bf" stroke-width="1"/>
+<text x="161.7" y="858.0" font-family="Pretendard, 'Apple SD Gothic Neo', 'Noto Sans KR', 'Malgun Gothic', -apple-system, 'Segoe UI', sans-serif" font-size="11" font-weight="500" fill="#f0a3bf" text-anchor="middle">알림</text>
+<rect x="286.7" y="686.0" width="230.7" height="242.0" rx="8" fill="#202020" stroke="#383838" stroke-width="1.2"/>
+<text x="300.7" y="713.5" font-family="Pretendard, 'Apple SD Gothic Neo', 'Noto Sans KR', 'Malgun Gothic', -apple-system, 'Segoe UI', sans-serif" font-size="14" font-weight="700" fill="#f0f0f0" text-anchor="start">첨부파일</text>
+<rect x="460.5" y="701.0" width="42.8" height="18.0" rx="9" fill="#2b2b2b" stroke="#444" stroke-width="1"/>
+<text x="481.9" y="713.6" font-family="Pretendard, 'Apple SD Gothic Neo', 'Noto Sans KR', 'Malgun Gothic', -apple-system, 'Segoe UI', sans-serif" font-size="10" font-weight="600" fill="#a3a3a3" text-anchor="middle">8 API</text>
+<text x="300.7" y="731.0" font-family="'JetBrains Mono', 'SF Mono', Menlo, Consolas, monospace" font-size="10.5" font-weight="400" fill="#727272" text-anchor="start">attachment</text>
+<text x="300.7" y="747.0" font-family="'JetBrains Mono', 'SF Mono', Menlo, Consolas, monospace" font-size="10.5" font-weight="400" fill="#a3a3a3" text-anchor="start">/api/cite/attachments</text>
+<text x="300.7" y="769.0" font-family="Pretendard, 'Apple SD Gothic Neo', 'Noto Sans KR', 'Malgun Gothic', -apple-system, 'Segoe UI', sans-serif" font-size="10" font-weight="600" fill="#727272" text-anchor="start" letter-spacing="0.6">기능</text>
+<rect x="300.7" y="774.0" width="101.8" height="20.0" rx="5" fill="#191919" stroke="#4a4a4a" stroke-width="1"/>
+<text x="351.6" y="788.0" font-family="Pretendard, 'Apple SD Gothic Neo', 'Noto Sans KR', 'Malgun Gothic', -apple-system, 'Segoe UI', sans-serif" font-size="11" font-weight="500" fill="#d4d4d4" text-anchor="middle">Presigned 업로드</text>
+<rect x="408.4" y="774.0" width="91.1" height="20.0" rx="5" fill="#191919" stroke="#4a4a4a" stroke-width="1"/>
+<text x="454.0" y="788.0" font-family="Pretendard, 'Apple SD Gothic Neo', 'Noto Sans KR', 'Malgun Gothic', -apple-system, 'Segoe UI', sans-serif" font-size="11" font-weight="500" fill="#d4d4d4" text-anchor="middle">메타 등록 · 조회</text>
+<rect x="300.7" y="800.0" width="80.4" height="20.0" rx="5" fill="#191919" stroke="#4a4a4a" stroke-width="1"/>
+<text x="340.9" y="814.0" font-family="Pretendard, 'Apple SD Gothic Neo', 'Noto Sans KR', 'Malgun Gothic', -apple-system, 'Segoe UI', sans-serif" font-size="11" font-weight="500" fill="#d4d4d4" text-anchor="middle">다운로드 302</text>
+<rect x="387.1" y="800.0" width="59.3" height="20.0" rx="5" fill="#191919" stroke="#4a4a4a" stroke-width="1"/>
+<text x="416.8" y="814.0" font-family="Pretendard, 'Apple SD Gothic Neo', 'Noto Sans KR', 'Malgun Gothic', -apple-system, 'Segoe UI', sans-serif" font-size="11" font-weight="500" fill="#d4d4d4" text-anchor="middle">일괄 삭제</text>
+<rect x="300.7" y="826.0" width="101.7" height="20.0" rx="5" fill="#191919" stroke="#4a4a4a" stroke-width="1"/>
+<text x="351.5" y="840.0" font-family="Pretendard, 'Apple SD Gothic Neo', 'Noto Sans KR', 'Malgun Gothic', -apple-system, 'Segoe UI', sans-serif" font-size="11" font-weight="500" fill="#d4d4d4" text-anchor="middle">레거시 multipart</text>
+<text x="300.7" y="865.0" font-family="Pretendard, 'Apple SD Gothic Neo', 'Noto Sans KR', 'Malgun Gothic', -apple-system, 'Segoe UI', sans-serif" font-size="10" font-weight="600" fill="#727272" text-anchor="start" letter-spacing="0.6">연동</text>
+<rect x="300.7" y="870.0" width="90.3" height="20.0" rx="5" fill="#1c2410" stroke="#8fbf3a" stroke-width="1"/>
+<text x="345.8" y="884.0" font-family="Pretendard, 'Apple SD Gothic Neo', 'Noto Sans KR', 'Malgun Gothic', -apple-system, 'Segoe UI', sans-serif" font-size="11" font-weight="500" fill="#8fbf3a" text-anchor="middle">S3 · FileStore</text>
+<rect x="529.3" y="686.0" width="230.7" height="242.0" rx="8" fill="#202020" stroke="#383838" stroke-width="1.2"/>
+<text x="543.3" y="713.5" font-family="Pretendard, 'Apple SD Gothic Neo', 'Noto Sans KR', 'Malgun Gothic', -apple-system, 'Segoe UI', sans-serif" font-size="14" font-weight="700" fill="#f0f0f0" text-anchor="start">알림 · SSE</text>
+<rect x="703.2" y="701.0" width="42.8" height="18.0" rx="9" fill="#2b2b2b" stroke="#444" stroke-width="1"/>
+<text x="724.6" y="713.6" font-family="Pretendard, 'Apple SD Gothic Neo', 'Noto Sans KR', 'Malgun Gothic', -apple-system, 'Segoe UI', sans-serif" font-size="10" font-weight="600" fill="#a3a3a3" text-anchor="middle">7 API</text>
+<text x="543.3" y="731.0" font-family="'JetBrains Mono', 'SF Mono', Menlo, Consolas, monospace" font-size="10.5" font-weight="400" fill="#727272" text-anchor="start">alarm · notification</text>
+<text x="543.3" y="747.0" font-family="'JetBrains Mono', 'SF Mono', Menlo, Consolas, monospace" font-size="10.5" font-weight="400" fill="#a3a3a3" text-anchor="start">/api/alarm/subscribe</text>
+<text x="543.3" y="763.0" font-family="'JetBrains Mono', 'SF Mono', Menlo, Consolas, monospace" font-size="10.5" font-weight="400" fill="#a3a3a3" text-anchor="start">/api/notifications</text>
+<text x="543.3" y="785.0" font-family="Pretendard, 'Apple SD Gothic Neo', 'Noto Sans KR', 'Malgun Gothic', -apple-system, 'Segoe UI', sans-serif" font-size="10" font-weight="600" fill="#727272" text-anchor="start" letter-spacing="0.6">기능</text>
+<rect x="543.3" y="790.0" width="83.2" height="20.0" rx="5" fill="#191919" stroke="#4a4a4a" stroke-width="1"/>
+<text x="584.9" y="804.0" font-family="Pretendard, 'Apple SD Gothic Neo', 'Noto Sans KR', 'Malgun Gothic', -apple-system, 'Segoe UI', sans-serif" font-size="11" font-weight="500" fill="#d4d4d4" text-anchor="middle">SSE 구독 24h</text>
+<rect x="543.3" y="816.0" width="115.5" height="20.0" rx="5" fill="#191919" stroke="#4a4a4a" stroke-width="1"/>
+<text x="601.1" y="830.0" font-family="Pretendard, 'Apple SD Gothic Neo', 'Noto Sans KR', 'Malgun Gothic', -apple-system, 'Segoe UI', sans-serif" font-size="11" font-weight="500" fill="#d4d4d4" text-anchor="middle">이벤트 → 저장 · 푸시</text>
+<rect x="543.3" y="842.0" width="91.1" height="20.0" rx="5" fill="#191919" stroke="#4a4a4a" stroke-width="1"/>
+<text x="588.9" y="856.0" font-family="Pretendard, 'Apple SD Gothic Neo', 'Noto Sans KR', 'Malgun Gothic', -apple-system, 'Segoe UI', sans-serif" font-size="11" font-weight="500" fill="#d4d4d4" text-anchor="middle">읽음 · 전체 읽음</text>
+<rect x="640.4" y="842.0" width="94.5" height="20.0" rx="5" fill="#191919" stroke="#4a4a4a" stroke-width="1"/>
+<text x="687.7" y="856.0" font-family="Pretendard, 'Apple SD Gothic Neo', 'Noto Sans KR', 'Malgun Gothic', -apple-system, 'Segoe UI', sans-serif" font-size="11" font-weight="500" fill="#d4d4d4" text-anchor="middle">00:00 만료 정리</text>
+<text x="543.3" y="881.0" font-family="Pretendard, 'Apple SD Gothic Neo', 'Noto Sans KR', 'Malgun Gothic', -apple-system, 'Segoe UI', sans-serif" font-size="10" font-weight="600" fill="#727272" text-anchor="start" letter-spacing="0.6">연동</text>
+<rect x="543.3" y="886.0" width="89.6" height="20.0" rx="5" fill="#1f1a2b" stroke="#c4a6ff" stroke-width="1"/>
+<text x="588.1" y="900.0" font-family="Pretendard, 'Apple SD Gothic Neo', 'Noto Sans KR', 'Malgun Gothic', -apple-system, 'Segoe UI', sans-serif" font-size="11" font-weight="500" fill="#c4a6ff" text-anchor="middle">@Async 리스너</text>
+<rect x="638.9" y="886.0" width="35.1" height="20.0" rx="5" fill="#2b1820" stroke="#f0a3bf" stroke-width="1"/>
+<text x="656.5" y="900.0" font-family="Pretendard, 'Apple SD Gothic Neo', 'Noto Sans KR', 'Malgun Gothic', -apple-system, 'Segoe UI', sans-serif" font-size="11" font-weight="500" fill="#f0a3bf" text-anchor="middle">SSE</text>
+<rect x="44.0" y="940.0" width="230.7" height="226.0" rx="8" fill="#202020" stroke="#383838" stroke-width="1.2"/>
+<text x="58.0" y="967.5" font-family="Pretendard, 'Apple SD Gothic Neo', 'Noto Sans KR', 'Malgun Gothic', -apple-system, 'Segoe UI', sans-serif" font-size="14" font-weight="700" fill="#f0f0f0" text-anchor="start">출석</text>
+<rect x="217.9" y="955.0" width="42.8" height="18.0" rx="9" fill="#2b2b2b" stroke="#444" stroke-width="1"/>
+<text x="239.3" y="967.6" font-family="Pretendard, 'Apple SD Gothic Neo', 'Noto Sans KR', 'Malgun Gothic', -apple-system, 'Segoe UI', sans-serif" font-size="10" font-weight="600" fill="#a3a3a3" text-anchor="middle">7 API</text>
+<text x="58.0" y="985.0" font-family="'JetBrains Mono', 'SF Mono', Menlo, Consolas, monospace" font-size="10.5" font-weight="400" fill="#727272" text-anchor="start">attendance</text>
+<text x="58.0" y="1001.0" font-family="'JetBrains Mono', 'SF Mono', Menlo, Consolas, monospace" font-size="10.5" font-weight="400" fill="#a3a3a3" text-anchor="start">/api/cite/attendance</text>
+<text x="58.0" y="1023.0" font-family="Pretendard, 'Apple SD Gothic Neo', 'Noto Sans KR', 'Malgun Gothic', -apple-system, 'Segoe UI', sans-serif" font-size="10" font-weight="600" fill="#727272" text-anchor="start" letter-spacing="0.6">기능</text>
+<rect x="58.0" y="1028.0" width="59.3" height="20.0" rx="5" fill="#191919" stroke="#4a4a4a" stroke-width="1"/>
+<text x="87.7" y="1042.0" font-family="Pretendard, 'Apple SD Gothic Neo', 'Noto Sans KR', 'Malgun Gothic', -apple-system, 'Segoe UI', sans-serif" font-size="11" font-weight="500" fill="#d4d4d4" text-anchor="middle">출석 체크</text>
+<rect x="123.3" y="1028.0" width="69.8" height="20.0" rx="5" fill="#191919" stroke="#4a4a4a" stroke-width="1"/>
+<text x="158.2" y="1042.0" font-family="Pretendard, 'Apple SD Gothic Neo', 'Noto Sans KR', 'Malgun Gothic', -apple-system, 'Segoe UI', sans-serif" font-size="11" font-weight="500" fill="#d4d4d4" text-anchor="middle">오늘 출석자</text>
+<rect x="58.0" y="1054.0" width="101.9" height="20.0" rx="5" fill="#191919" stroke="#4a4a4a" stroke-width="1"/>
+<text x="108.9" y="1068.0" font-family="Pretendard, 'Apple SD Gothic Neo', 'Noto Sans KR', 'Malgun Gothic', -apple-system, 'Segoe UI', sans-serif" font-size="11" font-weight="500" fill="#d4d4d4" text-anchor="middle">연속 · 누적 TOP 5</text>
+<rect x="165.9" y="1054.0" width="59.3" height="20.0" rx="5" fill="#191919" stroke="#4a4a4a" stroke-width="1"/>
+<text x="195.5" y="1068.0" font-family="Pretendard, 'Apple SD Gothic Neo', 'Noto Sans KR', 'Malgun Gothic', -apple-system, 'Segoe UI', sans-serif" font-size="11" font-weight="500" fill="#d4d4d4" text-anchor="middle">출석 로그</text>
+<text x="58.0" y="1093.0" font-family="Pretendard, 'Apple SD Gothic Neo', 'Noto Sans KR', 'Malgun Gothic', -apple-system, 'Segoe UI', sans-serif" font-size="10" font-weight="600" fill="#727272" text-anchor="start" letter-spacing="0.6">연동</text>
+<rect x="58.0" y="1098.0" width="83.7" height="20.0" rx="5" fill="#1f1a2b" stroke="#c4a6ff" stroke-width="1"/>
+<text x="99.9" y="1112.0" font-family="Pretendard, 'Apple SD Gothic Neo', 'Noto Sans KR', 'Malgun Gothic', -apple-system, 'Segoe UI', sans-serif" font-size="11" font-weight="500" fill="#c4a6ff" text-anchor="middle">로그인 시 자동</text>
+<rect x="147.7" y="1098.0" width="28.1" height="20.0" rx="5" fill="#1c2410" stroke="#8fbf3a" stroke-width="1"/>
+<text x="161.8" y="1112.0" font-family="Pretendard, 'Apple SD Gothic Neo', 'Noto Sans KR', 'Malgun Gothic', -apple-system, 'Segoe UI', sans-serif" font-size="11" font-weight="500" fill="#8fbf3a" text-anchor="middle">S3</text>
+<rect x="286.7" y="940.0" width="230.7" height="226.0" rx="8" fill="#202020" stroke="#383838" stroke-width="1.2"/>
+<text x="300.7" y="967.5" font-family="Pretendard, 'Apple SD Gothic Neo', 'Noto Sans KR', 'Malgun Gothic', -apple-system, 'Segoe UI', sans-serif" font-size="14" font-weight="700" fill="#f0f0f0" text-anchor="start">마일리지 · 상점</text>
+<rect x="460.5" y="955.0" width="42.8" height="18.0" rx="9" fill="#2b2b2b" stroke="#444" stroke-width="1"/>
+<text x="481.9" y="967.6" font-family="Pretendard, 'Apple SD Gothic Neo', 'Noto Sans KR', 'Malgun Gothic', -apple-system, 'Segoe UI', sans-serif" font-size="10" font-weight="600" fill="#a3a3a3" text-anchor="middle">8 API</text>
+<text x="300.7" y="985.0" font-family="'JetBrains Mono', 'SF Mono', Menlo, Consolas, monospace" font-size="10.5" font-weight="400" fill="#727272" text-anchor="start">point</text>
+<text x="300.7" y="1001.0" font-family="'JetBrains Mono', 'SF Mono', Menlo, Consolas, monospace" font-size="10.5" font-weight="400" fill="#a3a3a3" text-anchor="start">/api/cite/point</text>
+<text x="300.7" y="1017.0" font-family="'JetBrains Mono', 'SF Mono', Menlo, Consolas, monospace" font-size="10.5" font-weight="400" fill="#a3a3a3" text-anchor="start">/api/cite/board/{id}/purchase</text>
+<text x="300.7" y="1039.0" font-family="Pretendard, 'Apple SD Gothic Neo', 'Noto Sans KR', 'Malgun Gothic', -apple-system, 'Segoe UI', sans-serif" font-size="10" font-weight="600" fill="#727272" text-anchor="start" letter-spacing="0.6">기능</text>
+<rect x="300.7" y="1044.0" width="66.7" height="20.0" rx="5" fill="#191919" stroke="#4a4a4a" stroke-width="1"/>
+<text x="334.0" y="1058.0" font-family="Pretendard, 'Apple SD Gothic Neo', 'Noto Sans KR', 'Malgun Gothic', -apple-system, 'Segoe UI', sans-serif" font-size="11" font-weight="500" fill="#d4d4d4" text-anchor="middle">잔액 · 내역</text>
+<rect x="373.4" y="1044.0" width="101.6" height="20.0" rx="5" fill="#191919" stroke="#4a4a4a" stroke-width="1"/>
+<text x="424.1" y="1058.0" font-family="Pretendard, 'Apple SD Gothic Neo', 'Noto Sans KR', 'Malgun Gothic', -apple-system, 'Segoe UI', sans-serif" font-size="11" font-weight="500" fill="#d4d4d4" text-anchor="middle">관리자 지급 · 일괄</text>
+<rect x="300.7" y="1070.0" width="94.2" height="20.0" rx="5" fill="#191919" stroke="#4a4a4a" stroke-width="1"/>
+<text x="347.8" y="1084.0" font-family="Pretendard, 'Apple SD Gothic Neo', 'Noto Sans KR', 'Malgun Gothic', -apple-system, 'Segoe UI', sans-serif" font-size="11" font-weight="500" fill="#d4d4d4" text-anchor="middle">상점 아이템 구매</text>
+<rect x="400.9" y="1070.0" width="83.0" height="20.0" rx="5" fill="#191919" stroke="#4a4a4a" stroke-width="1"/>
+<text x="442.3" y="1084.0" font-family="Pretendard, 'Apple SD Gothic Neo', 'Noto Sans KR', 'Malgun Gothic', -apple-system, 'Segoe UI', sans-serif" font-size="11" font-weight="500" fill="#d4d4d4" text-anchor="middle">출석 +10 자동</text>
+<text x="300.7" y="1109.0" font-family="Pretendard, 'Apple SD Gothic Neo', 'Noto Sans KR', 'Malgun Gothic', -apple-system, 'Segoe UI', sans-serif" font-size="10" font-weight="600" fill="#727272" text-anchor="start" letter-spacing="0.6">연동</text>
+<rect x="300.7" y="1114.0" width="80.2" height="20.0" rx="5" fill="#1f1a2b" stroke="#c4a6ff" stroke-width="1"/>
+<text x="340.8" y="1128.0" font-family="Pretendard, 'Apple SD Gothic Neo', 'Noto Sans KR', 'Malgun Gothic', -apple-system, 'Segoe UI', sans-serif" font-size="11" font-weight="500" fill="#c4a6ff" text-anchor="middle">로그인 이벤트</text>
+<rect x="529.3" y="940.0" width="230.7" height="226.0" rx="8" fill="#202020" stroke="#383838" stroke-width="1.2"/>
+<text x="543.3" y="967.5" font-family="Pretendard, 'Apple SD Gothic Neo', 'Noto Sans KR', 'Malgun Gothic', -apple-system, 'Segoe UI', sans-serif" font-size="14" font-weight="700" fill="#f0f0f0" text-anchor="start">프로필 장식 · 배지</text>
+<rect x="703.2" y="955.0" width="42.8" height="18.0" rx="9" fill="#2b2b2b" stroke="#444" stroke-width="1"/>
+<text x="724.6" y="967.6" font-family="Pretendard, 'Apple SD Gothic Neo', 'Noto Sans KR', 'Malgun Gothic', -apple-system, 'Segoe UI', sans-serif" font-size="10" font-weight="600" fill="#a3a3a3" text-anchor="middle">8 API</text>
+<text x="543.3" y="985.0" font-family="'JetBrains Mono', 'SF Mono', Menlo, Consolas, monospace" font-size="10.5" font-weight="400" fill="#727272" text-anchor="start">profiledecoration</text>
+<text x="543.3" y="1001.0" font-family="'JetBrains Mono', 'SF Mono', Menlo, Consolas, monospace" font-size="10.5" font-weight="400" fill="#a3a3a3" text-anchor="start">/api/cite/profile-decorations</text>
+<text x="543.3" y="1023.0" font-family="Pretendard, 'Apple SD Gothic Neo', 'Noto Sans KR', 'Malgun Gothic', -apple-system, 'Segoe UI', sans-serif" font-size="10" font-weight="600" fill="#727272" text-anchor="start" letter-spacing="0.6">기능</text>
+<rect x="543.3" y="1028.0" width="91.1" height="20.0" rx="5" fill="#191919" stroke="#4a4a4a" stroke-width="1"/>
+<text x="588.9" y="1042.0" font-family="Pretendard, 'Apple SD Gothic Neo', 'Noto Sans KR', 'Malgun Gothic', -apple-system, 'Segoe UI', sans-serif" font-size="11" font-weight="500" fill="#d4d4d4" text-anchor="middle">장식 · 배지 목록</text>
+<rect x="543.3" y="1054.0" width="112.4" height="20.0" rx="5" fill="#191919" stroke="#4a4a4a" stroke-width="1"/>
+<text x="599.6" y="1068.0" font-family="Pretendard, 'Apple SD Gothic Neo', 'Noto Sans KR', 'Malgun Gothic', -apple-system, 'Segoe UI', sans-serif" font-size="11" font-weight="500" fill="#d4d4d4" text-anchor="middle">등록 · 삭제 (ADMIN)</text>
+<rect x="543.3" y="1080.0" width="115.5" height="20.0" rx="5" fill="#191919" stroke="#4a4a4a" stroke-width="1"/>
+<text x="601.1" y="1094.0" font-family="Pretendard, 'Apple SD Gothic Neo', 'Noto Sans KR', 'Malgun Gothic', -apple-system, 'Segoe UI', sans-serif" font-size="11" font-weight="500" fill="#d4d4d4" text-anchor="middle">학번 기준 지급 · 회수</text>
+<rect x="664.9" y="1080.0" width="73.3" height="20.0" rx="5" fill="#191919" stroke="#4a4a4a" stroke-width="1"/>
+<text x="701.5" y="1094.0" font-family="Pretendard, 'Apple SD Gothic Neo', 'Noto Sans KR', 'Malgun Gothic', -apple-system, 'Segoe UI', sans-serif" font-size="11" font-weight="500" fill="#d4d4d4" text-anchor="middle">내 보유 장식</text>
+<text x="543.3" y="1119.0" font-family="Pretendard, 'Apple SD Gothic Neo', 'Noto Sans KR', 'Malgun Gothic', -apple-system, 'Segoe UI', sans-serif" font-size="10" font-weight="600" fill="#727272" text-anchor="start" letter-spacing="0.6">연동</text>
+<rect x="543.3" y="1124.0" width="87.6" height="20.0" rx="5" fill="#1c2410" stroke="#8fbf3a" stroke-width="1"/>
+<text x="587.1" y="1138.0" font-family="Pretendard, 'Apple SD Gothic Neo', 'Noto Sans KR', 'Malgun Gothic', -apple-system, 'Segoe UI', sans-serif" font-size="11" font-weight="500" fill="#8fbf3a" text-anchor="middle">S3 이미지 302</text>
+<rect x="44.0" y="1178.0" width="230.7" height="200.0" rx="8" fill="#202020" stroke="#383838" stroke-width="1.2"/>
+<text x="58.0" y="1205.5" font-family="Pretendard, 'Apple SD Gothic Neo', 'Noto Sans KR', 'Malgun Gothic', -apple-system, 'Segoe UI', sans-serif" font-size="14" font-weight="700" fill="#f0f0f0" text-anchor="start">태그</text>
+<rect x="217.9" y="1193.0" width="42.8" height="18.0" rx="9" fill="#2b2b2b" stroke="#444" stroke-width="1"/>
+<text x="239.3" y="1205.6" font-family="Pretendard, 'Apple SD Gothic Neo', 'Noto Sans KR', 'Malgun Gothic', -apple-system, 'Segoe UI', sans-serif" font-size="10" font-weight="600" fill="#a3a3a3" text-anchor="middle">5 API</text>
+<text x="58.0" y="1223.0" font-family="'JetBrains Mono', 'SF Mono', Menlo, Consolas, monospace" font-size="10.5" font-weight="400" fill="#727272" text-anchor="start">tag</text>
+<text x="58.0" y="1239.0" font-family="'JetBrains Mono', 'SF Mono', Menlo, Consolas, monospace" font-size="10.5" font-weight="400" fill="#a3a3a3" text-anchor="start">/api/cite/tag</text>
+<text x="58.0" y="1261.0" font-family="Pretendard, 'Apple SD Gothic Neo', 'Noto Sans KR', 'Malgun Gothic', -apple-system, 'Segoe UI', sans-serif" font-size="10" font-weight="600" fill="#727272" text-anchor="start" letter-spacing="0.6">기능</text>
+<rect x="58.0" y="1266.0" width="66.6" height="20.0" rx="5" fill="#191919" stroke="#4a4a4a" stroke-width="1"/>
+<text x="91.3" y="1280.0" font-family="Pretendard, 'Apple SD Gothic Neo', 'Noto Sans KR', 'Malgun Gothic', -apple-system, 'Segoe UI', sans-serif" font-size="11" font-weight="500" fill="#d4d4d4" text-anchor="middle">태그 CRUD</text>
+<rect x="130.6" y="1266.0" width="90.7" height="20.0" rx="5" fill="#191919" stroke="#4a4a4a" stroke-width="1"/>
+<text x="175.9" y="1280.0" font-family="Pretendard, 'Apple SD Gothic Neo', 'Noto Sans KR', 'Malgun Gothic', -apple-system, 'Segoe UI', sans-serif" font-size="11" font-weight="500" fill="#d4d4d4" text-anchor="middle">카테고리별 태그</text>
+<text x="58.0" y="1305.0" font-family="Pretendard, 'Apple SD Gothic Neo', 'Noto Sans KR', 'Malgun Gothic', -apple-system, 'Segoe UI', sans-serif" font-size="10" font-weight="600" fill="#727272" text-anchor="start" letter-spacing="0.6">연동</text>
+<rect x="58.0" y="1310.0" width="84.1" height="20.0" rx="5" fill="#1d1e20" stroke="#9aa0a6" stroke-width="1"/>
+<text x="100.0" y="1324.0" font-family="Pretendard, 'Apple SD Gothic Neo', 'Noto Sans KR', 'Malgun Gothic', -apple-system, 'Segoe UI', sans-serif" font-size="11" font-weight="500" fill="#9aa0a6" text-anchor="middle">변경은 ADMIN</text>
+<rect x="286.7" y="1178.0" width="230.7" height="200.0" rx="8" fill="#202020" stroke="#383838" stroke-width="1.2"/>
+<text x="300.7" y="1205.5" font-family="Pretendard, 'Apple SD Gothic Neo', 'Noto Sans KR', 'Malgun Gothic', -apple-system, 'Segoe UI', sans-serif" font-size="14" font-weight="700" fill="#f0f0f0" text-anchor="start">로그인 후처리</text>
+<text x="300.7" y="1223.0" font-family="'JetBrains Mono', 'SF Mono', Menlo, Consolas, monospace" font-size="10.5" font-weight="400" fill="#727272" text-anchor="start">EventListener</text>
+<text x="300.7" y="1239.0" font-family="Pretendard, 'Apple SD Gothic Neo', 'Noto Sans KR', 'Malgun Gothic', -apple-system, 'Segoe UI', sans-serif" font-size="11" font-weight="400" fill="#a3a3a3" text-anchor="start">AuthenticationSuccessEvent</text>
+<text x="300.7" y="1261.0" font-family="Pretendard, 'Apple SD Gothic Neo', 'Noto Sans KR', 'Malgun Gothic', -apple-system, 'Segoe UI', sans-serif" font-size="10" font-weight="600" fill="#727272" text-anchor="start" letter-spacing="0.6">기능</text>
+<rect x="300.7" y="1266.0" width="59.3" height="20.0" rx="5" fill="#191919" stroke="#4a4a4a" stroke-width="1"/>
+<text x="330.3" y="1280.0" font-family="Pretendard, 'Apple SD Gothic Neo', 'Noto Sans KR', 'Malgun Gothic', -apple-system, 'Segoe UI', sans-serif" font-size="11" font-weight="500" fill="#d4d4d4" text-anchor="middle">자동 출석</text>
+<rect x="366.0" y="1266.0" width="80.2" height="20.0" rx="5" fill="#191919" stroke="#4a4a4a" stroke-width="1"/>
+<text x="406.1" y="1280.0" font-family="Pretendard, 'Apple SD Gothic Neo', 'Noto Sans KR', 'Malgun Gothic', -apple-system, 'Segoe UI', sans-serif" font-size="11" font-weight="500" fill="#d4d4d4" text-anchor="middle">출석 마일리지</text>
+<rect x="300.7" y="1292.0" width="84.0" height="20.0" rx="5" fill="#191919" stroke="#4a4a4a" stroke-width="1"/>
+<text x="342.6" y="1306.0" font-family="Pretendard, 'Apple SD Gothic Neo', 'Noto Sans KR', 'Malgun Gothic', -apple-system, 'Segoe UI', sans-serif" font-size="11" font-weight="500" fill="#d4d4d4" text-anchor="middle">SSE 채널 구독</text>
+<text x="300.7" y="1331.0" font-family="Pretendard, 'Apple SD Gothic Neo', 'Noto Sans KR', 'Malgun Gothic', -apple-system, 'Segoe UI', sans-serif" font-size="10" font-weight="600" fill="#727272" text-anchor="start" letter-spacing="0.6">연동</text>
+<rect x="300.7" y="1336.0" width="54.7" height="20.0" rx="5" fill="#1f1a2b" stroke="#c4a6ff" stroke-width="1"/>
+<text x="328.0" y="1350.0" font-family="Pretendard, 'Apple SD Gothic Neo', 'Noto Sans KR', 'Malgun Gothic', -apple-system, 'Segoe UI', sans-serif" font-size="11" font-weight="500" fill="#c4a6ff" text-anchor="middle">@Async</text>
+<rect x="40.0" y="1416.0" width="724.0" height="302.0" rx="10" fill="none" stroke="#444" stroke-width="1.2"/>
+<text x="54.0" y="1436.0" font-family="Pretendard, 'Apple SD Gothic Neo', 'Noto Sans KR', 'Malgun Gothic', -apple-system, 'Segoe UI', sans-serif" font-size="11.5" font-weight="600" fill="#a3a3a3" text-anchor="start">judgeServer — 대회 · 채점</text>
+<rect x="44.0" y="1450.0" width="230.7" height="252.0" rx="8" fill="#202020" stroke="#383838" stroke-width="1.2"/>
+<text x="58.0" y="1477.5" font-family="Pretendard, 'Apple SD Gothic Neo', 'Noto Sans KR', 'Malgun Gothic', -apple-system, 'Segoe UI', sans-serif" font-size="14" font-weight="700" fill="#f0f0f0" text-anchor="start">대회 · 문제</text>
+<rect x="217.9" y="1465.0" width="42.8" height="18.0" rx="9" fill="#2b2b2b" stroke="#444" stroke-width="1"/>
+<text x="239.3" y="1477.6" font-family="Pretendard, 'Apple SD Gothic Neo', 'Noto Sans KR', 'Malgun Gothic', -apple-system, 'Segoe UI', sans-serif" font-size="10" font-weight="600" fill="#a3a3a3" text-anchor="middle">8 API</text>
+<text x="58.0" y="1495.0" font-family="'JetBrains Mono', 'SF Mono', Menlo, Consolas, monospace" font-size="10.5" font-weight="400" fill="#727272" text-anchor="start">problem</text>
+<text x="58.0" y="1511.0" font-family="'JetBrains Mono', 'SF Mono', Menlo, Consolas, monospace" font-size="10.5" font-weight="400" fill="#a3a3a3" text-anchor="start">/api/judge/problem</text>
+<text x="58.0" y="1533.0" font-family="Pretendard, 'Apple SD Gothic Neo', 'Noto Sans KR', 'Malgun Gothic', -apple-system, 'Segoe UI', sans-serif" font-size="10" font-weight="600" fill="#727272" text-anchor="start" letter-spacing="0.6">기능</text>
+<rect x="58.0" y="1538.0" width="59.5" height="20.0" rx="5" fill="#191919" stroke="#4a4a4a" stroke-width="1"/>
+<text x="87.8" y="1552.0" font-family="Pretendard, 'Apple SD Gothic Neo', 'Noto Sans KR', 'Malgun Gothic', -apple-system, 'Segoe UI', sans-serif" font-size="11" font-weight="500" fill="#d4d4d4" text-anchor="middle">ZIP 등록</text>
+<rect x="58.0" y="1564.0" width="145.2" height="20.0" rx="5" fill="#191919" stroke="#4a4a4a" stroke-width="1"/>
+<text x="130.6" y="1578.0" font-family="Pretendard, 'Apple SD Gothic Neo', 'Noto Sans KR', 'Malgun Gothic', -apple-system, 'Segoe UI', sans-serif" font-size="11" font-weight="500" fill="#d4d4d4" text-anchor="middle">problem.json · tests.zip</text>
+<rect x="58.0" y="1590.0" width="66.6" height="20.0" rx="5" fill="#191919" stroke="#4a4a4a" stroke-width="1"/>
+<text x="91.3" y="1604.0" font-family="Pretendard, 'Apple SD Gothic Neo', 'Noto Sans KR', 'Malgun Gothic', -apple-system, 'Segoe UI', sans-serif" font-size="11" font-weight="500" fill="#d4d4d4" text-anchor="middle">문제 HTML</text>
+<rect x="130.6" y="1590.0" width="66.7" height="20.0" rx="5" fill="#191919" stroke="#4a4a4a" stroke-width="1"/>
+<text x="163.9" y="1604.0" font-family="Pretendard, 'Apple SD Gothic Neo', 'Noto Sans KR', 'Malgun Gothic', -apple-system, 'Segoe UI', sans-serif" font-size="11" font-weight="500" fill="#d4d4d4" text-anchor="middle">목록 · 검색</text>
+<rect x="58.0" y="1616.0" width="59.3" height="20.0" rx="5" fill="#191919" stroke="#4a4a4a" stroke-width="1"/>
+<text x="87.7" y="1630.0" font-family="Pretendard, 'Apple SD Gothic Neo', 'Noto Sans KR', 'Malgun Gothic', -apple-system, 'Segoe UI', sans-serif" font-size="11" font-weight="500" fill="#d4d4d4" text-anchor="middle">공개 토글</text>
+<text x="58.0" y="1655.0" font-family="Pretendard, 'Apple SD Gothic Neo', 'Noto Sans KR', 'Malgun Gothic', -apple-system, 'Segoe UI', sans-serif" font-size="10" font-weight="600" fill="#727272" text-anchor="start" letter-spacing="0.6">연동</text>
+<rect x="58.0" y="1660.0" width="94.5" height="20.0" rx="5" fill="#1c2410" stroke="#8fbf3a" stroke-width="1"/>
+<text x="105.3" y="1674.0" font-family="'JetBrains Mono', 'SF Mono', Menlo, Consolas, monospace" font-size="11" font-weight="500" fill="#8fbf3a" text-anchor="middle">S3 problems/</text>
+<rect x="286.7" y="1450.0" width="230.7" height="252.0" rx="8" fill="#202020" stroke="#383838" stroke-width="1.2"/>
+<text x="300.7" y="1477.5" font-family="Pretendard, 'Apple SD Gothic Neo', 'Noto Sans KR', 'Malgun Gothic', -apple-system, 'Segoe UI', sans-serif" font-size="14" font-weight="700" fill="#f0f0f0" text-anchor="start">제출 · 채점</text>
+<rect x="460.5" y="1465.0" width="42.8" height="18.0" rx="9" fill="#2b2b2b" stroke="#444" stroke-width="1"/>
+<text x="481.9" y="1477.6" font-family="Pretendard, 'Apple SD Gothic Neo', 'Noto Sans KR', 'Malgun Gothic', -apple-system, 'Segoe UI', sans-serif" font-size="10" font-weight="600" fill="#a3a3a3" text-anchor="middle">6 API</text>
+<text x="300.7" y="1495.0" font-family="'JetBrains Mono', 'SF Mono', Menlo, Consolas, monospace" font-size="10.5" font-weight="400" fill="#727272" text-anchor="start">submission</text>
+<text x="300.7" y="1511.0" font-family="'JetBrains Mono', 'SF Mono', Menlo, Consolas, monospace" font-size="10.5" font-weight="400" fill="#a3a3a3" text-anchor="start">/api/judge/submission</text>
+<text x="300.7" y="1533.0" font-family="Pretendard, 'Apple SD Gothic Neo', 'Noto Sans KR', 'Malgun Gothic', -apple-system, 'Segoe UI', sans-serif" font-size="10" font-weight="600" fill="#727272" text-anchor="start" letter-spacing="0.6">기능</text>
+<rect x="300.7" y="1538.0" width="59.3" height="20.0" rx="5" fill="#191919" stroke="#4a4a4a" stroke-width="1"/>
+<text x="330.3" y="1552.0" font-family="Pretendard, 'Apple SD Gothic Neo', 'Noto Sans KR', 'Malgun Gothic', -apple-system, 'Segoe UI', sans-serif" font-size="11" font-weight="500" fill="#d4d4d4" text-anchor="middle">코드 제출</text>
+<rect x="300.7" y="1564.0" width="170.5" height="20.0" rx="5" fill="#191919" stroke="#4a4a4a" stroke-width="1"/>
+<text x="385.9" y="1578.0" font-family="Pretendard, 'Apple SD Gothic Neo', 'Noto Sans KR', 'Malgun Gothic', -apple-system, 'Segoe UI', sans-serif" font-size="11" font-weight="500" fill="#d4d4d4" text-anchor="middle">Java · Python3 · C++17 · C99</text>
+<rect x="300.7" y="1590.0" width="59.3" height="20.0" rx="5" fill="#191919" stroke="#4a4a4a" stroke-width="1"/>
+<text x="330.3" y="1604.0" font-family="Pretendard, 'Apple SD Gothic Neo', 'Noto Sans KR', 'Malgun Gothic', -apple-system, 'Segoe UI', sans-serif" font-size="11" font-weight="500" fill="#d4d4d4" text-anchor="middle">결과 콜백</text>
+<rect x="366.0" y="1590.0" width="73.3" height="20.0" rx="5" fill="#191919" stroke="#4a4a4a" stroke-width="1"/>
+<text x="402.6" y="1604.0" font-family="Pretendard, 'Apple SD Gothic Neo', 'Noto Sans KR', 'Malgun Gothic', -apple-system, 'Segoe UI', sans-serif" font-size="11" font-weight="500" fill="#d4d4d4" text-anchor="middle">내 풀이 현황</text>
+<text x="300.7" y="1629.0" font-family="Pretendard, 'Apple SD Gothic Neo', 'Noto Sans KR', 'Malgun Gothic', -apple-system, 'Segoe UI', sans-serif" font-size="10" font-weight="600" fill="#727272" text-anchor="start" letter-spacing="0.6">연동</text>
+<rect x="300.7" y="1634.0" width="118.6" height="20.0" rx="5" fill="#2a1513" stroke="#ff6f61" stroke-width="1"/>
+<text x="360.0" y="1648.0" font-family="Pretendard, 'Apple SD Gothic Neo', 'Noto Sans KR', 'Malgun Gothic', -apple-system, 'Segoe UI', sans-serif" font-size="11" font-weight="500" fill="#ff6f61" text-anchor="middle">Redis Stream XADD</text>
+<rect x="300.7" y="1660.0" width="86.0" height="20.0" rx="5" fill="#121c2b" stroke="#6aa8ff" stroke-width="1"/>
+<text x="343.7" y="1674.0" font-family="Pretendard, 'Apple SD Gothic Neo', 'Noto Sans KR', 'Malgun Gothic', -apple-system, 'Segoe UI', sans-serif" font-size="11" font-weight="500" fill="#6aa8ff" text-anchor="middle">Judge Worker</text>
+<rect x="529.3" y="1450.0" width="230.7" height="252.0" rx="8" fill="#202020" stroke="#383838" stroke-width="1.2"/>
+<text x="543.3" y="1477.5" font-family="Pretendard, 'Apple SD Gothic Neo', 'Noto Sans KR', 'Malgun Gothic', -apple-system, 'Segoe UI', sans-serif" font-size="14" font-weight="700" fill="#f0f0f0" text-anchor="start">그룹</text>
+<rect x="696.8" y="1465.0" width="49.2" height="18.0" rx="9" fill="#2b2b2b" stroke="#444" stroke-width="1"/>
+<text x="721.4" y="1477.6" font-family="Pretendard, 'Apple SD Gothic Neo', 'Noto Sans KR', 'Malgun Gothic', -apple-system, 'Segoe UI', sans-serif" font-size="10" font-weight="600" fill="#a3a3a3" text-anchor="middle">14 API</text>
+<text x="543.3" y="1495.0" font-family="'JetBrains Mono', 'SF Mono', Menlo, Consolas, monospace" font-size="10.5" font-weight="400" fill="#727272" text-anchor="start">group · joinRequest · member</text>
+<text x="543.3" y="1511.0" font-family="'JetBrains Mono', 'SF Mono', Menlo, Consolas, monospace" font-size="10.5" font-weight="400" fill="#a3a3a3" text-anchor="start">/api/groups</text>
+<text x="543.3" y="1533.0" font-family="Pretendard, 'Apple SD Gothic Neo', 'Noto Sans KR', 'Malgun Gothic', -apple-system, 'Segoe UI', sans-serif" font-size="10" font-weight="600" fill="#727272" text-anchor="start" letter-spacing="0.6">기능</text>
+<rect x="543.3" y="1538.0" width="66.6" height="20.0" rx="5" fill="#191919" stroke="#4a4a4a" stroke-width="1"/>
+<text x="576.6" y="1552.0" font-family="Pretendard, 'Apple SD Gothic Neo', 'Noto Sans KR', 'Malgun Gothic', -apple-system, 'Segoe UI', sans-serif" font-size="11" font-weight="500" fill="#d4d4d4" text-anchor="middle">그룹 CRUD</text>
+<rect x="615.9" y="1538.0" width="91.1" height="20.0" rx="5" fill="#191919" stroke="#4a4a4a" stroke-width="1"/>
+<text x="661.5" y="1552.0" font-family="Pretendard, 'Apple SD Gothic Neo', 'Noto Sans KR', 'Malgun Gothic', -apple-system, 'Segoe UI', sans-serif" font-size="11" font-weight="500" fill="#d4d4d4" text-anchor="middle">가입 신청 · 초대</text>
+<rect x="543.3" y="1564.0" width="98.5" height="20.0" rx="5" fill="#191919" stroke="#4a4a4a" stroke-width="1"/>
+<text x="592.6" y="1578.0" font-family="Pretendard, 'Apple SD Gothic Neo', 'Noto Sans KR', 'Malgun Gothic', -apple-system, 'Segoe UI', sans-serif" font-size="11" font-weight="500" fill="#d4d4d4" text-anchor="middle">수락 · 거절 · 취소</text>
+<rect x="543.3" y="1590.0" width="119.4" height="20.0" rx="5" fill="#191919" stroke="#4a4a4a" stroke-width="1"/>
+<text x="603.0" y="1604.0" font-family="Pretendard, 'Apple SD Gothic Neo', 'Noto Sans KR', 'Malgun Gothic', -apple-system, 'Segoe UI', sans-serif" font-size="11" font-weight="500" fill="#d4d4d4" text-anchor="middle">멤버 · 탈퇴 · 내보내기</text>
+<rect x="786.0" y="278.0" width="258.0" height="1440.0" rx="10" fill="none" stroke="#444" stroke-width="1.2"/>
+<text x="800.0" y="298.0" font-family="Pretendard, 'Apple SD Gothic Neo', 'Noto Sans KR', 'Malgun Gothic', -apple-system, 'Segoe UI', sans-serif" font-size="11.5" font-weight="600" fill="#a3a3a3" text-anchor="start">공통 · 인프라 어댑터</text>
+<rect x="790.0" y="312.0" width="250.0" height="176.0" rx="8" fill="#202020" stroke="#383838" stroke-width="1.2"/>
+<text x="804.0" y="339.5" font-family="Pretendard, 'Apple SD Gothic Neo', 'Noto Sans KR', 'Malgun Gothic', -apple-system, 'Segoe UI', sans-serif" font-size="14" font-weight="700" fill="#f0f0f0" text-anchor="start">보안 · 인증</text>
+<text x="804.0" y="357.0" font-family="Pretendard, 'Apple SD Gothic Neo', 'Noto Sans KR', 'Malgun Gothic', -apple-system, 'Segoe UI', sans-serif" font-size="11" font-weight="400" fill="#a3a3a3" text-anchor="start">config/ · common/util</text>
+<rect x="804.0" y="370.0" width="95.6" height="20.0" rx="5" fill="#191919" stroke="#4a4a4a" stroke-width="1"/>
+<text x="851.8" y="384.0" font-family="Pretendard, 'Apple SD Gothic Neo', 'Noto Sans KR', 'Malgun Gothic', -apple-system, 'Segoe UI', sans-serif" font-size="11" font-weight="500" fill="#d4d4d4" text-anchor="middle">SecurityConfig</text>
+<rect x="804.0" y="396.0" width="149.4" height="20.0" rx="5" fill="#191919" stroke="#4a4a4a" stroke-width="1"/>
+<text x="878.7" y="410.0" font-family="Pretendard, 'Apple SD Gothic Neo', 'Noto Sans KR', 'Malgun Gothic', -apple-system, 'Segoe UI', sans-serif" font-size="11" font-weight="500" fill="#d4d4d4" text-anchor="middle">JwtAuthenticationFilter</text>
+<rect x="959.4" y="396.0" width="42.2" height="20.0" rx="5" fill="#191919" stroke="#4a4a4a" stroke-width="1"/>
+<text x="980.5" y="410.0" font-family="Pretendard, 'Apple SD Gothic Neo', 'Noto Sans KR', 'Malgun Gothic', -apple-system, 'Segoe UI', sans-serif" font-size="11" font-weight="500" fill="#d4d4d4" text-anchor="middle">CORS</text>
+<rect x="804.0" y="422.0" width="77.4" height="20.0" rx="5" fill="#191919" stroke="#4a4a4a" stroke-width="1"/>
+<text x="842.7" y="436.0" font-family="Pretendard, 'Apple SD Gothic Neo', 'Noto Sans KR', 'Malgun Gothic', -apple-system, 'Segoe UI', sans-serif" font-size="11" font-weight="500" fill="#d4d4d4" text-anchor="middle">STATELESS</text>
+<rect x="887.4" y="422.0" width="52.3" height="20.0" rx="5" fill="#191919" stroke="#4a4a4a" stroke-width="1"/>
+<text x="913.5" y="436.0" font-family="Pretendard, 'Apple SD Gothic Neo', 'Noto Sans KR', 'Malgun Gothic', -apple-system, 'Segoe UI', sans-serif" font-size="11" font-weight="500" fill="#d4d4d4" text-anchor="middle">BCrypt</text>
+<rect x="804.0" y="448.0" width="95.5" height="20.0" rx="5" fill="#191919" stroke="#4a4a4a" stroke-width="1"/>
+<text x="851.8" y="462.0" font-family="Pretendard, 'Apple SD Gothic Neo', 'Noto Sans KR', 'Malgun Gothic', -apple-system, 'Segoe UI', sans-serif" font-size="11" font-weight="500" fill="#d4d4d4" text-anchor="middle">@PreAuthorize</text>
+<rect x="790.0" y="558.7" width="250.0" height="150.0" rx="8" fill="#202020" stroke="#383838" stroke-width="1.2"/>
+<text x="804.0" y="586.2" font-family="Pretendard, 'Apple SD Gothic Neo', 'Noto Sans KR', 'Malgun Gothic', -apple-system, 'Segoe UI', sans-serif" font-size="14" font-weight="700" fill="#f0f0f0" text-anchor="start">이벤트 · 비동기</text>
+<text x="804.0" y="603.7" font-family="Pretendard, 'Apple SD Gothic Neo', 'Noto Sans KR', 'Malgun Gothic', -apple-system, 'Segoe UI', sans-serif" font-size="11" font-weight="400" fill="#a3a3a3" text-anchor="start">@EnableAsync · @EnableScheduling</text>
+<rect x="804.0" y="616.7" width="155.6" height="20.0" rx="5" fill="#191919" stroke="#4a4a4a" stroke-width="1"/>
+<text x="881.8" y="630.7" font-family="Pretendard, 'Apple SD Gothic Neo', 'Noto Sans KR', 'Malgun Gothic', -apple-system, 'Segoe UI', sans-serif" font-size="11" font-weight="500" fill="#d4d4d4" text-anchor="middle">ApplicationEventPublisher</text>
+<rect x="804.0" y="642.7" width="145.8" height="20.0" rx="5" fill="#191919" stroke="#4a4a4a" stroke-width="1"/>
+<text x="876.9" y="656.7" font-family="Pretendard, 'Apple SD Gothic Neo', 'Noto Sans KR', 'Malgun Gothic', -apple-system, 'Segoe UI', sans-serif" font-size="11" font-weight="500" fill="#d4d4d4" text-anchor="middle">@Async @EventListener</text>
+<rect x="804.0" y="668.7" width="136.3" height="20.0" rx="5" fill="#2b1820" stroke="#f0a3bf" stroke-width="1"/>
+<text x="872.2" y="682.7" font-family="Pretendard, 'Apple SD Gothic Neo', 'Noto Sans KR', 'Malgun Gothic', -apple-system, 'Segoe UI', sans-serif" font-size="11" font-weight="500" fill="#f0a3bf" text-anchor="middle">SseEmitterRepository</text>
+<rect x="946.3" y="668.7" width="76.4" height="20.0" rx="5" fill="#191919" stroke="#4a4a4a" stroke-width="1"/>
+<text x="984.5" y="682.7" font-family="Pretendard, 'Apple SD Gothic Neo', 'Noto Sans KR', 'Malgun Gothic', -apple-system, 'Segoe UI', sans-serif" font-size="11" font-weight="500" fill="#d4d4d4" text-anchor="middle">@Scheduled</text>
+<rect x="790.0" y="779.3" width="250.0" height="124.0" rx="8" fill="#202020" stroke="#383838" stroke-width="1.2"/>
+<text x="804.0" y="806.8" font-family="Pretendard, 'Apple SD Gothic Neo', 'Noto Sans KR', 'Malgun Gothic', -apple-system, 'Segoe UI', sans-serif" font-size="14" font-weight="700" fill="#f0f0f0" text-anchor="start">영속성</text>
+<text x="804.0" y="824.3" font-family="Pretendard, 'Apple SD Gothic Neo', 'Noto Sans KR', 'Malgun Gothic', -apple-system, 'Segoe UI', sans-serif" font-size="11" font-weight="400" fill="#a3a3a3" text-anchor="start">Spring Data JPA</text>
+<rect x="804.0" y="837.3" width="92.1" height="20.0" rx="5" fill="#191919" stroke="#4a4a4a" stroke-width="1"/>
+<text x="850.0" y="851.3" font-family="Pretendard, 'Apple SD Gothic Neo', 'Noto Sans KR', 'Malgun Gothic', -apple-system, 'Segoe UI', sans-serif" font-size="11" font-weight="500" fill="#d4d4d4" text-anchor="middle">JpaRepository</text>
+<rect x="902.1" y="837.3" width="66.9" height="20.0" rx="5" fill="#191919" stroke="#4a4a4a" stroke-width="1"/>
+<text x="935.6" y="851.3" font-family="Pretendard, 'Apple SD Gothic Neo', 'Noto Sans KR', 'Malgun Gothic', -apple-system, 'Segoe UI', sans-serif" font-size="11" font-weight="500" fill="#d4d4d4" text-anchor="middle">Hibernate</text>
+<rect x="804.0" y="863.3" width="70.9" height="20.0" rx="5" fill="#191919" stroke="#4a4a4a" stroke-width="1"/>
+<text x="839.4" y="877.3" font-family="Pretendard, 'Apple SD Gothic Neo', 'Noto Sans KR', 'Malgun Gothic', -apple-system, 'Segoe UI', sans-serif" font-size="11" font-weight="500" fill="#d4d4d4" text-anchor="middle">HikariCP 5</text>
+<rect x="880.9" y="863.3" width="96.9" height="20.0" rx="5" fill="#191919" stroke="#4a4a4a" stroke-width="1"/>
+<text x="929.3" y="877.3" font-family="Pretendard, 'Apple SD Gothic Neo', 'Noto Sans KR', 'Malgun Gothic', -apple-system, 'Segoe UI', sans-serif" font-size="11" font-weight="500" fill="#d4d4d4" text-anchor="middle">Flyway V2–V30</text>
+<rect x="790.0" y="974.0" width="250.0" height="124.0" rx="8" fill="#202020" stroke="#383838" stroke-width="1.2"/>
+<text x="804.0" y="1001.5" font-family="Pretendard, 'Apple SD Gothic Neo', 'Noto Sans KR', 'Malgun Gothic', -apple-system, 'Segoe UI', sans-serif" font-size="14" font-weight="700" fill="#f0f0f0" text-anchor="start">Redis</text>
+<text x="804.0" y="1019.0" font-family="Pretendard, 'Apple SD Gothic Neo', 'Noto Sans KR', 'Malgun Gothic', -apple-system, 'Segoe UI', sans-serif" font-size="11" font-weight="400" fill="#a3a3a3" text-anchor="start">redis/ · judgeServer/mq</text>
+<rect x="804.0" y="1032.0" width="62.8" height="20.0" rx="5" fill="#2a1513" stroke="#ff6f61" stroke-width="1"/>
+<text x="835.4" y="1046.0" font-family="Pretendard, 'Apple SD Gothic Neo', 'Noto Sans KR', 'Malgun Gothic', -apple-system, 'Segoe UI', sans-serif" font-size="11" font-weight="500" fill="#ff6f61" text-anchor="middle">RedisUtil</text>
+<rect x="872.8" y="1032.0" width="151.9" height="20.0" rx="5" fill="#2a1513" stroke="#ff6f61" stroke-width="1"/>
+<text x="948.8" y="1046.0" font-family="Pretendard, 'Apple SD Gothic Neo', 'Noto Sans KR', 'Malgun Gothic', -apple-system, 'Segoe UI', sans-serif" font-size="11" font-weight="500" fill="#ff6f61" text-anchor="middle">RedisSubmissionProducer</text>
+<rect x="804.0" y="1058.0" width="111.2" height="20.0" rx="5" fill="#191919" stroke="#4a4a4a" stroke-width="1"/>
+<text x="859.6" y="1072.0" font-family="Pretendard, 'Apple SD Gothic Neo', 'Noto Sans KR', 'Malgun Gothic', -apple-system, 'Segoe UI', sans-serif" font-size="11" font-weight="500" fill="#d4d4d4" text-anchor="middle">JudgeQueueConfig</text>
+<rect x="790.0" y="1168.7" width="250.0" height="124.0" rx="8" fill="#202020" stroke="#383838" stroke-width="1.2"/>
+<text x="804.0" y="1196.2" font-family="Pretendard, 'Apple SD Gothic Neo', 'Noto Sans KR', 'Malgun Gothic', -apple-system, 'Segoe UI', sans-serif" font-size="14" font-weight="700" fill="#f0f0f0" text-anchor="start">파일 저장</text>
+<text x="804.0" y="1213.7" font-family="Pretendard, 'Apple SD Gothic Neo', 'Noto Sans KR', 'Malgun Gothic', -apple-system, 'Segoe UI', sans-serif" font-size="11" font-weight="400" fill="#a3a3a3" text-anchor="start">common/s3 · attachment/store</text>
+<rect x="804.0" y="1226.7" width="68.9" height="20.0" rx="5" fill="#1c2410" stroke="#8fbf3a" stroke-width="1"/>
+<text x="838.4" y="1240.7" font-family="Pretendard, 'Apple SD Gothic Neo', 'Noto Sans KR', 'Malgun Gothic', -apple-system, 'Segoe UI', sans-serif" font-size="11" font-weight="500" fill="#8fbf3a" text-anchor="middle">S3Service</text>
+<rect x="878.9" y="1226.7" width="65.4" height="20.0" rx="5" fill="#1c2410" stroke="#8fbf3a" stroke-width="1"/>
+<text x="911.6" y="1240.7" font-family="Pretendard, 'Apple SD Gothic Neo', 'Noto Sans KR', 'Malgun Gothic', -apple-system, 'Segoe UI', sans-serif" font-size="11" font-weight="500" fill="#8fbf3a" text-anchor="middle">FileStore</text>
+<rect x="804.0" y="1252.7" width="102.6" height="20.0" rx="5" fill="#191919" stroke="#4a4a4a" stroke-width="1"/>
+<text x="855.3" y="1266.7" font-family="Pretendard, 'Apple SD Gothic Neo', 'Noto Sans KR', 'Malgun Gothic', -apple-system, 'Segoe UI', sans-serif" font-size="11" font-weight="500" fill="#d4d4d4" text-anchor="middle">S3 · Local 구현체</text>
+<rect x="912.5" y="1252.7" width="99.0" height="20.0" rx="5" fill="#191919" stroke="#4a4a4a" stroke-width="1"/>
+<text x="962.1" y="1266.7" font-family="Pretendard, 'Apple SD Gothic Neo', 'Noto Sans KR', 'Malgun Gothic', -apple-system, 'Segoe UI', sans-serif" font-size="11" font-weight="500" fill="#d4d4d4" text-anchor="middle">ImageSanitizer</text>
+<rect x="790.0" y="1363.3" width="250.0" height="98.0" rx="8" fill="#202020" stroke="#383838" stroke-width="1.2"/>
+<text x="804.0" y="1390.8" font-family="Pretendard, 'Apple SD Gothic Neo', 'Noto Sans KR', 'Malgun Gothic', -apple-system, 'Segoe UI', sans-serif" font-size="14" font-weight="700" fill="#f0f0f0" text-anchor="start">메일</text>
+<text x="804.0" y="1408.3" font-family="Pretendard, 'Apple SD Gothic Neo', 'Noto Sans KR', 'Malgun Gothic', -apple-system, 'Segoe UI', sans-serif" font-size="11" font-weight="400" fill="#a3a3a3" text-anchor="start">SesConfig · MailService</text>
+<rect x="804.0" y="1421.3" width="96.6" height="20.0" rx="5" fill="#2a2111" stroke="#f5b54a" stroke-width="1"/>
+<text x="852.3" y="1435.3" font-family="Pretendard, 'Apple SD Gothic Neo', 'Noto Sans KR', 'Malgun Gothic', -apple-system, 'Segoe UI', sans-serif" font-size="11" font-weight="500" fill="#f5b54a" text-anchor="middle">JavaMailSender</text>
+<rect x="906.6" y="1421.3" width="105.2" height="20.0" rx="5" fill="#191919" stroke="#4a4a4a" stroke-width="1"/>
+<text x="959.2" y="1435.3" font-family="Pretendard, 'Apple SD Gothic Neo', 'Noto Sans KR', 'Malgun Gothic', -apple-system, 'Segoe UI', sans-serif" font-size="11" font-weight="500" fill="#d4d4d4" text-anchor="middle">Thymeleaf 템플릿</text>
+<rect x="790.0" y="1532.0" width="250.0" height="176.0" rx="8" fill="#202020" stroke="#383838" stroke-width="1.2"/>
+<text x="804.0" y="1559.5" font-family="Pretendard, 'Apple SD Gothic Neo', 'Noto Sans KR', 'Malgun Gothic', -apple-system, 'Segoe UI', sans-serif" font-size="14" font-weight="700" fill="#f0f0f0" text-anchor="start">공통 응답</text>
+<text x="804.0" y="1577.0" font-family="Pretendard, 'Apple SD Gothic Neo', 'Noto Sans KR', 'Malgun Gothic', -apple-system, 'Segoe UI', sans-serif" font-size="11" font-weight="400" fill="#a3a3a3" text-anchor="start">common/response · exception</text>
+<rect x="804.0" y="1590.0" width="99.1" height="20.0" rx="5" fill="#191919" stroke="#4a4a4a" stroke-width="1"/>
+<text x="853.6" y="1604.0" font-family="Pretendard, 'Apple SD Gothic Neo', 'Noto Sans KR', 'Malgun Gothic', -apple-system, 'Segoe UI', sans-serif" font-size="11" font-weight="500" fill="#d4d4d4" text-anchor="middle">ApiResponse&lt;T&gt;</text>
+<rect x="804.0" y="1616.0" width="140.0" height="20.0" rx="5" fill="#191919" stroke="#4a4a4a" stroke-width="1"/>
+<text x="874.0" y="1630.0" font-family="Pretendard, 'Apple SD Gothic Neo', 'Noto Sans KR', 'Malgun Gothic', -apple-system, 'Segoe UI', sans-serif" font-size="11" font-weight="500" fill="#d4d4d4" text-anchor="middle">GlobalExceptionHandler</text>
+<rect x="804.0" y="1642.0" width="100.0" height="20.0" rx="5" fill="#191919" stroke="#4a4a4a" stroke-width="1"/>
+<text x="854.0" y="1656.0" font-family="Pretendard, 'Apple SD Gothic Neo', 'Noto Sans KR', 'Malgun Gothic', -apple-system, 'Segoe UI', sans-serif" font-size="11" font-weight="500" fill="#d4d4d4" text-anchor="middle">BaseTimeEntity</text>
+<rect x="804.0" y="1668.0" width="188.5" height="20.0" rx="5" fill="#191919" stroke="#3a3a3a" stroke-width="1"/>
+<text x="898.2" y="1682.0" font-family="Pretendard, 'Apple SD Gothic Neo', 'Noto Sans KR', 'Malgun Gothic', -apple-system, 'Segoe UI', sans-serif" font-size="11" font-weight="500" fill="#727272" text-anchor="middle">VersionCheckInterceptor 미등록</text>
+<rect x="1078.0" y="354.0" width="214.0" height="92.0" rx="8" fill="#202020" stroke="#383838" stroke-width="1.2"/>
+<g transform="translate(1092.0 369.0) scale(1.000)">
+<rect width="16" height="16" rx="3.5" fill="#4b5563"/>
+<circle cx="8" cy="8" r="5" stroke="#fff" stroke-width="1.3" fill="none" stroke-linecap="round" stroke-linejoin="round"/><ellipse cx="8" cy="8" rx="2.2" ry="5" stroke="#fff" stroke-width="1.3" fill="none" stroke-linecap="round" stroke-linejoin="round"/><path d="M3 8 H13" stroke="#fff" stroke-width="1.3" fill="none" stroke-linecap="round" stroke-linejoin="round"/>
+</g>
+<text x="1114.0" y="381.5" font-family="Pretendard, 'Apple SD Gothic Neo', 'Noto Sans KR', 'Malgun Gothic', -apple-system, 'Segoe UI', sans-serif" font-size="14" font-weight="700" fill="#f0f0f0" text-anchor="start">Browser</text>
+<text x="1092.0" y="399.0" font-family="Pretendard, 'Apple SD Gothic Neo', 'Noto Sans KR', 'Malgun Gothic', -apple-system, 'Segoe UI', sans-serif" font-size="11" font-weight="400" fill="#a3a3a3" text-anchor="start">모든 API 요청</text>
+<rect x="1092.0" y="412.0" width="113.0" height="20.0" rx="5" fill="#1d1e20" stroke="#9aa0a6" stroke-width="1"/>
+<text x="1148.5" y="426.0" font-family="Pretendard, 'Apple SD Gothic Neo', 'Noto Sans KR', 'Malgun Gothic', -apple-system, 'Segoe UI', sans-serif" font-size="11" font-weight="500" fill="#9aa0a6" text-anchor="middle">Authorization 쿠키</text>
+<rect x="1078.0" y="587.7" width="214.0" height="92.0" rx="8" fill="#202020" stroke="#383838" stroke-width="1.2"/>
+<g transform="translate(1092.0 602.7) scale(1.000)">
+<rect width="16" height="16" rx="3.5" fill="#4b5563"/>
+<circle cx="8" cy="8" r="5" stroke="#fff" stroke-width="1.3" fill="none" stroke-linecap="round" stroke-linejoin="round"/><ellipse cx="8" cy="8" rx="2.2" ry="5" stroke="#fff" stroke-width="1.3" fill="none" stroke-linecap="round" stroke-linejoin="round"/><path d="M3 8 H13" stroke="#fff" stroke-width="1.3" fill="none" stroke-linecap="round" stroke-linejoin="round"/>
+</g>
+<text x="1114.0" y="615.2" font-family="Pretendard, 'Apple SD Gothic Neo', 'Noto Sans KR', 'Malgun Gothic', -apple-system, 'Segoe UI', sans-serif" font-size="14" font-weight="700" fill="#f0f0f0" text-anchor="start">Browser</text>
+<text x="1092.0" y="632.7" font-family="'JetBrains Mono', 'SF Mono', Menlo, Consolas, monospace" font-size="10.5" font-weight="400" fill="#a3a3a3" text-anchor="start">/api/alarm/subscribe</text>
+<rect x="1092.0" y="645.7" width="59.5" height="20.0" rx="5" fill="#2b1820" stroke="#f0a3bf" stroke-width="1"/>
+<text x="1121.8" y="659.7" font-family="Pretendard, 'Apple SD Gothic Neo', 'Noto Sans KR', 'Malgun Gothic', -apple-system, 'Segoe UI', sans-serif" font-size="11" font-weight="500" fill="#f0a3bf" text-anchor="middle">SSE 수신</text>
+<rect x="1078.0" y="795.3" width="214.0" height="92.0" rx="8" fill="#2a171a" stroke="#6e3138" stroke-width="1.2"/>
+<text x="1092.0" y="822.8" font-family="Pretendard, 'Apple SD Gothic Neo', 'Noto Sans KR', 'Malgun Gothic', -apple-system, 'Segoe UI', sans-serif" font-size="14" font-weight="700" fill="#f0f0f0" text-anchor="start">MySQL 8.0</text>
+<text x="1092.0" y="840.3" font-family="Pretendard, 'Apple SD Gothic Neo', 'Noto Sans KR', 'Malgun Gothic', -apple-system, 'Segoe UI', sans-serif" font-size="11" font-weight="400" fill="#a3a3a3" text-anchor="start">nimda-mysql</text>
+<rect x="1092.0" y="853.3" width="84.2" height="20.0" rx="5" fill="#191919" stroke="#4a4a4a" stroke-width="1"/>
+<text x="1134.1" y="867.3" font-family="Pretendard, 'Apple SD Gothic Neo', 'Noto Sans KR', 'Malgun Gothic', -apple-system, 'Segoe UI', sans-serif" font-size="11" font-weight="500" fill="#d4d4d4" text-anchor="middle">JPA · Flyway</text>
+<rect x="1224.5" y="859.3" width="59.5" height="18.0" rx="4" fill="#ececec"/>
+<g transform="translate(1227.5 861.3) scale(0.875)">
+<rect width="16" height="16" rx="3.5" fill="#00758F"/>
+<ellipse cx="8" cy="4.6" rx="4.3" ry="1.6" stroke="#fff" stroke-width="1.3" fill="none" stroke-linecap="round" stroke-linejoin="round"/><path d="M3.7 4.6 V11.4 Q8 13.8 12.3 11.4 V4.6 M3.7 8 Q8 10.4 12.3 8" stroke="#fff" stroke-width="1.3" fill="none" stroke-linecap="round" stroke-linejoin="round"/>
+</g>
+<text x="1245.5" y="871.9" font-family="Pretendard, 'Apple SD Gothic Neo', 'Noto Sans KR', 'Malgun Gothic', -apple-system, 'Segoe UI', sans-serif" font-size="9.5" font-weight="600" fill="#222" text-anchor="start">MySQL</text>
+<rect x="1078.0" y="990.0" width="214.0" height="92.0" rx="8" fill="#2a171a" stroke="#6e3138" stroke-width="1.2"/>
+<text x="1092.0" y="1017.5" font-family="Pretendard, 'Apple SD Gothic Neo', 'Noto Sans KR', 'Malgun Gothic', -apple-system, 'Segoe UI', sans-serif" font-size="14" font-weight="700" fill="#f0f0f0" text-anchor="start">Redis 7.0</text>
+<text x="1092.0" y="1035.0" font-family="Pretendard, 'Apple SD Gothic Neo', 'Noto Sans KR', 'Malgun Gothic', -apple-system, 'Segoe UI', sans-serif" font-size="11" font-weight="400" fill="#a3a3a3" text-anchor="start">nimda-redis</text>
+<rect x="1092.0" y="1048.0" width="86.7" height="20.0" rx="5" fill="#2a1513" stroke="#ff6f61" stroke-width="1"/>
+<text x="1135.4" y="1062.0" font-family="Pretendard, 'Apple SD Gothic Neo', 'Noto Sans KR', 'Malgun Gothic', -apple-system, 'Segoe UI', sans-serif" font-size="11" font-weight="500" fill="#ff6f61" text-anchor="middle">Stream · TTL</text>
+<rect x="1229.2" y="1054.0" width="54.8" height="18.0" rx="4" fill="#ececec"/>
+<g transform="translate(1232.2 1056.0) scale(0.875)">
+<rect width="16" height="16" rx="3.5" fill="#DC382D"/>
+<g fill="#fff"><path d="M8 3 L13 5 L8 7 L3 5 Z"/><path d="M3 7.6 L8 9.6 L13 7.6 L13 8.6 L8 10.6 L3 8.6 Z" opacity=".85"/><path d="M3 10.6 L8 12.6 L13 10.6 L13 11.6 L8 13.6 L3 11.6 Z" opacity=".7"/></g>
+</g>
+<text x="1250.2" y="1066.6" font-family="Pretendard, 'Apple SD Gothic Neo', 'Noto Sans KR', 'Malgun Gothic', -apple-system, 'Segoe UI', sans-serif" font-size="9.5" font-weight="600" fill="#222" text-anchor="start">Redis</text>
+<rect x="1078.0" y="1184.7" width="214.0" height="92.0" rx="8" fill="#2a171a" stroke="#6e3138" stroke-width="1.2"/>
+<text x="1092.0" y="1212.2" font-family="Pretendard, 'Apple SD Gothic Neo', 'Noto Sans KR', 'Malgun Gothic', -apple-system, 'Segoe UI', sans-serif" font-size="14" font-weight="700" fill="#f0f0f0" text-anchor="start">Amazon S3</text>
+<text x="1092.0" y="1229.7" font-family="Pretendard, 'Apple SD Gothic Neo', 'Noto Sans KR', 'Malgun Gothic', -apple-system, 'Segoe UI', sans-serif" font-size="11" font-weight="400" fill="#a3a3a3" text-anchor="start">nimda-bucket</text>
+<rect x="1092.0" y="1242.7" width="66.9" height="20.0" rx="5" fill="#1c2410" stroke="#8fbf3a" stroke-width="1"/>
+<text x="1125.5" y="1256.7" font-family="Pretendard, 'Apple SD Gothic Neo', 'Noto Sans KR', 'Malgun Gothic', -apple-system, 'Segoe UI', sans-serif" font-size="11" font-weight="500" fill="#8fbf3a" text-anchor="middle">Presigned</text>
+<rect x="1203.7" y="1248.7" width="80.3" height="18.0" rx="4" fill="#ececec"/>
+<g transform="translate(1206.7 1250.7) scale(0.875)">
+<rect width="16" height="16" rx="3.5" fill="#7AA116"/>
+<path d="M3.5 5 L12.5 5 L11.3 12.5 L4.7 12.5 Z" stroke="#fff" stroke-width="1.3" fill="none" stroke-linecap="round" stroke-linejoin="round"/><ellipse cx="8" cy="5" rx="4.5" ry="1.4" stroke="#fff" stroke-width="1.3" fill="none" stroke-linecap="round" stroke-linejoin="round"/>
+</g>
+<text x="1224.7" y="1261.3" font-family="Pretendard, 'Apple SD Gothic Neo', 'Noto Sans KR', 'Malgun Gothic', -apple-system, 'Segoe UI', sans-serif" font-size="9.5" font-weight="600" fill="#222" text-anchor="start">Amazon S3</text>
+<rect x="1078.0" y="1366.3" width="214.0" height="92.0" rx="8" fill="#2a171a" stroke="#6e3138" stroke-width="1.2"/>
+<text x="1092.0" y="1393.8" font-family="Pretendard, 'Apple SD Gothic Neo', 'Noto Sans KR', 'Malgun Gothic', -apple-system, 'Segoe UI', sans-serif" font-size="14" font-weight="700" fill="#f0f0f0" text-anchor="start">Amazon SES</text>
+<text x="1092.0" y="1411.3" font-family="Pretendard, 'Apple SD Gothic Neo', 'Noto Sans KR', 'Malgun Gothic', -apple-system, 'Segoe UI', sans-serif" font-size="11" font-weight="400" fill="#a3a3a3" text-anchor="start">SMTP 587</text>
+<rect x="1092.0" y="1424.3" width="59.3" height="20.0" rx="5" fill="#2a2111" stroke="#f5b54a" stroke-width="1"/>
+<text x="1121.7" y="1438.3" font-family="Pretendard, 'Apple SD Gothic Neo', 'Noto Sans KR', 'Malgun Gothic', -apple-system, 'Segoe UI', sans-serif" font-size="11" font-weight="500" fill="#f5b54a" text-anchor="middle">인증 메일</text>
+<rect x="1197.6" y="1430.3" width="86.4" height="18.0" rx="4" fill="#ececec"/>
+<g transform="translate(1200.6 1432.3) scale(0.875)">
+<rect width="16" height="16" rx="3.5" fill="#DD344C"/>
+<rect x="3" y="4.8" width="10" height="6.8" rx="1" stroke="#fff" stroke-width="1.3" fill="none" stroke-linecap="round" stroke-linejoin="round"/><path d="M3.3 5.2 L8 9 L12.7 5.2" stroke="#fff" stroke-width="1.3" fill="none" stroke-linecap="round" stroke-linejoin="round"/>
+</g>
+<text x="1218.6" y="1442.9" font-family="Pretendard, 'Apple SD Gothic Neo', 'Noto Sans KR', 'Malgun Gothic', -apple-system, 'Segoe UI', sans-serif" font-size="9.5" font-weight="600" fill="#222" text-anchor="start">Amazon SES</text>
+<rect x="1078.0" y="1103.3" width="214.0" height="60.0" rx="8" fill="#1b1b1b" stroke="#555" stroke-width="1.2" stroke-dasharray="5 4"/>
+<g transform="translate(1092.0 1118.3) scale(1.000)">
+<rect width="16" height="16" rx="3.5" fill="#2563eb"/>
+<text x="8" y="10.6" font-family="Menlo,monospace" font-size="6.6" font-weight="700" fill="#fff" text-anchor="middle">&lt;/&gt;</text>
+</g>
+<text x="1114.0" y="1130.8" font-family="Pretendard, 'Apple SD Gothic Neo', 'Noto Sans KR', 'Malgun Gothic', -apple-system, 'Segoe UI', sans-serif" font-size="14" font-weight="700" fill="#f0f0f0" text-anchor="start">Judge Worker</text>
+<text x="1092.0" y="1148.3" font-family="Pretendard, 'Apple SD Gothic Neo', 'Noto Sans KR', 'Malgun Gothic', -apple-system, 'Segoe UI', sans-serif" font-size="11" font-weight="400" fill="#a3a3a3" text-anchor="start">외부 · XREADGROUP</text>
+<path d="M 1185.0 1082.0 L 1185.0 1101.3" fill="none" stroke="#7c7c7c" stroke-width="1.3" stroke-linejoin="round" stroke-dasharray="5 4" marker-end="url(#ah)"/>
+<path d="M 1040.0 400.0 L 1076.0 400.0" fill="none" stroke="#7c7c7c" stroke-width="1.3" stroke-linejoin="round" marker-end="url(#ah)"/>
+<path d="M 1040.0 633.7 L 1076.0 633.7" fill="none" stroke="#7c7c7c" stroke-width="1.3" stroke-linejoin="round" marker-end="url(#ah)"/>
+<path d="M 1040.0 841.3 L 1076.0 841.3" fill="none" stroke="#7c7c7c" stroke-width="1.3" stroke-linejoin="round" marker-end="url(#ah)"/>
+<path d="M 1040.0 1036.0 L 1076.0 1036.0" fill="none" stroke="#7c7c7c" stroke-width="1.3" stroke-linejoin="round" marker-end="url(#ah)"/>
+<path d="M 1040.0 1230.7 L 1076.0 1230.7" fill="none" stroke="#7c7c7c" stroke-width="1.3" stroke-linejoin="round" marker-end="url(#ah)"/>
+<path d="M 1040.0 1412.3 L 1076.0 1412.3" fill="none" stroke="#7c7c7c" stroke-width="1.3" stroke-linejoin="round" marker-end="url(#ah)"/>
+<rect x="28.0" y="1754.0" width="1264.0" height="110.0" rx="10" fill="#1b1b1b" stroke="#333" stroke-width="1"/>
+<text x="44.0" y="1780.0" font-family="Pretendard, 'Apple SD Gothic Neo', 'Noto Sans KR', 'Malgun Gothic', -apple-system, 'Segoe UI', sans-serif" font-size="13" font-weight="700" fill="#f0f0f0" text-anchor="start">칩 색 읽는 법</text>
+<rect x="44.0" y="1798.0" width="66.9" height="20.0" rx="5" fill="#1d1e20" stroke="#9aa0a6" stroke-width="1"/>
+<text x="77.5" y="1812.0" font-family="Pretendard, 'Apple SD Gothic Neo', 'Noto Sans KR', 'Malgun Gothic', -apple-system, 'Segoe UI', sans-serif" font-size="11" font-weight="500" fill="#9aa0a6" text-anchor="middle">JWT · 권한</text>
+<rect x="120.9" y="1798.0" width="28.1" height="20.0" rx="5" fill="#1c2410" stroke="#8fbf3a" stroke-width="1"/>
+<text x="134.9" y="1812.0" font-family="Pretendard, 'Apple SD Gothic Neo', 'Noto Sans KR', 'Malgun Gothic', -apple-system, 'Segoe UI', sans-serif" font-size="11" font-weight="500" fill="#8fbf3a" text-anchor="middle">S3</text>
+<rect x="159.0" y="1798.0" width="42.7" height="20.0" rx="5" fill="#2a1513" stroke="#ff6f61" stroke-width="1"/>
+<text x="180.3" y="1812.0" font-family="Pretendard, 'Apple SD Gothic Neo', 'Noto Sans KR', 'Malgun Gothic', -apple-system, 'Segoe UI', sans-serif" font-size="11" font-weight="500" fill="#ff6f61" text-anchor="middle">Redis</text>
+<rect x="211.7" y="1798.0" width="66.9" height="20.0" rx="5" fill="#2a2111" stroke="#f5b54a" stroke-width="1"/>
+<text x="245.2" y="1812.0" font-family="Pretendard, 'Apple SD Gothic Neo', 'Noto Sans KR', 'Malgun Gothic', -apple-system, 'Segoe UI', sans-serif" font-size="11" font-weight="500" fill="#f5b54a" text-anchor="middle">SES · 메일</text>
+<rect x="288.6" y="1798.0" width="131.8" height="20.0" rx="5" fill="#1f1a2b" stroke="#c4a6ff" stroke-width="1"/>
+<text x="354.5" y="1812.0" font-family="Pretendard, 'Apple SD Gothic Neo', 'Noto Sans KR', 'Malgun Gothic', -apple-system, 'Segoe UI', sans-serif" font-size="11" font-weight="500" fill="#c4a6ff" text-anchor="middle">도메인 이벤트 · @Async</text>
+<rect x="430.4" y="1798.0" width="66.9" height="20.0" rx="5" fill="#2b1820" stroke="#f0a3bf" stroke-width="1"/>
+<text x="463.9" y="1812.0" font-family="Pretendard, 'Apple SD Gothic Neo', 'Noto Sans KR', 'Malgun Gothic', -apple-system, 'Segoe UI', sans-serif" font-size="11" font-weight="500" fill="#f0a3bf" text-anchor="middle">알림 · SSE</text>
+<rect x="507.3" y="1798.0" width="91.0" height="20.0" rx="5" fill="#121c2b" stroke="#6aa8ff" stroke-width="1"/>
+<text x="552.8" y="1812.0" font-family="Pretendard, 'Apple SD Gothic Neo', 'Noto Sans KR', 'Malgun Gothic', -apple-system, 'Segoe UI', sans-serif" font-size="11" font-weight="500" fill="#6aa8ff" text-anchor="middle">채점 큐 · Judge</text>
+<rect x="608.3" y="1798.0" width="59.3" height="20.0" rx="5" fill="#191919" stroke="#4a4a4a" stroke-width="1"/>
+<text x="638.0" y="1812.0" font-family="Pretendard, 'Apple SD Gothic Neo', 'Noto Sans KR', 'Malgun Gothic', -apple-system, 'Segoe UI', sans-serif" font-size="11" font-weight="500" fill="#d4d4d4" text-anchor="middle">일반 기능</text>
+<rect x="677.7" y="1798.0" width="101.1" height="20.0" rx="5" fill="#191919" stroke="#3a3a3a" stroke-width="1"/>
+<text x="728.2" y="1812.0" font-family="Pretendard, 'Apple SD Gothic Neo', 'Noto Sans KR', 'Malgun Gothic', -apple-system, 'Segoe UI', sans-serif" font-size="11" font-weight="500" fill="#727272" text-anchor="middle">정의됐지만 미연결</text>
+<text x="44.0" y="1846.0" font-family="Pretendard, 'Apple SD Gothic Neo', 'Noto Sans KR', 'Malgun Gothic', -apple-system, 'Segoe UI', sans-serif" font-size="10.5" font-weight="400" fill="#727272" text-anchor="start">※ 카드 오른쪽 위 숫자는 해당 모듈의 엔드포인트 수 — 전체 명세는 docs/API.md</text>
+</svg>
